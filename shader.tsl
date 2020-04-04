@@ -1,0 +1,10 @@
+// One line comment
+/*
+ * Multi-line comments
+ */
+
+shader function_name( in float3 input_data = float3( 0.1, 0.2, 0.3 ) <<< Field1 = Value >>> ,
+                      out event float3 output_data = float3( 0.0, 0.0, 0.0 ) <<< Field2 = Value >>> )
+{
+    output_data = 2.0 * input_data;
+}
