@@ -1,6 +1,6 @@
 echo "Lexing..."
-flex laxer.lex
+flex laxer.l
 echo "Compiling Lex.yy.c"
-g++ lex.yy.c -ll
+gcc lex.yy.c -ll
 echo "Parsing shader"
 ./a.out < shader.tsl
