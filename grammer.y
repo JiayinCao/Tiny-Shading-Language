@@ -5,13 +5,29 @@
     void yyerror(char const* );
 %}
 
-%token INDENTIFIER L_CBRACKET R_CBRACKET L_RBRACKET R_RBRACKET COLON INT_NUM FLT_NUM OP_ADD OP_MINUS OP_MULT OP_DIV SHADER_FUNC_ID EOL COMMA EQUAL TO_BE_IGNORED
+%token INDENTIFIER
+%token INT_NUM
+%token FLT_NUM
+%token SHADER_FUNC_ID
+%token EOL
+%token TO_BE_IGNORED
+%token L_CBRACKET       "{"
+%token R_CBRACKET       "}"
+%token L_RBRACKET       "("
+%token R_RBRACKET       ")"
+%token COLON            ":"
+%token OP_ADD           "+"
+%token OP_MINUS         "-"
+%token OP_MULT          "*"
+%token OP_DIV           "/"
+%token COMMA            ","
+%token EQUAL            "="
 
 %start input
 
 %%
 input:
-    SHADER_FUNC_ID  INDENTIFIER L_RBRACKET R_RBRACKET L_CBRACKET R_CBRACKET
+    SHADER_FUNC_ID  INDENTIFIER "(" ")" "{" "}"
 %%
 
 void yyerror(char const * p){

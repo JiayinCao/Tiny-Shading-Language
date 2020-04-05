@@ -3,6 +3,7 @@
 %}
 
 %option outfile="compiled_lex.c"
+%option noyywrap
 
 integer_numbers          [+-]?[0-9]+
 float_numbers            [+-]?([0-9]+\.[0-9]*|[0-9]*\.[0-9]+)
@@ -30,7 +31,3 @@ whitespace               [ \t\r\n\f]
 {whitespace}              { return TO_BE_IGNORED; }                                            /* ignore whitespace */
 .                         { return TO_BE_IGNORED; }                                            /* supress output for the unknown */
 %%
-
-int yywrap(void){
-  return 1;
-}
