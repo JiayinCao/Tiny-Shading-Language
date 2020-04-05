@@ -32,6 +32,24 @@ if "%CLEAN%" == "1" (
 	goto EOF
 )
 
+if "%CLEAN_DEP%" == "1" (
+	echo Cleaning all dependencies file
+	powershell Remove-Item -path ./dependencies -recurse -ErrorAction Ignore
+	goto EOF
+)
+
+if "%UPDATE_DEP%" == "1" (
+	echo Downloading dependencies
+	powershell .\build-files\win\getdep.ps1
+	goto EOF
+)
+
+if "%UPDATE%" == "1" (
+	echo Sycning latest code
+	git pull
+	goto EOF
+)
+
 if "%BUILD_RELEASE%" == "1" (
 	echo Building
 
@@ -43,10 +61,10 @@ if "%BUILD_RELEASE%" == "1" (
 
 	rem Bison parsing
 	echo "Bison parsing ..."
-	.\dep\win\flex_bison\win_bison.exe -d .\src\grammer.y -o .\tmp\compiled_grammer.c
+	.\dependencies\flex_bison\win_bison.exe -d .\src\grammer.y -o .\tmp\compiled_grammer.c
 
 	echo "Laxer parsing ..."
-	.\dep\win\flex_bison\win_flex.exe .\src\lex.l
+	.\dependencies\flex_bison\win_flex.exe .\src\lex.l
 
 	
 )
