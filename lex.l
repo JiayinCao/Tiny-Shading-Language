@@ -1,6 +1,8 @@
 %{
-  #include "grammer.tab.h"
+  #include "compiled_grammer.h"
 %}
+
+%option outfile="compiled_lex.c"
 
 integer_numbers          [+-]?[0-9]+
 float_numbers            [+-]?([0-9]+\.[0-9]*|[0-9]*\.[0-9]+)
@@ -9,7 +11,7 @@ identifier               [a-zA-Z_]+[a-zA-Z_0-9]*
 whitespace               [ \t\r\n\f]
 
 %%
-"shader"                  { printf("%s\n", yytext);                   return SHADER_FUNC_ID; }
+"shader"                  { printf("shader_func  ->\t%s\n", yytext);  return SHADER_FUNC_ID; }
 "("                       { printf("%s\n", yytext);                   return L_RBRACKET; }
 ")"                       { printf("%s\n", yytext);                   return R_RBRACKET; }
 "{"                       { printf("%s\n", yytext);                   return L_CBRACKET; }
@@ -28,3 +30,7 @@ whitespace               [ \t\r\n\f]
 {whitespace}              { return TO_BE_IGNORED; }                                            /* ignore whitespace */
 .                         { return TO_BE_IGNORED; }                                            /* supress output for the unknown */
 %%
+
+int yywrap(void){
+  return 1;
+}
