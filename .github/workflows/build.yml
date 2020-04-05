@@ -1,0 +1,63 @@
+name: Build TSL
+
+on: [push, pull_request]
+
+jobs:
+  Windows:
+    runs-on: windows-latest
+    steps:
+    - name: Checking Out Source Code
+      uses: actions/checkout@v1
+    - name: Setup MSBuild.exe
+      uses: warrenbuckley/Setup-MSBuild@v1
+    - name: Get Cache Directory
+      id: cache-dir
+      run: |
+          echo ::set-output name=dir::%CD%
+      shell: cmd
+    - name: Load Dependencies from Cache
+      uses: actions/cache@v1
+      id: cache-dep
+      with:
+        path: ${{ steps.cache-dir.outputs.dir }}/dependencies
+        key: Windows-dep-ver-0
+    - name: Install Dependencies
+      if: steps.cache-dep.outputs.cache-hit != 'true'
+      run: make update_dep
+      shell: cmd
+    - name: Build Release Version
+      run: make
+      shell: cmd
+  Macos:
+    runs-on: macOS-latest
+    steps:
+    - name: Checking Out Source Code
+      uses: actions/checkout@v1
+    - name: Configure Environment
+      run: |
+           sudo brew install flex
+           sudo brew install bison
+    - name: Build Release Version
+      run: make
+  Ubuntu_18_04:
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Checking Out Source Code
+      uses: actions/checkout@v1
+    - name: Configure Environment
+      run: |
+           sudo apt-get install flex
+           sudo apt-get install bison
+    - name: Build Release Version
+      run: make
+  Ubuntu_16_04:
+    runs-on: ubuntu-16.04
+    steps:
+    - name: Checking Out Source Code
+      uses: actions/checkout@v1
+    - name: Configure Environment
+      run: |
+           sudo apt-get install flex
+           sudo apt-get install bison
+    - name: Build Release Version
+      run: make
