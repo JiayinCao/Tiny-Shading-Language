@@ -21,8 +21,11 @@ all:
 	rm -rf tmp
 	mkdir tmp
 
-	$(MAKE) grammer
-	$(MAKE) lex
+	echo    "Bison parsing ..."
+	bison   -d src/grammer.y -o tmp/compiled_grammer.c
+
+	echo    "Laxer parsing ..."
+	flex    src/lex.l
 
 	echo    "Compiling generated C ..."
 	cd tmp;ls;gcc -m64 -c compiled_lex.c compiled_grammer.c;\
@@ -35,13 +38,8 @@ all:
 	echo    "Executing binary ..."
 	./bin/a.out < example/shader_first.tsl
 
-grammer:
-	echo    "Bison parsing ..."
-	bison   -d src/grammer.y -o tmp/compiled_grammer.c
-
-lex:
-	echo    "Laxer parsing ..."
-	flex    src/lex.l
-
 clean:
 	rm -rf bin tmp
+
+update:
+	git pull
