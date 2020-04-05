@@ -18,28 +18,28 @@
 MAKEFLAGS += --silent
 
 all:
-	rm -rf tmp
-	mkdir tmp
+	rm -rf src/generated
+	mkdir src/generated
 
 	echo    "Bison parsing ..."
-	bison   -d src/grammer.y -o tmp/compiled_grammer.c
+	bison   -d src/grammer.y -o src/generated/compiled_grammer.c
 
 	echo    "Laxer parsing ..."
 	flex    src/lex.l
 
 	echo    "Compiling generated C ..."
-	cd tmp;ls;gcc -m64 -c compiled_lex.c compiled_grammer.c;\
+	cd src/generated;gcc -m64 -c compiled_lex.c compiled_grammer.c;\
 	ar rvs compiled_grammer.a compiled_grammer.o;\
 	ar rvs compiled_lex.a compiled_lex.o;
 
 	rm -rf bin;mkdir bin;cd bin;\
-	g++ -m64 -std=c++11 ../src/main.cpp ../tmp/compiled_grammer.a ../tmp/compiled_lex.a
+	g++ -m64 -std=c++11 ../src/main.cpp ../src/generated/compiled_grammer.a ../src/generated/compiled_lex.a
 
 	echo    "Executing binary ..."
 	./bin/a.out < example/shader_first.tsl
 
 clean:
-	rm -rf bin tmp
+	rm -rf bin src/generated
 
 update:
 	git pull
