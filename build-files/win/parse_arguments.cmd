@@ -29,6 +29,9 @@ if NOT "%1" == "" (
     )else if "%1" == "update_dep" (
 		set UPDATE_DEP=1
 		goto EOF
+    )else if "%1" == "generate_src" (
+        set GENERATE_SRC=1
+        goto EOF
     )else (
         echo Unrecognized Command
         goto EOF
