@@ -1,5 +1,6 @@
 # Tiny-Shading-Language
 [![Build TSL](https://github.com/JiayinCao/Tiny-Shading-Language/workflows/Build%20TSL/badge.svg)](https://actions-badge.atrox.dev/Jiayincao/Tiny-Shading-Language/goto)
+[![License](https://img.shields.io/badge/License-GPL3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
 TSL ( Tiny Shading Language ) is my own shading language designed for my offline renderer [SORT](http://sort-renderer.com/).
 
