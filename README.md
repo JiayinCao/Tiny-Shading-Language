@@ -1,6 +1,8 @@
 # Tiny-Shading-Language
 ![Build TSL](https://github.com/JiayinCao/Tiny-Shading-Language/workflows/Build%20TSL/badge.svg)
 
+[![Build TSL](https://github.com/JiayinCao/Tiny-Shading-Language/workflows/Build%20TSL/badge.svg)](https://actions-badge.atrox.dev/Jiayincao/Tiny-Shading-Language/goto)
+
 TSL ( Tiny Shading Language ) is my own shading language designed for my offline renderer [SORT](http://sort-renderer.com/).
 
 The goal of TSL is to provide shader programming ability to open source ray tracer projects. 
