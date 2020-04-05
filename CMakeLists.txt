@@ -72,3 +72,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244" )
 add_definitions( -DYY_NO_UNISTD_H )
 
 add_executable(TSL ${all_files})
+
+# Setup correct output name for different configurations
+set_target_properties( TSL PROPERTIES RELEASE_OUTPUT_NAME "tsl_r" )
+set_target_properties( TSL PROPERTIES DEBUG_OUTPUT_NAME "tsl_d" )

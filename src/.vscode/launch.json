@@ -1,0 +1,27 @@
+{
+    "version": "0.0.1",
+    "configurations": [
+        {
+            "name": "Run Release",
+            "type": "cppdbg",
+            "request": "launch",
+            "preLaunchTask": "Build (Release)",
+            "program": "${workspaceFolder}/../bin/tsl_r",
+            "args": [""],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/../bin",
+            "environment": [],
+            "externalConsole": true,
+            "osx":{
+                "MIMode": "lldb"
+            },
+            "linux":{
+                "MIMode":"gdb"
+            },
+            "windows":{
+                "type": "cppvsdbg",
+                "program": "${workspaceFolder}/../bin/tsl_r.exe"
+            }
+        }
+    ]
+}
