@@ -2,7 +2,7 @@
   #include "compiled_grammer.h"
 %}
 
-%option outfile="compiled_lex.c"
+%option outfile="tmp/compiled_lex.c"
 %option noyywrap
 
 integer_numbers          [+-]?[0-9]+

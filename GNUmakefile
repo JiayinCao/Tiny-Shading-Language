@@ -1,33 +1,30 @@
 MAKEFLAGS += --silent
 
 all:
+	rm -rf tmp
+	mkdir tmp
+
 	$(MAKE) grammer
 	$(MAKE) lex
     
 	echo    "Compiling generated C ..."
-	gcc -m64 -c compiled_lex.c compiled_grammer.c
-	ar rvs compiled_grammer.a compiled_grammer.o
-	ar rvs compiled_lex.a compiled_lex.o
-	g++ -m64 -std=c++11 main.cpp compiled_grammer.a compiled_lex.a
+	cd tmp;ls;gcc -m64 -c compiled_lex.c compiled_grammer.c;\
+	ar rvs compiled_grammer.a compiled_grammer.o;\
+	ar rvs compiled_lex.a compiled_lex.o;
 
-	rm -rf tmp
-	mkdir tmp
-	mv compiled_lex.* ./tmp/
-	mv compiled_grammer.* ./tmp/
+	rm -rf bin;mkdir bin;cd bin;\
+	g++ -m64 -std=c++11 ../src/main.cpp ../tmp/compiled_grammer.a ../tmp/compiled_lex.a
+
 	echo    "Executing binary ..."
-
-	rm -rf bin
-	mkdir bin
-	mv a.out ./bin
-	./bin/a.out < shader_first.tsl
+	./bin/a.out < example/shader_first.tsl
 
 grammer:
 	echo    "Bison parsing ..."
-	bison   -d grammer.y -o compiled_grammer.c
+	bison   -d src/grammer.y -o tmp/compiled_grammer.c
 
 lex:
 	echo    "Laxer parsing ..."
-	flex    lex.l
+	flex    src/lex.l
 
 clean:
 	rm -rf bin tmp
