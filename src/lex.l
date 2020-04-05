@@ -4,6 +4,7 @@
 
 %option outfile="tmp/compiled_lex.c"
 %option noyywrap
+%option never-interactive
 
 integer_numbers          [+-]?[0-9]+
 float_numbers            [+-]?([0-9]+\.[0-9]*|[0-9]*\.[0-9]+)
