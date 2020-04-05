@@ -35,8 +35,8 @@ jobs:
       uses: actions/checkout@v1
     - name: Configure Environment
       run: |
-           sudo brew install flex
-           sudo brew install bison
+           brew install flex
+           brew install bison
     - name: Build Release Version
       run: make
   Ubuntu_18_04:
