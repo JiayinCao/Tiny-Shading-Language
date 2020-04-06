@@ -2,7 +2,7 @@
   #include "compiled_grammer.h"
 %}
 
-%option outfile="src/generated/compiled_lex.c"
+%option outfile="generated_src/compiled_lex.c"
 %option noyywrap
 %option never-interactive
 

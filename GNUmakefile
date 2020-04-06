@@ -21,23 +21,23 @@ all:
 	make release
 
 clean:
-	rm -rf bin src/generated
+	rm -rf bin generated_src
 
 update:
 	git pull
 
 generate_src:
-	rm -rf src/generated
-	mkdir src/generated
+	rm -rf generated_src
+	mkdir generated_src
 
 	echo    "Bison parsing ..."
-	bison   -d src/grammer.y -o src/generated/compiled_grammer.c
+	bison   -d src/grammer.y -o generated_src/compiled_grammer.c
 
 	echo    "Laxer parsing ..."
 	flex    src/lex.l
 
 	echo    "Compiling generated C ..."
-	cd src/generated;gcc -m64 -c compiled_lex.c compiled_grammer.c;\
+	cd generated_src;gcc -m64 -c compiled_lex.c compiled_grammer.c;\
 	ar rvs compiled_grammer.a compiled_grammer.o;\
 	ar rvs compiled_lex.a compiled_lex.o;
 

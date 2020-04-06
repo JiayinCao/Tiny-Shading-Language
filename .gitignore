@@ -1,6 +1,6 @@
-src/generated/
 bin/
 dependencies/
 _out/
 proj_release/
 proj_debug/
+generated_src/
