@@ -32,6 +32,15 @@ if NOT "%1" == "" (
     )else if "%1" == "generate_src" (
         set GENERATE_SRC=1
         goto EOF
+    )else if "%1" == "generate_proj" (
+        set GENERATE_PROJ=1
+        goto EOF
+    )else if "%1" == "release" (
+        set BUILD_RELEASE=1
+        goto EOF
+    )else if "%1" == "debug" (
+        set BUILD_DEBUG=1
+        goto EOF
     )else (
         echo Unrecognized Command
         goto EOF

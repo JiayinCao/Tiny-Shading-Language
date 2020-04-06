@@ -18,6 +18,8 @@
 rem reset all variables so they do not get accidentally get carried over from previous builds
 set CLEAN=
 set BUILD_RELEASE=
+set BUILD_DEBUG=
+set GENERATE_PROJ=
 set UPDATE_DEP=
 set CLEAN_DEP=
 set UPDATE=

@@ -30,7 +30,7 @@ if "%CLEAN%" == "1" (
 	powershell Remove-Item -path ./bin -recurse -ErrorAction Ignore
 	powershell Remove-Item -path ./src/generated -recurse -ErrorAction Ignore
 	powershell Remove-Item -path ./proj_release -recurse -ErrorAction Ignore
-	powershell Remove-Item -path ./debug_release -recurse -ErrorAction Ignore
+	powershell Remove-Item -path ./proj_debug -recurse -ErrorAction Ignore
 	powershell Remove-Item -path ./_out -recurse -ErrorAction Ignore
 	goto EOF
 )
@@ -59,14 +59,33 @@ if "%BUILD_RELEASE%" == "1" (
 	rem Generate source code
 	make generate_src
 
-	rem Making directories
-	powershell Remove-Item -path ./bin -recurse -ErrorAction Ignore
-	mkdir bin
-
 	powershell New-Item -Force -ItemType directory -Path proj_release
 	cd proj_release
 	cmake -A x64 ..
 	msbuild /p:Configuration=Release TSL.sln
+	cd ..
+)
+
+if "%BUILD_DEBUG%" == "1" (
+	echo Building
+
+	rem Generate source code
+	make generate_src
+
+	powershell New-Item -Force -ItemType directory -Path proj_debug
+	cd proj_debug
+	cmake -A x64 ..
+	msbuild /p:Configuration=Debug TSL.sln
+	cd ..
+)
+
+if "%GENERATE_PROJ%" == "1" (
+	rem Generate source code
+	make generate_src
+
+	powershell New-Item -Force -ItemType directory -Path _out
+	cd _out
+	cmake -A x64 ..
 	cd ..
 )
 
