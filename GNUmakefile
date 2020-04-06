@@ -18,6 +18,15 @@
 MAKEFLAGS += --silent
 
 all:
+	make release
+
+clean:
+	rm -rf bin src/generated
+
+update:
+	git pull
+
+generate_src:
 	rm -rf src/generated
 	mkdir src/generated
 
@@ -32,14 +41,11 @@ all:
 	ar rvs compiled_grammer.a compiled_grammer.o;\
 	ar rvs compiled_lex.a compiled_lex.o;
 
-	rm -rf bin;mkdir bin;cd bin;\
-	g++ -m64 -std=c++11 ../src/main.cpp ../src/generated/compiled_grammer.a ../src/generated/compiled_lex.a
+release:
+	make generate_src
+	rm -rf proj_release;mkdir proj_release;cd proj_release;cmake -DCMAKE_BUILD_TYPE=Release ..;make -j 4;cd ..;
 
-	echo    "Executing binary ..."
-	./bin/a.out < example/shader_first.tsl
+debug:
+	make generate_src
+	rm -rf proj_debug;mkdir proj_debug;cd proj_debug;cmake -DCMAKE_BUILD_TYPE=Debug ..;make -j 4;cd ..;
 
-clean:
-	rm -rf bin src/generated
-
-update:
-	git pull
