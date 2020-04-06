@@ -82,7 +82,10 @@ if (WIN32)
                         COMMAND cmd /c make generate_src
                         WORKING_DIRECTORY ${TSL_SOURCE_DIR})
 else()
-    add_executable(TSL ${all_files})
+    add_executable(TSL ${all_files} ${generated_src})
+    add_custom_command( OUTPUT ${generated_src}
+                        COMMAND make generate_src
+                        WORKING_DIRECTORY ${TSL_SOURCE_DIR})
 endif()
 
 # Separate folder for the generated files

@@ -42,10 +42,8 @@ generate_src:
 	ar rvs compiled_lex.a compiled_lex.o;
 
 release:
-	make generate_src
 	rm -rf proj_release;mkdir proj_release;cd proj_release;cmake -DCMAKE_BUILD_TYPE=Release ..;make -j 4;cd ..;
 
 debug:
-	make generate_src
 	rm -rf proj_debug;mkdir proj_debug;cd proj_debug;cmake -DCMAKE_BUILD_TYPE=Debug ..;make -j 4;cd ..;
 
