@@ -84,9 +84,9 @@ if "%GENERATE_PROJ%" == "1" (
 
 if "%GENERATE_SRC%" == "1" (
 	echo Generate source code dependencies
-
-	powershell Remove-Item -path ./src/generated -recurse -ErrorAction Ignore
-	mkdir src\generated
+	
+	powershell Remove-Item -path ./generated_src -recurse -ErrorAction Ignore
+	mkdir generated_src
 
 	echo "Bison parsing ..."
 	.\dependencies\flex_bison\win_bison.exe -d .\src\grammer.y -o .\generated_src\compiled_grammer.c
