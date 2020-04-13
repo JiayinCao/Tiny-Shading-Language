@@ -5,16 +5,17 @@
     void yyerror(char const* );
 %}
 
-%token INDENTIFIER
+%token ID
 %token INT_NUM
 %token FLT_NUM
 %token SHADER_FUNC_ID
 %token EOL              ";"
-%token TO_BE_IGNORED
 %token L_CBRACKET       "{"
 %token R_CBRACKET       "}"
 %token L_RBRACKET       "("
 %token R_RBRACKET       ")"
+%token L_SBRACKET       "["
+%token R_SBRACKET       "]"
 %token COLON            ":"
 %token OP_ADD           "+"
 %token OP_MINUS         "-"
@@ -22,6 +23,7 @@
 %token OP_DIV           "/"
 %token COMMA            ","
 %token EQUAL            "="
+%token DOT				"."
 
 /* the start token */
 %start PROGRAM
@@ -33,7 +35,7 @@ PROGRAM:
     };
 
 FUNCTION_DEF:
-	INDENTIFIER "(" ")" COMPOUNDSTMT {
+	ID "(" ")" COMPOUNDSTMT {
 		printf("Found a shader definition.\n");
 	};
 
@@ -56,10 +58,75 @@ STATEMENTS:
 	};
 
 STATEMENT:
-	INDENTIFIER ";" {
+	STATEMENT_EXPRESSION ";" {
 		printf("Place holder for now.\n");
 	};
 
+STATEMENT_EXPRESSION:
+	EXPRESSION_CONST {
+	    printf("Useless expression?\n" );
+	}
+	|
+	EXPRESSION_ASSIGN {
+		printf("Expression statement.\n");
+	}
+	|
+	EXPRESSION_OP {
+	};
+
+EXPRESSION_ASSIGN:
+	EXPRESSION_REF "=" STATEMENT_EXPRESSION {
+	};
+
+EXPRESSION_CONST:
+	INT_NUM {
+	}
+	|
+	FLT_NUM {
+	};
+
+EXPRESSION_REF:
+	EXPRESSION_REF "." IDENTIFIER {
+	}
+	|
+	IDENTIFIER {
+	};
+
+EXPRESSION_OP:
+	EXPRESSION_ADD {
+	}
+	|
+	EXPRESSION_MINUS {
+	}
+	|
+	EXPRESSION_MULT {
+	}
+	|
+	EXPRESSION_DIV{
+	};
+
+EXPRESSION_ADD:
+	STATEMENT_EXPRESSION "+" STATEMENT_EXPRESSION {
+	};
+
+EXPRESSION_MINUS:
+	STATEMENT_EXPRESSION "-" STATEMENT_EXPRESSION {
+	};
+
+EXPRESSION_MULT:
+	STATEMENT_EXPRESSION "*" STATEMENT_EXPRESSION {
+	};
+
+EXPRESSION_DIV:
+	STATEMENT_EXPRESSION "/" STATEMENT_EXPRESSION {
+	};
+
+IDENTIFIER:
+	ID {
+	}
+	|
+	ID "[" INT_NUM "]"{
+	};
 %%
 
 void yyerror(char const * p){

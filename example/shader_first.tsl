@@ -1,4 +1,26 @@
 shader function_name()
 {
-    test;
+    // basic variable assign
+    test = 1;
+
+    // field in data structure
+    data_structure.field = 2;
+
+    // multi-line code
+    data_structure.field2.afd = 3
+    
+    ;
+
+    // array
+    data[23] = 34;
+    data.data[213421] = 32;
+    data[324].dafa.sdf[21] = 3;
+
+    // multi-assign
+    SADFAF = ASDFASF = 234;
+
+    gg = testagain = 2 + 3;
+
+    // some false positives for now
+    3 + 34 = asfa;
 }

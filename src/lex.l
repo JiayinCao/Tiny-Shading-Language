@@ -21,11 +21,14 @@ identifier               [a-zA-Z_]+[a-zA-Z_0-9]*
 whitespace               [ \t\r\n\f]
 
 %%
+"."                       { DEBUG_INFO(".", yytext);                      return DOT; }
 "shader"                  { DEBUG_INFO("shader_func  ->\t%s\n", yytext);  return SHADER_FUNC_ID; }
 "("                       { DEBUG_INFO("%s\n", yytext);                   return L_RBRACKET; }
 ")"                       { DEBUG_INFO("%s\n", yytext);                   return R_RBRACKET; }
 "{"                       { DEBUG_INFO("%s\n", yytext);                   return L_CBRACKET; }
 "}"                       { DEBUG_INFO("%s\n", yytext);                   return R_CBRACKET; }
+"["                       { DEBUG_INFO("%s\n", yytext);                   return L_SBRACKET; }
+"]"                       { DEBUG_INFO("%s\n", yytext);                   return R_SBRACKET; }
 "+"                       { DEBUG_INFO("%s\n", yytext);                   return OP_ADD; }
 "-"                       { DEBUG_INFO("%s\n", yytext);                   return OP_MINUS; }
 "*"                       { DEBUG_INFO("%s\n", yytext);                   return OP_MULT; }
@@ -34,7 +37,7 @@ whitespace               [ \t\r\n\f]
 ","                       { DEBUG_INFO("%s\n", yytext);                   return COMMA; }
 "="                       { DEBUG_INFO("%s\n", yytext);                   return EQUAL; }
 {one_line_comment}        { DEBUG_INFO("comment      ->\t%s\n", yytext);  }                        /* eat up one-line comments */
-{identifier}              { DEBUG_INFO("indentifier  ->\t%s\n", yytext);  return INDENTIFIER; }    /* variable / function name */
+{identifier}              { DEBUG_INFO("indentifier  ->\t%s\n", yytext);  return ID; }             /* variable / function name */
 {float_numbers}           { DEBUG_INFO("float        ->\t%s\n", yytext);  return FLT_NUM; }        /* floating point value */
 {integer_numbers}         { DEBUG_INFO("int          ->\t%s\n", yytext);  return INT_NUM; }        /* integer value */
 {whitespace}              { }                                            					   /* ignore whitespace */
