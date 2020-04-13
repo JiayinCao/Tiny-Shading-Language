@@ -1,5 +1,8 @@
 shader function_name()
 {
+    int k = 0;
+    float gg = 0.0;
+
     // basic variable assign
     test = 1;
 

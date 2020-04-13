@@ -9,6 +9,8 @@
 %token INT_NUM
 %token FLT_NUM
 %token SHADER_FUNC_ID
+%token TYPE_INT
+%token TYPE_FLOAT
 %token EOL              ";"
 %token L_CBRACKET       "{"
 %token R_CBRACKET       "}"
@@ -60,6 +62,13 @@ STATEMENTS:
 STATEMENT:
 	STATEMENT_EXPRESSION ";" {
 		printf("Place holder for now.\n");
+	}
+	|
+	STATEMENT_DECLARATION ";" {
+	};
+
+STATEMENT_DECLARATION:
+	PARAM{
 	};
 
 STATEMENT_EXPRESSION:
@@ -121,6 +130,20 @@ EXPRESSION_DIV:
 	STATEMENT_EXPRESSION "/" STATEMENT_EXPRESSION {
 	};
 
+PARAM:
+	TYPE ID {
+	}
+	|
+	TYPE ID "=" STATEMENT_EXPRESSION{
+	};
+	
+TYPE:
+	TYPE_INT {
+	}
+	|
+	TYPE_FLOAT {
+	};
+	
 IDENTIFIER:
 	ID {
 	}
