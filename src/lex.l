@@ -17,7 +17,7 @@ whitespace               [ \t\r\n\f]
 "("                       { printf("%s\n", yytext);                   return L_RBRACKET; }
 ")"                       { printf("%s\n", yytext);                   return R_RBRACKET; }
 "{"                       { printf("%s\n", yytext);                   return L_CBRACKET; }
-"}"                       { printf("%s\n", yytext);                   return R_RBRACKET; }
+"}"                       { printf("%s\n", yytext);                   return R_CBRACKET; }
 "+"                       { printf("%s\n", yytext);                   return OP_ADD; }
 "-"                       { printf("%s\n", yytext);                   return OP_MINUS; }
 "*"                       { printf("%s\n", yytext);                   return OP_MULT; }
@@ -25,10 +25,10 @@ whitespace               [ \t\r\n\f]
 ";"                       { printf("%s\n", yytext);                   return EOL; }
 ","                       { printf("%s\n", yytext);                   return COMMA; }
 "="                       { printf("%s\n", yytext);                   return EQUAL; }
-{one_line_comment}        { printf("comment      ->\t%s\n", yytext);  return TO_BE_IGNORED; }  /* eat up one-line comments */
+{one_line_comment}        { printf("comment      ->\t%s\n", yytext);  }                        /* eat up one-line comments */
 {identifier}              { printf("indentifier  ->\t%s\n", yytext);  return INDENTIFIER; }    /* variable / function name */
 {float_numbers}           { printf("float        ->\t%s\n", yytext);  return FLT_NUM; }        /* floating point value */
 {integer_numbers}         { printf("int          ->\t%s\n", yytext);  return INT_NUM; }        /* integer value */
-{whitespace}              { return TO_BE_IGNORED; }                                            /* ignore whitespace */
-.                         { return TO_BE_IGNORED; }                                            /* supress output for the unknown */
+{whitespace}              { }                                            					   /* ignore whitespace */
+.                         { }                                                                  /* supress output for the unknown */
 %%

@@ -28,6 +28,12 @@ jobs:
     - name: Build Release Version
       run: make
       shell: cmd
+    - name: Build Debug Version
+      run: make debug
+      shell: cmd
+    - name: Unit test
+      run: make test
+      shell: cmd
   Macos:
     runs-on: macOS-latest
     steps:
@@ -39,6 +45,10 @@ jobs:
            brew install bison
     - name: Build Release Version
       run: make
+    - name: Build Debug Version
+      run: make debug
+    - name: Unit test
+      run: make test
   Ubuntu_18_04:
     runs-on: ubuntu-18.04
     steps:
@@ -50,6 +60,10 @@ jobs:
            sudo apt-get install bison
     - name: Build Release Version
       run: make
+    - name: Build Debug Version
+      run: make debug
+    - name: Unit test
+      run: make test
   Ubuntu_16_04:
     runs-on: ubuntu-16.04
     steps:
@@ -61,3 +75,7 @@ jobs:
            sudo apt-get install bison
     - name: Build Release Version
       run: make
+    - name: Build Debug Version
+      run: make debug
+    - name: Unit test
+      run: make test

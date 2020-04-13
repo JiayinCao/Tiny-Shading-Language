@@ -27,8 +27,11 @@ extern "C"{
 int main(){
     int result = yyparse();
     if( 0 == result )
-        cout<<"input is valid"<<endl;
-    else
-        cout<<"input is invalid"<<endl;
+        cout<<"This is a valid shader!"<<endl;
+    else {
+        cout << "Something is wrong!" << endl;
+        return -1;
+    }
+
     return 0;
 }

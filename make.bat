@@ -95,4 +95,10 @@ if "%GENERATE_SRC%" == "1" (
 	.\dependencies\flex_bison\win_flex.exe .\src\lex.l
 )
 
+if "%UNIT_TEST%" == "1" (
+	echo Very basic test
+	
+	.\bin\tsl_r.exe < .\example\shader_first.tsl
+)
+
 :EOF

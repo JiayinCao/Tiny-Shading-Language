@@ -47,3 +47,5 @@ release:
 debug:
 	rm -rf proj_debug;mkdir proj_debug;cd proj_debug;cmake -DCMAKE_BUILD_TYPE=Debug ..;make -j 4;cd ..;
 
+test:
+	./bin/tsl_r < ./example/shader_first.tsl

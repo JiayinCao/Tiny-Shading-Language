@@ -41,6 +41,9 @@ if NOT "%1" == "" (
     )else if "%1" == "debug" (
         set BUILD_DEBUG=1
         goto EOF
+    )else if "%1" == "test" (
+        set UNIT_TEST=1
+        goto EOF
     )else (
         echo Unrecognized Command
         goto EOF

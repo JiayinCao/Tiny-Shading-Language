@@ -24,3 +24,4 @@ set UPDATE_DEP=
 set CLEAN_DEP=
 set UPDATE=
 set GENERATE_SRC=
+set UNIT_TEST=

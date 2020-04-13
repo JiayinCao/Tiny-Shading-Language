@@ -9,7 +9,7 @@
 %token INT_NUM
 %token FLT_NUM
 %token SHADER_FUNC_ID
-%token EOL
+%token EOL              ";"
 %token TO_BE_IGNORED
 %token L_CBRACKET       "{"
 %token R_CBRACKET       "}"
@@ -23,11 +23,43 @@
 %token COMMA            ","
 %token EQUAL            "="
 
-%start input
+/* the start token */
+%start PROGRAM
 
 %%
-input:
-    SHADER_FUNC_ID  INDENTIFIER "(" ")" "{" "}"
+PROGRAM:
+    SHADER_FUNC_ID FUNCTION_DEF {
+        printf("Found a shader!\n");
+    };
+
+FUNCTION_DEF:
+	INDENTIFIER "(" ")" COMPOUNDSTMT {
+		printf("Found a shader definition.\n");
+	};
+
+COMPOUNDSTMT:
+	"{" "}" {
+		printf("Empty compound statement.\n");
+	}
+	|
+	"{" STATEMENTS "}" {
+		printf("Statements.\n");
+	};
+
+STATEMENTS:
+	STATEMENT {
+		printf("Found a statement.\n");
+	}
+	|
+	STATEMENTS STATEMENT {
+		printf("Found multiple statements.\n" );
+	};
+
+STATEMENT:
+	INDENTIFIER ";" {
+		printf("Place holder for now.\n");
+	};
+
 %%
 
 void yyerror(char const * p){

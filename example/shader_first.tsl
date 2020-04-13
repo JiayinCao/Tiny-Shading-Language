@@ -1,3 +1,4 @@
 shader function_name()
 {
+    test;
 }
