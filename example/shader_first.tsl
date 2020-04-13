@@ -20,7 +20,4 @@ shader function_name()
     SADFAF = ASDFASF = 234;
 
     gg = testagain = 2 + 3;
-
-    // some false positives for now
-    3 + 34 = asfa;
 }
