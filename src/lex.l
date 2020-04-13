@@ -1,5 +1,13 @@
 %{
   #include "compiled_grammer.h"
+
+  // #define DEBUG_TOKENS
+
+  #ifdef DEBUG_TOKENS
+  	#define DEBUG_INFO( ... )  printf( __VA_ARGS__ );
+  #else
+  	#define DEBUG_INFO( ... )  ;
+  #endif
 %}
 
 %option outfile="generated_src/compiled_lex.c"
@@ -13,22 +21,22 @@ identifier               [a-zA-Z_]+[a-zA-Z_0-9]*
 whitespace               [ \t\r\n\f]
 
 %%
-"shader"                  { printf("shader_func  ->\t%s\n", yytext);  return SHADER_FUNC_ID; }
-"("                       { printf("%s\n", yytext);                   return L_RBRACKET; }
-")"                       { printf("%s\n", yytext);                   return R_RBRACKET; }
-"{"                       { printf("%s\n", yytext);                   return L_CBRACKET; }
-"}"                       { printf("%s\n", yytext);                   return R_CBRACKET; }
-"+"                       { printf("%s\n", yytext);                   return OP_ADD; }
-"-"                       { printf("%s\n", yytext);                   return OP_MINUS; }
-"*"                       { printf("%s\n", yytext);                   return OP_MULT; }
-"/"                       { printf("%s\n", yytext);                   return OP_DIV; }
-";"                       { printf("%s\n", yytext);                   return EOL; }
-","                       { printf("%s\n", yytext);                   return COMMA; }
-"="                       { printf("%s\n", yytext);                   return EQUAL; }
-{one_line_comment}        { printf("comment      ->\t%s\n", yytext);  }                        /* eat up one-line comments */
-{identifier}              { printf("indentifier  ->\t%s\n", yytext);  return INDENTIFIER; }    /* variable / function name */
-{float_numbers}           { printf("float        ->\t%s\n", yytext);  return FLT_NUM; }        /* floating point value */
-{integer_numbers}         { printf("int          ->\t%s\n", yytext);  return INT_NUM; }        /* integer value */
+"shader"                  { DEBUG_INFO("shader_func  ->\t%s\n", yytext);  return SHADER_FUNC_ID; }
+"("                       { DEBUG_INFO("%s\n", yytext);                   return L_RBRACKET; }
+")"                       { DEBUG_INFO("%s\n", yytext);                   return R_RBRACKET; }
+"{"                       { DEBUG_INFO("%s\n", yytext);                   return L_CBRACKET; }
+"}"                       { DEBUG_INFO("%s\n", yytext);                   return R_CBRACKET; }
+"+"                       { DEBUG_INFO("%s\n", yytext);                   return OP_ADD; }
+"-"                       { DEBUG_INFO("%s\n", yytext);                   return OP_MINUS; }
+"*"                       { DEBUG_INFO("%s\n", yytext);                   return OP_MULT; }
+"/"                       { DEBUG_INFO("%s\n", yytext);                   return OP_DIV; }
+";"                       { DEBUG_INFO("%s\n", yytext);                   return EOL; }
+","                       { DEBUG_INFO("%s\n", yytext);                   return COMMA; }
+"="                       { DEBUG_INFO("%s\n", yytext);                   return EQUAL; }
+{one_line_comment}        { DEBUG_INFO("comment      ->\t%s\n", yytext);  }                        /* eat up one-line comments */
+{identifier}              { DEBUG_INFO("indentifier  ->\t%s\n", yytext);  return INDENTIFIER; }    /* variable / function name */
+{float_numbers}           { DEBUG_INFO("float        ->\t%s\n", yytext);  return FLT_NUM; }        /* floating point value */
+{integer_numbers}         { DEBUG_INFO("int          ->\t%s\n", yytext);  return INT_NUM; }        /* integer value */
 {whitespace}              { }                                            					   /* ignore whitespace */
 .                         { }                                                                  /* supress output for the unknown */
 %%
