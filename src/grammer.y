@@ -3,6 +3,12 @@
     #include <stdlib.h>
     int yylex();
     void yyerror(char const* );
+
+	#ifdef DEBUG_TOKENS
+  		#define DEBUG_INFO( ... )  printf( __VA_ARGS__ );
+	#else
+  		#define DEBUG_INFO( ... )  ;
+	#endif
 %}
 
 %token ID
@@ -33,35 +39,35 @@
 %%
 PROGRAM:
     SHADER_FUNC_ID FUNCTION_DEF {
-        printf("Found a shader!\n");
+        DEBUG_INFO("Found a shader!\n");
     };
 
 FUNCTION_DEF:
 	ID "(" ")" COMPOUNDSTMT {
-		printf("Found a shader definition.\n");
+		DEBUG_INFO("Found a shader definition.\n");
 	};
 
 COMPOUNDSTMT:
 	"{" "}" {
-		printf("Empty compound statement.\n");
+		DEBUG_INFO("Empty compound statement.\n");
 	}
 	|
 	"{" STATEMENTS "}" {
-		printf("Statements.\n");
+		DEBUG_INFO("Statements.\n");
 	};
 
 STATEMENTS:
 	STATEMENT {
-		printf("Found a statement.\n");
+		DEBUG_INFO("Found a statement.\n");
 	}
 	|
 	STATEMENTS STATEMENT {
-		printf("Found multiple statements.\n" );
+		DEBUG_INFO("Found multiple statements.\n" );
 	};
 
 STATEMENT:
 	STATEMENT_EXPRESSION ";" {
-		printf("Place holder for now.\n");
+		DEBUG_INFO("Place holder for now.\n");
 	}
 	|
 	STATEMENT_DECLARATION ";" {
@@ -73,11 +79,11 @@ STATEMENT_DECLARATION:
 
 STATEMENT_EXPRESSION:
 	EXPRESSION_CONST {
-	    printf("Useless expression?\n" );
+	    DEBUG_INFO("Useless expression?\n" );
 	}
 	|
 	EXPRESSION_ASSIGN {
-		printf("Expression statement.\n");
+		DEBUG_INFO("Expression statement.\n");
 	}
 	|
 	EXPRESSION_OP {

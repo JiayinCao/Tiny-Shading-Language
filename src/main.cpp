@@ -16,22 +16,10 @@
  */
 
 #include <iostream>
+#include "thirdparty/gtest/gtest.h"
 using namespace std;
 
-extern "C"{
-    int yyparse();
-    void yyerror(const char * p);
-    int yylex();
-}
-
-int main(){
-    int result = yyparse();
-    if( 0 == result )
-        cout<<"This is a valid shader!"<<endl;
-    else {
-        cout << "Something is wrong!" << endl;
-        return -1;
-    }
-
-    return 0;
+int main(int argc, char** argv){
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
