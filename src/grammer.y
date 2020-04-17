@@ -43,17 +43,50 @@
 %start PROGRAM
 
 %%
+// A programm has a bunch of global statement.
 PROGRAM:
-    SHADER_FUNC_ID FUNCTION_DEF {
-        DEBUG_INFO("Found a shader!\n");
-    };
+	// empty shader
+	{}
+	|
+	GLOBAL_STATEMENTS {
+	};
 
+// One or multiple of blobal statements
+GLOBAL_STATEMENTS:
+	GLOBAL_STATEMENT{
+	}
+	|
+	GLOBAL_STATEMENT GLOBAL_STATEMENTS {
+	};
+
+// Global statement could be one of the followings
+//  - Global variable decleration.
+//  - Global function definition.
+//  - Global data structure definition.
+//  - Shader function definition.
+GLOBAL_STATEMENT:
+	STATEMENT_VARIABLES_DECLARATIONS{
+	}
+	|
+    SHADER_DEF {
+        DEBUG_INFO("Found a shader!\n");
+    }
+	|
+	FUNCTION_DEF {
+	};
+
+// Shader is the only unit that can be exposed in the group.
+SHADER_DEF:
+	SHADER_FUNC_ID FUNCTION_DEF {
+	};
+
+// Standard function definition
 FUNCTION_DEF:
-	ID "(" ")" COMPOUNDSTMT {
+	ID "(" ")" FUNCTION_BODY {
 		DEBUG_INFO("Found a shader definition.\n");
 	};
 
-COMPOUNDSTMT:
+FUNCTION_BODY:
 	"{" "}" {
 		DEBUG_INFO("Empty compound statement.\n");
 	}
@@ -63,27 +96,62 @@ COMPOUNDSTMT:
 	};
 
 STATEMENTS:
-	STATEMENT {
+	STATEMENT_PROXY {
 		DEBUG_INFO("Found a statement.\n");
 	}
 	|
-	STATEMENTS STATEMENT {
+	STATEMENTS STATEMENT_PROXY {
 		DEBUG_INFO("Found multiple statements.\n" );
 	};
 
+STATEMENT_PROXY:
+	"{" "}"{
+	}
+	|
+	"{" STATEMENTS "}"{
+	}
+	|
+	STATEMENT {
+	};
+
 STATEMENT:
-	STATEMENT_EXPRESSION ";" {
+	STATEMENT_EXPRESSION {
 		DEBUG_INFO("Place holder for now.\n");
 	}
 	|
-	STATEMENT_DECLARATION ";" {
+	STATEMENT_VARIABLES_DECLARATIONS {
 	};
 
-STATEMENT_DECLARATION:
-	PARAM{
+STATEMENT_VARIABLES_DECLARATIONS:
+	PARAMS_DECLARATION {
+	}
+	|
+	PARAMS_DECLARATION STATEMENT_VARIABLES_DECLARATIONS {
+	};
+
+PARAMS_DECLARATION:
+	TYPE VARIABLE_DECLARATIONS ";" {
+	};
+
+VARIABLE_DECLARATIONS:
+	VARIABLE_DECLARATION {
+	}
+	|
+	VARIABLE_DECLARATION "," VARIABLE_DECLARATIONS {
+	};
+
+VARIABLE_DECLARATION:
+	ID {
+	}
+	|
+	ID "=" EXPRESSION {
 	};
 
 STATEMENT_EXPRESSION:
+	EXPRESSION ";" {
+	};
+
+EXPRESSION:
 	EXPRESSION_CONST {
 	    DEBUG_INFO("Useless expression?\n" );
 	}
@@ -96,7 +164,7 @@ STATEMENT_EXPRESSION:
 	};
 
 EXPRESSION_ASSIGN:
-	EXPRESSION_REF "=" STATEMENT_EXPRESSION {
+	EXPRESSION_REF "=" EXPRESSION {
 	};
 
 EXPRESSION_CONST:
@@ -127,33 +195,30 @@ EXPRESSION_OP:
 	};
 
 EXPRESSION_ADD:
-	STATEMENT_EXPRESSION "+" STATEMENT_EXPRESSION {
+	EXPRESSION "+" EXPRESSION {
 	};
 
 EXPRESSION_MINUS:
-	STATEMENT_EXPRESSION "-" STATEMENT_EXPRESSION {
+	EXPRESSION "-" EXPRESSION {
 	};
 
 EXPRESSION_MULT:
-	STATEMENT_EXPRESSION "*" STATEMENT_EXPRESSION {
+	EXPRESSION "*" EXPRESSION {
 	};
 
 EXPRESSION_DIV:
-	STATEMENT_EXPRESSION "/" STATEMENT_EXPRESSION {
+	EXPRESSION "/" EXPRESSION {
 	};
 
-PARAM:
-	TYPE ID {
-	}
-	|
-	TYPE ID "=" STATEMENT_EXPRESSION{
-	};
-	
 TYPE:
 	TYPE_INT {
 	}
 	|
 	TYPE_FLOAT {
+	}
+	|
+	ID {
+		// custom data structure
 	};
 	
 IDENTIFIER:

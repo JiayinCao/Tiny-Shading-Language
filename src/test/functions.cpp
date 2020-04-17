@@ -17,39 +17,28 @@
 
 #include "test_common.h"
 
-TEST(Gramma, Empty_Shader) {
+TEST(Functions, Default_Shader) {
     validate_shader(R"(
         shader func(){
         }
     )");
 }
 
-TEST(Gramma, Standard_Shader) {
+TEST(Functions, Non_Shader) {
     validate_shader(R"(
-        shader function_name()
-        {
-            int k = 0;
-            float gg = 0.0;
-            // basic variable assign
-            test = 1;
-            
-            // field in data structure
-            data_structure.field = 2;
-            
-            // multi-line code
-            data_structure.field2.afd = 3
+        non_shader_func(){}
+    )");
+}
 
-            ;
-            
-            // array
-            data[23] = 34;
-            data.data[213421] = 32;
-            data[324].dafa. sdf[21] = 3;
-            
-            // multi-assign
-            SADFAF = ASDFASF = 234;
-            
-            gg = testagain = 2 + 3;
+TEST(Functions, Mixed_Shader) {
+    validate_shader(R"(
+        non_shader_func(){}
+        
+        shader shader_func()
+        {
+            {}
         }
+
+        non_shader_func2(){}
     )");
 }

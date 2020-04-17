@@ -17,7 +17,7 @@
 
 #include "test_common.h"
 
-TEST(Comments, Compound_Test){
+TEST(Comments, Full_Test){
     validate_shader(R"(
         /*
            this is some random comments.
@@ -29,6 +29,8 @@ TEST(Comments, Compound_Test){
 
             // This is an ugly line that is full of comments, but it is a valid one.
             /* start from here */ int /* I'm here. */ k /* I'm also here. */ = /* Here again. */ 0 /* again */;
+
+            int kk = 0; // this should be fine too.
         }
 
         /* I'm not a blocker. // */
