@@ -9,7 +9,13 @@
 	#else
   		#define DEBUG_INFO( ... )  ;
 	#endif
+
+	int g_verbose = 0;	// somehow bool is not working here.
+
+	extern int yylineno;
 %}
+
+%locations
 
 %token ID
 %token INT_NUM
@@ -158,6 +164,13 @@ IDENTIFIER:
 	};
 %%
 
-void yyerror(char const * p){
-    printf( "Error: %s\n" , p );
+void yyerror(char const * str){
+	if(!g_verbose)
+		return;
+
+	printf( "line(%d), error: %s\n", yylineno, str);
+}
+
+void makeVerbose(int verbose){
+	 g_verbose = verbose;
 }

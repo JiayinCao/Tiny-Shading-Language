@@ -15,41 +15,28 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-#include "test_common.h"
+#pragma once
 
-TEST(Gramma, Empty_Shader) {
-    validate_shader(R"(
-        shader func(){
-        }
-    )");
+#include "thirdparty/gtest/gtest.h"
+
+struct yy_buffer_state;
+typedef yy_buffer_state* YY_BUFFER_STATE;
+
+extern "C" {
+    int yyparse();
+    int yylex_destroy(void);
+    YY_BUFFER_STATE yy_scan_string(const char* base);
+    void makeVerbose(int verbose);
 }
 
-TEST(Gramma, Standard_Shader) {
-    validate_shader(R"(
-        shader function_name()
-        {
-            int k = 0;
-            float gg = 0.0;
-            // basic variable assign
-            test = 1;
-            
-            // field in data structure
-            data_structure.field = 2;
-            
-            // multi-line code
-            data_structure.field2.afd = 3
-
-            ;
-            
-            // array
-            data[23] = 34;
-            data.data[213421] = 32;
-            data[324].dafa. sdf[21] = 3;
-            
-            // multi-assign
-            SADFAF = ASDFASF = 234;
-            
-            gg = testagain = 2 + 3;
-        }
-    )");
+inline void validate_shader(const char* shader_source, bool valid = true ) {
+    yy_scan_string(shader_source);
+    if (valid) {
+        makeVerbose(true);
+        EXPECT_EQ(yyparse(), 0);
+    } else {
+        makeVerbose(false); // surpress the error message
+        EXPECT_NE(yyparse(), 0);
+    }
+    yylex_destroy();
 }
