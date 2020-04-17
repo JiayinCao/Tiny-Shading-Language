@@ -98,7 +98,7 @@ if "%GENERATE_SRC%" == "1" (
 if "%UNIT_TEST%" == "1" (
 	echo Very basic test
 	
-	.\bin\tsl_r.exe < .\example\shader_first.tsl
+	.\bin\tsl_r.exe
 )
 
 :EOF
