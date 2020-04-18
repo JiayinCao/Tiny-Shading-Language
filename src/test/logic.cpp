@@ -49,3 +49,48 @@ TEST(Logic, Compound_Condition) {
         }
     )");
 }
+
+TEST(Logic, While_Loop) {
+    validate_shader(R"(
+        shader func(){
+            int k = 0;
+            while( k++ < 100 ){
+                k += 1;
+                ++k;
+            }
+        }
+    )");
+}
+
+TEST(Logic, Do_While_Loop) {
+    validate_shader(R"(
+        shader func(){
+            int k = 0;
+            do{
+                k += 1;
+                ++k;
+            }while( k++ < 100 );
+
+            do
+                k += 1;
+            while( k++ < 100 );
+        }
+    )");
+}
+
+TEST(Logic, For_Loop) {
+    validate_shader(R"(
+        shader func(){
+            int k = 0;
+            for( ; k < 100 ; ++k ){
+                k += 2;
+            }
+
+            for( k = 2 ; k < 100 ; )
+                ++k;
+  
+            for( k = 1 ; k < 100 ; ++k )
+                ++k;
+        }
+    )");
+}

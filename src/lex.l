@@ -40,6 +40,9 @@ identifier               [a-zA-Z_]+[a-zA-Z_0-9]*
 whitespace               [ \t\r\n\f]
 
 %%
+"do"                      {                                               return DO; }
+"while"                   {                                               return WHILE; }
+"for"                     {                                               return FOR; }
 "if"                      {                                               return IF; }
 "else"                    {                                               return ELSE; }
 "--"                      {                                               return INC_OP; }
