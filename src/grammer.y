@@ -79,7 +79,7 @@
 %right "=" "+=" "-=" "*=" "/=" "%="
 %right "?" ":"
 %left "+" "-"
-%left "*" "/"
+%left "*" "/" "%"
 %left "(" ")"
 
 /* the start token */
