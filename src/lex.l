@@ -40,6 +40,8 @@ identifier               [a-zA-Z_]+[a-zA-Z_0-9]*
 whitespace               [ \t\r\n\f]
 
 %%
+"--"                      {                                               return INC_OP; }
+"++"                      {                                               return DEC_OP; }
 ":"                       {                                               return COLON; }
 "?"                       {                                               return QUESTION_MARK; }
 "return"                  {                                               return RETURN; }
@@ -60,6 +62,12 @@ whitespace               [ \t\r\n\f]
 "-"                       { DEBUG_INFO("%s\n", yytext);                   return OP_MINUS; }
 "*"                       { DEBUG_INFO("%s\n", yytext);                   return OP_MULT; }
 "/"                       { DEBUG_INFO("%s\n", yytext);                   return OP_DIV; }
+"%"                       { DEBUG_INFO("%s\n", yytext);                   return OP_MOD; }
+"+="                      { DEBUG_INFO("%s\n", yytext);                   return OP_ADD_ASSIGN; }
+"-="                      { DEBUG_INFO("%s\n", yytext);                   return OP_MINUS_ASSIGN; }
+"*="                      { DEBUG_INFO("%s\n", yytext);                   return OP_MULT_ASSIGN; }
+"/="                      { DEBUG_INFO("%s\n", yytext);                   return OP_DIV_ASSIGN; }
+"%="                      { DEBUG_INFO("%s\n", yytext);                   return OP_MOD_ASSIGN; }
 ";"                       { DEBUG_INFO("%s\n", yytext);                   return EOL; }
 ","                       { DEBUG_INFO("%s\n", yytext);                   return COMMA; }
 "="                       { DEBUG_INFO("%s\n", yytext);                   return EQUAL; }

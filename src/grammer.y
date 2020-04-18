@@ -42,6 +42,8 @@
 %token ID
 %token INT_NUM
 %token FLT_NUM
+%token INC_OP			"++"
+%token DEC_OP			"--"
 %token SHADER_FUNC_ID
 %token TYPE_INT			"int"
 %token TYPE_FLOAT		"float"
@@ -58,6 +60,12 @@
 %token OP_MINUS         "-"
 %token OP_MULT          "*"
 %token OP_DIV           "/"
+%token OP_MOD			"%"
+%token OP_ADD_ASSIGN    "+="
+%token OP_MINUS_ASSIGN  "-="
+%token OP_MULT_ASSIGN   "*="
+%token OP_DIV_ASSIGN    "/="
+%token OP_MOD_ASSIGN    "%="
 %token COMMA            ","
 %token EQUAL            "="
 %token DOT				"."
@@ -68,7 +76,7 @@
 
 %type <Program_Ptr> PROGRAM
 
-%right "="
+%right "=" "+=" "-=" "*=" "/=" "%="
 %right "?" ":"
 %left "+" "-"
 %left "*" "/"
@@ -235,13 +243,10 @@ COMPOUND_EXPRESSION:
 // Exrpession always carries a value so that it can be used as input for anything needs a value,
 // like if condition, function parameter, etc.
 EXPRESSION:
-	IDENTIFIER{
-	}
-	|
-	EXPRESSION_ASSIGN{
-	}
-	|
 	EXPRESSION_OP{
+	}
+	|
+	EXPRESSION_ASSIGN {
 	}
 	|
 	FUNCTION_CALL {
@@ -257,6 +262,9 @@ EXPRESSION:
 	}
 	|
 	EXPRESSION_TYPECAST {
+	}
+	|
+	EXPRESSION_VARIABLE {
 	};
 
 // Scopped expression
@@ -281,7 +289,22 @@ FUNCTION_ARGUMENTS:
 
 // Assign an expression to a reference
 EXPRESSION_ASSIGN:
-	EXPRESSION_REF "=" EXPRESSION {
+	VARIABLE_LVALUE "=" EXPRESSION {
+	}
+	|
+	VARIABLE_LVALUE "+=" EXPRESSION {
+	}
+	|
+	VARIABLE_LVALUE "-=" EXPRESSION {
+	}
+	|
+	VARIABLE_LVALUE "*=" EXPRESSION {
+	}
+	|
+	VARIABLE_LVALUE "/=" EXPRESSION {
+	}
+	|
+	VARIABLE_LVALUE "%=" EXPRESSION {
 	};
 
 // Ternary operation support
@@ -302,40 +325,52 @@ EXPRESSION_CONST:
 	FLT_NUM {
 	};
 
-EXPRESSION_REF:
-	EXPRESSION_REF "." IDENTIFIER {
+EXPRESSION_VARIABLE:
+	VARIABLE_LVALUE{
 	}
 	|
-	IDENTIFIER {
+	VARIABLE_LVALUE REC_OR_DEC {
+	}
+	|
+	REC_OR_DEC VARIABLE_LVALUE {
 	};
 
+REC_OR_DEC:
+	"++" {
+	}
+	|
+	"--" {
+	};
+
+// No up to two dimensional array supported for now.
+VARIABLE_LVALUE:
+	ID_OR_FIELD {
+	}
+	|
+	ID_OR_FIELD "[" EXPRESSION "]" {
+	};
+
+ID_OR_FIELD:
+	ID{
+	}
+	|
+	VARIABLE_LVALUE "." ID {
+	};
+	
 EXPRESSION_OP:
-	EXPRESSION_ADD {
-	}
-	|
-	EXPRESSION_MINUS {
-	}
-	|
-	EXPRESSION_MULT {
-	}
-	|
-	EXPRESSION_DIV{
-	};
-
-EXPRESSION_ADD:
 	EXPRESSION "+" EXPRESSION {
-	};
-
-EXPRESSION_MINUS:
+	}
+	|
 	EXPRESSION "-" EXPRESSION {
-	};
-
-EXPRESSION_MULT:
+	}
+	|
 	EXPRESSION "*" EXPRESSION {
-	};
-
-EXPRESSION_DIV:
-	EXPRESSION "/" EXPRESSION {
+	}
+	|
+	EXPRESSION "/" EXPRESSION{
+	}
+	|
+	EXPRESSION "%" EXPRESSION{
 	};
 
 TYPE:
@@ -346,13 +381,6 @@ TYPE:
 	}
 	|
 	"void" {
-	};
-	
-IDENTIFIER:
-	ID {
-	}
-	|
-	ID "[" INT_NUM "]"{
 	};
 %%
 

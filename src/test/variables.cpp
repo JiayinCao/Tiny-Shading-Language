@@ -76,3 +76,37 @@ TEST(Variables, Only_Global_Variables) {
         float t = 0.0, kkk = 0.0;
     )");
 }
+
+TEST(Variables, Recursive_Variables) {
+    validate_shader(R"(
+        shader func(){
+            data.time = 0.0;
+            data_array[0].t.da[2] = 2;
+        }
+    )");
+}
+
+TEST(Variables, Inc_or_Dec) {
+    validate_shader(R"(
+        shader func(){
+            data.time++;
+            --data.time;
+        }
+    )");
+}
+
+TEST(Variables, Invalid_Inc) {
+    validate_shader(R"(
+        shader func(){
+            data.time++ = 0;
+        }
+    )", false);
+}
+
+TEST(Variables, Invalid_Dec) {
+    validate_shader(R"(
+        shader func(){
+            --data.time = 0;
+        }
+    )", false );
+}
