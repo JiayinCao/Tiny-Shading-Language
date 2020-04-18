@@ -40,6 +40,8 @@ identifier               [a-zA-Z_]+[a-zA-Z_0-9]*
 whitespace               [ \t\r\n\f]
 
 %%
+"if"                      {                                               return IF; }
+"else"                    {                                               return ELSE; }
 "--"                      {                                               return INC_OP; }
 "++"                      {                                               return DEC_OP; }
 ":"                       {                                               return COLON; }

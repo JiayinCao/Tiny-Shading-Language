@@ -84,6 +84,8 @@
 %token OP_XOR_ASSIGN	"^="
 %token OP_SHL_ASSIGN	"<<="
 %token OP_SHR_ASSIGN	">>="
+%token OP_NOT			"!"
+%token OP_COMP			"~"
 %token DOT				"."
 %token COMMA            ","
 %token COLON            ":"
@@ -91,10 +93,13 @@
 %token METADATA_END     ">>>"
 %token RETURN		    "return"
 %token QUESTION_MARK	"?"
-%token OP_NOT			"!"
-%token OP_COMP			"~"
+%token IF				"if"
+%token ELSE				"else"
 
 %type <Program_Ptr> PROGRAM
+
+%nonassoc IF_THEN
+%nonassoc ELSE
 
 %left ","
 %right "=" "+=" "-=" "*=" "/=" "%=" "<<=" ">>=" "&=" "|=" "^="
@@ -212,18 +217,20 @@ STATEMENTS:
 	/* empty */ {};
 
 STATEMENT:
-	STATEMENT_COMPOUND_EXPRESSION {
-	}
-	|
-	STATEMENT_VARIABLES_DECLARATIONS {
-	}
-	|
 	STATEMENT_SCOPED{
 	}
 	|
 	STATEMENT_RETURN{
 	}
-	;
+	|
+	STATEMENT_VARIABLES_DECLARATIONS {
+	}
+	|
+	STATEMENT_CONDITIONAL {
+	}
+	|
+	STATEMENT_COMPOUND_EXPRESSION {
+	};
 
 STATEMENT_SCOPED:
 	"{" 
@@ -262,6 +269,13 @@ VARIABLE_DECLARATION:
 	ID "=" EXPRESSION {
 	};
 
+STATEMENT_CONDITIONAL:
+	"if" "(" COMPOUND_EXPRESSION ")" STATEMENT %prec IF_THEN {
+	}
+	|
+	"if" "(" COMPOUND_EXPRESSION ")" STATEMENT "else" STATEMENT {
+	};
+	
 STATEMENT_COMPOUND_EXPRESSION:
 	COMPOUND_EXPRESSION ";" {
 	}

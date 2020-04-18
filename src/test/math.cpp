@@ -43,10 +43,8 @@ TEST(Math, Bit_Operation) {
         shader func(){
             int sum_test = ( a & b ) ^ ( a | b );
 
-            //if( flag && flag2 )
-
-            int test = flag && flag2;
-            {
+            if( flag && flag2 )
+            {  
                 sum_test = ( a & b ) ^ ( a | b );
             }
         }
