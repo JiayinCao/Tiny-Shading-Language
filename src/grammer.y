@@ -91,6 +91,8 @@
 %token METADATA_END     ">>>"
 %token RETURN		    "return"
 %token QUESTION_MARK	"?"
+%token OP_NOT			"!"
+%token OP_COMP			"~"
 
 %type <Program_Ptr> PROGRAM
 
@@ -107,6 +109,7 @@
 %left "<<" ">>"
 %left "+" "-"
 %left "*" "/" "%"
+%right UMINUS_PREC "!" "~"
 %left "++" "--"
 %left "(" ")"
 %left "[" "]"
@@ -273,6 +276,9 @@ COMPOUND_EXPRESSION:
 // Exrpession always carries a value so that it can be used as input for anything needs a value,
 // like if condition, function parameter, etc.
 EXPRESSION:
+	EXPRESSION_UNARY {
+	}
+	|
 	EXPRESSION_BINARY {
 	}
 	|
@@ -295,6 +301,23 @@ EXPRESSION:
 	}
 	|
 	EXPRESSION_VARIABLE {
+	};
+
+EXPRESSION_UNARY:
+	OP_UNARY EXPRESSION %prec UMINUS_PREC {
+	};
+	
+OP_UNARY:
+	"-" {
+	}
+	|
+	"+" {
+	}
+	|
+	"!" {
+	}
+	|
+	"~" {
 	};
 
 // Scopped expression

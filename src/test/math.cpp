@@ -79,3 +79,15 @@ TEST(Math, Bit_Shifts) {
         }
     )");
 }
+
+TEST(Math, Unary_Operation) {
+    validate_shader(R"(
+        shader func(){
+            int k = -2;
+            int k1 = ~k ;
+            
+            int k2 = !k;
+            int k3 = -( +k2 );
+        }
+    )");
+}
