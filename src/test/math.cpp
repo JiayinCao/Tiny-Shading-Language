@@ -52,3 +52,30 @@ TEST(Math, Bit_Operation) {
         }
     )");
 }
+
+TEST(Math, Assigns) {
+    validate_shader(R"(
+        shader func(){
+            int k = 0, a = 1;
+            k += a;
+            k -= a;
+            k *= a;
+            k /= a;
+            k %= a;
+            k &= a;
+            k |= a;
+            k ^= a;
+            k <<= a;
+            k >>= a;
+        }
+    )");
+}
+
+TEST(Math, Bit_Shifts) {
+    validate_shader(R"(
+        shader func(){
+            int k = ( 1 << 2 ) << 3;
+            int k1 = ( k >> 1 ) | ( ( k << 3 ) , k ) ;
+        }
+    )");
+}

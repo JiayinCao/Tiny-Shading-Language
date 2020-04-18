@@ -55,7 +55,6 @@
 %token R_RBRACKET       ")"
 %token L_SBRACKET       "["
 %token R_SBRACKET       "]"
-%token COLON            ":"
 %token OP_ADD           "+"
 %token OP_MINUS         "-"
 %token OP_MULT          "*"
@@ -72,16 +71,22 @@
 %token OP_G				">"
 %token OP_LE			"<="
 %token OP_L				"<"
-%token OP_L_SHIFT		"<<"
-%token OP_R_SHIFT		">>"
+%token OP_SHL			"<<"
+%token OP_SHR			">>"
 %token OP_ADD_ASSIGN    "+="
 %token OP_MINUS_ASSIGN  "-="
 %token OP_MULT_ASSIGN   "*="
 %token OP_DIV_ASSIGN    "/="
 %token OP_MOD_ASSIGN    "%="
-%token COMMA            ","
 %token OP_ASSIGN        "="
+%token OP_AND_ASSIGN	"&="
+%token OP_OR_ASSIGN		"|="
+%token OP_XOR_ASSIGN	"^="
+%token OP_SHL_ASSIGN	"<<="
+%token OP_SHR_ASSIGN	">>="
 %token DOT				"."
+%token COMMA            ","
+%token COLON            ":"
 %token METADATA_START   "<<<"
 %token METADATA_END     ">>>"
 %token RETURN		    "return"
@@ -90,7 +95,7 @@
 %type <Program_Ptr> PROGRAM
 
 %left ","
-%right "=" "+=" "-=" "*=" "/=" "%="
+%right "=" "+=" "-=" "*=" "/=" "%=" "<<=" ">>=" "&=" "|=" "^="
 %right "?" ":"
 %left "||"
 %left "&&"
@@ -268,7 +273,7 @@ COMPOUND_EXPRESSION:
 // Exrpession always carries a value so that it can be used as input for anything needs a value,
 // like if condition, function parameter, etc.
 EXPRESSION:
-	EXPRESSION_BINARY{
+	EXPRESSION_BINARY {
 	}
 	|
 	EXPRESSION_ASSIGN {
@@ -330,6 +335,21 @@ EXPRESSION_ASSIGN:
 	}
 	|
 	VARIABLE_LVALUE "%=" EXPRESSION {
+	}
+	|
+	VARIABLE_LVALUE "&=" EXPRESSION {
+	}
+	|
+	VARIABLE_LVALUE "|=" EXPRESSION {
+	}
+	|
+	VARIABLE_LVALUE "^=" EXPRESSION {
+	}
+	|
+	VARIABLE_LVALUE "<<=" EXPRESSION {
+	}
+	|
+	VARIABLE_LVALUE ">>=" EXPRESSION {
 	};
 
 // Ternary operation support
@@ -401,7 +421,7 @@ EXPRESSION_BINARY:
 	EXPRESSION "==" EXPRESSION {
 	}
 	|
-	EXPRESSION "!= " EXPRESSION {
+	EXPRESSION "!=" EXPRESSION {
 	}
 	|
 	EXPRESSION ">" EXPRESSION {

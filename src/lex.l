@@ -82,8 +82,13 @@ whitespace               [ \t\r\n\f]
 ">"                       { DEBUG_INFO("%s\n", yytext);                   return OP_G; }
 "<="                      { DEBUG_INFO("%s\n", yytext);                   return OP_LE; }
 "<"                       { DEBUG_INFO("%s\n", yytext);                   return OP_L; }
-"<<"                      { DEBUG_INFO("%s\n", yytext);                   return OP_L_SHIFT; }
-">>"                      { DEBUG_INFO("%s\n", yytext);                   return OP_R_SHIFT; }
+"<<"                      { DEBUG_INFO("%s\n", yytext);                   return OP_SHL; }
+">>"                      { DEBUG_INFO("%s\n", yytext);                   return OP_SHR; }
+"&="                      { DEBUG_INFO("%s\n", yytext);                   return OP_AND_ASSIGN; }
+"|="                      { DEBUG_INFO("%s\n", yytext);                   return OP_OR_ASSIGN; }
+"^="                      { DEBUG_INFO("%s\n", yytext);                   return OP_XOR_ASSIGN; }
+"<<="                     { DEBUG_INFO("%s\n", yytext);                   return OP_SHL_ASSIGN; }
+">>="                     { DEBUG_INFO("%s\n", yytext);                   return OP_SHR_ASSIGN; }
 {one_line_comment}        { DEBUG_INFO("comment      ->\t%s\n", yytext);  }                        /* eat up one-line comments */
 {multi_line_comment}      { DEBUG_INFO("comments     ->\t%s\n", yytext);  }                        /* eat up multi-line comments */
 {identifier}              { DEBUG_INFO("indentifier  ->\t%s\n", yytext);  return ID; }             /* variable / function name */
