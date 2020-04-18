@@ -61,3 +61,12 @@ TEST(Expression, Ternary_Operation) {
         }
     )");
 }
+
+TEST(Expression, Type_Cast) {
+    validate_shader(R"(
+        shader func(){
+            int g = (int) 23.0;
+            float k = (float) 2;
+        }
+    )");
+}

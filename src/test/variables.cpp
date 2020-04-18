@@ -25,7 +25,7 @@ TEST(Variables, Full_Test) {
         shader func(){
             int k = 0;
             float gg = 0;
-            CustomData cd;
+            // CustomData cd;
 
             // this is not supported for now
             // CustomData cd = CustomData();

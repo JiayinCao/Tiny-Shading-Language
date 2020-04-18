@@ -43,8 +43,8 @@
 %token INT_NUM
 %token FLT_NUM
 %token SHADER_FUNC_ID
-%token TYPE_INT
-%token TYPE_FLOAT
+%token TYPE_INT			"int"
+%token TYPE_FLOAT		"float"
 %token TYPE_VOID		"void"
 %token EOL              ";"
 %token L_CBRACKET       "{"
@@ -72,7 +72,7 @@
 %right "?" ":"
 %left "+" "-"
 %left "*" "/"
-%left '(' ')'
+%left "(" ")"
 
 /* the start token */
 %start PROGRAM
@@ -232,36 +232,44 @@ COMPOUND_EXPRESSION:
 	EXPRESSION "," COMPOUND_EXPRESSION {
 	};
 
+// Exrpession always carries a value so that it can be used as input for anything needs a value,
+// like if condition, function parameter, etc.
 EXPRESSION:
-	FUNCTION_CALL{
+	IDENTIFIER{
+	}
+	|
+	EXPRESSION_ASSIGN{
+	}
+	|
+	EXPRESSION_OP{
+	}
+	|
+	FUNCTION_CALL {
 	}
 	|
 	EXPRESSION_CONST {
 	}
 	|
-	EXPRESSION_ASSIGN {
+	EXPRESSION_TERNARY {
 	}
 	|
-	EXPRESSION_OP {
+	EXPRESSION_SCOPED {
 	}
 	|
-	EXPRESSION_TERNARY{
-	}
-	|
-	IDENTIFIER{
-	}
-	|
-	EXPRESSION_SCOPED{
+	EXPRESSION_TYPECAST {
 	};
 
+// Scopped expression
 EXPRESSION_SCOPED:
 	"(" COMPOUND_EXPRESSION ")" {
 	};
 
+// Function call, this is only non-shader function. TSL doesn't allow calling shader function.
 FUNCTION_CALL:
 	ID "(" FUNCTION_ARGUMENTS ")" {
 	};
 
+// None-shader function arguments
 FUNCTION_ARGUMENTS:
 	{}
 	|
@@ -271,15 +279,22 @@ FUNCTION_ARGUMENTS:
 	FUNCTION_ARGUMENTS "," EXPRESSION {
 	};
 
+// Assign an expression to a reference
 EXPRESSION_ASSIGN:
 	EXPRESSION_REF "=" EXPRESSION {
 	};
 
+// Ternary operation support
 EXPRESSION_TERNARY:
-	EXPRESSION "?" EXPRESSION ":" EXPRESSION
-	{
+	EXPRESSION "?" EXPRESSION ":" EXPRESSION {
 	};
 
+// This is for type casting
+EXPRESSION_TYPECAST:
+	"(" TYPE ")" EXPRESSION {
+	};
+	
+// Const literal
 EXPRESSION_CONST:
 	INT_NUM {
 	}
@@ -324,17 +339,13 @@ EXPRESSION_DIV:
 	};
 
 TYPE:
-	TYPE_INT {
+	"int" {
 	}
 	|
-	TYPE_FLOAT {
+	"float" {
 	}
 	|
-	TYPE_VOID{
-	}
-	|
-	ID {
-		// custom data structure
+	"void" {
 	};
 	
 IDENTIFIER:
