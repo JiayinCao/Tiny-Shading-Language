@@ -37,3 +37,18 @@ TEST(Math, Full_Test) {
         }
     )");
 }
+
+TEST(Math, Bit_Operation) {
+    validate_shader(R"(
+        shader func(){
+            int sum_test = ( a & b ) ^ ( a | b );
+
+            //if( flag && flag2 )
+
+            int test = flag && flag2;
+            {
+                sum_test = ( a & b ) ^ ( a | b );
+            }
+        }
+    )");
+}

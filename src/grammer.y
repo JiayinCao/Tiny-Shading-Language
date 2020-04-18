@@ -61,13 +61,26 @@
 %token OP_MULT          "*"
 %token OP_DIV           "/"
 %token OP_MOD			"%"
+%token OP_AND			"&"
+%token OP_OR			"|"
+%token OP_XOR			"^"
+%token OP_LOGIC_AND     "&&"
+%token OP_LOGIC_OR		"||"
+%token OP_EQ			"=="
+%token OP_NE			"!="
+%token OP_GE			">="
+%token OP_G				">"
+%token OP_LE			"<="
+%token OP_L				"<"
+%token OP_L_SHIFT		"<<"
+%token OP_R_SHIFT		">>"
 %token OP_ADD_ASSIGN    "+="
 %token OP_MINUS_ASSIGN  "-="
 %token OP_MULT_ASSIGN   "*="
 %token OP_DIV_ASSIGN    "/="
 %token OP_MOD_ASSIGN    "%="
 %token COMMA            ","
-%token EQUAL            "="
+%token OP_ASSIGN        "="
 %token DOT				"."
 %token METADATA_START   "<<<"
 %token METADATA_END     ">>>"
@@ -76,11 +89,23 @@
 
 %type <Program_Ptr> PROGRAM
 
+%left ","
 %right "=" "+=" "-=" "*=" "/=" "%="
 %right "?" ":"
+%left "||"
+%left "&&"
+%left "|"
+%left "^"
+%left "&"
+%left "==" "!="
+%left ">" ">=" "<" "<=" 
+%left "<<" ">>"
 %left "+" "-"
 %left "*" "/" "%"
+%left "++" "--"
 %left "(" ")"
+%left "[" "]"
+%left "<<<" ">>>"
 
 /* the start token */
 %start PROGRAM
@@ -243,13 +268,13 @@ COMPOUND_EXPRESSION:
 // Exrpession always carries a value so that it can be used as input for anything needs a value,
 // like if condition, function parameter, etc.
 EXPRESSION:
-	EXPRESSION_OP{
+	EXPRESSION_BINARY{
 	}
 	|
 	EXPRESSION_ASSIGN {
 	}
 	|
-	FUNCTION_CALL {
+	EXPRESSION_FUNCTION_CALL {
 	}
 	|
 	EXPRESSION_CONST {
@@ -273,7 +298,7 @@ EXPRESSION_SCOPED:
 	};
 
 // Function call, this is only non-shader function. TSL doesn't allow calling shader function.
-FUNCTION_CALL:
+EXPRESSION_FUNCTION_CALL:
 	ID "(" FUNCTION_ARGUMENTS ")" {
 	};
 
@@ -357,7 +382,46 @@ ID_OR_FIELD:
 	VARIABLE_LVALUE "." ID {
 	};
 	
-EXPRESSION_OP:
+EXPRESSION_BINARY:
+	EXPRESSION "&&" EXPRESSION {
+	}
+	|
+	EXPRESSION "||" EXPRESSION {
+	}
+	|
+	EXPRESSION "&" EXPRESSION {
+	}
+	|
+	EXPRESSION "|" EXPRESSION {
+	}
+	|
+	EXPRESSION "^" EXPRESSION {
+	}
+	|
+	EXPRESSION "==" EXPRESSION {
+	}
+	|
+	EXPRESSION "!= " EXPRESSION {
+	}
+	|
+	EXPRESSION ">" EXPRESSION {
+	}
+	|
+	EXPRESSION "<" EXPRESSION {
+	}
+	|
+	EXPRESSION ">=" EXPRESSION {
+	}
+	|
+	EXPRESSION "<=" EXPRESSION {
+	}
+	|
+	EXPRESSION "<<" EXPRESSION {
+	}
+	|
+	EXPRESSION ">>" EXPRESSION {
+	}
+	|
 	EXPRESSION "+" EXPRESSION {
 	}
 	|

@@ -70,7 +70,20 @@ whitespace               [ \t\r\n\f]
 "%="                      { DEBUG_INFO("%s\n", yytext);                   return OP_MOD_ASSIGN; }
 ";"                       { DEBUG_INFO("%s\n", yytext);                   return EOL; }
 ","                       { DEBUG_INFO("%s\n", yytext);                   return COMMA; }
-"="                       { DEBUG_INFO("%s\n", yytext);                   return EQUAL; }
+"="                       { DEBUG_INFO("%s\n", yytext);                   return OP_ASSIGN; }
+"&"                       { DEBUG_INFO("%s\n", yytext);                   return OP_AND; }
+"|"                       { DEBUG_INFO("%s\n", yytext);                   return OP_OR; }
+"^"                       { DEBUG_INFO("%s\n", yytext);                   return OP_XOR; }
+"&&"                      { DEBUG_INFO("%s\n", yytext);                   return OP_LOGIC_AND; }
+"||"                      { DEBUG_INFO("%s\n", yytext);                   return OP_LOGIC_OR; }
+"=="                      { DEBUG_INFO("%s\n", yytext);                   return OP_EQ; }
+"!="                      { DEBUG_INFO("%s\n", yytext);                   return OP_NE; }
+">="                      { DEBUG_INFO("%s\n", yytext);                   return OP_GE; }
+">"                       { DEBUG_INFO("%s\n", yytext);                   return OP_G; }
+"<="                      { DEBUG_INFO("%s\n", yytext);                   return OP_LE; }
+"<"                       { DEBUG_INFO("%s\n", yytext);                   return OP_L; }
+"<<"                      { DEBUG_INFO("%s\n", yytext);                   return OP_L_SHIFT; }
+">>"                      { DEBUG_INFO("%s\n", yytext);                   return OP_R_SHIFT; }
 {one_line_comment}        { DEBUG_INFO("comment      ->\t%s\n", yytext);  }                        /* eat up one-line comments */
 {multi_line_comment}      { DEBUG_INFO("comments     ->\t%s\n", yytext);  }                        /* eat up multi-line comments */
 {identifier}              { DEBUG_INFO("indentifier  ->\t%s\n", yytext);  return ID; }             /* variable / function name */
