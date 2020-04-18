@@ -26,26 +26,26 @@ TEST(Functions, Default_Shader) {
 
 TEST(Functions, Non_Shader) {
     validate_shader(R"(
-        none_shader_func(){}
+        void none_shader_func(){}
     )");
 }
 
 TEST(Functions, Mixed_Shader) {
     validate_shader(R"(
-        none_shader_func(){}
+        int none_shader_func(){}
         
         shader shader_func()
         {
             {}
         }
 
-        non_shader_func2(){}
+        float non_shader_func2(){}
     )");
 }
 
 TEST(Functions, Single_Argument) {
     validate_shader(R"(
-        none_shader_func( int k )
+        int none_shader_func( int k )
         {
         }
     )");
@@ -53,7 +53,7 @@ TEST(Functions, Single_Argument) {
 
 TEST(Functions, Multi_Arguments) {
     validate_shader(R"(
-        none_shader_func( int arg0 , float arg1 , int arg2 , int arg3 )
+        int none_shader_func( int arg0 , float arg1 , int arg2 , int arg3 )
         {
         }
     )");
@@ -61,7 +61,7 @@ TEST(Functions, Multi_Arguments) {
 
 TEST(Functions, Single_Argument_With_Defaults) {
     validate_shader(R"(
-        none_shader_func( float arg0 = 0.0 )
+        int none_shader_func( float arg0 = 0.0 )
         {
         }
     )");
@@ -71,7 +71,7 @@ TEST(Functions, Multi_Argument_With_Defaults) {
     validate_shader(R"(
         // unlike C, there is no function overloading in TSL
         // default value can go to any argument, instead of just the last ones
-        none_shader_func( float arg0 = 0.0 , float arg1 , int arg2 = 0.0 , int arg3 )
+        void none_shader_func( float arg0 = 0.0 , float arg1 , int arg2 = 0.0 , int arg3 )
         {
         }
     )");
@@ -81,7 +81,7 @@ TEST(Functions, Multi_Argument_With_Defaults_Multi_Line) {
     validate_shader(R"(
         // unlike C, there is no function overloading in TSL
         // default value can go to any argument, instead of just the last ones
-        none_shader_func( float arg0 = 0.0 , 
+        void none_shader_func( float arg0 = 0.0 , 
                           float arg1 , 
                           int arg2 = 0.0 , 
                           int arg3 ){

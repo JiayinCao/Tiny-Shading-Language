@@ -101,15 +101,6 @@ ARGUMENT_METADATA:
 
 // Standard function definition
 FUNCTION_DEF:
-	ID "(" ")" FUNCTION_BODY {
-	}
-	|
-	ID "(" FUNCTION_ARGUMENT_DECLS ")" FUNCTION_BODY {
-	}
-	|
-	TYPE ID "(" ")" FUNCTION_BODY {
-	}
-	|
 	TYPE ID "(" FUNCTION_ARGUMENT_DECLS ")" FUNCTION_BODY {
 	};
 
@@ -199,13 +190,12 @@ EXPRESSION:
 	};
 
 FUNCTION_CALL:
-	ID "(" ")" {
-	}
-	|
 	ID "(" FUNCTION_ARGUMENTS ")" {
 	};
 
 FUNCTION_ARGUMENTS:
+	{}
+	|
 	EXPRESSION{
 	}
 	|
