@@ -150,18 +150,27 @@ TEST(Functions, Call_Function_Single_Arg ) {
             int arg0 = 0;
 
             // fix me
-            // generic_func( arg0 );
+            generic_func( arg0 = 0 );
         }
     )");
 }
 
 TEST(Functions, Call_Function_Multi_Args ) {
     validate_shader(R"(
-        int generic_func2( float arg0 = 0.0 ){
-            int arg0 = 0;
+        int generic_func2(){
+            int k = 0;
 
-            // fix me
-            // generic_func( arg0 , arg0 );
+            generic_func( arg0 , gg = 0 );
+        }
+    )");
+}
+
+TEST(Functions, Function_As_Argument ) {
+    validate_shader(R"(
+        int generic_func2(){
+            int k = 0;
+
+            generic_func( func( arg0 = 0 , arg1 = 0 ) , k );
         }
     )");
 }
