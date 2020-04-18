@@ -7,7 +7,18 @@
 	int g_verbose = 0;	// somehow bool is not working here.
 
 	extern int yylineno;
+
+	#include "ast.h"
+
+	/* global variables which can be used in other .c .h */
+	struct Program *g_program = c_nullptr;
 %}
+
+/* definitions of tokens and types passed by FLEX */
+%union {
+	/* pointers for the AST struct nodes */
+    struct Program 			*Program_Ptr;
+}
 
 %locations
 
@@ -36,6 +47,8 @@
 %token METADATA_START   "<<<"
 %token METADATA_END     ">>>"
 
+%type <Program_Ptr> PROGRAM
+
 %right "="
 %left "+" "-"
 %left "*" "/"
@@ -48,9 +61,14 @@
 // A programm has a bunch of global statement.
 PROGRAM:
 	// empty shader
-	{}
+	{
+        $$ = c_nullptr;
+	}
 	|
 	GLOBAL_STATEMENTS {
+		struct Program *p = (struct Program*)malloc(sizeof(struct Program));	// create a new node and allocate the space
+        p->tmp = 123;
+        g_program = p;
 	};
 
 // One or multiple of blobal statements

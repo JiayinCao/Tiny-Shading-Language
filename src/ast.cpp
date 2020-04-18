@@ -15,31 +15,4 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-#pragma once
-
-#include "thirdparty/gtest/gtest.h"
 #include "ast.h"
-
-struct yy_buffer_state;
-typedef yy_buffer_state* YY_BUFFER_STATE;
-
-extern "C" {
-    int yyparse();
-    int yylex_destroy(void);
-    YY_BUFFER_STATE yy_scan_string(const char* base);
-    void makeVerbose(int verbose);
-
-    extern Program* g_program;
-}
-
-inline void validate_shader(const char* shader_source, bool valid = true ) {
-    yy_scan_string(shader_source);
-    if (valid) {
-        makeVerbose(true);
-        EXPECT_EQ(yyparse(), 0);
-    } else {
-        makeVerbose(false); // surpress the error message
-        EXPECT_NE(yyparse(), 0);
-    }
-    yylex_destroy();
-}
