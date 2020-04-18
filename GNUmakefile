@@ -36,11 +36,6 @@ generate_src:
 	echo    "Laxer parsing ..."
 	flex    src/lex.l
 
-	echo    "Compiling generated C ..."
-	cd generated_src;gcc -m64 -c compiled_lex.c compiled_grammer.c;\
-	ar rvs compiled_grammer.a compiled_grammer.o;\
-	ar rvs compiled_lex.a compiled_lex.o;
-
 release:
 	rm -rf proj_release;mkdir proj_release;cd proj_release;cmake -DCMAKE_BUILD_TYPE=Release ..;make -j 4;cd ..;
 
