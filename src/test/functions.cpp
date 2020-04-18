@@ -92,6 +92,7 @@ TEST(Functions, Multi_Argument_With_Defaults_Multi_Line) {
 TEST(Functions, Shader_Single_Argument) {
     validate_shader(R"(
         shader shader_func( float arg0 ){
+            return;
         }
     )");
 }
@@ -126,6 +127,7 @@ TEST(Functions, Non_Shader_Func_With_Return ) {
         }
 
         int generic_func2( float arg0 = 0.0 ){
+            return a + generic_func( arg0 );
         }
     )");
 }
@@ -137,6 +139,8 @@ TEST(Functions, Call_Function_No_Arg ) {
 
         int generic_func2( float arg0 = 0.0 ){
             generic_func();
+        
+            return 2 + 12;
         }
     )");
 }
@@ -151,6 +155,8 @@ TEST(Functions, Call_Function_Single_Arg ) {
 
             // fix me
             generic_func( arg0 = 0 );
+
+            return generic_func2();
         }
     )");
 }
@@ -161,6 +167,8 @@ TEST(Functions, Call_Function_Multi_Args ) {
             int k = 0;
 
             generic_func( arg0 , gg = 0 );
+
+            return k = 2;
         }
     )");
 }
@@ -171,6 +179,8 @@ TEST(Functions, Function_As_Argument ) {
             int k = 0;
 
             generic_func( func( arg0 = 0 , arg1 = 0 ) , k );
+
+            return 2;
         }
     )");
 }

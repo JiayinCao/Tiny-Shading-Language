@@ -63,10 +63,13 @@
 %token DOT				"."
 %token METADATA_START   "<<<"
 %token METADATA_END     ">>>"
+%token RETURN		    "return"
+%token QUESTION_MARK	"?"
 
 %type <Program_Ptr> PROGRAM
 
 %right "="
+%right "?" ":"
 %left "+" "-"
 %left "*" "/"
 %left '(' ')'
@@ -159,34 +162,45 @@ FUNCTION_ARGUMENT_DECL:
 	};
 
 FUNCTION_BODY:
-	"{" "}" {
-	}
-	|
 	"{" STATEMENTS "}" {
 	};
 
 STATEMENTS:
-	STATEMENT_PROXY {
-	}
+	STATEMENT STATEMENTS {}
 	|
-	STATEMENTS STATEMENT_PROXY {
-	};
-
-STATEMENT_PROXY:
-	"{" "}"{
-	}
-	|
-	"{" STATEMENTS "}"{
-	}
-	|
-	STATEMENT {
-	};
+	/* empty */ {};
 
 STATEMENT:
-	STATEMENT_EXPRESSION {
+	STATEMENT_COMPOUND_EXPRESSION {
 	}
 	|
 	STATEMENT_VARIABLES_DECLARATIONS {
+	}
+	|
+	STATEMENT_SCOPED{
+	}
+	|
+	STATEMENT_RETURN{
+	}
+	;
+
+STATEMENT_SCOPED:
+	"{" 
+		{ /* push a new scope here */ }
+	STATEMENTS "}"
+		{ /* pop the scope from here */ }
+	;
+
+STATEMENT_RETURN:
+	"return" STATEMENT_EXPRESSION_OPT ";"
+	{
+	};
+
+STATEMENT_EXPRESSION_OPT:
+	COMPOUND_EXPRESSION {
+	}
+	|
+	/* empty */ {
 	};
 
 STATEMENT_VARIABLES_DECLARATIONS:
@@ -207,8 +221,15 @@ VARIABLE_DECLARATION:
 	ID "=" EXPRESSION {
 	};
 
-STATEMENT_EXPRESSION:
-	EXPRESSION ";" {
+STATEMENT_COMPOUND_EXPRESSION:
+	COMPOUND_EXPRESSION ";" {
+	}
+
+COMPOUND_EXPRESSION:
+	EXPRESSION {
+	}
+	| 
+	EXPRESSION "," COMPOUND_EXPRESSION {
 	};
 
 EXPRESSION:
@@ -224,7 +245,17 @@ EXPRESSION:
 	EXPRESSION_OP {
 	}
 	|
+	EXPRESSION_TERNARY{
+	}
+	|
 	IDENTIFIER{
+	}
+	|
+	EXPRESSION_SCOPED{
+	};
+
+EXPRESSION_SCOPED:
+	"(" COMPOUND_EXPRESSION ")" {
 	};
 
 FUNCTION_CALL:
@@ -242,6 +273,11 @@ FUNCTION_ARGUMENTS:
 
 EXPRESSION_ASSIGN:
 	EXPRESSION_REF "=" EXPRESSION {
+	};
+
+EXPRESSION_TERNARY:
+	EXPRESSION "?" EXPRESSION ":" EXPRESSION
+	{
 	};
 
 EXPRESSION_CONST:

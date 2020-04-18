@@ -40,6 +40,9 @@ identifier               [a-zA-Z_]+[a-zA-Z_0-9]*
 whitespace               [ \t\r\n\f]
 
 %%
+":"                       {                                               return COLON; }
+"?"                       {                                               return QUESTION_MARK; }
+"return"                  {                                               return RETURN; }
 "<<<"                     {                                               return METADATA_START; }
 ">>>"                     {                                               return METADATA_END; }
 "int"                     {                                               return TYPE_INT; }
