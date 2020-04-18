@@ -282,6 +282,9 @@ EXPRESSION:
 	EXPRESSION_BINARY {
 	}
 	|
+	EXPRESSION_TERNARY {
+	}
+	|
 	EXPRESSION_ASSIGN {
 	}
 	|
@@ -289,9 +292,6 @@ EXPRESSION:
 	}
 	|
 	EXPRESSION_CONST {
-	}
-	|
-	EXPRESSION_TERNARY {
 	}
 	|
 	EXPRESSION_SCOPED {
@@ -320,111 +320,6 @@ OP_UNARY:
 	"~" {
 	};
 
-// Scopped expression
-EXPRESSION_SCOPED:
-	"(" COMPOUND_EXPRESSION ")" {
-	};
-
-// Function call, this is only non-shader function. TSL doesn't allow calling shader function.
-EXPRESSION_FUNCTION_CALL:
-	ID "(" FUNCTION_ARGUMENTS ")" {
-	};
-
-// None-shader function arguments
-FUNCTION_ARGUMENTS:
-	{}
-	|
-	EXPRESSION{
-	}
-	|
-	FUNCTION_ARGUMENTS "," EXPRESSION {
-	};
-
-// Assign an expression to a reference
-EXPRESSION_ASSIGN:
-	VARIABLE_LVALUE "=" EXPRESSION {
-	}
-	|
-	VARIABLE_LVALUE "+=" EXPRESSION {
-	}
-	|
-	VARIABLE_LVALUE "-=" EXPRESSION {
-	}
-	|
-	VARIABLE_LVALUE "*=" EXPRESSION {
-	}
-	|
-	VARIABLE_LVALUE "/=" EXPRESSION {
-	}
-	|
-	VARIABLE_LVALUE "%=" EXPRESSION {
-	}
-	|
-	VARIABLE_LVALUE "&=" EXPRESSION {
-	}
-	|
-	VARIABLE_LVALUE "|=" EXPRESSION {
-	}
-	|
-	VARIABLE_LVALUE "^=" EXPRESSION {
-	}
-	|
-	VARIABLE_LVALUE "<<=" EXPRESSION {
-	}
-	|
-	VARIABLE_LVALUE ">>=" EXPRESSION {
-	};
-
-// Ternary operation support
-EXPRESSION_TERNARY:
-	EXPRESSION "?" EXPRESSION ":" EXPRESSION {
-	};
-
-// This is for type casting
-EXPRESSION_TYPECAST:
-	"(" TYPE ")" EXPRESSION {
-	};
-	
-// Const literal
-EXPRESSION_CONST:
-	INT_NUM {
-	}
-	|
-	FLT_NUM {
-	};
-
-EXPRESSION_VARIABLE:
-	VARIABLE_LVALUE{
-	}
-	|
-	VARIABLE_LVALUE REC_OR_DEC {
-	}
-	|
-	REC_OR_DEC VARIABLE_LVALUE {
-	};
-
-REC_OR_DEC:
-	"++" {
-	}
-	|
-	"--" {
-	};
-
-// No up to two dimensional array supported for now.
-VARIABLE_LVALUE:
-	ID_OR_FIELD {
-	}
-	|
-	ID_OR_FIELD "[" EXPRESSION "]" {
-	};
-
-ID_OR_FIELD:
-	ID{
-	}
-	|
-	VARIABLE_LVALUE "." ID {
-	};
-	
 EXPRESSION_BINARY:
 	EXPRESSION "&&" EXPRESSION {
 	}
@@ -478,6 +373,112 @@ EXPRESSION_BINARY:
 	}
 	|
 	EXPRESSION "%" EXPRESSION{
+	};
+
+// Ternary operation support
+EXPRESSION_TERNARY:
+	EXPRESSION "?" EXPRESSION ":" EXPRESSION {
+	};
+
+// Assign an expression to a reference
+EXPRESSION_ASSIGN:
+	VARIABLE_LVALUE "=" EXPRESSION {
+	}
+	|
+	VARIABLE_LVALUE "+=" EXPRESSION {
+	}
+	|
+	VARIABLE_LVALUE "-=" EXPRESSION {
+	}
+	|
+	VARIABLE_LVALUE "*=" EXPRESSION {
+	}
+	|
+	VARIABLE_LVALUE "/=" EXPRESSION {
+	}
+	|
+	VARIABLE_LVALUE "%=" EXPRESSION {
+	}
+	|
+	VARIABLE_LVALUE "&=" EXPRESSION {
+	}
+	|
+	VARIABLE_LVALUE "|=" EXPRESSION {
+	}
+	|
+	VARIABLE_LVALUE "^=" EXPRESSION {
+	}
+	|
+	VARIABLE_LVALUE "<<=" EXPRESSION {
+	}
+	|
+	VARIABLE_LVALUE ">>=" EXPRESSION {
+	};
+
+// Function call, this is only non-shader function. TSL doesn't allow calling shader function.
+EXPRESSION_FUNCTION_CALL:
+	ID "(" FUNCTION_ARGUMENTS ")" {
+	};
+
+// None-shader function arguments
+FUNCTION_ARGUMENTS:
+	{}
+	|
+	EXPRESSION{
+	}
+	|
+	FUNCTION_ARGUMENTS "," EXPRESSION {
+	};
+
+
+// Const literal
+EXPRESSION_CONST:
+	INT_NUM {
+	}
+	|
+	FLT_NUM {
+	};
+
+// Scopped expression
+EXPRESSION_SCOPED:
+	"(" COMPOUND_EXPRESSION ")" {
+	};
+
+// This is for type casting
+EXPRESSION_TYPECAST:
+	"(" TYPE ")" EXPRESSION {
+	};
+
+EXPRESSION_VARIABLE:
+	VARIABLE_LVALUE{
+	}
+	|
+	VARIABLE_LVALUE REC_OR_DEC {
+	}
+	|
+	REC_OR_DEC VARIABLE_LVALUE {
+	};
+
+REC_OR_DEC:
+	"++" {
+	}
+	|
+	"--" {
+	};
+
+// No up to two dimensional array supported for now.
+VARIABLE_LVALUE:
+	ID_OR_FIELD {
+	}
+	|
+	ID_OR_FIELD "[" EXPRESSION "]" {
+	};
+
+ID_OR_FIELD:
+	ID{
+	}
+	|
+	VARIABLE_LVALUE "." ID {
 	};
 
 TYPE:
