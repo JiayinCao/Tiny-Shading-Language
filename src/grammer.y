@@ -4,12 +4,6 @@
     int yylex();
     void yyerror(char const* );
 
-	#ifdef DEBUG_TOKENS
-  		#define DEBUG_INFO( ... )  printf( __VA_ARGS__ );
-	#else
-  		#define DEBUG_INFO( ... )  ;
-	#endif
-
 	int g_verbose = 0;	// somehow bool is not working here.
 
 	extern int yylineno;
@@ -23,6 +17,7 @@
 %token SHADER_FUNC_ID
 %token TYPE_INT
 %token TYPE_FLOAT
+%token TYPE_VOID		"void"
 %token EOL              ";"
 %token L_CBRACKET       "{"
 %token R_CBRACKET       "}"
@@ -38,6 +33,8 @@
 %token COMMA            ","
 %token EQUAL            "="
 %token DOT				"."
+%token METADATA_START   "<<<"
+%token METADATA_END     ">>>"
 
 /* the start token */
 %start PROGRAM
@@ -69,7 +66,6 @@ GLOBAL_STATEMENT:
 	}
 	|
     SHADER_DEF {
-        DEBUG_INFO("Found a shader!\n");
     }
 	|
 	FUNCTION_DEF {
@@ -77,31 +73,67 @@ GLOBAL_STATEMENT:
 
 // Shader is the only unit that can be exposed in the group.
 SHADER_DEF:
-	SHADER_FUNC_ID FUNCTION_DEF {
+	SHADER_FUNC_ID ID "(" ")" FUNCTION_BODY {
+	}
+	|
+	SHADER_FUNC_ID ID "(" SHADER_FUNCTION_ARGUMENT_DECLS ")" FUNCTION_BODY {
+	};
+
+SHADER_FUNCTION_ARGUMENT_DECLS:
+	SHADER_FUNCTION_ARGUMENT_DECL{
+	}
+	|
+	SHADER_FUNCTION_ARGUMENT_DECL "," SHADER_FUNCTION_ARGUMENT_DECLS {
+	};
+
+SHADER_FUNCTION_ARGUMENT_DECL:
+	FUNCTION_ARGUMENT_DECL ARGUMENT_METADATA {
+	};
+
+ARGUMENT_METADATA:
+	// no meta data
+	{}
+	|
+	"<<<" ">>>"{
 	};
 
 // Standard function definition
 FUNCTION_DEF:
 	ID "(" ")" FUNCTION_BODY {
-		DEBUG_INFO("Found a shader definition.\n");
+	}
+	|
+	ID "(" FUNCTION_ARGUMENT_DECLS ")" FUNCTION_BODY {
+	};
+	|
+	TYPE ID "(" FUNCTION_ARGUMENT_DECLS ")" FUNCTION_BODY {
+	};
+
+FUNCTION_ARGUMENT_DECLS:
+	FUNCTION_ARGUMENT_DECL{
+	}
+	|
+	FUNCTION_ARGUMENT_DECL "," FUNCTION_ARGUMENT_DECLS{
+	};
+
+FUNCTION_ARGUMENT_DECL:
+	TYPE ID {
+	}
+	|
+	TYPE ID "=" EXPRESSION {
 	};
 
 FUNCTION_BODY:
 	"{" "}" {
-		DEBUG_INFO("Empty compound statement.\n");
 	}
 	|
 	"{" STATEMENTS "}" {
-		DEBUG_INFO("Statements.\n");
 	};
 
 STATEMENTS:
 	STATEMENT_PROXY {
-		DEBUG_INFO("Found a statement.\n");
 	}
 	|
 	STATEMENTS STATEMENT_PROXY {
-		DEBUG_INFO("Found multiple statements.\n" );
 	};
 
 STATEMENT_PROXY:
@@ -116,7 +148,6 @@ STATEMENT_PROXY:
 
 STATEMENT:
 	STATEMENT_EXPRESSION {
-		DEBUG_INFO("Place holder for now.\n");
 	}
 	|
 	STATEMENT_VARIABLES_DECLARATIONS {
@@ -151,16 +182,35 @@ STATEMENT_EXPRESSION:
 	EXPRESSION ";" {
 	};
 
+FUNCTION_CALL:
+	ID "(" ")" {
+	}
+	|
+	ID "(" FUNCTION_ARGUMENTS ")" {
+		printf( "really here" );
+	};
+
+FUNCTION_ARGUMENTS:
+	ID{
+	}
+	|
+	ID "," FUNCTION_ARGUMENTS {
+	};
+
 EXPRESSION:
+	IDENTIFIER{
+	}
+	|
 	EXPRESSION_CONST {
-	    DEBUG_INFO("Useless expression?\n" );
 	}
 	|
 	EXPRESSION_ASSIGN {
-		DEBUG_INFO("Expression statement.\n");
 	}
 	|
 	EXPRESSION_OP {
+	}
+	|
+	FUNCTION_CALL {
 	};
 
 EXPRESSION_ASSIGN:
@@ -215,6 +265,9 @@ TYPE:
 	}
 	|
 	TYPE_FLOAT {
+	}
+	|
+	TYPE_VOID{
 	}
 	|
 	ID {

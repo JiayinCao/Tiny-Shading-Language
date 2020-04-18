@@ -23,8 +23,11 @@ identifier               [a-zA-Z_]+[a-zA-Z_0-9]*
 whitespace               [ \t\r\n\f]
 
 %%
+"<<<"                     {                                               return METADATA_START; }
+">>>"                     {                                               return METADATA_END; }
 "int"                     {                                               return TYPE_INT; }
 "float"                   {                                               return TYPE_FLOAT; }
+"void"                    {                                               return TYPE_VOID; }
 "."                       { DEBUG_INFO(".", yytext);                      return DOT; }
 "shader"                  { DEBUG_INFO("shader_func  ->\t%s\n", yytext);  return SHADER_FUNC_ID; }
 "("                       { DEBUG_INFO("%s\n", yytext);                   return L_RBRACKET; }

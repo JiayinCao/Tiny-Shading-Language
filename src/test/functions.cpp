@@ -26,13 +26,13 @@ TEST(Functions, Default_Shader) {
 
 TEST(Functions, Non_Shader) {
     validate_shader(R"(
-        non_shader_func(){}
+        none_shader_func(){}
     )");
 }
 
 TEST(Functions, Mixed_Shader) {
     validate_shader(R"(
-        non_shader_func(){}
+        none_shader_func(){}
         
         shader shader_func()
         {
@@ -40,5 +40,128 @@ TEST(Functions, Mixed_Shader) {
         }
 
         non_shader_func2(){}
+    )");
+}
+
+TEST(Functions, Single_Argument) {
+    validate_shader(R"(
+        none_shader_func( int k )
+        {
+        }
+    )");
+}
+
+TEST(Functions, Multi_Arguments) {
+    validate_shader(R"(
+        none_shader_func( int arg0 , float arg1 , int arg2 , int arg3 )
+        {
+        }
+    )");
+}
+
+TEST(Functions, Single_Argument_With_Defaults) {
+    validate_shader(R"(
+        none_shader_func( float arg0 = 0.0 )
+        {
+        }
+    )");
+}
+
+TEST(Functions, Multi_Argument_With_Defaults) {
+    validate_shader(R"(
+        // unlike C, there is no function overloading in TSL
+        // default value can go to any argument, instead of just the last ones
+        none_shader_func( float arg0 = 0.0 , float arg1 , int arg2 = 0.0 , int arg3 )
+        {
+        }
+    )");
+}
+
+TEST(Functions, Multi_Argument_With_Defaults_Multi_Line) {
+    validate_shader(R"(
+        // unlike C, there is no function overloading in TSL
+        // default value can go to any argument, instead of just the last ones
+        none_shader_func( float arg0 = 0.0 , 
+                          float arg1 , 
+                          int arg2 = 0.0 , 
+                          int arg3 ){
+        }
+    )");
+}
+
+TEST(Functions, Shader_Single_Argument) {
+    validate_shader(R"(
+        shader shader_func( float arg0 ){
+        }
+    )");
+}
+
+TEST(Functions, Shader_Single_Argument_With_Metadata ) {
+    validate_shader(R"(
+        shader shader_func( float arg0 <<< >>> ){
+        }
+    )");
+}
+
+TEST(Functions, Shader_Single_Argument_With_Metadata_and_Default ) {
+    validate_shader(R"(
+        shader shader_func( float arg0 = 0.0 <<< >>> ){
+        }
+    )");
+}
+
+TEST(Functions, Shader_Multi_Arguments_With_Metadata_and_Default ) {
+    validate_shader(R"(
+        shader shader_func( float arg0 = 0.0 <<< >>>,
+                            int   arg1 = 1  <<< >>> ,
+                            int   arg2      <<<>>> ,
+                            int   arg3      ){
+        }
+    )");
+}
+
+TEST(Functions, Non_Shader_Func_With_Return ) {
+    validate_shader(R"(
+        void generic_func( float arg0 = 0.0 ){
+        }
+
+        int generic_func2( float arg0 = 0.0 ){
+        }
+    )");
+}
+
+TEST(Functions, Call_Function_No_Arg ) {
+    validate_shader(R"(
+        void generic_func( float arg0 = 0.0 ){
+        }
+
+        int generic_func2( float arg0 = 0.0 ){
+            generic_func();
+        }
+    )");
+}
+
+TEST(Functions, Call_Function_Single_Arg ) {
+    validate_shader(R"(
+        void generic_func( float arg0 = 0.0 ){
+        }
+
+        int generic_func2( float arg0 = 0.0 ){
+            int arg0 = 0;
+
+            // fix me
+            // generic_func( arg0 );
+        }
+    )");
+}
+
+TEST(Functions, Call_Function_Multi_Args ) {
+    validate_shader(R"(
+        int generic_func2( float arg0 = 0.0 ){
+            int arg0 = 0;
+
+            // fix me
+            // generic_func( arg0 , arg0 );
+        }
     )");
 }
