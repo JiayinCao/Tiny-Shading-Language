@@ -36,7 +36,10 @@
 %token METADATA_START   "<<<"
 %token METADATA_END     ">>>"
 
-%left '(' ')' 
+%right "="
+%left "+" "-"
+%left "*" "/"
+%left '(' ')'
 
 /* the start token */
 %start PROGRAM
