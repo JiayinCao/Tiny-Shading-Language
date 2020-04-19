@@ -17,16 +17,18 @@
 
 #pragma once
 
+#include <string>
 #include "include/tslversion.h"
 
 TSL_NAMESPACE_ENTER
 
-struct Shader_Func {
-    int k;
+class AstNode {
+    
 };
 
-struct Program {
-    int tmp;
+class AstNode_Shader : public AstNode {
+public:
+    std::string name;
 };
 
 TSL_NAMESPACE_LEAVE

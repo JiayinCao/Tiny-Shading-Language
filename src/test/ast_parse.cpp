@@ -17,7 +17,7 @@
 
 #include "test_common.h"
 
-extern Program* g_program;
+extern AstNode* g_program;
 
 TEST(AST, FirstTry) {
     validate_shader(R"(
