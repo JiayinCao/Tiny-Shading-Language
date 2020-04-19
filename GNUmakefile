@@ -20,27 +20,36 @@ MAKEFLAGS += --silent
 all:
 	make release
 
+full:
+	make update
+	make clean
+	make
+	make test
+
 clean:
+	echo Cleaning all temporary file
 	rm -rf bin generated_src
 
 update:
+	echo Sycning latest code
 	git pull
 
 generate_src:
+	echo Generating flex and bison source code
 	rm -rf generated_src
 	mkdir generated_src
 
-	echo    "Bison parsing ..."
 	bison   -d src/grammer.y -o generated_src/compiled_grammer.cpp
-
-	echo    "Laxer parsing ..."
 	flex    src/lex.l
 
 release:
+	echo Building release
 	rm -rf proj_release;mkdir proj_release;cd proj_release;cmake -DCMAKE_BUILD_TYPE=Release ..;make -j 4;cd ..;
 
 debug:
+	echo Building debug
 	rm -rf proj_debug;mkdir proj_debug;cd proj_debug;cmake -DCMAKE_BUILD_TYPE=Debug ..;make -j 4;cd ..;
 
 test:
+	echo Running unit tests
 	./bin/tsl_r
