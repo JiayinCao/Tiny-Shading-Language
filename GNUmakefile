@@ -17,6 +17,9 @@
 
 MAKEFLAGS += --silent
 
+YELLOW=`tput setaf 3`
+NOCOLOR=`tput sgr0`
+
 all:
 	make release
 
@@ -27,15 +30,15 @@ full:
 	make test
 
 clean:
-	echo Cleaning all temporary file
+	echo ${YELLOW}Cleaning all temporary file${NOCOLOR}
 	rm -rf bin generated_src
 
 update:
-	echo Sycning latest code
+	echo ${YELLOW}Sycning latest code${NOCOLOR}
 	git pull
 
 generate_src:
-	echo Generating flex and bison source code
+	echo ${YELLOW}Generating flex and bison source code${NOCOLOR}
 	rm -rf generated_src
 	mkdir generated_src
 
@@ -43,13 +46,13 @@ generate_src:
 	flex    src/lex.l
 
 release:
-	echo Building release
+	echo ${YELLOW}Building release${NOCOLOR}
 	rm -rf proj_release;mkdir proj_release;cd proj_release;cmake -DCMAKE_BUILD_TYPE=Release ..;make -j 4;cd ..;
 
 debug:
-	echo Building debug
+	echo ${YELLOW}Building debug${NOCOLOR}
 	rm -rf proj_debug;mkdir proj_debug;cd proj_debug;cmake -DCMAKE_BUILD_TYPE=Debug ..;make -j 4;cd ..;
 
 test:
-	echo Running unit tests
+	echo ${YELLOW}Running unit tests${NOCOLOR}
 	./bin/tsl_r
