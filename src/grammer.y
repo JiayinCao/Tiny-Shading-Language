@@ -18,6 +18,7 @@
 %{
     #include <stdio.h>
     #include <stdlib.h>
+	#include "include/tslversion.h"
     int yylex();
     void yyerror(char const* );
 
@@ -27,7 +28,7 @@
 
 	#include "compiler/ast.h"
 
-	using namespace tsl;
+	USE_TSL_NAMESPACE
 
 	/* global variables which can be used in other .c .h */
 	struct Program *g_program = nullptr;

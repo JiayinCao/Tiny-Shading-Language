@@ -16,10 +16,13 @@
  */
 
 #include <iostream>
+#include "include/tslversion.h"
 #include "thirdparty/gtest/gtest.h"
 using namespace std;
 
 int main(int argc, char** argv){
+    std::cout << "--------------------------" TSL_INTRO_STRING "--------------------------" << std::endl;
+
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

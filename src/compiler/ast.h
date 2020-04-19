@@ -17,12 +17,16 @@
 
 #pragma once
 
-namespace tsl{
-    struct Shader_Func {
-        int k;
-    };
+#include "include/tslversion.h"
 
-    struct Program {
-        int tmp;
-    };
-}
+TSL_NAMESPACE_ENTER
+
+struct Shader_Func {
+    int k;
+};
+
+struct Program {
+    int tmp;
+};
+
+TSL_NAMESPACE_LEAVE

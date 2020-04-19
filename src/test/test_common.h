@@ -20,7 +20,7 @@
 #include "thirdparty/gtest/gtest.h"
 #include "compiler/ast.h"
 
-using namespace tsl;
+USE_TSL_NAMESPACE
 
 struct yy_buffer_state;
 typedef yy_buffer_state* YY_BUFFER_STATE;

@@ -16,3 +16,7 @@
  */
 
 #include "ast.h"
+
+TSL_NAMESPACE_ENTER
+
+TSL_NAMESPACE_LEAVE

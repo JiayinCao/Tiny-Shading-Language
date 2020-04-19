@@ -41,6 +41,16 @@ endif()
 
 project (TSL)
 
+set (PROJ_NAME ${PROJECT_NAME})
+set (TSL_LIBRARY_VERSION_MAJOR 0)
+set (TSL_LIBRARY_VERSION_MINOR 0)
+set (TSL_LIBRARY_VERSION_PATCH 0)
+
+set (versionfile tslversion.h)
+message (STATUS "Create ${versionfile} from ${versionfile}.in")
+configure_file (${TSL_SOURCE_DIR}/src/include/${versionfile}.in "${TSL_SOURCE_DIR}/src/include/${versionfile}" @ONLY)
+list (APPEND version_head "${TSL_SOURCE_DIR}/src/include/${versionfile}")
+
 macro(source_group_by_dir source_files)
     set(sgbd_cur_dir ${CMAKE_CURRENT_SOURCE_DIR}/src)
     foreach(sgbd_file ${${source_files}})
@@ -60,7 +70,7 @@ file(GLOB_RECURSE project_cpps src/*.cpp)
 file(GLOB_RECURSE project_cs src/*.c)
 file(GLOB_RECURSE project_ccs src/*.cc)
 
-set(all_files ${project_headers} ${project_cpps} ${project_cs} ${project_ccs})
+set(all_files ${project_headers} ${project_cpps} ${project_cs} ${project_ccs} ${version_head})
 source_group_by_dir(all_files)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${TSL_SOURCE_DIR}/bin")
