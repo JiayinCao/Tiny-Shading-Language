@@ -26,6 +26,7 @@
   #include <string.h>
   #include <stdio.h>
   #include <stdlib.h>
+  #include "compiler/platform.h"
   #include "compiled_grammer.hpp"
 
   // #define DEBUG_TOKENS
@@ -113,8 +114,12 @@ whitespace               [ \t\r\n\f]
 {one_line_comment}        { DEBUG_INFO("comment      ->\t%s\n", yytext);  }                        /* eat up one-line comments */
 {multi_line_comment}      { DEBUG_INFO("comments     ->\t%s\n", yytext);  }                        /* eat up multi-line comments */
 {identifier}              { 
-                                DEBUG_INFO("indentifier  ->\t%s\n", yytext);  
-                                yylval.s = _strdup(yytext);
+                                DEBUG_INFO("indentifier  ->\t%s\n", yytext);
+                                #ifdef TSL_ON_WINDOWS
+                                    yylval.s = _strdup(yytext);
+                                #else
+                                    yylval.s = strdup(yytext);
+                                #endif
                                 return ID;
                           }
 {float_numbers}           { DEBUG_INFO("float        ->\t%s\n", yytext);  return FLT_NUM; }        /* floating point value */
