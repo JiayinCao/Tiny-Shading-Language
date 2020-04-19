@@ -31,7 +31,7 @@
 #define @PROJ_NAME@_VERSION_PATCH        @TSL_LIBRARY_VERSION_PATCH@
 #define @PROJ_NAME@_VERSION              ( 65536 * @PROJ_NAME@_VERSION_MAJOR + 256 * @PROJ_NAME@_VERSION_MINOR + @PROJ_NAME@_VERSION_PATCH )
 
-#define Tsl_Namespace                    Tsl_Namespace_##@PROJ_NAME@_VERSION
+#define Tsl_Namespace                    Tsl_Namespace_@TSL_LIBRARY_VERSION_MAJOR@_@TSL_LIBRARY_VERSION_MINOR@_@TSL_LIBRARY_VERSION_PATCH@
 
 #define TSL_NAMESPACE_ENTER              namespace Tsl_Namespace{
 #define TSL_NAMESPACE_LEAVE              }
@@ -42,3 +42,7 @@
 #define TSL_MAKE_VERSION_STRING(a,b,c) TSL_MAKE_VERSION_STRING2(a,b,c)
 #define TSL_LIBRARY_VERSION_STRING TSL_MAKE_VERSION_STRING(@PROJ_NAME@_VERSION_MAJOR, @PROJ_NAME@_VERSION_MINOR, @PROJ_NAME@_VERSION_PATCH )
 #define TSL_INTRO_STRING "TinyShadingLanguage " TSL_LIBRARY_VERSION_STRING
+
+// This is just a hack to make sure the namespace is always valid
+TSL_NAMESPACE_ENTER
+TSL_NAMESPACE_LEAVE
