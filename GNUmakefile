@@ -31,7 +31,7 @@ generate_src:
 	mkdir generated_src
 
 	echo    "Bison parsing ..."
-	bison   -d src/grammer.y -o generated_src/compiled_grammer.c
+	bison   -d src/grammer.y -o generated_src/compiled_grammer.cpp
 
 	echo    "Laxer parsing ..."
 	flex    src/lex.l

@@ -25,6 +25,10 @@
   #else
   	#define DEBUG_INFO( ... )  ;
   #endif
+
+  #if __cplusplus > 199711L
+    #define register      // Deprecated in C++11.
+  #endif  // #if __cplusplus > 199711L
 %}
 
 %option outfile="generated_src/compiled_lex.cpp"
