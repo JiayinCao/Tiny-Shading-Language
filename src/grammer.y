@@ -25,7 +25,7 @@
 
 	extern int yylineno;
 
-	#include "ast.h"
+	#include "compiler/ast.h"
 
 	/* global variables which can be used in other .c .h */
 	struct Program *g_program = c_nullptr;

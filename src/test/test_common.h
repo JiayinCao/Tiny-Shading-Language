@@ -18,7 +18,7 @@
 #pragma once
 
 #include "thirdparty/gtest/gtest.h"
-#include "ast.h"
+#include "compiler/ast.h"
 
 struct yy_buffer_state;
 typedef yy_buffer_state* YY_BUFFER_STATE;
