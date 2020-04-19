@@ -20,17 +20,15 @@
 #include "thirdparty/gtest/gtest.h"
 #include "compiler/ast.h"
 
+using namespace tsl;
+
 struct yy_buffer_state;
 typedef yy_buffer_state* YY_BUFFER_STATE;
 
-extern "C" {
-    int yyparse();
-    int yylex_destroy(void);
-    YY_BUFFER_STATE yy_scan_string(const char* base);
-    void makeVerbose(int verbose);
-
-    extern Program* g_program;
-}
+int yyparse();
+int yylex_destroy(void);
+YY_BUFFER_STATE yy_scan_string(const char* base);
+void makeVerbose(int verbose);
 
 inline void validate_shader(const char* shader_source, bool valid = true ) {
     yy_scan_string(shader_source);

@@ -27,8 +27,10 @@
 
 	#include "compiler/ast.h"
 
+	using namespace tsl;
+
 	/* global variables which can be used in other .c .h */
-	struct Program *g_program = c_nullptr;
+	struct Program *g_program = nullptr;
 %}
 
 /* definitions of tokens and types passed by FLEX */
@@ -131,7 +133,7 @@
 PROGRAM:
 	// empty shader
 	{
-        $$ = c_nullptr;
+        $$ = nullptr;
 	}
 	|
 	GLOBAL_STATEMENTS {

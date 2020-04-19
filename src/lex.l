@@ -16,7 +16,7 @@
  */
 
 %{
-  #include "compiled_grammer.h"
+  #include "compiled_grammer.hpp"
 
   // #define DEBUG_TOKENS
 
@@ -27,7 +27,7 @@
   #endif
 %}
 
-%option outfile="generated_src/compiled_lex.c"
+%option outfile="generated_src/compiled_lex.cpp"
 %option noyywrap
 %option never-interactive
 %option yylineno

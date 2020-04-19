@@ -89,7 +89,7 @@ if "%GENERATE_SRC%" == "1" (
 	mkdir generated_src
 
 	echo "Bison parsing ..."
-	.\dependencies\flex_bison\win_bison.exe -d .\src\grammer.y -o .\generated_src\compiled_grammer.c
+	.\dependencies\flex_bison\win_bison.exe -d .\src\grammer.y -o .\generated_src\compiled_grammer.cpp
 
 	echo "Laxer parsing ..."
 	.\dependencies\flex_bison\win_flex.exe .\src\lex.l

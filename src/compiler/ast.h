@@ -17,12 +17,12 @@
 
 #pragma once
 
-#define c_nullptr 0
+namespace tsl{
+    struct Shader_Func {
+        int k;
+    };
 
-struct Shader_Func {
-    int k;
-};
-
-struct Program {
-    int tmp;
-};
+    struct Program {
+        int tmp;
+    };
+}

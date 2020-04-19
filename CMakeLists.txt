@@ -80,7 +80,7 @@ add_definitions( -DYY_NO_UNISTD_H )
 add_definitions( -DYYERROR_VERBOSE )
 
 # Generated source code
-set(generated_src ${TSL_SOURCE_DIR}/generated_src/compiled_lex.c ${TSL_SOURCE_DIR}/generated_src/compiled_grammer.c ${TSL_SOURCE_DIR}/generated_src/compiled_grammer.h)
+set(generated_src ${TSL_SOURCE_DIR}/generated_src/compiled_lex.cpp ${TSL_SOURCE_DIR}/generated_src/compiled_grammer.cpp ${TSL_SOURCE_DIR}/generated_src/compiled_grammer.hpp)
 
 if (WIN32)
     add_executable(TSL ${all_files} ${generated_src})
