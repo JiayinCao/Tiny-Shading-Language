@@ -5,3 +5,4 @@ proj_release/
 proj_debug/
 generated_src/
 *.DS_Store
+src/include/tslversion.h
