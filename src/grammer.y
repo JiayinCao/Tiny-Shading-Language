@@ -172,14 +172,13 @@ GLOBAL_STATEMENT:
 SHADER_DEF:
 	SHADER_FUNC_ID ID "(" ")" FUNCTION_BODY {
 		AstNode_Shader *p = new AstNode_Shader();
-		// this doesn't work somehow, need to figure out why
-        // p->name = std::string($2);
+        p->name = std::string($2);
         g_program = p;
 	}
 	|
 	SHADER_FUNC_ID ID "(" SHADER_FUNCTION_ARGUMENT_DECLS ")" FUNCTION_BODY {
 		AstNode_Shader *p = new AstNode_Shader();
-        // p->name = std::string($2);
+        p->name = std::string($2);
         g_program = p;
 	};
 
