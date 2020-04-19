@@ -29,14 +29,6 @@
   #include "compiler/platform.h"
   #include "compiled_grammer.hpp"
 
-  // #define DEBUG_TOKENS
-
-  #ifdef DEBUG_TOKENS
-  	#define DEBUG_INFO( ... )  printf( __VA_ARGS__ );
-  #else
-  	#define DEBUG_INFO( ... )  ;
-  #endif
-
   #if __cplusplus > 199711L
     #define register      // Deprecated in C++11.
   #endif  // #if __cplusplus > 199711L
@@ -47,73 +39,82 @@
 %option never-interactive
 %option yylineno
 
-integer_numbers          [+-]?[0-9]+
-float_numbers            [+-]?([0-9]+\.[0-9]*|[0-9]*\.[0-9]+)
+alpha                    [a-zA-Z]
+digit                    [0-9]
+integer_numbers          {digit}+
+hex_numbers              0[xX][0-9a-fA-F]+
+exp                      [eE][-+]?{digit}+
+flt1                     {digit}+\.{digit}*{exp}?
+flt2                     {digit}*\.{digit}+{exp}?
+flt3                     {digit}+{exp}
+float_numbers            {flt1}|{flt2}|{flt3}
 one_line_comment         (\/\/)(.*\n)
 multi_line_comment       \/\*[^*]*\*+(?:[^\/*][^*]*\*+)*\/
-identifier               [a-zA-Z_]+[a-zA-Z_0-9]*
-whitespace               [ \t\r\n\f]
+identifier               ({alpha}|[_])({alpha}|{digit}|[_])*
+whitespace               [ \t\r\n\f]+
 
 %%
-"do"                      {                                               return DO; }
-"while"                   {                                               return WHILE; }
-"for"                     {                                               return FOR; }
-"if"                      {                                               return IF; }
-"else"                    {                                               return ELSE; }
-"--"                      {                                               return INC_OP; }
-"++"                      {                                               return DEC_OP; }
-":"                       {                                               return COLON; }
-"?"                       {                                               return QUESTION_MARK; }
-"return"                  {                                               return RETURN; }
-"<<<"                     {                                               return METADATA_START; }
-">>>"                     {                                               return METADATA_END; }
-"int"                     {                                               return TYPE_INT; }
-"float"                   {                                               return TYPE_FLOAT; }
-"void"                    {                                               return TYPE_VOID; }
-"."                       { DEBUG_INFO(".", yytext);                      return DOT; }
-"shader"                  { DEBUG_INFO("shader_func  ->\t%s\n", yytext);  return SHADER_FUNC_ID; }
-"("                       { DEBUG_INFO("%s\n", yytext);                   return L_RBRACKET; }
-")"                       { DEBUG_INFO("%s\n", yytext);                   return R_RBRACKET; }
-"{"                       { DEBUG_INFO("%s\n", yytext);                   return L_CBRACKET; }
-"}"                       { DEBUG_INFO("%s\n", yytext);                   return R_CBRACKET; }
-"["                       { DEBUG_INFO("%s\n", yytext);                   return L_SBRACKET; }
-"]"                       { DEBUG_INFO("%s\n", yytext);                   return R_SBRACKET; }
-"+"                       { DEBUG_INFO("%s\n", yytext);                   return OP_ADD; }
-"-"                       { DEBUG_INFO("%s\n", yytext);                   return OP_MINUS; }
-"*"                       { DEBUG_INFO("%s\n", yytext);                   return OP_MULT; }
-"/"                       { DEBUG_INFO("%s\n", yytext);                   return OP_DIV; }
-"%"                       { DEBUG_INFO("%s\n", yytext);                   return OP_MOD; }
-"+="                      { DEBUG_INFO("%s\n", yytext);                   return OP_ADD_ASSIGN; }
-"-="                      { DEBUG_INFO("%s\n", yytext);                   return OP_MINUS_ASSIGN; }
-"*="                      { DEBUG_INFO("%s\n", yytext);                   return OP_MULT_ASSIGN; }
-"/="                      { DEBUG_INFO("%s\n", yytext);                   return OP_DIV_ASSIGN; }
-"%="                      { DEBUG_INFO("%s\n", yytext);                   return OP_MOD_ASSIGN; }
-";"                       { DEBUG_INFO("%s\n", yytext);                   return EOL; }
-","                       { DEBUG_INFO("%s\n", yytext);                   return COMMA; }
-"="                       { DEBUG_INFO("%s\n", yytext);                   return OP_ASSIGN; }
-"&"                       { DEBUG_INFO("%s\n", yytext);                   return OP_AND; }
-"|"                       { DEBUG_INFO("%s\n", yytext);                   return OP_OR; }
-"^"                       { DEBUG_INFO("%s\n", yytext);                   return OP_XOR; }
-"&&"                      { DEBUG_INFO("%s\n", yytext);                   return OP_LOGIC_AND; }
-"||"                      { DEBUG_INFO("%s\n", yytext);                   return OP_LOGIC_OR; }
-"=="                      { DEBUG_INFO("%s\n", yytext);                   return OP_EQ; }
-"!="                      { DEBUG_INFO("%s\n", yytext);                   return OP_NE; }
-">="                      { DEBUG_INFO("%s\n", yytext);                   return OP_GE; }
-">"                       { DEBUG_INFO("%s\n", yytext);                   return OP_G; }
-"<="                      { DEBUG_INFO("%s\n", yytext);                   return OP_LE; }
-"<"                       { DEBUG_INFO("%s\n", yytext);                   return OP_L; }
-"<<"                      { DEBUG_INFO("%s\n", yytext);                   return OP_SHL; }
-">>"                      { DEBUG_INFO("%s\n", yytext);                   return OP_SHR; }
-"&="                      { DEBUG_INFO("%s\n", yytext);                   return OP_AND_ASSIGN; }
-"|="                      { DEBUG_INFO("%s\n", yytext);                   return OP_OR_ASSIGN; }
-"^="                      { DEBUG_INFO("%s\n", yytext);                   return OP_XOR_ASSIGN; }
-"<<="                     { DEBUG_INFO("%s\n", yytext);                   return OP_SHL_ASSIGN; }
-">>="                     { DEBUG_INFO("%s\n", yytext);                   return OP_SHR_ASSIGN; }
-"~"                       { DEBUG_INFO("%s\n", yytext);                   return OP_COMP; }
-"!"                       { DEBUG_INFO("%s\n", yytext);                   return OP_NOT; }
+"do"                      { return DO; }
+"while"                   { return WHILE; }
+"for"                     { return FOR; }
+"if"                      { return IF; }
+"else"                    { return ELSE; }
+"--"                      { return INC_OP; }
+"++"                      { return DEC_OP; }
+":"                       { return COLON; }
+"?"                       { return QUESTION_MARK; }
+"return"                  { return RETURN; }
+"<<<"                     { return METADATA_START; }
+">>>"                     { return METADATA_END; }
+"int"                     { return TYPE_INT; }
+"float"                   { return TYPE_FLOAT; }
+"void"                    { return TYPE_VOID; }
+"matrix"                  { return TYPE_MATRIX; }
+"float3"                  { return TYPE_FLOAT3; }
+"bool"                    { return TYPE_BOOL; }
+"."                       { return DOT; }
+"shader"                  { return SHADER_FUNC_ID; }
+"("                       { return L_RBRACKET; }
+")"                       { return R_RBRACKET; }
+"{"                       { return L_CBRACKET; }
+"}"                       { return R_CBRACKET; }
+"["                       { return L_SBRACKET; }
+"]"                       { return R_SBRACKET; }
+"+"                       { return OP_ADD; }
+"-"                       { return OP_MINUS; }
+"*"                       { return OP_MULT; }
+"/"                       { return OP_DIV; }
+"%"                       { return OP_MOD; }
+"+="                      { return OP_ADD_ASSIGN; }
+"-="                      { return OP_MINUS_ASSIGN; }
+"*="                      { return OP_MULT_ASSIGN; }
+"/="                      { return OP_DIV_ASSIGN; }
+"%="                      { return OP_MOD_ASSIGN; }
+";"                       { return EOL; }
+","                       { return COMMA; }
+"="                       { return OP_ASSIGN; }
+"&"                       { return OP_AND; }
+"|"                       { return OP_OR; }
+"^"                       { return OP_XOR; }
+"&&"                      { return OP_LOGIC_AND; }
+"||"                      { return OP_LOGIC_OR; }
+"=="                      { return OP_EQ; }
+"!="                      { return OP_NE; }
+">="                      { return OP_GE; }
+">"                       { return OP_G; }
+"<="                      { return OP_LE; }
+"<"                       { return OP_L; }
+"<<"                      { return OP_SHL; }
+">>"                      { return OP_SHR; }
+"&="                      { return OP_AND_ASSIGN; }
+"|="                      { return OP_OR_ASSIGN; }
+"^="                      { return OP_XOR_ASSIGN; }
+"<<="                     { return OP_SHL_ASSIGN; }
+">>="                     { return OP_SHR_ASSIGN; }
+"~"                       { return OP_COMP; }
+"!"                       { return OP_NOT; }
 
 {identifier}              { 
-                                DEBUG_INFO("indentifier  ->\t%s\n", yytext);
                                 #ifdef TSL_ON_WINDOWS
                                     yylval.s = _strdup(yytext);
                                 #else
@@ -123,20 +124,24 @@ whitespace               [ \t\r\n\f]
                           }
 
 {float_numbers}           { 
-                                DEBUG_INFO("float        ->\t%s\n", yytext);  
                                 yylval.f = atof(yytext);
                                 return FLT_NUM; 
                           }
 
-{integer_numbers}         { 
-                                DEBUG_INFO("int          ->\t%s\n", yytext);
+{integer_numbers}         {
                                 // no over flow control for now
                                 yylval.i = atoi(yytext);
                                 return INT_NUM;
                           }
 
-{one_line_comment}        { DEBUG_INFO("comment      ->\t%s\n", yytext);  }                    /* eat up one-line comments */
-{multi_line_comment}      { DEBUG_INFO("comments     ->\t%s\n", yytext);  }                    /* eat up multi-line comments */
-{whitespace}              { }                                            					   /* ignore whitespace */
-.                         { }                                                                  /* supress output for the unknown */
+{hex_numbers}             {
+                                // no over flow control for now
+                                yylval.i = atoi(yytext);
+                                return INT_NUM;
+                          }
+
+{one_line_comment}        { /* eat up one-line comments */ }
+{multi_line_comment}      { /* eat up multi-line comments */ }
+{whitespace}              { /* ignore whitespace */ }
+.                         { /* supress output for the unknown */ }
 %%

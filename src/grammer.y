@@ -39,11 +39,10 @@
 
 /* definitions of tokens and types passed by FLEX */
 %union {
-	/* pointers for the AST struct nodes */
-    class AstNode 				*p;
-	float						 f;
-	int							 i;
-	const char					*s;
+    class AstNode 				*p;	/* pointers for the AST struct nodes */
+	float						 f; /* floating point value cache. */
+	int							 i; /* integer value or enum values. */
+	const char					*s;	/* string values. */
 }
 
 %locations
@@ -54,8 +53,11 @@
 %token INC_OP			"++"
 %token DEC_OP			"--"
 %token SHADER_FUNC_ID
-%token TYPE_INT			"int"
-%token TYPE_FLOAT		"float"
+%token <i> TYPE_INT	    "int"
+%token <i> TYPE_FLOAT	"float"
+%token <i> TYPE_MATRIX  "matrix"
+%token <i> TYPE_FLOAT3  "float3"
+%token <i> TYPE_BOOL	"bool"
 %token TYPE_VOID		"void"
 %token EOL              ";"
 %token L_CBRACKET       "{"
@@ -544,6 +546,15 @@ TYPE:
 	}
 	|
 	"float" {
+	}
+	|
+	"matrix" {
+	}
+	|
+	"float3" {
+	}
+	|
+	"bool" {
 	}
 	|
 	"void" {
