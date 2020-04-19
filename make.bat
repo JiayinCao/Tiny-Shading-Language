@@ -26,7 +26,7 @@ call "%SORT_DIR%\build-files\win\parse_arguments.cmd" %*
 if errorlevel 1 goto EOF
 
 if "%CLEAN%" == "1" (
-	echo Cleaning all temporary file
+	echo [33mCleaning all temporary file[0m
 	powershell Remove-Item -path ./bin -recurse -ErrorAction Ignore
 	powershell Remove-Item -path ./generated_src -recurse -ErrorAction Ignore
 	powershell Remove-Item -path ./proj_release -recurse -ErrorAction Ignore
@@ -36,25 +36,25 @@ if "%CLEAN%" == "1" (
 )
 
 if "%CLEAN_DEP%" == "1" (
-	echo Cleaning all dependencies file
+	echo [33mCleaning all dependencies file[0m
 	powershell Remove-Item -path ./dependencies -recurse -ErrorAction Ignore
 	goto EOF
 )
 
 if "%UPDATE_DEP%" == "1" (
-	echo Downloading dependencies
+	echo [33mDownloading dependencies[0m
 	powershell .\build-files\win\getdep.ps1
 	goto EOF
 )
 
 if "%UPDATE%" == "1" (
-	echo Sycning latest code
+	echo [33mSycning latest code[0m
 	git pull
 	goto EOF
 )
 
 if "%BUILD_RELEASE%" == "1" (
-	echo Building
+	echo [33mBuilding release[0m
 
 	powershell New-Item -Force -ItemType directory -Path proj_release
 	cd proj_release
@@ -64,7 +64,7 @@ if "%BUILD_RELEASE%" == "1" (
 )
 
 if "%BUILD_DEBUG%" == "1" (
-	echo Building
+	echo [33mBuilding debug[0m
 
 	powershell New-Item -Force -ItemType directory -Path proj_debug
 	cd proj_debug
@@ -74,7 +74,7 @@ if "%BUILD_DEBUG%" == "1" (
 )
 
 if "%GENERATE_PROJ%" == "1" (
-	echo Generating Visual Studio Project
+	echo [33mGenerating Visual Studio Project[0m
 	
 	powershell New-Item -Force -ItemType directory -Path _out
 	cd _out
@@ -83,22 +83,25 @@ if "%GENERATE_PROJ%" == "1" (
 )
 
 if "%GENERATE_SRC%" == "1" (
-	echo Generate source code dependencies
+	echo [33mGenerating flex and bison source code[0m
 	
 	powershell Remove-Item -path ./generated_src -recurse -ErrorAction Ignore
 	mkdir generated_src
 
-	echo "Bison parsing ..."
 	.\dependencies\flex_bison\win_bison.exe -d .\src\grammer.y -o .\generated_src\compiled_grammer.cpp
-
-	echo "Laxer parsing ..."
 	.\dependencies\flex_bison\win_flex.exe .\src\lex.l
 )
 
 if "%UNIT_TEST%" == "1" (
-	echo Very basic test
-	
+	echo [33mRunning unit tests[0m
 	.\bin\tsl_r.exe
+)
+
+if "%FULL%" == "1" (
+	make update
+	make clean
+	make
+	make test 
 )
 
 :EOF

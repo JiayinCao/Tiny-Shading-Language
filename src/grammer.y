@@ -41,14 +41,16 @@
 %union {
 	/* pointers for the AST struct nodes */
     class AstNode 				*p;
+	float						 f;
+	int							 i;
 	const char					*s;
 }
 
 %locations
 
-%token ID
-%token INT_NUM
-%token FLT_NUM
+%token <s> ID
+%token <i> INT_NUM
+%token <f> FLT_NUM
 %token INC_OP			"++"
 %token DEC_OP			"--"
 %token SHADER_FUNC_ID
@@ -107,7 +109,6 @@
 %token DO				"do"
 
 %type <p> PROGRAM
-%type <s> ID
 
 %nonassoc IF_THEN
 %nonassoc ELSE

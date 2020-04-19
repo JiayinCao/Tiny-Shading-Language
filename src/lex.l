@@ -111,8 +111,7 @@ whitespace               [ \t\r\n\f]
 ">>="                     { DEBUG_INFO("%s\n", yytext);                   return OP_SHR_ASSIGN; }
 "~"                       { DEBUG_INFO("%s\n", yytext);                   return OP_COMP; }
 "!"                       { DEBUG_INFO("%s\n", yytext);                   return OP_NOT; }
-{one_line_comment}        { DEBUG_INFO("comment      ->\t%s\n", yytext);  }                        /* eat up one-line comments */
-{multi_line_comment}      { DEBUG_INFO("comments     ->\t%s\n", yytext);  }                        /* eat up multi-line comments */
+
 {identifier}              { 
                                 DEBUG_INFO("indentifier  ->\t%s\n", yytext);
                                 #ifdef TSL_ON_WINDOWS
@@ -122,8 +121,22 @@ whitespace               [ \t\r\n\f]
                                 #endif
                                 return ID;
                           }
-{float_numbers}           { DEBUG_INFO("float        ->\t%s\n", yytext);  return FLT_NUM; }        /* floating point value */
-{integer_numbers}         { DEBUG_INFO("int          ->\t%s\n", yytext);  return INT_NUM; }        /* integer value */
+
+{float_numbers}           { 
+                                DEBUG_INFO("float        ->\t%s\n", yytext);  
+                                yylval.f = atof(yytext);
+                                return FLT_NUM; 
+                          }
+
+{integer_numbers}         { 
+                                DEBUG_INFO("int          ->\t%s\n", yytext);
+                                // no over flow control for now
+                                yylval.i = atoi(yytext);
+                                return INT_NUM;
+                          }
+
+{one_line_comment}        { DEBUG_INFO("comment      ->\t%s\n", yytext);  }                    /* eat up one-line comments */
+{multi_line_comment}      { DEBUG_INFO("comments     ->\t%s\n", yytext);  }                    /* eat up multi-line comments */
 {whitespace}              { }                                            					   /* ignore whitespace */
 .                         { }                                                                  /* supress output for the unknown */
 %%
