@@ -28,8 +28,8 @@
 
 	USE_TSL_NAMESPACE
 
-    int yylex();
-    void yyerror(char const* );
+	int yylex( union YYSTYPE *,struct YYLTYPE *,void * );
+    void yyerror(struct YYLTYPE* loc, void *scanner, char const *str);
 	int g_verbose = 0;	// somehow bool is not working here.
 	extern int yylineno;
 
@@ -46,6 +46,9 @@
 }
 
 %locations
+%define api.pure
+%lex-param {void * scanner}
+%parse-param {void * scanner}
 
 %token <s> ID
 %token <i> INT_NUM
@@ -573,11 +576,12 @@ TYPE:
 	};
 %%
 
-void yyerror(char const * str){
+void yyerror(struct YYLTYPE* loc, void* scanner, char const * str){
 	if(!g_verbose)
 		return;
 
-	printf( "line(%d), error: %s\n", yylineno, str);
+	// line number is incorrect for now
+	printf( "line(%d, %d), error: %s\n", loc->first_line, loc->first_column, str);
 }
 
 void makeVerbose(int verbose){

@@ -25,19 +25,23 @@ USE_TSL_NAMESPACE
 struct yy_buffer_state;
 typedef yy_buffer_state* YY_BUFFER_STATE;
 
-int yyparse();
-int yylex_destroy(void);
-YY_BUFFER_STATE yy_scan_string(const char* base);
+int yylex_init(void**);
+int yyparse(void*);
+int yylex_destroy(void*);
+YY_BUFFER_STATE yy_scan_string(const char* yystr, void* yyscanner);
 void makeVerbose(int verbose);
 
 inline void validate_shader(const char* shader_source, bool valid = true ) {
-    yy_scan_string(shader_source);
+    void* parser = nullptr;
+    yylex_init(&parser);
+
+    yy_scan_string(shader_source, parser);
     if (valid) {
         makeVerbose(true);
-        EXPECT_EQ(yyparse(), 0);
+        EXPECT_EQ(yyparse(parser), 0);
     } else {
         makeVerbose(false); // surpress the error message
-        EXPECT_NE(yyparse(), 0);
+        EXPECT_NE(yyparse(parser), 0);
     }
-    yylex_destroy();
+    yylex_destroy(parser);
 }

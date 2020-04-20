@@ -38,6 +38,9 @@
 %option noyywrap
 %option never-interactive
 %option yylineno
+%option reentrant
+%option bison-bridge
+%option bison-locations
 
 alpha                    [a-zA-Z]
 digit                    [0-9]
@@ -116,27 +119,27 @@ whitespace               [ \t\r\n\f]+
 
 {identifier}              { 
                                 #ifdef TSL_ON_WINDOWS
-                                    yylval.s = _strdup(yytext);
+                                    yylval->s = _strdup(yytext);
                                 #else
-                                    yylval.s = strdup(yytext);
+                                    yylval->s = strdup(yytext);
                                 #endif
                                 return ID;
                           }
 
 {float_numbers}           { 
-                                yylval.f = atof(yytext);
+                                yylval->f = atof(yytext);
                                 return FLT_NUM; 
                           }
 
 {integer_numbers}         {
                                 // no over flow control for now
-                                yylval.i = atoi(yytext);
+                                yylval->i = atoi(yytext);
                                 return INT_NUM;
                           }
 
 {hex_numbers}             {
                                 // no over flow control for now
-                                yylval.i = atoi(yytext);
+                                yylval->i = atoi(yytext);
                                 return INT_NUM;
                           }
 
