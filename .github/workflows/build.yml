@@ -48,14 +48,23 @@ jobs:
            ls /usr/local/opt/bison/bin
            ls /usr/local/Cellar/bison/3.5.3
            echo 'export PATH="/usr/local/opt/bison/bin:$PATH"' >> ~/.bash_profile
-           echo 'export PATH="/usr/local/Cellar/bison/3.5.3:$PATH"' >> ~/.bash_profile
            source ~/.bash_profile
            bison -V
            which bison
     - name: Build Release Version
-      run: make
+      run: |
+           echo 'export PATH="/usr/local/opt/bison/bin:$PATH"' >> ~/.bash_profile
+           source ~/.bash_profile
+           bison -V
+           which bison
+           make
     - name: Build Debug Version
-      run: make debug
+      run: |
+           echo 'export PATH="/usr/local/opt/bison/bin:$PATH"' >> ~/.bash_profile
+           source ~/.bash_profile
+           bison -V
+           which bison
+           make debug
     - name: Unit test
       run: make test
   Ubuntu_18_04:
