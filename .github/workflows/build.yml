@@ -45,7 +45,13 @@ jobs:
            brew install bison
            bison -V
            which bison
-           echo 'export PATH="/usr/local/opt/bison/bin:$PATH"' >> ~/.bash_profile
+           brew unlink bison
+           brew link bison --force
+           bison -V
+           which bison
+           source ~/.bash_profile
+           bison -V
+           which bison
     - name: Build Release Version
       run: make
     - name: Build Debug Version
