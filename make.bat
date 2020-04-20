@@ -16,13 +16,13 @@
 :: 
 
 @echo off
-set SORT_DIR=%~dp0
+set TSL_DIR=%~dp0
 
 rem reset all variables first
-call "%SORT_DIR%\build-files\win\reset_variables.cmd"
+call "%TSL_DIR%\build-files\win\reset_variables.cmd"
 
 rem parse arguments
-call "%SORT_DIR%\build-files\win\parse_arguments.cmd" %*
+call "%TSL_DIR%\build-files\win\parse_arguments.cmd" %*
 if errorlevel 1 goto EOF
 
 if "%CLEAN%" == "1" (

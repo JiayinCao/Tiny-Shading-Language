@@ -22,14 +22,14 @@
 #elif defined(__linux__)
     #define TSL_ON_LINUX
 
-    // Make sure the compiler is C++14 compatible. Otherwise, make it clear that it is necessary to compile SORT in an error message.
+    // Make sure the compiler is C++14 compatible. Otherwise, make it clear that it is necessary to compile TSL in an error message.
     #if (__cplusplus < 201300L)
     #  error "TSL heavily uses features of C++14/11, please make sure you have a C++14 compatible compiler."
     #endif
 #elif defined(__APPLE__)
     #define TSL_ON_MAC
 
-        // Make sure the compiler is C++14 compatible. Otherwise, make it clear that it is necessary to compile SORT in an error message.
+        // Make sure the compiler is C++14 compatible. Otherwise, make it clear that it is necessary to compile TSL in an error message.
     #if (__cplusplus < 201300L)
     #  error "TSL heavily uses features of C++14/11, please make sure you have a C++14 compatible compiler."
     #endif

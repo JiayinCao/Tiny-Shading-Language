@@ -19,11 +19,26 @@
 
 extern AstNode* g_program;
 
-TEST(AST, FirstTry) {
+TEST(AST, SingleParameter_Function) {
     validate_shader(R"(
-        shader func(){
+        int func( int catch_my_name = 0 ){
         }
     )");
 
     EXPECT_NE(g_program, nullptr);
+
+    const AstNode_Function* func = dynamic_cast<const AstNode_Function*>(g_program);
+    EXPECT_NE(func, nullptr);
+}
+
+TEST(AST, Parameters_Function) {
+    validate_shader(R"(
+        int func( int catch_my_name = 0 , int gg = 0 ){
+        }
+    )");
+
+    EXPECT_NE(g_program, nullptr);
+
+    const AstNode_Function* func = dynamic_cast<const AstNode_Function*>(g_program);
+    EXPECT_NE(func, nullptr);
 }

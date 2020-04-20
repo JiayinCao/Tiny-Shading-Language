@@ -110,7 +110,7 @@
 %token WHILE			"while"
 %token DO				"do"
 
-%type <p> PROGRAM
+%type <p> PROGRAM FUNCTION_ARGUMENT_DECL FUNCTION_ARGUMENT_DECLS SHADER_FUNCTION_ARGUMENT_DECLS
 
 %nonassoc IF_THEN
 %nonassoc ELSE
@@ -173,19 +173,17 @@ GLOBAL_STATEMENT:
 
 // Shader is the only unit that can be exposed in the group.
 SHADER_DEF:
-	SHADER_FUNC_ID ID "(" ")" FUNCTION_BODY {
-		AstNode_Shader *p = new AstNode_Shader();
-        p->name = std::string($2);
-        g_program = p;
-	}
-	|
 	SHADER_FUNC_ID ID "(" SHADER_FUNCTION_ARGUMENT_DECLS ")" FUNCTION_BODY {
-		AstNode_Shader *p = new AstNode_Shader();
-        p->name = std::string($2);
-        g_program = p;
+		//AstNode_Shader *p = new AstNode_Shader($2);
+        //g_program = p;
 	};
 
 SHADER_FUNCTION_ARGUMENT_DECLS:
+	/* empty */
+	{
+		$$ = nullptr;
+	}
+	|
 	SHADER_FUNCTION_ARGUMENT_DECL{
 	}
 	|
@@ -206,22 +204,36 @@ ARGUMENT_METADATA:
 // Standard function definition
 FUNCTION_DEF:
 	TYPE ID "(" FUNCTION_ARGUMENT_DECLS ")" FUNCTION_BODY {
+		const AstNode* variables = $4;
+		g_program = new AstNode_Function($2, AstNode::CastType<AstNode_Variable>(variables));
 	};
 
 FUNCTION_ARGUMENT_DECLS:
-	{}
+	/* empty */
+	{
+		$$ = nullptr;
+	}
 	|
-	FUNCTION_ARGUMENT_DECL{
+	FUNCTION_ARGUMENT_DECL
+	{
+		$$ = $1;
 	}
 	|
 	FUNCTION_ARGUMENT_DECL "," FUNCTION_ARGUMENT_DECLS{
+		AstNode* node_arg = $1;
+		AstNode* node_args = $3;
+		$$ = node_arg->Append( node_args );
 	};
 
 FUNCTION_ARGUMENT_DECL:
 	TYPE ID {
+		AstNode_Variable* node = new AstNode_Variable($2);
+		$$ = node;
 	}
 	|
 	TYPE ID "=" EXPRESSION {
+		AstNode_Variable* node = new AstNode_Variable($2);
+		$$ = node;
 	};
 
 FUNCTION_BODY:
