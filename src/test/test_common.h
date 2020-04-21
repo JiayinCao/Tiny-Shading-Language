@@ -26,22 +26,24 @@ struct yy_buffer_state;
 typedef yy_buffer_state* YY_BUFFER_STATE;
 
 int yylex_init(void**);
-int yyparse(void*);
+int yyparse(struct Tsl_Scanner*);
 int yylex_destroy(void*);
 YY_BUFFER_STATE yy_scan_string(const char* yystr, void* yyscanner);
 void makeVerbose(int verbose);
 
-inline void validate_shader(const char* shader_source, bool valid = true ) {
-    void* parser = nullptr;
-    yylex_init(&parser);
+inline void validate_shader(const char* shader_source, bool valid = true , Tsl_Scanner* scanner = nullptr ) {
+    Tsl_Scanner local_scanner;
+    if (!scanner)
+        scanner = &local_scanner;
+    yylex_init(&scanner->scanner);
 
-    yy_scan_string(shader_source, parser);
+    yy_scan_string(shader_source, scanner->scanner);
     if (valid) {
         makeVerbose(true);
-        EXPECT_EQ(yyparse(parser), 0);
+        EXPECT_EQ(yyparse(scanner), 0);
     } else {
         makeVerbose(false); // surpress the error message
-        EXPECT_NE(yyparse(parser), 0);
+        EXPECT_NE(yyparse(scanner), 0);
     }
-    yylex_destroy(parser);
+    yylex_destroy(scanner->scanner);
 }

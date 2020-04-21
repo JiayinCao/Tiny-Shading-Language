@@ -23,6 +23,11 @@
 
 TSL_NAMESPACE_ENTER
 
+struct Tsl_Scanner {
+    void* scanner;
+    class AstNode* root = nullptr;
+};
+
 class AstNode {
 public:
     virtual ~AstNode() = default;

@@ -17,28 +17,28 @@
 
 #include "test_common.h"
 
-extern AstNode* g_program;
-
 TEST(AST, SingleParameter_Function) {
+    Tsl_Scanner scanner;
     validate_shader(R"(
         int func( int catch_my_name = 0 ){
         }
-    )");
+    )" , true , &scanner);
 
-    EXPECT_NE(g_program, nullptr);
+    EXPECT_NE(scanner.root, nullptr);
 
-    const AstNode_Function* func = dynamic_cast<const AstNode_Function*>(g_program);
+    const AstNode_Function* func = dynamic_cast<const AstNode_Function*>(scanner.root);
     EXPECT_NE(func, nullptr);
 }
 
 TEST(AST, Parameters_Function) {
+    Tsl_Scanner scanner;
     validate_shader(R"(
         int func( int catch_my_name = 0 , int gg = 0 ){
         }
-    )");
+    )", true, &scanner);
 
-    EXPECT_NE(g_program, nullptr);
+    EXPECT_NE(scanner.root, nullptr);
 
-    const AstNode_Function* func = dynamic_cast<const AstNode_Function*>(g_program);
+    const AstNode_Function* func = dynamic_cast<const AstNode_Function*>(scanner.root);
     EXPECT_NE(func, nullptr);
 }

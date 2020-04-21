@@ -28,13 +28,11 @@
 
 	USE_TSL_NAMESPACE
 
-	int yylex( union YYSTYPE *,struct YYLTYPE *,void * );
-    void yyerror(struct YYLTYPE* loc, void *scanner, char const *str);
-	int g_verbose = 0;	// somehow bool is not working here.
-	extern int yylineno;
+	#define scanner tsl_scanner->scanner
 
-	/* global variables which can be used in other .c .h */
-	AstNode *g_program = nullptr;
+	int yylex( union YYSTYPE *,struct YYLTYPE *,void * );
+    void yyerror(struct YYLTYPE* loc, void *tsl_scanner, char const *str);
+	int g_verbose = 0;	// somehow bool is not working here.
 %}
 
 /* definitions of tokens and types passed by FLEX */
@@ -48,7 +46,7 @@
 %locations
 %define api.pure
 %lex-param {void * scanner}
-%parse-param {void * scanner}
+%parse-param {struct Tsl_Scanner * tsl_scanner}
 
 %token <s> ID
 %token <i> INT_NUM
@@ -177,8 +175,8 @@ GLOBAL_STATEMENT:
 // Shader is the only unit that can be exposed in the group.
 SHADER_DEF:
 	SHADER_FUNC_ID ID "(" SHADER_FUNCTION_ARGUMENT_DECLS ")" FUNCTION_BODY {
-		//AstNode_Shader *p = new AstNode_Shader($2);
-        //g_program = p;
+		AstNode_Shader *p = new AstNode_Shader($2);
+		tsl_scanner->root = p;
 	};
 
 SHADER_FUNCTION_ARGUMENT_DECLS:
@@ -208,7 +206,7 @@ ARGUMENT_METADATA:
 FUNCTION_DEF:
 	TYPE ID "(" FUNCTION_ARGUMENT_DECLS ")" FUNCTION_BODY {
 		const AstNode* variables = $4;
-		g_program = new AstNode_Function($2, AstNode::CastType<AstNode_Variable>(variables));
+		tsl_scanner->root = new AstNode_Function($2, AstNode::CastType<AstNode_Variable>(variables));
 	};
 
 FUNCTION_ARGUMENT_DECLS:
@@ -576,7 +574,7 @@ TYPE:
 	};
 %%
 
-void yyerror(struct YYLTYPE* loc, void* scanner, char const * str){
+void yyerror(struct YYLTYPE* loc, void* x, char const * str){
 	if(!g_verbose)
 		return;
 
