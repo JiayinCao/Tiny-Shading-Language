@@ -32,6 +32,24 @@
   #if __cplusplus > 199711L
     #define register      // Deprecated in C++11.
   #endif  // #if __cplusplus > 199711L
+
+    #define YY_USER_ACTION \
+        {\
+            yylloc->first_line   = yylloc->last_line;\
+            yylloc->first_column = yylloc->last_column;\
+            int curr_line = yylloc->first_line;\
+            int curr_col = yylloc->first_column;\
+            for(char* s = yytext; *s != '\0'; s++){\
+                if(*s == '\n'){\
+                    curr_line++;\
+                    curr_col = 1;\
+                }else{\
+                    curr_col++;\
+                }\
+            }\
+            yylloc->last_line   = curr_line;\
+            yylloc->last_column = curr_col - 1;\
+        }
 %}
 
 %option outfile="generated_src/compiled_lex.cpp"
