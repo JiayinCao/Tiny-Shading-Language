@@ -15,6 +15,49 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
+#if 0
+
+// this is just for verification purpose on Mac and Ubunt, this will be removed shortly after I configure LLVM properly on all platforms
+
+#include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/Verifier.h"
+#include <algorithm>
+#include <cctype>
+#include <cstdio>
+#include <cstdlib>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+#include <iostream>
+using namespace llvm;
+
+static LLVMContext TheContext;
+
+
+int main(int argc, char** argv) {
+
+    Module* TheModule = new Module("my cool jit", TheContext);
+
+    if (TheModule != nullptr)
+        std::cout << "win" << std::endl;
+    else
+        std::cout << "faii" << std::endl;
+
+    return 0;
+}
+
+#else
+
 #include <iostream>
 #include "include/tslversion.h"
 #include "thirdparty/gtest/gtest.h"
@@ -25,3 +68,5 @@ int main(int argc, char** argv){
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
+
+#endif
