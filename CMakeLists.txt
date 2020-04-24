@@ -77,14 +77,20 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${TSL_SOURCE_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "${TSL_SOURCE_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${TSL_SOURCE_DIR}/bin")
 
-if (WIN32)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244 /wd4146 /wd4267 /wd4141 /wd4624" )
+if (TSL_PLATFORM_WIN)
+    set(CMAKE_CXX_FLAGS "'llvm-config ${CMAKE_CXX_FLAGS} /wd4244 /wd4146 /wd4267 /wd4141 /wd4624" )
 endif()
 
-if (WIN32)
+if (TSL_PLATFORM_WIN)
     set(LLVM_INCLUDE_DIR "${TSL_SOURCE_DIR}/dependencies/llvm/include")
     set(LLVM_LIB_DIR     "${TSL_SOURCE_DIR}/dependencies/llvm/lib")
     set(LLVM_LIBS        "LLVMCore.lib" "LLVMSupport.lib" "LLVMBinaryFormat.lib" "LLVMRemarks.lib" "LLVMBitstreamReader.lib" )
+elseif(TSL_PLATFORM_MAC)
+    set(LLVM_INCLUDE_DIR "${TSL_SOURCE_DIR}/dependencies/llvm/include")
+    set(LLVM_LIB_DIR     "${TSL_SOURCE_DIR}/dependencies/llvm/lib")
+    set(LLVM_LIBS        "libLLVMCore.a" "libLLVMSupport.a" "libLLVMBinaryFormat.a" "libLLVMRemarks.a" "libLLVMBitstreamReader.a" "libLLVMDemangle.a")
+elseif(TSL_PLATFORM_LINUX)
+    # to be done
 endif()
 
 # default including folders
@@ -102,7 +108,7 @@ add_definitions( -DYYERROR_VERBOSE )
 # Generated source code
 set(generated_src ${TSL_SOURCE_DIR}/generated_src/compiled_lex.cpp ${TSL_SOURCE_DIR}/generated_src/compiled_grammer.cpp ${TSL_SOURCE_DIR}/generated_src/compiled_grammer.hpp)
 
-if (WIN32)
+if (TSL_PLATFORM_WIN)
     add_executable(TSL ${all_files} ${generated_src})
     add_custom_command( OUTPUT ${generated_src}
                         COMMAND cmd /c make generate_src
