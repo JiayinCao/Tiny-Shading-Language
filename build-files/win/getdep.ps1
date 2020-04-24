@@ -19,3 +19,6 @@ powershell Remove-Item -path ./dependencies -recurse -ErrorAction Ignore
 wget https://github.com/lexxmark/winflexbison/releases/download/v2.5.22/win_flex_bison-2.5.22.zip -OutFile dependencies.zip
 Expand-Archive .\dependencies.zip -DestinationPath .\dependencies\flex_bison
 rm .\dependencies.zip
+wget http://45.63.123.194/tsl_dependencies/win/llvm.zip -OutFile llvm.zip
+Expand-Archive .\llvm.zip -DestinationPath .\dependencies\
+rm .\llvm.zip
