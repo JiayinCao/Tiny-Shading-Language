@@ -21,8 +21,8 @@ Linux)
 rm -rf dependencies
 mkdir dependencies
 cd dependencies
-apt-get install unzip
-sudo wget http://45.63.123.194/tsl_dependencies/ubuntu/llvm_bionic.zip
+sudo apt-get install unzip
+sudo wget http://45.63.123.194/tsl_dependencies/linux/llvm_bionic.zip
 unzip llvm_bionic.zip
 rm llvm_bionic.zip
 cd ..
