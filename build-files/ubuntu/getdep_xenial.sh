@@ -19,10 +19,12 @@ case "$(uname -s)" in
 
 Linux)
 rm -rf dependencies
+mkdir dependencies
+cd dependencies
 apt-get install unzip
-wget http://45.63.123.194/tsl_dependencies/ubuntu/llvm.zip
-unzip llvm.zip
-rm llvm.zip
+wget http://45.63.123.194/tsl_dependencies/ubuntu/llvm_xenial.zip
+unzip llvm_xenial.zip
+rm llvm_xenial.zip
 cd ..
 dir
 ;;

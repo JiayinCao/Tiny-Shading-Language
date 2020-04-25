@@ -20,7 +20,7 @@ jobs:
       id: cache-dep
       with:
         path: ${{ steps.cache-dir.outputs.dir }}/dependencies
-        key: Windows-dep-ver-1
+        key: Windows-dep-ver-2
     - name: Install Dependencies
       if: steps.cache-dep.outputs.cache-hit != 'true'
       run: make update_dep
@@ -52,7 +52,7 @@ jobs:
       id: cache-dep
       with:
         path: ${{ steps.cache-dir.outputs.dir }}/dependencies
-        key: MacOS-dep-ver-1
+        key: MacOS-dep-ver-2
     - name: Install Dependencies
       if: steps.cache-dep.outputs.cache-hit != 'true'
       run: make update_dep
@@ -79,6 +79,19 @@ jobs:
       run: |
            sudo apt-get install flex
            sudo apt-get install bison
+    - name: Get Cache Directory
+      id: cache-dir
+      run: |
+           echo "::set-output name=dir::$(pwd)"
+    - name: Load Dependencies from Cache
+      uses: actions/cache@v1
+      id: cache-dep
+      with:
+        path: ${{ steps.cache-dir.outputs.dir }}/dependencies
+        key: MacOS-dep-ver-2
+    - name: Install Dependencies
+      if: steps.cache-dep.outputs.cache-hit != 'true'
+      run: make update_dep
     - name: Build Release Version
       run: make
     - name: Build Debug Version
@@ -94,6 +107,19 @@ jobs:
       run: |
            sudo apt-get install flex
            sudo apt-get install bison
+    - name: Get Cache Directory
+      id: cache-dir
+      run: |
+           echo "::set-output name=dir::$(pwd)"
+    - name: Load Dependencies from Cache
+      uses: actions/cache@v1
+      id: cache-dep
+      with:
+        path: ${{ steps.cache-dir.outputs.dir }}/dependencies
+        key: MacOS-dep-ver-0
+    - name: Install Dependencies
+      if: steps.cache-dep.outputs.cache-hit != 'true'
+      run: make update_dep
     - name: Build Release Version
       run: make
     - name: Build Debug Version

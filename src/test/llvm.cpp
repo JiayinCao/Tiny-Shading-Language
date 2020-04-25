@@ -15,13 +15,15 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-#include <iostream>
-#include "include/tslversion.h"
 #include "thirdparty/gtest/gtest.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+using namespace llvm;
 
-int main(int argc, char** argv){
-    std::cout << "--------------------------  " TSL_INTRO_STRING "  --------------------------" << std::endl;
-
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+// this test is purely just to verify llvm is properly setup.
+TEST(LLVM, LLVM_Configuration) {
+    llvm::LLVMContext TheContext;
+    llvm::Module* TheModule = new llvm::Module("my cool jit", TheContext);
+    EXPECT_NE(TheModule, nullptr);
+    delete TheModule;
 }
