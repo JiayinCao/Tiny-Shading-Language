@@ -27,16 +27,21 @@ endif
 
 # Ubuntu
 ifeq ($(OS), linux)
+	UPDATE_DEP_COMMAND = sh ./build-files/ubuntu/getdep.sh
+
+	# It looks like the library built on one verion of Ubuntu can be shared across multiple
+	# Then there is no need to separate the download anymore.
+
 	# Different Ubuntu have different version of libraries, we need to tell which version it is.
 	# I have only built dependencies for Ubuntu Xenial and Bionic. In order to build other versions,
 	# it is necessary to build the library first.
-	OS_VERS:=$(shell lsb_release -a 2>/dev/null | grep Description | awk '{ print $$2 "-" $$3 }')
-	ifeq ($(findstring Ubuntu-16,$(OS_VERS)),Ubuntu-16)
-		UPDATE_DEP_COMMAND = sh ./build-files/ubuntu/getdep_xenial.sh
-	endif
-	ifeq ($(findstring Ubuntu-18,$(OS_VERS)),Ubuntu-18)
-		UPDATE_DEP_COMMAND = sh ./build-files/ubuntu/getdep_bionic.sh
-	endif
+	#OS_VERS:=$(shell lsb_release -a 2>/dev/null | grep Description | awk '{ print $$2 "-" $$3 }')
+	#ifeq ($(findstring Ubuntu-16,$(OS_VERS)),Ubuntu-16)
+	#	UPDATE_DEP_COMMAND = sh ./build-files/ubuntu/getdep_xenial.sh
+	#endif
+	#ifeq ($(findstring Ubuntu-18,$(OS_VERS)),Ubuntu-18)
+	#	UPDATE_DEP_COMMAND = sh ./build-files/ubuntu/getdep_bionic.sh
+	#endif
 endif
 
 YELLOW=`tput setaf 3`
