@@ -92,10 +92,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${TSL_SOURCE_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "${TSL_SOURCE_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${TSL_SOURCE_DIR}/bin")
 
-if (TSL_PLATFORM_WIN)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244 /wd4146 /wd4267 /wd4141 /wd4624" )
-endif()
-
 # default including folders
 include_directories( "${TSL_SOURCE_DIR}/src" ${LLVM_INCLUDE_DIR} )
 
@@ -108,17 +104,10 @@ add_definitions( -DYYERROR_VERBOSE )
 # Generated source code
 set(generated_src ${TSL_SOURCE_DIR}/generated_src/compiled_lex.cpp ${TSL_SOURCE_DIR}/generated_src/compiled_grammer.cpp ${TSL_SOURCE_DIR}/generated_src/compiled_grammer.hpp)
 
-if (TSL_PLATFORM_WIN)
-    add_executable(TSL ${all_files} ${generated_src})
-    add_custom_command( OUTPUT ${generated_src}
-                        COMMAND cmd /c make generate_src
-                        WORKING_DIRECTORY ${TSL_SOURCE_DIR})
-else()
-    add_executable(TSL ${all_files} ${generated_src})
-    add_custom_command( OUTPUT ${generated_src}
-                        COMMAND make generate_src
-                        WORKING_DIRECTORY ${TSL_SOURCE_DIR})
-endif()
+add_executable(TSL ${all_files} ${generated_src})
+add_custom_command( OUTPUT ${generated_src}
+                    COMMAND make generate_src
+                    WORKING_DIRECTORY ${TSL_SOURCE_DIR})
 
 # Separate folder for the generated files
 source_group( "generated src" FILES ${generated_src} )
@@ -127,8 +116,13 @@ source_group( "generated src" FILES ${generated_src} )
 set_target_properties( TSL PROPERTIES RELEASE_OUTPUT_NAME "tsl_r" )
 set_target_properties( TSL PROPERTIES DEBUG_OUTPUT_NAME "tsl_d" )
 
-if ( TSL_PLATFORM_MAC OR TSL_PLATFORM_LINUX)
+if (TSL_PLATFORM_MAC OR TSL_PLATFORM_LINUX)
    set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -pthread -O3")
+endif()
+
+if (TSL_PLATFORM_WIN)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244 /wd4146 /wd4267 /wd4141 /wd4624 /MD" )
+    set_target_properties( TSL PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} /MD" )
 endif()
 
 # specify the llvm library to link
@@ -136,3 +130,6 @@ llvm_map_components_to_libnames(llvm_libs core)
 
 # link llvm libaries
 target_link_libraries(TSL ${llvm_libs})
+
+# hide the llvm generated project
+set_target_properties (intrinsics_gen PROPERTIES FOLDER LLVM_Generated)
