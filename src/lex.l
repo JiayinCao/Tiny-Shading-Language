@@ -26,7 +26,9 @@
   #include <string.h>
   #include <stdio.h>
   #include <stdlib.h>
+  #include "include/tslversion.h"
   #include "compiler/platform.h"
+  #include "compiler/compiler_impl.h"
   #include "compiled_grammer.hpp"
 
   #if __cplusplus > 199711L

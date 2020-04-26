@@ -25,13 +25,14 @@
 	#include <string>
 	#include "include/tslversion.h"
 	#include "compiler/ast.h"
+	#include "compiler/compiler_impl.h"
 
 	USE_TSL_NAMESPACE
 
-	#define scanner tsl_scanner->scanner
+	#define scanner tsl_compiler->getScanner()
 
 	int yylex( union YYSTYPE *,struct YYLTYPE *,void * );
-    void yyerror(struct YYLTYPE* loc, void *tsl_scanner, char const *str);
+    void yyerror(struct YYLTYPE* loc, void *tsl_compiler, char const *str);
 	int g_verbose = 0;	// somehow bool is not working here.
 %}
 
@@ -46,7 +47,7 @@
 %locations
 %define api.pure
 %lex-param {void * scanner}
-%parse-param {struct Tsl_Scanner * tsl_scanner}
+%parse-param {class Tsl_Namespace::TslCompiler_Impl * tsl_compiler}
 
 %token <s> ID
 %token <i> INT_NUM
@@ -176,7 +177,7 @@ GLOBAL_STATEMENT:
 SHADER_DEF:
 	SHADER_FUNC_ID ID "(" SHADER_FUNCTION_ARGUMENT_DECLS ")" FUNCTION_BODY {
 		AstNode_Shader *p = new AstNode_Shader($2);
-		tsl_scanner->root = p;
+		tsl_compiler->pushRootAst(p);
 	};
 
 SHADER_FUNCTION_ARGUMENT_DECLS:
@@ -206,7 +207,8 @@ ARGUMENT_METADATA:
 FUNCTION_DEF:
 	TYPE ID "(" FUNCTION_ARGUMENT_DECLS ")" FUNCTION_BODY {
 		const AstNode* variables = $4;
-		tsl_scanner->root = new AstNode_Function($2, AstNode::CastType<AstNode_Variable>(variables));
+		AstNode* root = new AstNode_Function($2, AstNode::castType<AstNode_Variable>(variables));
+		tsl_compiler->pushRootAst(root);
 	};
 
 FUNCTION_ARGUMENT_DECLS:
@@ -223,7 +225,7 @@ FUNCTION_ARGUMENT_DECLS:
 	FUNCTION_ARGUMENT_DECL "," FUNCTION_ARGUMENT_DECLS{
 		AstNode* node_arg = $1;
 		AstNode* node_args = $3;
-		$$ = node_arg->Append( node_args );
+		$$ = node_arg->append( node_args );
 	};
 
 FUNCTION_ARGUMENT_DECL:

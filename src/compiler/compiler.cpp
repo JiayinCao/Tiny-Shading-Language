@@ -15,20 +15,20 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-#pragma once
+#include "compiler.h"
+#include "compiler_impl.h"
 
-#include "thirdparty/gtest/gtest.h"
-#include "compiler/compiler.h"
+TSL_NAMESPACE_ENTER
 
-USE_TSL_NAMESPACE
-
-inline void validate_shader(const char* shader_source, bool valid = true, TslCompiler* compiler = nullptr) {
-    TslCompiler local_compiler;
-    if (!compiler)
-        compiler = &local_compiler;
-
-    std::string dummy;
-    const bool ret = compiler->compile(shader_source, dummy);
-
-    EXPECT_EQ(ret, valid);
+TslCompiler::TslCompiler(){
+    m_compiler = std::make_unique<TslCompiler_Impl>();
 }
+
+TslCompiler::~TslCompiler() {
+}
+
+bool TslCompiler::compile(const char* source_code, std::string& tso) const {
+    return m_compiler->compile(source_code, tso);
+}
+
+TSL_NAMESPACE_LEAVE

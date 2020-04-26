@@ -23,23 +23,18 @@
 
 TSL_NAMESPACE_ENTER
 
-struct Tsl_Scanner {
-    void* scanner;
-    class AstNode* root = nullptr;
-};
-
 class AstNode {
 public:
     virtual ~AstNode() = default;
 
     // Append a sibling to the ast node.
-    AstNode* Append(const AstNode* node) {
+    AstNode* append(const AstNode* node) {
         next_sibling = node;
         return this;
     }
     
     template<class T>
-    static T* CastType(AstNode* node) {
+    static T* castType(AstNode* node) {
 #ifndef TSL_FINAL
         if (!node)
             return nullptr;
@@ -54,7 +49,7 @@ public:
     }
 
     template<class T>
-    static const T* CastType(const AstNode* node) {
+    static const T* castType(const AstNode* node) {
 #ifndef TSL_FINAL
         if (!node)
             return nullptr;

@@ -62,3 +62,12 @@ TEST(Numbers, Integer) {
         }
     )");
 }
+
+TEST(Numbers, Number_Expression) {
+    validate_shader(R"(
+        shader func(){
+            2;
+            .45;
+        }
+    )");
+}
