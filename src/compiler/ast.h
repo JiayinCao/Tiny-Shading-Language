@@ -75,22 +75,94 @@ private:
     std::string name;
 };
 
-class AstNode_Variable : public AstNode {
+class AstNode_Expression : public AstNode {
+
+};
+
+class AstNode_Literal_Int : public AstNode_Expression {
 public:
-    AstNode_Variable(const char* name) : var_name(name) {}
+    AstNode_Literal_Int(int val) : m_val(val) {}
+
+private:
+    int m_val;
+};
+
+class AstNode_Literal_Flt : public AstNode_Expression {
+public:
+    AstNode_Literal_Flt(float val) : m_val(val) {}
+
+private:
+    float m_val;
+};
+
+class AstNode_Binary : public AstNode_Expression {
+public:
+    AstNode_Binary(AstNode_Expression* left, AstNode_Expression* right) :m_left(left), m_right(right) {}
 
 protected:
-    std::string var_name;
+    AstNode_Expression* m_left;
+    AstNode_Expression* m_right;
+};
+
+class AstNode_Binary_Add : public AstNode_Binary {
+public:
+    AstNode_Binary_Add(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+};
+
+class AstNode_Binary_Minus : public AstNode_Binary {
+public:
+    AstNode_Binary_Minus(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+};
+
+class AstNode_Binary_Multi : public AstNode_Binary {
+public:
+    AstNode_Binary_Multi(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+};
+
+class AstNode_Binary_Div : public AstNode_Binary {
+public:
+    AstNode_Binary_Div(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+};
+
+class AstNode_Binary_Mod : public AstNode_Binary {
+public:
+    AstNode_Binary_Mod(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+};
+
+class AstNode_Variable : public AstNode_Expression {
+public:
+    AstNode_Variable(const char* name) : m_name(name) {}
+
+private:
+    std::string m_name;
 };
 
 class AstNode_Function : public AstNode {
 public:
-    AstNode_Function(const char* func_name, const AstNode_Variable* variables) : name(func_name), variables(variables) {
-    }
+    AstNode_Function(const char* func_name, const AstNode_Variable* variables) : m_name(func_name), m_variables(variables) {}
 
 private:
-    std::string name;
-    const AstNode_Variable* variables;
+    std::string m_name;
+    const AstNode_Variable* m_variables;
+};
+
+class AstNode_FunctionCall : public AstNode_Expression {
+public:
+    AstNode_FunctionCall(const char* func_name, AstNode_Expression* variables) : m_name(func_name), m_variables(variables) {}
+
+private:
+    std::string m_name;
+    AstNode_Expression* m_variables;
+};
+
+class AstNode_Ternary : public AstNode_Expression {
+public:
+    AstNode_Ternary(AstNode_Expression* condition, AstNode_Expression* true_exp, AstNode_Expression* false_exp) :m_condition(condition), m_true_expr(true_exp), m_false_expr(false_exp) {}
+
+private:
+    AstNode_Expression* m_condition;
+    AstNode_Expression* m_true_expr;
+    AstNode_Expression* m_false_expr;
 };
 
 TSL_NAMESPACE_LEAVE

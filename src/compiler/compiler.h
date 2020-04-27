@@ -36,9 +36,6 @@ public:
     //! Constructor does nothing but to construct the m_compiler data.
     TslCompiler();
 
-    //! Default destructor.
-    ~TslCompiler();
-
     //! @brief  Compile a shader.
     //!
     //! Ideally, this should be thread-safe. Flex and Bison support it, as long as I can make sure LLVM supports too,

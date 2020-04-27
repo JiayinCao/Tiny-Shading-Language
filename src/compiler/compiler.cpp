@@ -24,9 +24,6 @@ TslCompiler::TslCompiler(){
     m_compiler = std::make_unique<TslCompiler_Impl>();
 }
 
-TslCompiler::~TslCompiler() {
-}
-
 bool TslCompiler::compile(const char* source_code, std::string& tso) const {
     return m_compiler->compile(source_code, tso);
 }

@@ -112,7 +112,8 @@
 %token WHILE			"while"
 %token DO				"do"
 
-%type <p> PROGRAM FUNCTION_ARGUMENT_DECL FUNCTION_ARGUMENT_DECLS SHADER_FUNCTION_ARGUMENT_DECLS
+%type <p> PROGRAM FUNCTION_ARGUMENT_DECL FUNCTION_ARGUMENT_DECLS SHADER_FUNCTION_ARGUMENT_DECLS VARIABLE_LVALUE ID_OR_FIELD FUNCTION_ARGUMENTS
+%type <p> EXPRESSION_COMPOUND EXPRESSION_CONST EXPRESSION_BINARY EXPRESSION EXPRESSION_VARIABLE EXPRESSION_FUNCTION_CALL EXPRESSION_TERNARY EXPRESSION_COMPOUND_OPT EXPRESSION_SCOPED
 
 %nonassoc IF_THEN
 %nonassoc ELSE
@@ -280,7 +281,7 @@ STATEMENT_RETURN:
 	};
 
 STATEMENT_EXPRESSION_OPT:
-	COMPOUND_EXPRESSION {
+	EXPRESSION_COMPOUND {
 	}
 	|
 	/* empty */ {
@@ -305,47 +306,51 @@ VARIABLE_DECLARATION:
 	};
 
 STATEMENT_CONDITIONAL:
-	"if" "(" COMPOUND_EXPRESSION ")" STATEMENT %prec IF_THEN {
+	"if" "(" EXPRESSION_COMPOUND ")" STATEMENT %prec IF_THEN {
 	}
 	|
-	"if" "(" COMPOUND_EXPRESSION ")" STATEMENT "else" STATEMENT {
+	"if" "(" EXPRESSION_COMPOUND ")" STATEMENT "else" STATEMENT {
 	};
 	
 STATEMENT_LOOP:
-	"while" "(" COMPOUND_EXPRESSION ")" STATEMENT{
+	"while" "(" EXPRESSION_COMPOUND ")" STATEMENT{
 	}
 	|
-	"do" STATEMENT "while" "(" COMPOUND_EXPRESSION ")" ";"{
+	"do" STATEMENT "while" "(" EXPRESSION_COMPOUND ")" ";"{
 	}
 	|
-	"for" "(" FOR_INIT_STATEMENT COMPOUND_EXPRESSION_OPT ";" COMPOUND_EXPRESSION_OPT ")" STATEMENT {
+	"for" "(" FOR_INIT_STATEMENT EXPRESSION_COMPOUND_OPT ";" EXPRESSION_COMPOUND_OPT ")" STATEMENT {
 	};
 	
 FOR_INIT_STATEMENT:
 	";"{
 	}
 	|
-	COMPOUND_EXPRESSION ";"{
+	EXPRESSION_COMPOUND ";"{
 	}
 	|
 	STATEMENT_VARIABLES_DECLARATIONS {
 	};
 	
 STATEMENT_COMPOUND_EXPRESSION:
-	COMPOUND_EXPRESSION ";" {
+	EXPRESSION_COMPOUND ";" {
 	}
 
-COMPOUND_EXPRESSION_OPT:
-	/* empty */ {}
+EXPRESSION_COMPOUND_OPT:
+	/* empty */ 
+	{
+		$$ = nullptr;
+	}
 	|
-	COMPOUND_EXPRESSION {
-	};
+	EXPRESSION_COMPOUND;
 
-COMPOUND_EXPRESSION:
-	EXPRESSION {
-	}
+EXPRESSION_COMPOUND:
+	EXPRESSION
 	| 
-	EXPRESSION "," COMPOUND_EXPRESSION {
+	EXPRESSION "," EXPRESSION_COMPOUND {
+		AstNode* exp = $1;
+		AstNode* extra_exp = $3;
+		$$ = exp->append( extra_exp );
 	};
 
 // Exrpession always carries a value so that it can be used as input for anything needs a value,
@@ -436,23 +441,42 @@ EXPRESSION_BINARY:
 	}
 	|
 	EXPRESSION "+" EXPRESSION {
+		AstNode_Expression* left = AstNode::castType<AstNode_Expression>($1);
+		AstNode_Expression* right = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_Binary_Add( left , right );
 	}
 	|
 	EXPRESSION "-" EXPRESSION {
+		AstNode_Expression* left = AstNode::castType<AstNode_Expression>($1);
+		AstNode_Expression* right = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_Binary_Minus( left , right );
 	}
 	|
 	EXPRESSION "*" EXPRESSION {
+		AstNode_Expression* left = AstNode::castType<AstNode_Expression>($1);
+		AstNode_Expression* right = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_Binary_Multi( left , right );
 	}
 	|
 	EXPRESSION "/" EXPRESSION{
+		AstNode_Expression* left = AstNode::castType<AstNode_Expression>($1);
+		AstNode_Expression* right = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_Binary_Div( left , right );
 	}
 	|
 	EXPRESSION "%" EXPRESSION{
+		AstNode_Expression* left = AstNode::castType<AstNode_Expression>($1);
+		AstNode_Expression* right = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_Binary_Mod( left , right );
 	};
 
 // Ternary operation support
 EXPRESSION_TERNARY:
 	EXPRESSION "?" EXPRESSION ":" EXPRESSION {
+		AstNode_Expression* cond = AstNode::castType<AstNode_Expression>($1);
+		AstNode_Expression* true_expr = AstNode::castType<AstNode_Expression>($3);
+		AstNode_Expression* false_expr = AstNode::castType<AstNode_Expression>($5);
+		$$ = new AstNode_Ternary( cond , true_expr , false_expr );
 	};
 
 // Assign an expression to a reference
@@ -493,30 +517,39 @@ EXPRESSION_ASSIGN:
 // Function call, this is only non-shader function. TSL doesn't allow calling shader function.
 EXPRESSION_FUNCTION_CALL:
 	ID "(" FUNCTION_ARGUMENTS ")" {
+		AstNode_Expression* args = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_FunctionCall( $1 , args );
 	};
 
 // None-shader function arguments
 FUNCTION_ARGUMENTS:
-	{}
-	|
-	EXPRESSION{
+	{
+		$$ = nullptr;
 	}
 	|
+	EXPRESSION
+	|
 	FUNCTION_ARGUMENTS "," EXPRESSION {
+		AstNode* node_arg = $1;
+		AstNode* node_args = $3;
+		$$ = node_arg->append( node_args );
 	};
 
 
 // Const literal
 EXPRESSION_CONST:
 	INT_NUM {
+		$$ = new AstNode_Literal_Int( $1 );
 	}
 	|
 	FLT_NUM {
+		$$ = new AstNode_Literal_Flt( $1 );
 	};
 
 // Scopped expression
 EXPRESSION_SCOPED:
-	"(" COMPOUND_EXPRESSION ")" {
+	"(" EXPRESSION_COMPOUND ")" {
+		$$ = $2;
 	};
 
 // This is for type casting
@@ -526,6 +559,7 @@ EXPRESSION_TYPECAST:
 
 EXPRESSION_VARIABLE:
 	VARIABLE_LVALUE{
+		
 	}
 	|
 	VARIABLE_LVALUE REC_OR_DEC {
@@ -543,14 +577,14 @@ REC_OR_DEC:
 
 // No up to two dimensional array supported for now.
 VARIABLE_LVALUE:
-	ID_OR_FIELD {
-	}
+	ID_OR_FIELD 
 	|
 	ID_OR_FIELD "[" EXPRESSION "]" {
 	};
 
 ID_OR_FIELD:
 	ID{
+		$$ = new AstNode_Variable($1);
 	}
 	|
 	VARIABLE_LVALUE "." ID {
