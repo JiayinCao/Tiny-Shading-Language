@@ -42,6 +42,7 @@
 	float						 f; /* floating point value cache. */
 	int							 i; /* integer value or enum values. */
 	const char					*s;	/* string values. */
+	char						 c; /* single char. */
 }
 
 %locations
@@ -113,7 +114,8 @@
 %token DO				"do"
 
 %type <p> PROGRAM FUNCTION_ARGUMENT_DECL FUNCTION_ARGUMENT_DECLS SHADER_FUNCTION_ARGUMENT_DECLS VARIABLE_LVALUE ID_OR_FIELD FUNCTION_ARGUMENTS
-%type <p> EXPRESSION_COMPOUND EXPRESSION_CONST EXPRESSION_BINARY EXPRESSION EXPRESSION_VARIABLE EXPRESSION_FUNCTION_CALL EXPRESSION_TERNARY EXPRESSION_COMPOUND_OPT EXPRESSION_SCOPED
+%type <p> EXPRESSION_COMPOUND EXPRESSION_CONST EXPRESSION_BINARY EXPRESSION EXPRESSION_VARIABLE EXPRESSION_FUNCTION_CALL EXPRESSION_TERNARY EXPRESSION_COMPOUND_OPT EXPRESSION_SCOPED EXPRESSION_ASSIGN EXPRESSION_UNARY
+%type <c> OP_UNARY
 
 %nonassoc IF_THEN
 %nonassoc ELSE
@@ -208,7 +210,7 @@ ARGUMENT_METADATA:
 FUNCTION_DEF:
 	TYPE ID "(" FUNCTION_ARGUMENT_DECLS ")" FUNCTION_BODY {
 		const AstNode* variables = $4;
-		AstNode* root = new AstNode_Function($2, AstNode::castType<AstNode_Variable>(variables));
+		AstNode* root = new AstNode_Function($2, AstNode::castType<AstNode_VariableRef>(variables));
 		tsl_compiler->pushRootAst(root);
 	};
 
@@ -231,12 +233,12 @@ FUNCTION_ARGUMENT_DECLS:
 
 FUNCTION_ARGUMENT_DECL:
 	TYPE ID {
-		AstNode_Variable* node = new AstNode_Variable($2);
+		AstNode_VariableRef* node = new AstNode_VariableRef($2);
 		$$ = node;
 	}
 	|
 	TYPE ID "=" EXPRESSION {
-		AstNode_Variable* node = new AstNode_Variable($2);
+		AstNode_VariableRef* node = new AstNode_VariableRef($2);
 		$$ = node;
 	};
 
@@ -356,26 +358,19 @@ EXPRESSION_COMPOUND:
 // Exrpession always carries a value so that it can be used as input for anything needs a value,
 // like if condition, function parameter, etc.
 EXPRESSION:
-	EXPRESSION_UNARY {
-	}
+	EXPRESSION_UNARY
 	|
-	EXPRESSION_BINARY {
-	}
+	EXPRESSION_BINARY
 	|
-	EXPRESSION_TERNARY {
-	}
+	EXPRESSION_TERNARY
 	|
-	EXPRESSION_ASSIGN {
-	}
+	EXPRESSION_ASSIGN
 	|
-	EXPRESSION_FUNCTION_CALL {
-	}
+	EXPRESSION_FUNCTION_CALL
 	|
-	EXPRESSION_CONST {
-	}
+	EXPRESSION_CONST
 	|
-	EXPRESSION_SCOPED {
-	}
+	EXPRESSION_SCOPED
 	|
 	EXPRESSION_TYPECAST {
 	}
@@ -385,59 +380,119 @@ EXPRESSION:
 
 EXPRESSION_UNARY:
 	OP_UNARY EXPRESSION %prec UMINUS_PREC {
+		AstNode_Expression* exp = AstNode::castType<AstNode_Expression>($2);
+		switch( $1 ){
+			case '+':
+				$$ = new AstNode_Unary_Pos(exp);	// it is still necessary to wrap something here to prevent this value from being a lvalue later.
+				break;
+			case '-':
+				$$ = new AstNode_Unary_Neg(exp);
+				break;
+			case '!':
+				$$ = new AstNode_Unary_Not(exp);
+				break;
+			case '~':
+				$$ = new AstNode_Unary_Compl(exp);
+				break;
+			default:
+				$$ = nullptr;
+		}
 	};
 	
 OP_UNARY:
 	"-" {
+		$$ = '-';
 	}
 	|
 	"+" {
+		$$ = '+';
 	}
 	|
 	"!" {
+		$$ = '!';
 	}
 	|
 	"~" {
+		$$ = '~';
 	};
 
 EXPRESSION_BINARY:
 	EXPRESSION "&&" EXPRESSION {
+		AstNode_Expression* left = AstNode::castType<AstNode_Expression>($1);
+		AstNode_Expression* right = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_Binary_And( left , right );
 	}
 	|
 	EXPRESSION "||" EXPRESSION {
+		AstNode_Expression* left = AstNode::castType<AstNode_Expression>($1);
+		AstNode_Expression* right = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_Binary_Or( left , right );
 	}
 	|
 	EXPRESSION "&" EXPRESSION {
+		AstNode_Expression* left = AstNode::castType<AstNode_Expression>($1);
+		AstNode_Expression* right = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_Binary_Bit_And( left , right );
 	}
 	|
 	EXPRESSION "|" EXPRESSION {
+		AstNode_Expression* left = AstNode::castType<AstNode_Expression>($1);
+		AstNode_Expression* right = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_Binary_Bit_Or( left , right );
 	}
 	|
 	EXPRESSION "^" EXPRESSION {
+		AstNode_Expression* left = AstNode::castType<AstNode_Expression>($1);
+		AstNode_Expression* right = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_Binary_Bit_Xor( left , right );
 	}
 	|
 	EXPRESSION "==" EXPRESSION {
+		AstNode_Expression* left = AstNode::castType<AstNode_Expression>($1);
+		AstNode_Expression* right = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_Binary_Eq( left , right );
 	}
 	|
 	EXPRESSION "!=" EXPRESSION {
+		AstNode_Expression* left = AstNode::castType<AstNode_Expression>($1);
+		AstNode_Expression* right = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_Binary_Ne( left , right );
 	}
 	|
 	EXPRESSION ">" EXPRESSION {
+		AstNode_Expression* left = AstNode::castType<AstNode_Expression>($1);
+		AstNode_Expression* right = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_Binary_G( left , right );
 	}
 	|
 	EXPRESSION "<" EXPRESSION {
+		AstNode_Expression* left = AstNode::castType<AstNode_Expression>($1);
+		AstNode_Expression* right = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_Binary_L( left , right );
 	}
 	|
 	EXPRESSION ">=" EXPRESSION {
+		AstNode_Expression* left = AstNode::castType<AstNode_Expression>($1);
+		AstNode_Expression* right = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_Binary_Ge( left , right );
 	}
 	|
 	EXPRESSION "<=" EXPRESSION {
+		AstNode_Expression* left = AstNode::castType<AstNode_Expression>($1);
+		AstNode_Expression* right = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_Binary_Le( left , right );
 	}
 	|
 	EXPRESSION "<<" EXPRESSION {
+		AstNode_Expression* left = AstNode::castType<AstNode_Expression>($1);
+		AstNode_Expression* right = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_Binary_Shl( left , right );
 	}
 	|
 	EXPRESSION ">>" EXPRESSION {
+		AstNode_Expression* left = AstNode::castType<AstNode_Expression>($1);
+		AstNode_Expression* right = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_Binary_Shr( left , right );
 	}
 	|
 	EXPRESSION "+" EXPRESSION {
@@ -482,36 +537,70 @@ EXPRESSION_TERNARY:
 // Assign an expression to a reference
 EXPRESSION_ASSIGN:
 	VARIABLE_LVALUE "=" EXPRESSION {
+		AstNode_Lvalue* var = AstNode::castType<AstNode_Lvalue>($1);
+		AstNode* p = $3;
+		AstNode_Expression* exp = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_ExpAssign_Eq( var , exp );
 	}
 	|
 	VARIABLE_LVALUE "+=" EXPRESSION {
+		AstNode_Lvalue* var = AstNode::castType<AstNode_Lvalue>($1);
+		AstNode_Expression* exp = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_ExpAssign_AddEq( var , exp );
 	}
 	|
 	VARIABLE_LVALUE "-=" EXPRESSION {
+		AstNode_Lvalue* var = AstNode::castType<AstNode_Lvalue>($1);
+		AstNode_Expression* exp = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_ExpAssign_MinusEq( var , exp );
 	}
 	|
 	VARIABLE_LVALUE "*=" EXPRESSION {
+		AstNode_Lvalue* var = AstNode::castType<AstNode_Lvalue>($1);
+		AstNode_Expression* exp = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_ExpAssign_MultiEq( var , exp );
 	}
 	|
 	VARIABLE_LVALUE "/=" EXPRESSION {
+		AstNode_Lvalue* var = AstNode::castType<AstNode_Lvalue>($1);
+		AstNode_Expression* exp = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_ExpAssign_DivEq( var , exp );
 	}
 	|
 	VARIABLE_LVALUE "%=" EXPRESSION {
+		AstNode_Lvalue* var = AstNode::castType<AstNode_Lvalue>($1);
+		AstNode_Expression* exp = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_ExpAssign_ModEq( var , exp );
 	}
 	|
 	VARIABLE_LVALUE "&=" EXPRESSION {
+		AstNode_Lvalue* var = AstNode::castType<AstNode_Lvalue>($1);
+		AstNode_Expression* exp = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_ExpAssign_AndEq( var , exp );
 	}
 	|
 	VARIABLE_LVALUE "|=" EXPRESSION {
+		AstNode_Lvalue* var = AstNode::castType<AstNode_Lvalue>($1);
+		AstNode_Expression* exp = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_ExpAssign_OrEq( var , exp );
 	}
 	|
 	VARIABLE_LVALUE "^=" EXPRESSION {
+		AstNode_Lvalue* var = AstNode::castType<AstNode_Lvalue>($1);
+		AstNode_Expression* exp = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_ExpAssign_XorEq( var , exp );
 	}
 	|
 	VARIABLE_LVALUE "<<=" EXPRESSION {
+		AstNode_Lvalue* var = AstNode::castType<AstNode_Lvalue>($1);
+		AstNode_Expression* exp = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_ExpAssign_ShlEq( var , exp );
 	}
 	|
 	VARIABLE_LVALUE ">>=" EXPRESSION {
+		AstNode_Lvalue* var = AstNode::castType<AstNode_Lvalue>($1);
+		AstNode_Expression* exp = AstNode::castType<AstNode_Expression>($3);
+		$$ = new AstNode_ExpAssign_ShrEq( var , exp );
 	};
 
 // Function call, this is only non-shader function. TSL doesn't allow calling shader function.
@@ -584,7 +673,7 @@ VARIABLE_LVALUE:
 
 ID_OR_FIELD:
 	ID{
-		$$ = new AstNode_Variable($1);
+		$$ = new AstNode_VariableRef($1);
 	}
 	|
 	VARIABLE_LVALUE "." ID {
