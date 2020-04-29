@@ -72,7 +72,7 @@ public:
     }
 
     // helper function to print the ast
-    virtual void print() const { /* this should be a virtual function once I have implemented every node. */ }
+    virtual void print() const = 0;
 
 protected:
     AstNode* m_next_sibling = nullptr;
@@ -124,97 +124,134 @@ protected:
 class AstNode_Binary_Add : public AstNode_Binary {
 public:
     AstNode_Binary_Add(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    void print() const override;
 };
 
 class AstNode_Binary_Minus : public AstNode_Binary {
 public:
     AstNode_Binary_Minus(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    void print() const override;
 };
 
 class AstNode_Binary_Multi : public AstNode_Binary {
 public:
     AstNode_Binary_Multi(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    void print() const override;
 };
 
 class AstNode_Binary_Div : public AstNode_Binary {
 public:
     AstNode_Binary_Div(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    void print() const override;
 };
 
 class AstNode_Binary_Mod : public AstNode_Binary {
 public:
     AstNode_Binary_Mod(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    void print() const override;
 };
 
 class AstNode_Binary_And : public AstNode_Binary {
 public:
     AstNode_Binary_And(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    void print() const override;
 };
 
 class AstNode_Binary_Or : public AstNode_Binary {
 public:
     AstNode_Binary_Or(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    void print() const override;
 };
 
 class AstNode_Binary_Eq : public AstNode_Binary {
 public:
     AstNode_Binary_Eq(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    void print() const override;
 };
 
 class AstNode_Binary_Ne : public AstNode_Binary {
 public:
     AstNode_Binary_Ne(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    void print() const override;
 };
 
 class AstNode_Binary_G : public AstNode_Binary {
 public:
     AstNode_Binary_G(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    void print() const override;
 };
 
 class AstNode_Binary_L : public AstNode_Binary {
 public:
     AstNode_Binary_L(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    void print() const override;
 };
 
 class AstNode_Binary_Ge : public AstNode_Binary {
 public:
     AstNode_Binary_Ge(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    void print() const override;
 };
 
 class AstNode_Binary_Le : public AstNode_Binary {
 public:
     AstNode_Binary_Le(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    void print() const override;
 };
 
 class AstNode_Binary_Shl : public AstNode_Binary {
 public:
     AstNode_Binary_Shl(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    void print() const override;
 };
 
 class AstNode_Binary_Shr : public AstNode_Binary {
 public:
     AstNode_Binary_Shr(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    void print() const override;
 };
 
 class AstNode_Binary_Bit_And : public AstNode_Binary {
 public:
     AstNode_Binary_Bit_And(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    void print() const override;
 };
 
 class AstNode_Binary_Bit_Or : public AstNode_Binary {
 public:
     AstNode_Binary_Bit_Or(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    void print() const override;
 };
 
 class AstNode_Binary_Bit_Xor : public AstNode_Binary {
 public:
     AstNode_Binary_Bit_Xor(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
-};
 
+    void print() const override;
+};
 
 class AstNode_FunctionCall : public AstNode_Expression {
 public:
     AstNode_FunctionCall(const char* func_name, AstNode_Expression* variables) : m_name(func_name), m_variables(variables) {}
+
+    void print() const override;
 
 private:
     std::string m_name;
@@ -224,6 +261,8 @@ private:
 class AstNode_Ternary : public AstNode_Expression {
 public:
     AstNode_Ternary(AstNode_Expression* condition, AstNode_Expression* true_exp, AstNode_Expression* false_exp) :m_condition(condition), m_true_expr(true_exp), m_false_expr(false_exp) {}
+
+    void print() const override;
 
 private:
     AstNode_Expression* m_condition;
@@ -238,6 +277,8 @@ class AstNode_Lvalue : public AstNode_Expression {
 class AstNode_VariableRef : public AstNode_Lvalue {
 public:
     AstNode_VariableRef(const char* name) : m_name(name) {}
+
+    void print() const override;
 
 private:
     std::string m_name;

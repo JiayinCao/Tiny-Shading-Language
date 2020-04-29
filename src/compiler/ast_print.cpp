@@ -50,6 +50,10 @@ void AstNode_Shader::print() const {
     std::cout << ")" << std::endl;
 }
 
+void AstNode_Ternary::print() const {
+    std::cout << m_condition << "?" << m_true_expr << ":" << m_false_expr;
+}
+
 void AstNode_Function::print() const {
     std::cout << m_name;
     std::cout << "(";
@@ -57,17 +61,111 @@ void AstNode_Function::print() const {
     bool first = true;
     AstNode* param_node = m_variables;
     while (param_node) {
-        param_node->print();
-
         if (!first)
             std::cout << " , ";
 
+        param_node->print();
         param_node = param_node->getSibling();
 
         first = false;
     }
 
     std::cout << ")" << std::endl;
+}
+
+void AstNode_FunctionCall::print() const {
+    std::cout << m_name;
+    std::cout << "(";
+
+    bool first = true;
+    AstNode* param_node = m_variables;
+    while (param_node) {
+        if (!first)
+            std::cout << " , ";
+
+        param_node->print();
+        param_node = param_node->getSibling();
+
+        first = false;
+    }
+
+    std::cout << ")" << std::endl;
+}
+
+void AstNode_VariableRef::print() const {
+    std::cout << m_name;
+}
+
+void AstNode_Binary_Add::print() const {
+    std::cout << m_left << "+" << m_right;
+}
+
+void AstNode_Binary_Minus::print() const {
+    std::cout << m_left << "-" << m_right;
+}
+
+void AstNode_Binary_Multi::print() const {
+    std::cout << m_left << "*" << m_right;
+}
+
+void AstNode_Binary_Div::print() const {
+    std::cout << m_left << "/" << m_right;
+}
+
+void AstNode_Binary_Mod::print() const {
+    std::cout << m_left << "%" << m_right;
+}
+
+void AstNode_Binary_And::print() const {
+    std::cout << m_left << "&&" << m_right;
+}
+
+void AstNode_Binary_Or::print() const {
+    std::cout << m_left << "||" << m_right;
+}
+
+void AstNode_Binary_Eq::print() const {
+    std::cout << m_left << "==" << m_right;
+}
+
+void AstNode_Binary_Ne::print() const {
+    std::cout << m_left << "!=" << m_right;
+}
+
+void AstNode_Binary_G::print() const {
+    std::cout << m_left << ">" << m_right;
+}
+
+void AstNode_Binary_L::print() const {
+    std::cout << m_left << "<" << m_right;
+}
+
+void AstNode_Binary_Ge::print() const {
+    std::cout << m_left << ">=" << m_right;
+}
+
+void AstNode_Binary_Le::print() const {
+    std::cout << m_left << "<=" << m_right;
+}
+
+void AstNode_Binary_Shl::print() const {
+    std::cout << m_left << "<<" << m_right;
+}
+
+void AstNode_Binary_Shr::print() const {
+    std::cout << m_left << ">>" << m_right;
+}
+
+void AstNode_Binary_Bit_And::print() const {
+    std::cout << m_left << "&" << m_right;
+}
+
+void AstNode_Binary_Bit_Or::print() const {
+    std::cout << m_left << "|" << m_right;
+}
+
+void AstNode_Binary_Bit_Xor::print() const {
+    std::cout << m_left << "^" << m_right;
 }
 
 void AstNode_ExpAssign_Eq::print() const {
