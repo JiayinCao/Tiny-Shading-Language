@@ -209,7 +209,7 @@ ARGUMENT_METADATA:
 // Standard function definition
 FUNCTION_DEF:
 	TYPE ID "(" FUNCTION_ARGUMENT_DECLS ")" FUNCTION_BODY {
-		const AstNode* variables = $4;
+		AstNode* variables = $4;
 		AstNode* root = new AstNode_Function($2, AstNode::castType<AstNode_VariableRef>(variables));
 		tsl_compiler->pushRootAst(root);
 	};

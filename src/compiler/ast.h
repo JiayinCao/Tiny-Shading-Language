@@ -28,8 +28,8 @@ public:
     virtual ~AstNode() = default;
 
     // Append a sibling to the ast node.
-    AstNode* append(const AstNode* node) {
-        next_sibling = node;
+    AstNode* append(AstNode* node) {
+        m_next_sibling = node;
         return this;
     }
     
@@ -63,16 +63,29 @@ public:
 #endif
     }
 
+    AstNode* getSibling() {
+        return m_next_sibling;
+    }
+
+    const AstNode* getSibling() const {
+        return m_next_sibling;
+    }
+
+    // helper function to print the ast
+    virtual void print() const { /* this should be a virtual function once I have implemented every node. */ }
+
 protected:
-    const AstNode* next_sibling = nullptr;
+    AstNode* m_next_sibling = nullptr;
 };
 
 class AstNode_Shader : public AstNode {
 public:
-    AstNode_Shader(const char* func_name) : name(func_name) {}
+    AstNode_Shader(const char* func_name) : m_name(func_name) {}
+
+    void print() const override;
 
 private:
-    std::string name;
+    std::string m_name;
 };
 
 class AstNode_Expression : public AstNode {
@@ -83,6 +96,8 @@ class AstNode_Literal_Int : public AstNode_Expression {
 public:
     AstNode_Literal_Int(int val) : m_val(val) {}
 
+    void print() const override;
+
 private:
     int m_val;
 };
@@ -90,6 +105,8 @@ private:
 class AstNode_Literal_Flt : public AstNode_Expression {
 public:
     AstNode_Literal_Flt(float val) : m_val(val) {}
+
+    void print() const override;
 
 private:
     float m_val;
@@ -228,11 +245,13 @@ private:
 
 class AstNode_Function : public AstNode {
 public:
-    AstNode_Function(const char* func_name, const AstNode_VariableRef* variables) : m_name(func_name), m_variables(variables) {}
+    AstNode_Function(const char* func_name, AstNode_VariableRef* variables) : m_name(func_name), m_variables(variables) {}
+
+    void print() const override;
 
 private:
     std::string m_name;
-    const AstNode_VariableRef* m_variables;
+    AstNode_VariableRef* m_variables;
 };
 
 class AstNode_ExpAssign : public AstNode_Expression {
@@ -247,56 +266,78 @@ protected:
 class AstNode_ExpAssign_Eq : public AstNode_ExpAssign {
 public:
     AstNode_ExpAssign_Eq(AstNode_Lvalue* var, AstNode_Expression* exp) :AstNode_ExpAssign(var, exp) {}
+
+    void print() const override;
 };
 
 class AstNode_ExpAssign_AddEq : public AstNode_ExpAssign {
 public:
     AstNode_ExpAssign_AddEq(AstNode_Lvalue* var, AstNode_Expression* exp) :AstNode_ExpAssign(var, exp) {}
+
+    void print() const override;
 };
 
 class AstNode_ExpAssign_MinusEq : public AstNode_ExpAssign {
 public:
     AstNode_ExpAssign_MinusEq(AstNode_Lvalue* var, AstNode_Expression* exp) :AstNode_ExpAssign(var, exp) {}
+
+    void print() const override;
 };
 
 class AstNode_ExpAssign_MultiEq : public AstNode_ExpAssign {
 public:
     AstNode_ExpAssign_MultiEq(AstNode_Lvalue* var, AstNode_Expression* exp) :AstNode_ExpAssign(var, exp) {}
+
+    void print() const override;
 };
 
 class AstNode_ExpAssign_DivEq : public AstNode_ExpAssign {
 public:
     AstNode_ExpAssign_DivEq(AstNode_Lvalue* var, AstNode_Expression* exp) :AstNode_ExpAssign(var, exp) {}
+
+    void print() const override;
 };
 
 class AstNode_ExpAssign_ModEq : public AstNode_ExpAssign {
 public:
     AstNode_ExpAssign_ModEq(AstNode_Lvalue* var, AstNode_Expression* exp) :AstNode_ExpAssign(var, exp) {}
+
+    void print() const override;
 };
 
 class AstNode_ExpAssign_AndEq : public AstNode_ExpAssign {
 public:
     AstNode_ExpAssign_AndEq(AstNode_Lvalue* var, AstNode_Expression* exp) :AstNode_ExpAssign(var, exp) {}
+
+    void print() const override;
 };
 
 class AstNode_ExpAssign_OrEq : public AstNode_ExpAssign {
 public:
     AstNode_ExpAssign_OrEq(AstNode_Lvalue* var, AstNode_Expression* exp) :AstNode_ExpAssign(var, exp) {}
+
+    void print() const override;
 };
 
 class AstNode_ExpAssign_XorEq : public AstNode_ExpAssign {
 public:
     AstNode_ExpAssign_XorEq(AstNode_Lvalue* var, AstNode_Expression* exp) :AstNode_ExpAssign(var, exp) {}
+
+    void print() const override;
 };
 
 class AstNode_ExpAssign_ShlEq : public AstNode_ExpAssign {
 public:
     AstNode_ExpAssign_ShlEq(AstNode_Lvalue* var, AstNode_Expression* exp) :AstNode_ExpAssign(var, exp) {}
+
+    void print() const override;
 };
 
 class AstNode_ExpAssign_ShrEq : public AstNode_ExpAssign {
 public:
     AstNode_ExpAssign_ShrEq(AstNode_Lvalue* var, AstNode_Expression* exp) :AstNode_ExpAssign(var, exp) {}
+
+    void print() const override;
 };
 
 class AstNode_Unary : public AstNode_Expression {
@@ -306,6 +347,8 @@ class AstNode_Unary_Pos : public AstNode_Expression {
 public:
     AstNode_Unary_Pos(AstNode_Expression* exp) : m_exp(exp) {}
 
+    void print() const override;
+
 private:
     AstNode_Expression* m_exp;
 };
@@ -313,6 +356,8 @@ private:
 class AstNode_Unary_Neg : public AstNode_Expression {
 public:
     AstNode_Unary_Neg(AstNode_Expression* exp) : m_exp(exp) {}
+
+    void print() const override;
 
 private:
     AstNode_Expression* m_exp;
@@ -322,6 +367,8 @@ class AstNode_Unary_Not : public AstNode_Expression {
 public:
     AstNode_Unary_Not(AstNode_Expression* exp) : m_exp(exp) {}
 
+    void print() const override;
+
 private:
     AstNode_Expression* m_exp;
 };
@@ -329,6 +376,8 @@ private:
 class AstNode_Unary_Compl : public AstNode_Expression {
 public:
     AstNode_Unary_Compl(AstNode_Expression* exp) : m_exp(exp) {}
+
+    void print() const override;
 
 private:
     AstNode_Expression* m_exp;
