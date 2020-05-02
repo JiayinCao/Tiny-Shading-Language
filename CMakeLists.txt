@@ -101,10 +101,15 @@ add_definitions( -DYY_NO_UNISTD_H )
 # make sure bison tells what is wrong
 add_definitions( -DYYERROR_VERBOSE )
 
-# Generated source code
-set(generated_src ${TSL_SOURCE_DIR}/generated_src/compiled_lex.cpp ${TSL_SOURCE_DIR}/generated_src/compiled_grammer.cpp ${TSL_SOURCE_DIR}/generated_src/compiled_grammer.hpp)
+# no need to compile the code, but it is handy to loop them in the project for easy access
+# hopefully this line won't introduce any trouble on any platforms since they are treated as input files for compiler.
+set(flex_bison ${TSL_SOURCE_DIR}/src/compiler/lex.l ${TSL_SOURCE_DIR}/src/compiler/grammar.y)
+source_group( "flex and bison" FILES ${flex_bison} )
 
-add_executable(TSL ${all_files} ${generated_src})
+# Generated source code
+set(generated_src ${TSL_SOURCE_DIR}/generated_src/compiled_lex.cpp ${TSL_SOURCE_DIR}/generated_src/compiled_grammar.cpp ${TSL_SOURCE_DIR}/generated_src/compiled_grammar.hpp)
+
+add_executable(TSL ${all_files} ${generated_src} ${flex_bison})
 add_custom_command( OUTPUT ${generated_src}
                     COMMAND make generate_src
                     WORKING_DIRECTORY ${TSL_SOURCE_DIR})

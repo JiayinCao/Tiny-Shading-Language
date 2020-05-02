@@ -29,7 +29,7 @@
   #include "include/tslversion.h"
   #include "compiler/platform.h"
   #include "compiler/compiler_impl.h"
-  #include "compiled_grammer.hpp"
+  #include "compiled_grammar.hpp"
 
   #if __cplusplus > 199711L
     #define register      // Deprecated in C++11.
