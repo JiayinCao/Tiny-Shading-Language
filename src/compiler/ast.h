@@ -19,10 +19,29 @@
 
 #include <assert.h>
 #include <string>
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/IRBuilder.h"
 #include "include/tslversion.h"
 #include "types.h"
 
 TSL_NAMESPACE_ENTER
+
+struct LLVM_Compile_Context{
+	llvm::LLVMContext*	context = nullptr;
+	llvm::Module*		module = nullptr;
+	llvm::IRBuilder<>*	builder = nullptr;
+};
+
+class LLVM_Value{
+public:
+	virtual llvm::Value* codegen( LLVM_Compile_Context& context ) const = 0;
+};
+
+class LLVM_Function{
+public:
+	virtual llvm::Function* codegen( LLVM_Compile_Context& context ) const = 0;
+};
 
 class AstNode {
 public:
@@ -278,6 +297,10 @@ public:
 
 	DataType dataType() const{
 		return m_type;
+	}
+
+	const char* getVarName() const {
+		return m_name.c_str();
 	}
 
 private:
@@ -559,9 +582,11 @@ public:
 	void print() const override; 
 };
 
-class AstNode_FunctionBody : public AstNode {
+class AstNode_FunctionBody : public AstNode, LLVM_Value {
 public:
 	AstNode_FunctionBody(AstNode_Statement* statements) : m_statements(statements) {}
+
+	llvm::Value* codegen( LLVM_Compile_Context& context ) const override;
 
 	void print() const override;
 
@@ -569,24 +594,37 @@ private:
 	AstNode_Statement*	m_statements;
 };
 
-class AstNode_Function : public AstNode {
+class AstNode_FunctionPrototype : public AstNode, LLVM_Function {
 public:
-	AstNode_Function(const char* func_name, AstNode_VariableDecl* variables, DataType type, AstNode_FunctionBody* body) : m_name(func_name), m_variables(variables), m_return_type(type), m_body(body) {}
+	AstNode_FunctionPrototype(const char* func_name, AstNode_VariableDecl* variables, DataType type = DataType::VOID)
+		:m_name(func_name), m_variables(variables), m_return_type(type){}
+
+	llvm::Function* codegen( LLVM_Compile_Context& context ) const override;
+
+	void print() const override;
+
+private:
+	const std::string		m_name;
+	AstNode_VariableDecl*	m_variables;
+	DataType				m_return_type;
+};
+
+class AstNode_FunctionDefinition : public AstNode {
+public:
+	AstNode_FunctionDefinition(AstNode_FunctionPrototype* proto, AstNode_FunctionBody* body) : m_proto(proto), m_body(body) {}
 
 	void print() const override;
 
 protected:
-	const std::string		m_name;
-	AstNode_VariableDecl*	m_variables;
-	DataType				m_return_type;
-	AstNode_FunctionBody*	m_body;
-
-	void printArgs() const;
+	AstNode_FunctionPrototype*	m_proto;
+	AstNode_FunctionBody*		m_body;
 };
 
-class AstNode_Shader : public AstNode_Function {
+class AstNode_Shader : public AstNode_FunctionDefinition, LLVM_Function{
 public:
-	AstNode_Shader(const char* func_name, AstNode_VariableDecl* variables, AstNode_FunctionBody* body) : AstNode_Function(func_name, variables, DataType::VOID, body) {}
+	AstNode_Shader(AstNode_FunctionPrototype* proto, AstNode_FunctionBody* body) : AstNode_FunctionDefinition(proto, body) {}
+
+	llvm::Function* codegen( LLVM_Compile_Context& context ) const override;
 
 	void print() const override;
 };

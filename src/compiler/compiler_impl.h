@@ -23,11 +23,11 @@
 
 TSL_NAMESPACE_ENTER
 
-class AstNode;
+class AstNode_Shader;
 
 //! @brief  Internal compiler implementation.
 /**
- * The sole purpose of another compiler implemntation thing is to keep TslCompiler as simple as possible.
+ * The sole purpose of another compiler implementation thing is to keep TslCompiler as simple as possible.
  * This class hides all details from the TslCompiler, which will eventually be exported to TSL users.
  */
 class TslCompiler_Impl {
@@ -55,7 +55,7 @@ public:
     //! @brief  Update root ast
     //!
     //! @param  ast             Push the root ast of the program.
-    void    pushRootAst(AstNode* node);
+    void    pushRootAst(AstNode_Shader* node);
 
 	//! @brief	Parameter type cache.
 	//!
@@ -74,7 +74,7 @@ private:
     void* m_scanner = nullptr;
 
     // root ast node of the parsed program
-    AstNode* m_ast_root = nullptr;
+    AstNode_Shader* m_ast_root = nullptr;
 
 	// data type cache
 	DataType	m_type_cache = DataType::VOID;

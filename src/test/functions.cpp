@@ -197,3 +197,17 @@ TEST(Functions, CONFIG_DECORATOR ) {
         }
     )");
 }
+
+TEST(Functions, Simple_Test) {
+	validate_shader(R"(
+        shader main( out float arg2 ){
+			int k = 0;
+			
+			while( k++ < 100 )
+			{
+			}
+
+            arg2 = k == 100 ? 122.0 : 22.0;
+        }
+    )");
+}

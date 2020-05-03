@@ -190,8 +190,10 @@ GLOBAL_STATEMENT:
 SHADER_DEF:
 	SHADER_FUNC_ID ID "(" SHADER_FUNCTION_ARGUMENT_DECLS ")" FUNCTION_BODY {
 		AstNode_VariableDecl*	variables = AstNode::castType<AstNode_VariableDecl>($4);
+		AstNode_FunctionPrototype*	proto = new AstNode_FunctionPrototype($2, variables);
+
 		AstNode_FunctionBody*	body = AstNode::castType<AstNode_FunctionBody>($6);
-		AstNode_Shader* shader = new AstNode_Shader($2, variables, body);
+		AstNode_Shader* shader = new AstNode_Shader(proto, body);
 		tsl_compiler->pushRootAst(shader);
 	};
 
@@ -229,9 +231,13 @@ FUNCTION_DEF:
 	TYPE ID "(" FUNCTION_ARGUMENT_DECLS ")" FUNCTION_BODY {
 		DataType type = $1;
 		AstNode_VariableDecl*	variables = AstNode::castType<AstNode_VariableDecl>($4);
+		AstNode_FunctionPrototype*	proto = new AstNode_FunctionPrototype($2, variables, $1);
+
 		AstNode_FunctionBody*	body = AstNode::castType<AstNode_FunctionBody>($6);
-		AstNode* root = new AstNode_Function($2, variables, type, body);
-		tsl_compiler->pushRootAst(root);
+		AstNode* root = new AstNode_FunctionDefinition(proto, body);
+
+		// to be done later
+		// tsl_compiler->pushRootAst(root);
 	};
 
 FUNCTION_ARGUMENT_DECLS:

@@ -36,23 +36,9 @@ void AstNode_Ternary::print() const {
 	m_false_expr->print();
 }
 
-void AstNode_Function::print() const {
-	std::cout << str_from_data_type(m_return_type) << " " << m_name <<  "(";
-    printArgs();
-    std::cout << ")";
+void AstNode_FunctionPrototype::print() const{
+	std::cout << str_from_data_type(m_return_type) << " " << m_name << "(";
 
-	m_body->print();
-}
-
-void AstNode_Shader::print() const {
-	std::cout << "shader" << " " << m_name << "(";
-	printArgs();
-	std::cout << ")";
-
-	m_body->print();
-}
-
-void AstNode_Function::printArgs() const {
 	bool first = true;
 	AstNode* param_node = m_variables;
 	while (param_node) {
@@ -64,6 +50,18 @@ void AstNode_Function::printArgs() const {
 
 		first = false;
 	}
+
+	std::cout << ")";
+}
+
+void AstNode_FunctionDefinition::print() const {
+	m_proto->print();
+	m_body->print();
+}
+
+void AstNode_Shader::print() const {
+	m_proto->print();
+	m_body->print();
 }
 
 void AstNode_FunctionBody::print() const{

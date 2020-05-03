@@ -15,6 +15,17 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
+#include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/Verifier.h"
 #include "compiler_impl.h"
 #include "ast.h"
 
@@ -27,6 +38,8 @@ int yylex_destroy(void*);
 YY_BUFFER_STATE yy_scan_string(const char* yystr, void* yyscanner);
 void makeVerbose(int verbose);
 
+// this may need to be moved later
+static llvm::LLVMContext g_llvm_context;
 
 TSL_NAMESPACE_ENTER
 
@@ -39,7 +52,7 @@ void TslCompiler_Impl::reset() {
     m_ast_root = nullptr;
 }
 
-void TslCompiler_Impl::pushRootAst(AstNode* node) {
+void TslCompiler_Impl::pushRootAst(AstNode_Shader* node) {
     m_ast_root = node;
 }
 
@@ -62,7 +75,28 @@ bool TslCompiler_Impl::compile(const char* source_code, std::string& tso) {
     // destroy scanner information
     yylex_destroy(m_scanner);
 
-    return 0 == parsing_result;
+    if( parsing_result != 0 )
+		return false;
+
+	llvm::Module* module = new llvm::Module("shader", g_llvm_context);
+	if(!module)
+		return false;
+
+	// if there is a legit shader defined, generate LLVM IR
+	if(m_ast_root){
+		llvm::IRBuilder<> builder(g_llvm_context);
+
+		LLVM_Compile_Context compile_context;
+		compile_context.context = &g_llvm_context;
+		compile_context.module = module;
+		compile_context.builder = &builder;
+		llvm::Function* function = m_ast_root->codegen(compile_context);
+
+		// if( function )
+		//	function->print(llvm::errs());
+	}
+
+	return true;
 }
 
 TSL_NAMESPACE_LEAVE
