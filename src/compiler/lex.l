@@ -84,6 +84,9 @@ whitespace               [ \t\r\n\f]+
 "else"                    { return ELSE; }
 "++"                      { return INC_OP; }
 "--"                      { return DEC_OP; }
+"in"					  { return IN; }
+"const"					  { return CONST; }
+"out"					  { return OUT; }
 ":"                       { return COLON; }
 "?"                       { return QUESTION_MARK; }
 "return"                  { return RETURN; }

@@ -103,6 +103,9 @@ void AstNode_VariableRef::print() const {
 }
 
 void AstNode_VariableDecl::print() const {
+	if( m_config != VariableConfig::NONE )
+		std::cout<<str_from_var_config(m_config)<< " ";
+
 	std::cout << str_from_data_type(m_type) << " " << m_name;
 
 	if (m_init_exp) {

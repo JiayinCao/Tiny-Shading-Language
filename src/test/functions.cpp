@@ -147,7 +147,7 @@ TEST(Functions, Call_Function_No_Arg ) {
 
 TEST(Functions, Call_Function_Single_Arg ) {
     validate_shader(R"(
-        void generic_func( float arg0 = 0.0 ){
+        void generic_func( float arg0 = 0.0 , int k = 0.0 ){
         }
 
         int generic_func2( float arg0 = 0.0 ){
@@ -181,6 +181,19 @@ TEST(Functions, Function_As_Argument ) {
             generic_func( func( arg0 = 0 , arg1 = 0 ) , k );
 
             return 2;
+        }
+    )");
+}
+
+TEST(Functions, CONFIG_DECORATOR ) {
+	validate_shader(R"(
+        shader main( int arg0 = 232 ,
+				     const int arg1 = 2,
+					 in const float arg2 = 3.0,
+					 const in matrix mat,
+                     in float input_arg = 0.2 <<< >>> ,
+                     out float arg2 = 2.0 <<< >>> ){
+            arg2 = input_arg + 2.0;
         }
     )");
 }

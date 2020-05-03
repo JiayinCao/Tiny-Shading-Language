@@ -54,4 +54,34 @@ inline const char* str_from_data_type( const DataType type ){
 	return "void";
 }
 
+enum VariableConfig : int {
+	NONE = 0,
+	INPUT = 1,
+	OUTPUT = 2,
+	CONST = 4,
+};
+
+inline const char* str_from_var_config(const VariableConfig type) {
+	if( type == ( VariableConfig::NONE ) )
+		return "";
+
+	if( type == ( VariableConfig::CONST ) )
+		return "const";
+
+	if( type == (VariableConfig::CONST | VariableConfig::INPUT) )
+		return "const in";
+
+	// this is useless
+	//if (type == (VariableConfig::CONST | VariableConfig::OUTPUT))
+	//	return "const output";
+
+	if( type == VariableConfig::INPUT )
+		return "in";
+
+	if( type == VariableConfig::OUTPUT )
+		return "out";
+
+	return "invalid";
+}
+
 TSL_NAMESPACE_LEAVE

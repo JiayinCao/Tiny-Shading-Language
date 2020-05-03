@@ -39,12 +39,13 @@
 
 /* definitions of tokens and types passed by FLEX */
 %union {
-    class AstNode 				*p;	/* pointers for the AST struct nodes */
-	float						 f; /* floating point value cache. */
-	int							 i; /* integer value or enum values. */
-	const char					*s;	/* string values. */
-	char						 c; /* single char. */
-	Tsl_Namespace::DataType		 t;	/* data type. */
+    class AstNode 					*p;	/* pointers for the AST struct nodes */
+	float							f; /* floating point value cache. */
+	int								i; /* integer value or enum values. */
+	const char						*s;	/* string values. */
+	char							c; /* single char. */
+	Tsl_Namespace::DataType			t;	/* data type. */
+	Tsl_Namespace::VariableConfig	vc; /* 'out', 'in' */
 }
 
 %locations
@@ -57,6 +58,9 @@
 %token <f> FLT_NUM
 %token INC_OP			"++"
 %token DEC_OP			"--"
+%token <vc> OUT			"out"
+%token <vc> IN			"in"
+%token <vc> CONST		"const"
 %token SHADER_FUNC_ID
 %token <i> TYPE_INT	    "int"
 %token <i> TYPE_FLOAT	"float"
@@ -121,6 +125,7 @@
 %type <c> OP_UNARY
 %type <t> TYPE
 %type <i> REC_OR_DEC
+%type <vc> ARGUMENT_CONFIG ARGUMENT_CONFIGS_OPT ARGUMENT_CONFIGS
 
 %nonassoc IF_THEN
 %nonassoc ELSE
@@ -247,15 +252,57 @@ FUNCTION_ARGUMENT_DECLS:
 	};
 
 FUNCTION_ARGUMENT_DECL:
-	TYPE ID {
-		AstNode_VariableDecl* node = new AstNode_VariableDecl($2, $1);
+	ARGUMENT_CONFIGS_OPT TYPE ID {
+		VariableConfig config = $1;
+		AstNode_VariableDecl* node = new AstNode_VariableDecl($3, $2, config);
 		$$ = node;
 	}
 	|
-	TYPE ID "=" EXPRESSION {
-		AstNode_Expression* init_exp = AstNode::castType<AstNode_Expression>($4);
-		AstNode_VariableDecl* node = new AstNode_VariableDecl($2, $1, init_exp);
+	ARGUMENT_CONFIGS_OPT TYPE ID "=" EXPRESSION {
+		VariableConfig config = $1;
+		AstNode_Expression* init_exp = AstNode::castType<AstNode_Expression>($5);
+		AstNode_VariableDecl* node = new AstNode_VariableDecl($3, $2, config, init_exp);
 		$$ = node;
+	};
+
+ARGUMENT_CONFIGS_OPT:
+	/* empty */
+	{
+		$$ = VariableConfig::NONE;
+	}
+	|
+	ARGUMENT_CONFIGS
+	{
+		$$ = $1;
+	};
+
+ARGUMENT_CONFIGS:
+	ARGUMENT_CONFIG
+	{
+		$$ = $1;
+	}
+	|
+	ARGUMENT_CONFIG ARGUMENT_CONFIGS
+	{
+		int config0 = $1;
+		int config1 = $2;
+		$$ = VariableConfig( config0 | config1 );
+	};
+
+ARGUMENT_CONFIG:
+	"in"
+	{
+		$$ = VariableConfig::INPUT;
+	}
+	|
+	"out"
+	{
+		$$ = VariableConfig::OUTPUT;
+	}
+	|
+	"const"
+	{
+		$$ = VariableConfig::CONST;
 	};
 
 FUNCTION_BODY:
@@ -343,7 +390,7 @@ VARIABLE_DECLARATION:
 		// initialization is not correctly handled yet.
 		const DataType type = tsl_compiler->dataTypeCache();
 		AstNode_Expression* init_exp = AstNode::castType<AstNode_Expression>($3);
-		AstNode_VariableDecl* node = new AstNode_VariableDecl($1, type, init_exp);
+		AstNode_VariableDecl* node = new AstNode_VariableDecl($1, type, VariableConfig::NONE, init_exp);
 		$$ = node;
 	};
 

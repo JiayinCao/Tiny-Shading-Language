@@ -269,7 +269,8 @@ class AstNode_Lvalue : public AstNode_Expression {
 
 class AstNode_VariableDecl : public AstNode {
 public:
-	AstNode_VariableDecl(const char* name, DataType type, AstNode_Expression* init_exp = nullptr) : m_name(name), m_type(type), m_init_exp(init_exp) {}
+	AstNode_VariableDecl(const char* name, const DataType type, const VariableConfig config = VariableConfig::NONE, AstNode_Expression* init_exp = nullptr) 
+		: m_name(name), m_type(type), m_config(config), m_init_exp(init_exp) {}
 
 	void print() const override;
 
@@ -280,9 +281,10 @@ public:
 	}
 
 private:
-	const std::string	m_name;
-	const DataType		m_type;
-	AstNode_Expression*	m_init_exp;
+	const std::string		m_name;
+	const DataType			m_type;
+	const VariableConfig	m_config;
+	AstNode_Expression*		m_init_exp;
 };
 
 class AstNode_VariableRef : public AstNode_Lvalue {
