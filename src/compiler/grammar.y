@@ -115,11 +115,12 @@
 %token WHILE			"while"
 %token DO				"do"
 
-%type <p> PROGRAM FUNCTION_ARGUMENT_DECL FUNCTION_ARGUMENT_DECLS SHADER_FUNCTION_ARGUMENT_DECLS FUNCTION_BODY VARIABLE_LVALUE ID_OR_FIELD FUNCTION_ARGUMENTS
+%type <p> PROGRAM FUNCTION_ARGUMENT_DECL FUNCTION_ARGUMENT_DECLS SHADER_FUNCTION_ARGUMENT_DECLS FUNCTION_BODY VARIABLE_LVALUE ID_OR_FIELD FUNCTION_ARGUMENTS SHADER_FUNCTION_ARGUMENT_DECL
 %type <p> STATEMENT STATEMENTS STATEMENT_RETURN STATEMENT_EXPRESSION_OPT STATEMENT_COMPOUND_EXPRESSION STATEMENT_VARIABLES_DECLARATIONS VARIABLE_DECLARATION VARIABLE_DECLARATIONS STATEMENT_CONDITIONAL STATEMENT_LOOP STATEMENT_SCOPED
 %type <p> EXPRESSION_COMPOUND EXPRESSION_CONST EXPRESSION_BINARY EXPRESSION EXPRESSION_VARIABLE EXPRESSION_FUNCTION_CALL EXPRESSION_TERNARY EXPRESSION_COMPOUND_OPT EXPRESSION_SCOPED EXPRESSION_ASSIGN EXPRESSION_UNARY EXPRESSION_TYPECAST
 %type <c> OP_UNARY
 %type <t> TYPE
+%type <i> REC_OR_DEC
 
 %nonassoc IF_THEN
 %nonassoc ELSE
@@ -199,6 +200,12 @@ SHADER_FUNCTION_ARGUMENT_DECLS:
 	}
 	|
 	SHADER_FUNCTION_ARGUMENT_DECL "," SHADER_FUNCTION_ARGUMENT_DECLS {
+		AstNode* node_arg = $1;
+		AstNode* node_args = $3;
+		if(!node_arg)
+			$$ = node_args;
+		else
+			$$ = node_arg->append( node_args );
 	};
 
 SHADER_FUNCTION_ARGUMENT_DECL:
@@ -310,13 +317,7 @@ STATEMENT_EXPRESSION_OPT:
 	};
 
 STATEMENT_VARIABLES_DECLARATIONS:
-	TYPE 
-	/*{
-		// this will lead to incorrect data type, will need to fix it later.
-		tsl_compiler->cacheNextDataType($1);
-	}
-	*/
-	VARIABLE_DECLARATIONS ";"
+	TYPE VARIABLE_DECLARATIONS ";"
 	{
 		AstNode_VariableDecl* vars = AstNode::castType<AstNode_VariableDecl>($2);
 		$$ = new AstNode_Statement_VariableDecls(vars);
@@ -709,18 +710,36 @@ EXPRESSION_VARIABLE:
 	}
 	|
 	VARIABLE_LVALUE REC_OR_DEC {
-		$$ = $1;	// to be changed
+		AstNode_Expression* exp = AstNode::castType<AstNode_Expression>($1);
+		if( $2 == 1 )
+			$$ = new AstNode_Expression_PostInc(exp);
+		else if( $2 == 2 )
+			$$ = new AstNode_Expression_PostDec(exp);
+		else{
+			// this should not happen
+			$$ = exp;
+		}
 	}
 	|
 	REC_OR_DEC VARIABLE_LVALUE {
-		$$ = $2;	// to be changed
+		AstNode_Expression* exp = AstNode::castType<AstNode_Expression>($2);
+		if( $1 == 1 )
+			$$ = new AstNode_Expression_PreInc(exp);
+		else if( $1 == 2 )
+			$$ = new AstNode_Expression_PreDec(exp);
+		else{
+			// this should not happen
+			$$ = exp;
+		}
 	};
 
 REC_OR_DEC:
 	"++" {
+		$$ = 1;
 	}
 	|
 	"--" {
+		$$ = 2;
 	};
 
 // No up to two dimensional array supported for now.
@@ -741,26 +760,32 @@ ID_OR_FIELD:
 TYPE:
 	"int" {
 		$$ = DataType::INT;
+		tsl_compiler->cacheNextDataType($$);
 	}
 	|
 	"float" {
 		$$ = DataType::FLOAT;
+		tsl_compiler->cacheNextDataType($$);
 	}
 	|
 	"matrix" {
 		$$ = DataType::MATRIX;
+		tsl_compiler->cacheNextDataType($$);
 	}
 	|
 	"float3" {
 		$$ = DataType::FLOAT3;
+		tsl_compiler->cacheNextDataType($$);
 	}
 	|
 	"bool" {
 		$$ = DataType::BOOL;
+		tsl_compiler->cacheNextDataType($$);
 	}
 	|
 	"void" {
 		$$ = DataType::VOID;
+		tsl_compiler->cacheNextDataType($$);
 	};
 %%
 

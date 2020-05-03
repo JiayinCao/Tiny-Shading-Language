@@ -33,7 +33,7 @@ void AstNode_Ternary::print() const {
 	std::cout << "?";
 	m_true_expr->print();
 	std::cout << ":";
-	std::cout << m_false_expr;
+	m_false_expr->print();
 }
 
 void AstNode_Function::print() const {
@@ -103,10 +103,19 @@ void AstNode_VariableRef::print() const {
 }
 
 void AstNode_VariableDecl::print() const {
+	std::cout << str_from_data_type(m_type) << " " << m_name;
+
+	if (m_init_exp) {
+		std::cout << " = ";
+		m_init_exp->print();
+	}
+}
+
+void AstNode_VariableDecl::printVariableOnly() const{
 	std::cout << m_name;
 
-	if( m_init_exp ){
-		std::cout<< " = ";
+	if (m_init_exp) {
+		std::cout << " = ";
 		m_init_exp->print();
 	}
 }
@@ -310,6 +319,26 @@ void AstNode_TypeCast::print() const {
 	m_exp->print();
 }
 
+void AstNode_Expression_PostInc::print() const {
+	m_exp->print();
+	std::cout<<"++";
+}
+
+void AstNode_Expression_PostDec::print() const {
+	m_exp->print();
+	std::cout << "--";
+}
+
+void AstNode_Expression_PreInc::print() const {
+	std::cout << "++";
+	m_exp->print();
+}
+
+void AstNode_Expression_PreDec::print() const {
+	std::cout << "--";
+	m_exp->print();
+}
+
 void AstNode_Statement_Return::print() const {
 	std::cout << "return";
 
@@ -404,7 +433,7 @@ void AstNode_Statement_VariableDecls::print() const {
 		}else
 			std::cout<<", ";
 
-		variable->print();
+		variable->printVariableOnly();
 		variable = castType<AstNode_VariableDecl>(variable->getSibling());
 
 		if(variable)

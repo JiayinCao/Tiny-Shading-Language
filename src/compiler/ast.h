@@ -273,6 +273,8 @@ public:
 
 	void print() const override;
 
+	void printVariableOnly() const;
+
 	DataType dataType() const{
 		return m_type;
 	}
@@ -432,6 +434,47 @@ private:
 	AstNode_Expression* m_exp;
 	DataType			m_target_type;
 };
+
+class AstNode_Expression_PostInc : public AstNode_Expression {
+public:
+	AstNode_Expression_PostInc(AstNode_Expression* exp) : m_exp(exp){}
+
+	void print() const override;
+
+private:
+	AstNode_Expression* m_exp;
+};
+
+class AstNode_Expression_PostDec : public AstNode_Expression {
+public:
+	AstNode_Expression_PostDec(AstNode_Expression* exp) : m_exp(exp) {}
+
+	void print() const override;
+
+private:
+	AstNode_Expression* m_exp;
+};
+
+class AstNode_Expression_PreInc : public AstNode_Expression {
+public:
+	AstNode_Expression_PreInc(AstNode_Expression* exp) : m_exp(exp) {}
+
+	void print() const override;
+
+private:
+	AstNode_Expression* m_exp;
+};
+
+class AstNode_Expression_PreDec : public AstNode_Expression {
+public:
+	AstNode_Expression_PreDec(AstNode_Expression* exp) : m_exp(exp) {}
+
+	void print() const override;
+
+private:
+	AstNode_Expression* m_exp;
+};
+
 
 class AstNode_Statement : public AstNode {
 };

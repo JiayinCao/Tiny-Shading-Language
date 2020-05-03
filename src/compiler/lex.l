@@ -82,8 +82,8 @@ whitespace               [ \t\r\n\f]+
 "for"                     { return FOR; }
 "if"                      { return IF; }
 "else"                    { return ELSE; }
-"--"                      { return INC_OP; }
-"++"                      { return DEC_OP; }
+"++"                      { return INC_OP; }
+"--"                      { return DEC_OP; }
 ":"                       { return COLON; }
 "?"                       { return QUESTION_MARK; }
 "return"                  { return RETURN; }
