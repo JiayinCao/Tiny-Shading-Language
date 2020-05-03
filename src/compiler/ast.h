@@ -20,11 +20,16 @@
 #include <assert.h>
 #include <string>
 #include "include/tslversion.h"
+#include "types.h"
 
 TSL_NAMESPACE_ENTER
 
 class AstNode {
 public:
+	AstNode() {
+		volatile int k = 0;
+	}
+
     virtual ~AstNode() = default;
 
     // Append a sibling to the ast node.
@@ -76,16 +81,6 @@ public:
 
 protected:
     AstNode* m_next_sibling = nullptr;
-};
-
-class AstNode_Shader : public AstNode {
-public:
-    AstNode_Shader(const char* func_name) : m_name(func_name) {}
-
-    void print() const override;
-
-private:
-    std::string m_name;
 };
 
 class AstNode_Expression : public AstNode {
@@ -274,6 +269,17 @@ class AstNode_Lvalue : public AstNode_Expression {
 
 };
 
+class AstNode_VariableDecl : public AstNode {
+public:
+	AstNode_VariableDecl(const char* name, DataType type) : m_name(name), m_type(type) {}
+
+	void print() const override;
+
+private:
+	const std::string	m_name;
+	const DataType		m_type;
+};
+
 class AstNode_VariableRef : public AstNode_Lvalue {
 public:
     AstNode_VariableRef(const char* name) : m_name(name) {}
@@ -281,18 +287,7 @@ public:
     void print() const override;
 
 private:
-    std::string m_name;
-};
-
-class AstNode_Function : public AstNode {
-public:
-    AstNode_Function(const char* func_name, AstNode_VariableRef* variables) : m_name(func_name), m_variables(variables) {}
-
-    void print() const override;
-
-private:
-    std::string m_name;
-    AstNode_VariableRef* m_variables;
+	const std::string	m_name;
 };
 
 class AstNode_ExpAssign : public AstNode_Expression {
@@ -422,6 +417,134 @@ public:
 
 private:
     AstNode_Expression* m_exp;
+};
+
+class AstNode_TypeCast : public AstNode_Expression {
+public:
+	AstNode_TypeCast(AstNode_Expression* exp, DataType type) : m_exp(exp), m_target_type(type) {}
+
+	void print() const override;
+
+private:
+	AstNode_Expression* m_exp;
+	DataType			m_target_type;
+};
+
+class AstNode_Statement : public AstNode {
+};
+
+class AstNode_Statement_Return : public AstNode_Statement {
+public:
+	AstNode_Statement_Return(AstNode_Expression* expression) : m_expression(expression) {}
+
+	void print() const override;
+
+private:
+	AstNode_Expression* m_expression;
+};
+
+class AstNode_Statement_CompoundExpression : public AstNode_Statement {
+public:
+	AstNode_Statement_CompoundExpression(AstNode_Expression* expression) : m_expression(expression) {}
+
+	void print() const override;
+
+private:
+	AstNode_Expression* m_expression;
+};
+
+class AstNode_Statement_Conditinon : public AstNode_Statement {
+public:
+	AstNode_Statement_Conditinon(AstNode_Expression* cond, AstNode_Statement* true_statements , AstNode_Statement* false_statements = nullptr) 
+		: m_condition(cond), m_true_statements(true_statements), m_false_statements(false_statements) {}
+
+	void print() const override;
+
+private:
+	AstNode_Expression*	m_condition;
+	AstNode_Statement*	m_true_statements;
+	AstNode_Statement*	m_false_statements;
+};
+
+class AstNode_Statement_VariableDecls: public AstNode_Statement {
+public:
+	AstNode_Statement_VariableDecls(AstNode_VariableDecl* var_decls) :m_var_decls(var_decls) {}
+
+	void print() const override;
+
+private:
+	AstNode_VariableDecl* m_var_decls;
+};
+
+class AstNode_Statement_Loop : public AstNode_Statement {
+public:
+	AstNode_Statement_Loop(AstNode_Expression* cond, AstNode_Statement* statements): m_condition(cond), m_statements(statements) {}
+
+protected:
+	AstNode_Expression*	m_condition;
+	AstNode_Statement*	m_statements;
+};
+
+class AstNode_Statement_Loop_For : public AstNode_Statement_Loop {
+public:
+	AstNode_Statement_Loop_For(AstNode_Expression* init_exp, AstNode_Expression* cond_exp, AstNode_Expression* iter_exp, AstNode_Statement* statements):
+		AstNode_Statement_Loop(cond_exp, statements), m_init_exp(init_exp), m_iter_exp(iter_exp){}
+
+	void print() const override;
+
+private:
+	AstNode_Expression* m_init_exp;
+	AstNode_Expression* m_iter_exp;
+};
+
+class AstNode_Statement_Loop_While : public AstNode_Statement_Loop {
+public:
+	AstNode_Statement_Loop_While(AstNode_Expression* cond, AstNode_Statement* statements):AstNode_Statement_Loop(cond,statements){
+		volatile int k = 0;
+	}
+
+	void print() const override;
+};
+
+class AstNode_Statement_Loop_DoWhile : public AstNode_Statement_Loop {
+public:
+	AstNode_Statement_Loop_DoWhile(AstNode_Expression* cond, AstNode_Statement* statements):AstNode_Statement_Loop(cond,statements){
+		volatile int k = 0;
+	}
+
+	void print() const override; 
+};
+
+class AstNode_FunctionBody : public AstNode {
+public:
+	AstNode_FunctionBody(AstNode_Statement* statements) : m_statements(statements) {}
+
+	void print() const override;
+
+private:
+	AstNode_Statement*	m_statements;
+};
+
+class AstNode_Function : public AstNode {
+public:
+	AstNode_Function(const char* func_name, AstNode_VariableDecl* variables, DataType type, AstNode_FunctionBody* body) : m_name(func_name), m_variables(variables), m_return_type(type), m_body(body) {}
+
+	void print() const override;
+
+protected:
+	const std::string		m_name;
+	AstNode_VariableDecl*	m_variables;
+	DataType				m_return_type;
+	AstNode_FunctionBody*	m_body;
+
+	void printArgs() const;
+};
+
+class AstNode_Shader : public AstNode_Function {
+public:
+	AstNode_Shader(const char* func_name, AstNode_VariableDecl* variables, AstNode_FunctionBody* body) : AstNode_Function(func_name, variables, DataType::VOID, body) {}
+
+	void print() const override;
 };
 
 TSL_NAMESPACE_LEAVE

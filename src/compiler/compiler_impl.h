@@ -19,6 +19,7 @@
 
 #include <string>
 #include "include/tslversion.h"
+#include "types.h"
 
 TSL_NAMESPACE_ENTER
 
@@ -56,11 +57,26 @@ public:
     //! @param  ast             Push the root ast of the program.
     void    pushRootAst(AstNode* node);
 
+	//! @brief	Parameter type cache.
+	//!
+	//! @param	type			Type of the parameter to be parsed.
+	void	cacheNextDataType(DataType type){
+		m_type_cache = type;
+	}
+
+	//! @brief	Acquire the cached data type.
+	DataType	dataTypeCache() const {
+		return m_type_cache;
+	}
+
 private:
     // flex scanner
     void* m_scanner = nullptr;
 
     // root ast node of the parsed program
     AstNode* m_ast_root = nullptr;
+
+	// data type cache
+	DataType	m_type_cache = DataType::VOID;
 };
 TSL_NAMESPACE_LEAVE

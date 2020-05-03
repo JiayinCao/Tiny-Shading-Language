@@ -28,49 +28,51 @@ void AstNode_Literal_Flt::print() const {
     std::cout << m_val;
 }
 
-void AstNode_Shader::print() const {
-    std::cout << "shader " << m_name;
-    std::cout << "(";
-
-    /*
-    bool first = true;
-    AstNode* param_node = m_variables;
-    while (param_node) {
-        param_node->print();
-
-        if (!first)
-            std::cout << " , ";
-
-        param_node = param_node->getSibling();
-
-        first = false;
-    }
-    */
-
-    std::cout << ")" << std::endl;
-}
-
 void AstNode_Ternary::print() const {
     std::cout << m_condition << "?" << m_true_expr << ":" << m_false_expr;
 }
 
 void AstNode_Function::print() const {
-    std::cout << m_name;
-    std::cout << "(";
+	std::cout << str_from_data_type(m_return_type) << " " << m_name <<  "(";
+    printArgs();
+    std::cout << ")";
 
-    bool first = true;
-    AstNode* param_node = m_variables;
-    while (param_node) {
-        if (!first)
-            std::cout << " , ";
+	m_body->print();
+}
 
-        param_node->print();
-        param_node = param_node->getSibling();
+void AstNode_Shader::print() const {
+	std::cout << "shader" << " " << m_name << "(";
+	printArgs();
+	std::cout << ")";
 
-        first = false;
-    }
+	m_body->print();
+}
 
-    std::cout << ")" << std::endl;
+void AstNode_Function::printArgs() const {
+	bool first = true;
+	AstNode* param_node = m_variables;
+	while (param_node) {
+		if (!first)
+			std::cout << ", ";
+
+		param_node->print();
+		param_node = param_node->getSibling();
+
+		first = false;
+	}
+}
+
+void AstNode_FunctionBody::print() const{
+	std::cout<<"{"<<std::endl;
+	
+	// print the statements here
+	AstNode* statement = m_statements;
+	while(statement){
+		statement->print();
+		statement = statement->getSibling();
+	}
+
+	std::cout<<"}"<<std::endl;
 }
 
 void AstNode_FunctionCall::print() const {
@@ -89,83 +91,123 @@ void AstNode_FunctionCall::print() const {
         first = false;
     }
 
-    std::cout << ")" << std::endl;
+    std::cout << ")";
 }
 
 void AstNode_VariableRef::print() const {
     std::cout << m_name;
 }
 
+void AstNode_VariableDecl::print() const {
+	std::cout<< str_from_data_type( m_type ) << " " << m_name;
+}
+
 void AstNode_Binary_Add::print() const {
-    std::cout << m_left << "+" << m_right;
+    m_left->print();
+	std::cout<< "+";
+	m_right->print();
 }
 
 void AstNode_Binary_Minus::print() const {
-    std::cout << m_left << "-" << m_right;
+	m_left->print();
+	std::cout << "-";
+	m_right->print();
 }
 
 void AstNode_Binary_Multi::print() const {
-    std::cout << m_left << "*" << m_right;
+	m_left->print();
+	std::cout << "*";
+	m_right->print();
 }
 
 void AstNode_Binary_Div::print() const {
-    std::cout << m_left << "/" << m_right;
+	m_left->print();
+	std::cout << "/";
+	m_right->print();
 }
 
 void AstNode_Binary_Mod::print() const {
-    std::cout << m_left << "%" << m_right;
+	m_left->print();
+	std::cout << "%";
+	m_right->print();
 }
 
 void AstNode_Binary_And::print() const {
-    std::cout << m_left << "&&" << m_right;
+	m_left->print();
+	std::cout << "&&";
+	m_right->print();
 }
 
 void AstNode_Binary_Or::print() const {
-    std::cout << m_left << "||" << m_right;
+	m_left->print();
+	std::cout << "||";
+	m_right->print();
 }
 
 void AstNode_Binary_Eq::print() const {
-    std::cout << m_left << "==" << m_right;
+	m_left->print();
+	std::cout << "==";
+	m_right->print();
 }
 
 void AstNode_Binary_Ne::print() const {
-    std::cout << m_left << "!=" << m_right;
+	m_left->print();
+	std::cout << "!=";
+	m_right->print();
 }
 
 void AstNode_Binary_G::print() const {
-    std::cout << m_left << ">" << m_right;
+	m_left->print();
+	std::cout << ">";
+	m_right->print();
 }
 
 void AstNode_Binary_L::print() const {
-    std::cout << m_left << "<" << m_right;
+	m_left->print();
+	std::cout << "<";
+	m_right->print();
 }
 
 void AstNode_Binary_Ge::print() const {
-    std::cout << m_left << ">=" << m_right;
+	m_left->print();
+	std::cout << ">=";
+	m_right->print();
 }
 
 void AstNode_Binary_Le::print() const {
-    std::cout << m_left << "<=" << m_right;
+	m_left->print();
+	std::cout << "<=";
+	m_right->print();
 }
 
 void AstNode_Binary_Shl::print() const {
-    std::cout << m_left << "<<" << m_right;
+	m_left->print();
+	std::cout << "<<";
+	m_right->print();
 }
 
 void AstNode_Binary_Shr::print() const {
-    std::cout << m_left << ">>" << m_right;
+	m_left->print();
+	std::cout << ">>";
+	m_right->print();
 }
 
 void AstNode_Binary_Bit_And::print() const {
-    std::cout << m_left << "&" << m_right;
+	m_left->print();
+	std::cout << "&";
+	m_right->print();
 }
 
 void AstNode_Binary_Bit_Or::print() const {
-    std::cout << m_left << "|" << m_right;
+	m_left->print();
+	std::cout << "|";
+	m_right->print();
 }
 
 void AstNode_Binary_Bit_Xor::print() const {
-    std::cout << m_left << "^" << m_right;
+	m_left->print();
+	std::cout << "^";
+	m_right->print();
 }
 
 void AstNode_ExpAssign_Eq::print() const {
@@ -194,7 +236,7 @@ void AstNode_ExpAssign_MultiEq::print() const {
 
 void AstNode_ExpAssign_DivEq::print() const {
     m_var->print();
-    std::cout << "//=" ;
+    std::cout << "/=" ;
     m_expression->print();
 }
 
@@ -252,6 +294,96 @@ void AstNode_Unary_Not::print() const {
 void AstNode_Unary_Compl::print() const {
     std::cout << "~";
     m_exp->print();
+}
+
+void AstNode_TypeCast::print() const {
+	std::cout << "(" << str_from_data_type(m_target_type) << ")";
+	m_exp->print();
+}
+
+void AstNode_Statement_Return::print() const {
+	std::cout << "return";
+
+	if( m_expression ){
+		std::cout<<" ";
+		m_expression->print();
+	}
+
+	std::cout<< ";" << std::endl;
+}
+
+void AstNode_Statement_CompoundExpression::print() const {
+	AstNode* expression = m_expression;
+	bool is_first = true;
+	while(expression){
+		if( !is_first )
+			std::cout<<", ";
+		expression->print();
+		expression = expression->getSibling();
+
+		is_first = false;
+	}
+	std::cout<<";"<<std::endl;
+}
+
+void AstNode_Statement_Conditinon::print() const {
+	std::cout<< "if(";
+	if(m_condition)
+		m_condition->print();
+	std::cout<< "){" << std::endl;
+	if(m_true_statements)
+		m_true_statements->print();
+	std::cout<<"}";
+
+	if( m_false_statements ){
+		std::cout<< "else{" <<std::endl;
+		m_false_statements->print();
+		std::cout<<"}";
+	}
+
+	std::cout<<std::endl;
+}
+
+void AstNode_Statement_Loop_For::print() const {
+	std::cout<< "for( ";
+	if(m_init_exp)
+		m_init_exp->print();
+	std::cout<<";";
+	if(m_condition)
+		m_condition->print();
+	std::cout<<";";
+	if(m_iter_exp)
+		m_condition->print();
+	std::cout<< "){" << std::endl;
+
+	if(m_statements)
+		m_statements->print();
+
+	std::cout<<"}"<<std::endl;
+}
+
+void AstNode_Statement_Loop_While::print() const{
+	std::cout<<"while(";
+	if(m_condition)
+		m_condition->print();
+	std::cout<<"){"<<std::endl;
+	if(m_statements)
+		m_statements->print();
+	std::cout<<"}"<<std::endl;
+}
+
+void AstNode_Statement_Loop_DoWhile::print() const{
+	std::cout << "do{" << std::endl;
+	if (m_statements)
+		m_statements->print();
+	std::cout << "} while(";
+	if (m_condition)
+		m_condition->print();
+	std::cout << ")" << std::endl;
+}
+
+void AstNode_Statement_VariableDecls::print() const {
+	// to be done
 }
 
 TSL_NAMESPACE_LEAVE
