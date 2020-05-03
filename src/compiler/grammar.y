@@ -246,7 +246,8 @@ FUNCTION_ARGUMENT_DECL:
 	}
 	|
 	TYPE ID "=" EXPRESSION {
-		AstNode_VariableDecl* node = new AstNode_VariableDecl($2, $1);
+		AstNode_Expression* init_exp = AstNode::castType<AstNode_Expression>($4);
+		AstNode_VariableDecl* node = new AstNode_VariableDecl($2, $1, init_exp);
 		$$ = node;
 	};
 
@@ -310,8 +311,7 @@ STATEMENT_EXPRESSION_OPT:
 
 STATEMENT_VARIABLES_DECLARATIONS:
 	TYPE 
-	/*
-	{
+	/*{
 		// this will lead to incorrect data type, will need to fix it later.
 		tsl_compiler->cacheNextDataType($1);
 	}
@@ -341,7 +341,8 @@ VARIABLE_DECLARATION:
 	ID "=" EXPRESSION {
 		// initialization is not correctly handled yet.
 		const DataType type = tsl_compiler->dataTypeCache();
-		AstNode_VariableDecl* node = new AstNode_VariableDecl($1, type);
+		AstNode_Expression* init_exp = AstNode::castType<AstNode_Expression>($3);
+		AstNode_VariableDecl* node = new AstNode_VariableDecl($1, type, init_exp);
 		$$ = node;
 	};
 

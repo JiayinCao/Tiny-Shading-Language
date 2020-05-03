@@ -29,7 +29,11 @@ void AstNode_Literal_Flt::print() const {
 }
 
 void AstNode_Ternary::print() const {
-    std::cout << m_condition << "?" << m_true_expr << ":" << m_false_expr;
+    m_condition->print();
+	std::cout << "?";
+	m_true_expr->print();
+	std::cout << ":";
+	std::cout << m_false_expr;
 }
 
 void AstNode_Function::print() const {
@@ -99,7 +103,12 @@ void AstNode_VariableRef::print() const {
 }
 
 void AstNode_VariableDecl::print() const {
-	std::cout<< str_from_data_type( m_type ) << " " << m_name;
+	std::cout << m_name;
+
+	if( m_init_exp ){
+		std::cout<< " = ";
+		m_init_exp->print();
+	}
 }
 
 void AstNode_Binary_Add::print() const {
@@ -383,7 +392,26 @@ void AstNode_Statement_Loop_DoWhile::print() const{
 }
 
 void AstNode_Statement_VariableDecls::print() const {
-	// to be done
+	bool is_first = true;
+	DataType type = DataType::VOID;
+
+	AstNode_VariableDecl* variable = m_var_decls;
+	while( variable ){
+		if( is_first ){
+			type = variable->dataType();
+			std::cout<<str_from_data_type(variable->dataType())<<" ";
+			is_first = false;
+		}else
+			std::cout<<", ";
+
+		variable->print();
+		variable = castType<AstNode_VariableDecl>(variable->getSibling());
+
+		if(variable)
+			assert(variable->dataType() == type);
+	}
+
+	std::cout<<";"<<std::endl;
 }
 
 TSL_NAMESPACE_LEAVE

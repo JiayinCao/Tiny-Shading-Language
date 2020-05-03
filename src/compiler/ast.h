@@ -26,9 +26,7 @@ TSL_NAMESPACE_ENTER
 
 class AstNode {
 public:
-	AstNode() {
-		volatile int k = 0;
-	}
+	AstNode() {}
 
     virtual ~AstNode() = default;
 
@@ -271,13 +269,18 @@ class AstNode_Lvalue : public AstNode_Expression {
 
 class AstNode_VariableDecl : public AstNode {
 public:
-	AstNode_VariableDecl(const char* name, DataType type) : m_name(name), m_type(type) {}
+	AstNode_VariableDecl(const char* name, DataType type, AstNode_Expression* init_exp = nullptr) : m_name(name), m_type(type), m_init_exp(init_exp) {}
 
 	void print() const override;
+
+	DataType dataType() const{
+		return m_type;
+	}
 
 private:
 	const std::string	m_name;
 	const DataType		m_type;
+	AstNode_Expression*	m_init_exp;
 };
 
 class AstNode_VariableRef : public AstNode_Lvalue {
@@ -499,18 +502,14 @@ private:
 
 class AstNode_Statement_Loop_While : public AstNode_Statement_Loop {
 public:
-	AstNode_Statement_Loop_While(AstNode_Expression* cond, AstNode_Statement* statements):AstNode_Statement_Loop(cond,statements){
-		volatile int k = 0;
-	}
+	AstNode_Statement_Loop_While(AstNode_Expression* cond, AstNode_Statement* statements):AstNode_Statement_Loop(cond,statements){}
 
 	void print() const override;
 };
 
 class AstNode_Statement_Loop_DoWhile : public AstNode_Statement_Loop {
 public:
-	AstNode_Statement_Loop_DoWhile(AstNode_Expression* cond, AstNode_Statement* statements):AstNode_Statement_Loop(cond,statements){
-		volatile int k = 0;
-	}
+	AstNode_Statement_Loop_DoWhile(AstNode_Expression* cond, AstNode_Statement* statements):AstNode_Statement_Loop(cond,statements){}
 
 	void print() const override; 
 };
