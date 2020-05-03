@@ -44,7 +44,7 @@
 	int							 i; /* integer value or enum values. */
 	const char					*s;	/* string values. */
 	char						 c; /* single char. */
-	enum DataType			     t;	/* data type. */
+	Tsl_Namespace::DataType		 t;	/* data type. */
 }
 
 %locations

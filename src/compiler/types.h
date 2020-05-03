@@ -46,6 +46,8 @@ inline const char* str_from_data_type( const DataType type ){
 		return "float4";
 	case DataType::MATRIX:
 		return "matrix";
+	default:
+		break;
 	}
 
 	assert( type == DataType::VOID );
