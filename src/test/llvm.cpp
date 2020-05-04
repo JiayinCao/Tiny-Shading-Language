@@ -24,6 +24,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/ExecutionEngine/MCJIT.h"
 
 #include "thirdparty/gtest/gtest.h"
 #include "llvm/IR/LLVMContext.h"
@@ -37,7 +38,10 @@ TEST(LLVM, LLVM_Configuration) {
     EXPECT_NE(TheModule.get(), nullptr);
 }
 
-TEST(LLVM, DISABLED_LLVM_JIT) {
+TEST(LLVM, LLVM_JIT) {
+	llvm::InitializeNativeTarget();
+	llvm::InitializeNativeTargetAsmPrinter();
+
 	llvm::LLVMContext TheContext;
 	std::unique_ptr<llvm::Module> TheModule = std::make_unique<llvm::Module>("my cool jit", TheContext);
 	EXPECT_NE(TheModule, nullptr);
@@ -60,7 +64,7 @@ TEST(LLVM, DISABLED_LLVM_JIT) {
 	std::vector<GenericValue> noargs;
 	GenericValue gv = EE->runFunction(function, noargs);
 	
-	EXPECT_NE(gv.IntVal, 123);
+	EXPECT_EQ(gv.IntVal, 123);
 
 	delete EE;
 	llvm_shutdown();

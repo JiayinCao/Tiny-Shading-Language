@@ -126,12 +126,12 @@ if (TSL_PLATFORM_MAC OR TSL_PLATFORM_LINUX)
 endif()
 
 if (TSL_PLATFORM_WIN)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244 /wd4146 /wd4267 /wd4141 /wd4624 /wd4005 /MD" )
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244 /wd4146 /wd4267 /wd4141 /wd4624 /wd4005 /wd4996 /MD" )
     set_target_properties( TSL PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} /MD" )
 endif()
 
 # specify the llvm library to link
-llvm_map_components_to_libnames(llvm_libs core executionengine)
+llvm_map_components_to_libnames(llvm_libs Core ExecutionEngine Interpreter MC MCJIT Support nativecodegen)
 
 # link llvm libaries
 target_link_libraries(TSL ${llvm_libs})
