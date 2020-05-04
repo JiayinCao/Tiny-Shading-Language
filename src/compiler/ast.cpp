@@ -102,7 +102,11 @@ llvm::Function* AstNode_Shader::codegen( LLVM_Compile_Context& context ) const{
 	context.builder->SetInsertPoint(BB);
 
 	context.builder->CreateRetVoid();
-	llvm::verifyFunction(*function);
+	if( !llvm::verifyFunction(*function) ){
+		function->eraseFromParent();
+		return nullptr;
+	}
+
 	return function;
 
 	if (llvm::Value *ret_val = m_body->codegen(context)) {

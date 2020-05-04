@@ -131,7 +131,7 @@ if (TSL_PLATFORM_WIN)
 endif()
 
 # specify the llvm library to link
-llvm_map_components_to_libnames(llvm_libs core)
+llvm_map_components_to_libnames(llvm_libs core executionengine)
 
 # link llvm libaries
 target_link_libraries(TSL ${llvm_libs})

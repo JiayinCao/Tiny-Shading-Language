@@ -52,9 +52,9 @@ public:
     //! @return                 Get the internal scanner, which will be used by bison generated code.
     void*   getScanner();
 
-    //! @brief  Update root ast
+    //! @brief  Update root node
     //!
-    //! @param  ast             Push the root ast of the program.
+    //! @param  node             Push the root node of the program.
     void    pushRootAst(AstNode_Shader* node);
 
 	//! @brief	Parameter type cache.
