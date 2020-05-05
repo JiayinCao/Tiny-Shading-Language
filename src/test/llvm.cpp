@@ -38,6 +38,13 @@ TEST(LLVM, LLVM_Configuration) {
     EXPECT_NE(TheModule.get(), nullptr);
 }
 
+/*
+ * Manually composing a shader like this through LLVM without Flex and Bison
+ *    int return_123(){
+ *        return 123;
+ *    }
+ * And it should return 123 when JITed.
+ */
 TEST(LLVM, LLVM_JIT) {
 	llvm::InitializeNativeTarget();
 	llvm::InitializeNativeTargetAsmPrinter();
@@ -46,18 +53,10 @@ TEST(LLVM, LLVM_JIT) {
 	std::unique_ptr<llvm::Module> TheModule = std::make_unique<llvm::Module>("my cool jit", TheContext);
 	EXPECT_NE(TheModule, nullptr);
 
-	/*
-		create a simple function
-	    int return_123(){
-	       return 123;
-	    }
-	*/
 	Function *function = Function::Create(FunctionType::get(Type::getInt32Ty(TheContext), {}, false), Function::ExternalLinkage, "return_123", TheModule.get());
 	BasicBlock *bb = BasicBlock::Create(TheContext, "EntryBlock", function);
 	IRBuilder<> builder(bb);
 	builder.CreateRet(builder.getInt32(123));
-
-	// function->print(llvm::errs());
 
 	llvm::ExecutionEngine* EE = llvm::EngineBuilder(std::move(TheModule)).create();
 
@@ -67,5 +66,63 @@ TEST(LLVM, LLVM_JIT) {
 	EXPECT_EQ(gv.IntVal, 123);
 
 	delete EE;
-	llvm_shutdown();
+	// llvm_shutdown();
+}
+
+/*
+ * Manually trying to call an external function defined in C++.
+ *    float my_proxy_function(){
+ *        float input_var = 12.0f;
+ *        return external_cpp_function(input_var);
+ *    }
+ * And it should return what external_cpp_function returns when JITed.
+ */
+
+#ifdef _WIN32
+#define DLLEXPORT __declspec(dllexport)
+#else
+#define DLLEXPORT
+#endif
+
+extern "C" DLLEXPORT float llvm_test_external_cpp_function( float x ) {
+	return x * x;
+}
+
+TEST(LLVM, LLVM_JIT_Ext_Func) {
+	const float input_var = 12.0;
+
+	llvm::InitializeNativeTarget();
+	llvm::InitializeNativeTargetAsmPrinter();
+
+	llvm::LLVMContext TheContext;
+	std::unique_ptr<llvm::Module> TheModule = std::make_unique<llvm::Module>("my cool jit", TheContext);
+	EXPECT_NE(TheModule, nullptr);
+
+	// create external function prototype
+	// this should perfectly match 'llvm_test_external_cpp_function' defined above.
+	std::vector<Type *> proto_args(1, Type::getFloatTy(TheContext));
+	Function *ext_function = Function::Create(FunctionType::get(Type::getFloatTy(TheContext), proto_args, false), Function::ExternalLinkage, "llvm_test_external_cpp_function", TheModule.get());
+
+	// the main function to be executed
+	Function *function = Function::Create(FunctionType::get(Type::getFloatTy(TheContext), {}, false), Function::ExternalLinkage, "my_proxy_function", TheModule.get());
+	BasicBlock *bb = BasicBlock::Create(TheContext, "EntryBlock", function);
+	IRBuilder<> builder(bb);
+
+	// call the external defined function in C++, llvm_test_external_cpp_function
+	std::vector<Value *> args(1);
+	args[0] = ConstantFP::get(TheContext, APFloat(input_var));
+	Value* value = builder.CreateCall(ext_function, args, "calltmp");
+
+	// return whatever the call returns
+	builder.CreateRet(value);
+
+	// execute the jited function
+	llvm::ExecutionEngine* EE = llvm::EngineBuilder(std::move(TheModule)).create();
+	std::vector<GenericValue> noargs;
+	GenericValue gv = EE->runFunction(function, noargs);
+	
+	const float expected_result = llvm_test_external_cpp_function(input_var);
+	EXPECT_EQ(gv.FloatVal, expected_result);
+
+	delete EE;
 }
