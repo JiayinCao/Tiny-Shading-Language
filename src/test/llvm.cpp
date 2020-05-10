@@ -128,7 +128,7 @@ TEST_F(LLVM, JIT_Ext_Func) {
 	EXPECT_EQ(gv.FloatVal, expected_result);
 }
 
-TEST_F(LLVM, Mutable_Variable) {
+TEST_F(LLVM, External_Call) {
 	const float input_var = 12.0;
 
 	// create external function prototype
@@ -263,4 +263,98 @@ TEST_F(LLVM, Passthrough_Pointer) {
 	shader_func(&local_value);
 
 	EXPECT_EQ(local_value, 12.0f);
+}
+
+/*
+ * This unit test verifies the method to allow in/out keyword of TSL in LLVM.
+ *    float inner_function( in float arg0 , out float arg1 ){
+ *          arg0 = 2.0f;
+ *          arg1 = 2.0f;
+ *    }
+ *
+ *    float outter_function( out float arg0 , out float arg1 ){
+ *        float local_arg0 = 123.0f, local_arg1 = 123.0f;
+ *        in_out_test( local_arg0 , local_arg1 );
+ *        *arg0 = local_arg0;
+ *        *arg1 = local_arg1;
+ *    }
+ *
+ * At the end of the day, arg0 should be 123.0f, arg1 should be 2.0f.
+ */
+
+/*
+extern "C" DLLEXPORT void inner_function(float arg0 , float* arg1) {
+	arg0 = 2.0f;
+	*arg1 = 2.0f;
+}
+*/
+
+TEST_F(LLVM, In_and_Out) {
+	// create external function prototype
+	// this should perfectly match 'external_func_cpp' defined above.
+	std::vector<Type *> proto_args0 = {Type::getFloatTy(context), Type::getFloatPtrTy(context)};
+	Function *inner_function = Function::Create(FunctionType::get(Type::getVoidTy(context), proto_args0, false), Function::ExternalLinkage, "inner_function", module.get());
+
+	{
+		BasicBlock *bb = BasicBlock::Create(context, "EntryBlock", inner_function);
+		IRBuilder<> builder(bb);
+
+		// declare the local variables
+		auto local_param0 = builder.CreateAlloca(Type::getFloatTy(context), nullptr);
+		auto local_param1 = builder.CreateAlloca(Type::getFloatPtrTy(context), nullptr);
+
+		auto store_inst0 = builder.CreateStore(inner_function->getArg(0), local_param0);
+		auto store_inst1 = builder.CreateStore(inner_function->getArg(1), local_param1);
+
+		// arg0 = 2.0f
+		Value* constant_value = ConstantFP::get(context, APFloat(2.0f));
+		builder.CreateStore(constant_value, local_param0);
+
+		// auto value0 = builder.CreateLoad(local_param0);
+		auto value1 = builder.CreateLoad(local_param1);
+
+		//builder.CreateStore( value0 , inner_function->getArg(0) );
+		builder.CreateStore(constant_value, value1);
+		builder.CreateRetVoid();
+	}
+
+	// the main function to be executed
+	std::vector<Type *> proto_args1 = {Type::getFloatPtrTy(context), Type::getFloatPtrTy(context)};
+	FunctionType* function_prototype = FunctionType::get(Type::getVoidTy(context), proto_args1, false);
+
+	Function *outter_function = Function::Create(function_prototype, Function::ExternalLinkage, "outter_function", module.get());
+	{
+		BasicBlock *bb = BasicBlock::Create(context, "EntryBlock", outter_function);
+		IRBuilder<> builder(bb);
+
+		auto local_param0 = builder.CreateAlloca(Type::getFloatTy(context), nullptr);
+		auto local_param1 = builder.CreateAlloca(Type::getFloatTy(context), nullptr);
+
+		auto constant_value = ConstantFP::get(context, APFloat(123.0f));
+		auto store_inst0 = builder.CreateStore(constant_value, local_param0);
+		auto store_inst1 = builder.CreateStore(constant_value, local_param1);
+
+		auto value0 = builder.CreateLoad(local_param0);
+
+		// Push the parameter stack
+		std::vector<Value*> args;
+		args.push_back(value0);
+		args.push_back(store_inst1->getPointerOperand());
+		builder.CreateCall(inner_function, args, "call_inner_function");
+
+		value0 = builder.CreateLoad(local_param0);
+		auto value1 = builder.CreateLoad(local_param1);
+
+		builder.CreateStore(value0, outter_function->getArg(0));
+		builder.CreateStore(value1, outter_function->getArg(1));
+		builder.CreateRetVoid();
+	}
+
+	// call the function compiled by llvm
+	const auto shader_func = get_function<void(*)(float*, float*)>("outter_function");
+	float local_value0 = 10.0f, local_value1 = 20.0f;
+	shader_func(&local_value0 , &local_value1);
+
+	EXPECT_EQ(local_value0, 123.0f);
+	EXPECT_EQ(local_value1, 2.0f);
 }
