@@ -22,6 +22,7 @@
 #include <memory>
 #include <mutex>
 #include "tslversion.h"
+#include "closure.h"
 
 TSL_NAMESPACE_BEGIN
 
@@ -51,15 +52,27 @@ public:
     //! @return     Allocated memory points to an instance of a newly created shading_context.
     ShadingContext* make_shading_context();
 
+    //! @brief  Register closure id.
+    //!
+    //! @param  name    Name of the closure.
+    //! @return         Allocated closure id for the closure.
+    ClosureID register_closure_id(const std::string& name);
+
 private:
     std::unordered_set<std::unique_ptr<ShadingContext>>    m_contexts;         /**< Data structure holding all contexts. */
     std::mutex                                             m_context_mutex;    /**< Making sure context related operation is thread-safe. */
 
+    /**< a container holding all shader unit. */
+    std::unordered_map<std::string, std::unique_ptr<ShaderUnit>> m_shader_units;
     /**< a mutex to make sure shader_group access is thread-safe. */
     std::mutex m_shader_unit_mutex;
 
-    /**< a container holding all shader unit. */
-    std::unordered_map<std::string, std::unique_ptr<ShaderUnit>> m_shader_units;
+    /**< a container holding all closures ids. */
+    std::unordered_map<std::string, ClosureID>  m_closures;
+    /**< current allocated closure id. */
+    int m_current_closure_id = INVALID_CLOSURE_ID + 1;
+    /**< a mutet to make sure access to closure container is thread-safe. */
+    std::mutex m_closure_mutex;
 
     friend class ShadingContext;
 };

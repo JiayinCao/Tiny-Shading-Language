@@ -76,7 +76,7 @@ ShaderGroup* ShadingContext::make_shader_group(const std::string& name) {
     return shader_group;
 }
 
-void ShadingContext::execute_shader_group(const ShaderGroup* shader_group) const {
+void ShadingContext::execute_shader_group(const ShaderGroup* shader_group, ClosureTree& closure) const {
     if (!shader_group)
         return;
 }

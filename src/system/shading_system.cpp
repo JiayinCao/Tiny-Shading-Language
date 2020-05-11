@@ -34,4 +34,13 @@ ShadingContext* ShadingSystem::make_shading_context() {
     return shading_context;
 }
 
+ClosureID ShadingSystem::register_closure_id(const std::string& name) {
+    std::lock_guard<std::mutex> lock(m_closure_mutex);
+
+    if (m_closures.count(name))
+        return INVALID_CLOSURE_ID;
+
+    return m_closures[name] = ++m_current_closure_id;
+}
+
 TSL_NAMESPACE_END

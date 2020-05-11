@@ -21,6 +21,7 @@
 #include <memory>
 #include "tslversion.h"
 #include "compiler/compiler.h"
+#include "closure.h"
 
 TSL_NAMESPACE_BEGIN
 
@@ -109,7 +110,8 @@ public:
     //! @brief  Execution of a shader group.
     //!
     //! @param shader_group  Shader group to be executed.
-    void         execute_shader_group(const ShaderGroup* shader_group) const;
+    //! @param closure       The resulting closure tree.
+    void         execute_shader_group(const ShaderGroup* shader_group, ClosureTree& closure) const;
 
 private:
     //! @brief  Constructor.
