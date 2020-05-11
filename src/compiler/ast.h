@@ -25,7 +25,7 @@
 #include "include/tslversion.h"
 #include "types.h"
 
-TSL_NAMESPACE_ENTER
+TSL_NAMESPACE_BEGIN
 
 struct LLVM_Compile_Context{
 	llvm::LLVMContext*	context = nullptr;
@@ -629,4 +629,4 @@ public:
 	void print() const override;
 };
 
-TSL_NAMESPACE_LEAVE
+TSL_NAMESPACE_END

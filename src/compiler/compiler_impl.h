@@ -22,7 +22,7 @@
 #include "include/tslversion.h"
 #include "types.h"
 
-TSL_NAMESPACE_ENTER
+TSL_NAMESPACE_BEGIN
 
 class AstNode_Shader;
 
@@ -83,4 +83,4 @@ private:
     // local llvm context
     llvm::LLVMContext m_llvm_context;
 };
-TSL_NAMESPACE_LEAVE
+TSL_NAMESPACE_END

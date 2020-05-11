@@ -15,17 +15,17 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-#include "compiler.h"
-#include "compiler_impl.h"
+#include "thirdparty/gtest/gtest.h"
+#include "include/shading_system.h"
 
-TSL_NAMESPACE_BEGIN
+USE_TSL_NAMESPACE
 
-TslCompiler::TslCompiler(){
-    m_compiler = std::make_unique<TslCompiler_Impl>();
+TEST(TSL, Basic) {
+    ShadingSystem ss;
+
+    // allocate a shading context
+    auto sc = ss.make_shading_context();
+
+    // make sure the context is allocated.
+    EXPECT_NE(sc, nullptr);
 }
-
-bool TslCompiler::compile(const char* source_code, std::string& tso) const {
-    return m_compiler->compile(source_code, tso);
-}
-
-TSL_NAMESPACE_END

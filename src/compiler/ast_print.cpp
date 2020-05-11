@@ -18,7 +18,7 @@
 #include <iostream>
 #include "ast.h"
 
-TSL_NAMESPACE_ENTER
+TSL_NAMESPACE_BEGIN
 
 void AstNode_Literal_Int::print() const {
     std::cout << m_val;
@@ -444,4 +444,4 @@ void AstNode_Statement_VariableDecls::print() const {
 	std::cout<<";"<<std::endl;
 }
 
-TSL_NAMESPACE_LEAVE
+TSL_NAMESPACE_END

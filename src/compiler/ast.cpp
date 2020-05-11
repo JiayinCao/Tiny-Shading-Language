@@ -28,7 +28,7 @@
 #include "llvm/IR/Verifier.h"
 #include "ast.h"
 
-TSL_NAMESPACE_ENTER
+TSL_NAMESPACE_BEGIN
 
 static inline llvm::Type* llvm_type_from_data_type( const DataType type , llvm::LLVMContext& context ){
 	switch(type){
@@ -128,4 +128,4 @@ llvm::Value* AstNode_FunctionBody::codegen( LLVM_Compile_Context& context ) cons
 	return nullptr;
 }
 
-TSL_NAMESPACE_LEAVE
+TSL_NAMESPACE_END

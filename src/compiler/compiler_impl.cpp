@@ -37,7 +37,7 @@ int yylex_destroy(void*);
 YY_BUFFER_STATE yy_scan_string(const char* yystr, void* yyscanner);
 void makeVerbose(int verbose);
 
-TSL_NAMESPACE_ENTER
+TSL_NAMESPACE_BEGIN
 
 TslCompiler_Impl::TslCompiler_Impl(){
     reset();
@@ -95,4 +95,4 @@ bool TslCompiler_Impl::compile(const char* source_code, std::string& tso) {
 	return true;
 }
 
-TSL_NAMESPACE_LEAVE
+TSL_NAMESPACE_END

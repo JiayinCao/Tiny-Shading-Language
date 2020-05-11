@@ -15,17 +15,23 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-#include "compiler.h"
-#include "compiler_impl.h"
+#include "include/shading_system.h"
+#include "include/shading_context.h"
 
 TSL_NAMESPACE_BEGIN
 
-TslCompiler::TslCompiler(){
-    m_compiler = std::make_unique<TslCompiler_Impl>();
+ShadingSystem::ShadingSystem() {
 }
 
-bool TslCompiler::compile(const char* source_code, std::string& tso) const {
-    return m_compiler->compile(source_code, tso);
+ShadingSystem::~ShadingSystem() {
+}
+
+ShadingContext* ShadingSystem::make_shading_context() {
+    std::lock_guard<std::mutex> lock(m_context_mutex);
+
+    auto shading_context = new ShadingContext(*this);
+    auto iter = m_contexts.insert(std::unique_ptr<ShadingContext>(shading_context));
+    return shading_context;
 }
 
 TSL_NAMESPACE_END

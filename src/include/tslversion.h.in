@@ -33,8 +33,8 @@
 
 #define Tsl_Namespace                    Tsl_Namespace_@TSL_LIBRARY_VERSION_MAJOR@_@TSL_LIBRARY_VERSION_MINOR@_@TSL_LIBRARY_VERSION_PATCH@
 
-#define TSL_NAMESPACE_ENTER              namespace Tsl_Namespace{
-#define TSL_NAMESPACE_LEAVE              }
+#define TSL_NAMESPACE_BEGIN              namespace Tsl_Namespace{
+#define TSL_NAMESPACE_END                }
 #define USE_TSL_NAMESPACE                using namespace Tsl_Namespace;
 
 // This will generate something like "TinyShadingLanguage 1.2.3"
@@ -44,5 +44,5 @@
 #define TSL_INTRO_STRING "TinyShadingLanguage " TSL_LIBRARY_VERSION_STRING
 
 // This is just a hack to make sure the namespace is always valid
-TSL_NAMESPACE_ENTER
-TSL_NAMESPACE_LEAVE
+TSL_NAMESPACE_BEGIN
+TSL_NAMESPACE_END

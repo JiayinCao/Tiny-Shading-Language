@@ -22,7 +22,7 @@
 #include "include/tslversion.h"
 #include "compiler_impl.h"
 
-TSL_NAMESPACE_ENTER
+TSL_NAMESPACE_BEGIN
 
 class TslCompiler_Impl;
 
@@ -49,4 +49,4 @@ private:
     std::unique_ptr<TslCompiler_Impl> m_compiler = nullptr;
 };
 
-TSL_NAMESPACE_LEAVE
+TSL_NAMESPACE_END

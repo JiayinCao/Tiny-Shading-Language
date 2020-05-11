@@ -20,7 +20,7 @@
 #include <assert.h>
 #include "include/tslversion.h"
 
-TSL_NAMESPACE_ENTER
+TSL_NAMESPACE_BEGIN
 
 enum DataType : int{
 	VOID	= 0,
@@ -84,4 +84,4 @@ inline const char* str_from_var_config(const VariableConfig type) {
 	return "invalid";
 }
 
-TSL_NAMESPACE_LEAVE
+TSL_NAMESPACE_END
