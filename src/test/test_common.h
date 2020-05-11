@@ -18,17 +18,17 @@
 #pragma once
 
 #include "thirdparty/gtest/gtest.h"
-#include "compiler/compiler.h"
+#include "include/shading_system.h"
+#include "include/shading_context.h"
 
 USE_TSL_NAMESPACE
 
 inline void validate_shader(const char* shader_source, bool valid = true, TslCompiler* compiler = nullptr) {
-    TslCompiler local_compiler;
-    if (!compiler)
-        compiler = &local_compiler;
+    ShadingSystem shading_system;
+    auto shading_context = shading_system.make_shading_context();
 
-    std::string dummy;
-    const bool ret = compiler->compile(shader_source, dummy);
+    const auto shader_unit = shading_context->compile_shader_unit("test", shader_source);
+    const auto ret = shader_unit != nullptr;
 
     EXPECT_EQ(ret, valid);
 }

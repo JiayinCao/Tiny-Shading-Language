@@ -27,6 +27,11 @@ ShaderGroup::ShaderGroup(const std::string& name, const TslCompiler& compiler)
     :m_compiler(compiler), ShaderUnit(name){
 }
 
+bool ShaderGroup::compile() {
+    // to be implemented
+    return false;
+}
+
 void ShaderGroup::add_shader_group(const ShaderUnit* shader_unit) {
     if (!shader_unit)
         return;
@@ -55,7 +60,7 @@ ShaderUnit* ShadingContext::compile_shader_unit(const std::string& name, const c
     if (!ret)
         return nullptr;
 
-    return nullptr;
+    return m_shading_system.m_shader_units[name].get();
 }
 
 ShaderGroup* ShadingContext::make_shader_group(const std::string& name) {

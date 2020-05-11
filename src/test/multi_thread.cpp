@@ -20,34 +20,40 @@
 #include "test_common.h"
 
 // LLVM is not properly configured to support multi-thread now
-TEST(Thread, DISABLED_Full_Test) {
+TEST(Thread, Full_Test) {
     // thread number, this should be large enough to make sure it fails if the compiler is not thread safe.
     constexpr int TN = 16;
+
+    ShadingSystem shading_system;
 
     try {
         // Unlike other unit test, this one can cause crash if it is not thread safe.
         std::vector<std::thread> threads(TN);
         for (int i = 0; i < TN; ++i)
             threads[i] = std::thread([&]() {
-            validate_shader(R"(
-            shader func(){
-                int flag = 1;
+                char name_buffer[256] = { 0 };
+                name_buffer[0] = 'a' + i;
+                auto shading_context = shading_system.make_shading_context();
+                shading_context->compile_shader_unit(name_buffer ,
+                    R"(
+                    shader func(){
+                        int flag = 1;
 
-                if( flag ){
-                    if( flag2 )
-                        flag = false;
-                    int test = 0;
-                }
+                        if( flag ){
+                            if( flag2 )
+                                flag = false;
+                            int test = 0;
+                        }
 
-                if( !flag ){
-                }else
+                        if( !flag ){
+                        }else
 
-                {
-                    int k = 0;
-                }
-            }
-            )");
-                });
+                        {
+                            int k = 0;
+                        }
+                    }
+                )");
+        });
 
         // making sure all threads are done
         std::for_each(threads.begin(), threads.end(), [](std::thread& thread) { thread.join(); });

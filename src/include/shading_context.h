@@ -64,7 +64,13 @@ public:
     //! @param  shader_unit A shader unit to be added in the group.
     void add_shader_group(const ShaderUnit* shader_unit);
 
+    //! @brief  Compile the shader group.
+    //!
+    //! @return             Whether the shader group is compiled successcully.
+    bool compile();
+
 private:
+    /**< TSL compiler of the owning context. */
     const TslCompiler&   m_compiler;
 
     /**< Shader units belong to this group. */
