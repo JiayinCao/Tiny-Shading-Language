@@ -30,11 +30,11 @@ TEST(Thread, Full_Test) {
         // Unlike other unit test, this one can cause crash if it is not thread safe.
         std::vector<std::thread> threads(TN);
         for (int i = 0; i < TN; ++i)
-            threads[i] = std::thread([&]() {
+            threads[i] = std::thread([&](int tid) {
                 char name_buffer[256] = { 0 };
-                name_buffer[0] = 'a' + i;
+                name_buffer[0] = 'a' + tid;
                 auto shading_context = shading_system.make_shading_context();
-                shading_context->compile_shader_unit(name_buffer ,
+                auto shader_group = shading_context->compile_shader_unit(name_buffer,
                     R"(
                     shader func(){
                         int flag = 1;
@@ -53,7 +53,9 @@ TEST(Thread, Full_Test) {
                         }
                     }
                 )");
-        });
+
+                EXPECT_NE(shader_group, nullptr);
+        }, i);
 
         // making sure all threads are done
         std::for_each(threads.begin(), threads.end(), [](std::thread& thread) { thread.join(); });
