@@ -22,7 +22,6 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Verifier.h"
@@ -38,9 +37,6 @@ int yylex_destroy(void*);
 YY_BUFFER_STATE yy_scan_string(const char* yystr, void* yyscanner);
 void makeVerbose(int verbose);
 
-// this may need to be moved later
-static llvm::LLVMContext g_llvm_context;
-
 TSL_NAMESPACE_ENTER
 
 TslCompiler_Impl::TslCompiler_Impl(){
@@ -52,11 +48,11 @@ void TslCompiler_Impl::reset() {
     m_ast_root = nullptr;
 }
 
-void TslCompiler_Impl::pushRootAst(AstNode_Shader* node) {
+void TslCompiler_Impl::push_root_ast(AstNode_Shader* node) {
     m_ast_root = node;
 }
 
-void* TslCompiler_Impl::getScanner() {
+void* TslCompiler_Impl::get_scanner() {
     return m_scanner;
 }
 
@@ -78,16 +74,16 @@ bool TslCompiler_Impl::compile(const char* source_code, std::string& tso) {
     if( parsing_result != 0 )
 		return false;
 
-	llvm::Module* module = new llvm::Module("shader", g_llvm_context);
+	llvm::Module* module = new llvm::Module("shader", m_llvm_context);
 	if(!module)
 		return false;
 
 	// if there is a legit shader defined, generate LLVM IR
 	if(m_ast_root){
-		llvm::IRBuilder<> builder(g_llvm_context);
+		llvm::IRBuilder<> builder(m_llvm_context);
 
 		LLVM_Compile_Context compile_context;
-		compile_context.context = &g_llvm_context;
+		compile_context.context = &m_llvm_context;
 		compile_context.module = module;
 		compile_context.builder = &builder;
 		llvm::Function* function = m_ast_root->codegen(compile_context);

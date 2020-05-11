@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "llvm/IR/LLVMContext.h"
 #include <string>
 #include "include/tslversion.h"
 #include "types.h"
@@ -50,22 +51,22 @@ public:
     //! @brief  Get scanner of the compiler
     //!
     //! @return                 Get the internal scanner, which will be used by bison generated code.
-    void*   getScanner();
+    void*   get_scanner();
 
     //! @brief  Update root node
     //!
     //! @param  node             Push the root node of the program.
-    void    pushRootAst(AstNode_Shader* node);
+    void    push_root_ast(AstNode_Shader* node);
 
 	//! @brief	Parameter type cache.
 	//!
 	//! @param	type			Type of the parameter to be parsed.
-	void	cacheNextDataType(DataType type){
+	void	cache_next_data_type(DataType type){
 		m_type_cache = type;
 	}
 
 	//! @brief	Acquire the cached data type.
-	DataType	dataTypeCache() const {
+	DataType	data_type_cache() const {
 		return m_type_cache;
 	}
 
@@ -78,5 +79,8 @@ private:
 
 	// data type cache
 	DataType	m_type_cache = DataType::VOID;
+
+    // local llvm context
+    llvm::LLVMContext m_llvm_context;
 };
 TSL_NAMESPACE_LEAVE

@@ -30,7 +30,7 @@
 
 	USE_TSL_NAMESPACE
 
-	#define scanner tsl_compiler->getScanner()
+	#define scanner tsl_compiler->get_scanner()
 
 	int yylex( union YYSTYPE *,struct YYLTYPE *,void * );
     void yyerror(struct YYLTYPE* loc, void *tsl_compiler, char const *str);
@@ -194,7 +194,7 @@ SHADER_DEF:
 
 		AstNode_FunctionBody*	body = AstNode::castType<AstNode_FunctionBody>($6);
 		AstNode_Shader* shader = new AstNode_Shader(proto, body);
-		tsl_compiler->pushRootAst(shader);
+		tsl_compiler->push_root_ast(shader);
 	};
 
 SHADER_FUNCTION_ARGUMENT_DECLS:
@@ -237,7 +237,7 @@ FUNCTION_DEF:
 		AstNode* root = new AstNode_FunctionDefinition(proto, body);
 
 		// to be done later
-		// tsl_compiler->pushRootAst(root);
+		// tsl_compiler->push_root_ast(root);
 	};
 
 FUNCTION_ARGUMENT_DECLS:
@@ -387,14 +387,14 @@ VARIABLE_DECLARATIONS:
 
 VARIABLE_DECLARATION:
 	ID {
-		const DataType type = tsl_compiler->dataTypeCache();
+		const DataType type = tsl_compiler->data_type_cache();
 		AstNode_VariableDecl* node = new AstNode_VariableDecl($1, type);
 		$$ = node;
 	}
 	|
 	ID "=" EXPRESSION {
 		// initialization is not correctly handled yet.
-		const DataType type = tsl_compiler->dataTypeCache();
+		const DataType type = tsl_compiler->data_type_cache();
 		AstNode_Expression* init_exp = AstNode::castType<AstNode_Expression>($3);
 		AstNode_VariableDecl* node = new AstNode_VariableDecl($1, type, VariableConfig::NONE, init_exp);
 		$$ = node;
@@ -813,32 +813,32 @@ ID_OR_FIELD:
 TYPE:
 	"int" {
 		$$ = DataType::INT;
-		tsl_compiler->cacheNextDataType($$);
+		tsl_compiler->cache_next_data_type($$);
 	}
 	|
 	"float" {
 		$$ = DataType::FLOAT;
-		tsl_compiler->cacheNextDataType($$);
+		tsl_compiler->cache_next_data_type($$);
 	}
 	|
 	"matrix" {
 		$$ = DataType::MATRIX;
-		tsl_compiler->cacheNextDataType($$);
+		tsl_compiler->cache_next_data_type($$);
 	}
 	|
 	"float3" {
 		$$ = DataType::FLOAT3;
-		tsl_compiler->cacheNextDataType($$);
+		tsl_compiler->cache_next_data_type($$);
 	}
 	|
 	"bool" {
 		$$ = DataType::BOOL;
-		tsl_compiler->cacheNextDataType($$);
+		tsl_compiler->cache_next_data_type($$);
 	}
 	|
 	"void" {
 		$$ = DataType::VOID;
-		tsl_compiler->cacheNextDataType($$);
+		tsl_compiler->cache_next_data_type($$);
 	};
 %%
 
