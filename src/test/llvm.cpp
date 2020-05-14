@@ -252,7 +252,7 @@ TEST_F(LLVM, Passthrough_Pointer) {
 
 	// call the external defined function in C++, llvm_test_external_cpp_function
 	std::vector<Value *> args(1);
-	args[0] = function->args().begin();
+	args[0] = function->getArg(0);
 	builder.CreateCall(ext_function, args, "calltmp");
 
 	builder.CreateRetVoid();
@@ -318,6 +318,8 @@ TEST_F(LLVM, In_and_Out) {
 		builder.CreateRetVoid();
 	}
 
+	inner_function->print(errs());
+
 	// the main function to be executed
 	std::vector<Type *> proto_args1 = {Type::getFloatPtrTy(context), Type::getFloatPtrTy(context)};
 	FunctionType* function_prototype = FunctionType::get(Type::getVoidTy(context), proto_args1, false);
@@ -359,6 +361,56 @@ TEST_F(LLVM, In_and_Out) {
 	EXPECT_EQ(local_value1, 2.0f);
 }
 
+/*
+ * This is an unit test for making sure there is a way to support global parameter.
+ *   float from_cpu;
+ *   out float to_cpu;
+ *   float shader_func(){
+ *       to_cpu = from_cpu + 2.0f;
+ *       return from_cpu;
+ *   }
+ * Passing the address of a floating point data and expect the correct result.
+ */
+TEST_F(LLVM, Global_Input_And_Ouput) {
+	float constant_input = 0.0f;
+	float global_output = 0.0f;
+	Constant* input_addr = ConstantInt::get(Type::getInt64Ty(context), uintptr_t(&constant_input));
+	GlobalVariable* global_input_value = new GlobalVariable(*module, Type::getFloatPtrTy(context), true, GlobalValue::ExternalLinkage, input_addr, "global_input");
+	Constant* output_addr = ConstantInt::get(Type::getInt64Ty(context), uintptr_t(&global_output));
+	GlobalVariable* global_output_value = new GlobalVariable(*module, Type::getFloatPtrTy(context), false, GlobalValue::ExternalLinkage, output_addr, "global_output");
+
+	// the main function to be executed
+	FunctionType* function_prototype = FunctionType::get(Type::getFloatTy(context), {}, false);
+
+	Function *function = Function::Create(function_prototype, Function::ExternalLinkage, "shader_func", module.get());
+	BasicBlock *bb = BasicBlock::Create(context, "EntryBlock", function);
+	IRBuilder<> builder(bb);
+
+	Value *input_value_addr = builder.CreateLoad(global_input_value);
+	Value *input_value = builder.CreateLoad(input_value_addr);
+
+	Value *constant_delta = ConstantFP::get(context, APFloat(2.0f));
+	Value* add_result = builder.CreateFAdd(input_value, constant_delta);
+	Value *output_value_addr = builder.CreateLoad(global_output_value);
+	builder.CreateStore(add_result, output_value_addr);
+
+	builder.CreateRet(input_value);
+
+	// call the function compiled by llvm
+	const auto shader_func = get_function<float(*)()>("shader_func");
+
+	// imagine the following two instance of function calls are calling shaders twice with two different inputs
+	constant_input = 1.0f;
+	auto local_value = shader_func();
+	EXPECT_EQ(local_value, 1.0f);
+	EXPECT_EQ(global_output, local_value + 2.0f);
+
+	constant_input = 13.0f;
+	local_value = shader_func();
+	EXPECT_EQ(local_value, 13.0f);
+	EXPECT_EQ(global_output, local_value + 2.0f);
+}
+
 TEST_F(LLVM, Multi_Thread) {
 	auto thread_task = []() {
 		llvm::LLVMContext context;
@@ -387,7 +439,6 @@ TEST_F(LLVM, Multi_Thread) {
 			Value* constant_value = ConstantFP::get(context, APFloat(2.0f));
 			builder.CreateStore(constant_value, local_param0);
 
-			// auto value0 = builder.CreateLoad(local_param0);
 			auto value1 = builder.CreateLoad(local_param1);
 
 			//builder.CreateStore( value0 , inner_function->getArg(0) );
