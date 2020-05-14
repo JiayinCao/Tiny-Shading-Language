@@ -71,7 +71,7 @@ private:
     std::unordered_map<std::string, ClosureID>  m_closures;
     /**< current allocated closure id. */
     int m_current_closure_id = INVALID_CLOSURE_ID + 1;
-    /**< a mutet to make sure access to closure container is thread-safe. */
+    /**< a mutex to make sure access to closure container is thread-safe. */
     std::mutex m_closure_mutex;
 
     friend class ShadingContext;

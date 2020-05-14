@@ -318,8 +318,6 @@ TEST_F(LLVM, In_and_Out) {
 		builder.CreateRetVoid();
 	}
 
-	inner_function->print(errs());
-
 	// the main function to be executed
 	std::vector<Type *> proto_args1 = {Type::getFloatPtrTy(context), Type::getFloatPtrTy(context)};
 	FunctionType* function_prototype = FunctionType::get(Type::getVoidTy(context), proto_args1, false);
@@ -409,6 +407,62 @@ TEST_F(LLVM, Global_Input_And_Ouput) {
 	local_value = shader_func();
 	EXPECT_EQ(local_value, 13.0f);
 	EXPECT_EQ(global_output, local_value + 2.0f);
+}
+
+/*
+ * This is an unit test for global data struct as input.
+ *   struct Global_Structure{
+ *       int m_data0;
+ *       int m_data1;
+ *   };
+ *
+ *   Global_Structure gs;
+ *
+ *   float shader_func(){
+ *       return gs.m_data0 + gs.m_data1;
+ *   }
+ */
+TEST_F(LLVM, Global_Structure) {
+	struct Global_Structure{
+		float	m_data0 = 23.0f;
+		float 	m_data1 = 122.0f;
+	};
+	Global_Structure gs;
+
+	Type *struct_var_types[] = { Type::getFloatTy(context), Type::getFloatTy(context) };
+	auto *struct_type = StructType::create(struct_var_types, "Global_Structure")->getPointerTo();
+
+	Constant* input_addr = ConstantInt::get(Type::getInt64Ty(context), uintptr_t(&gs));
+	GlobalVariable* global_struct_value = new GlobalVariable(*module, struct_type, false, GlobalValue::ExternalLinkage, input_addr, "global_input");
+
+	// the main function to be executed
+	FunctionType* function_prototype = FunctionType::get(Type::getFloatTy(context), {}, false);
+
+	Function *function = Function::Create(function_prototype, Function::ExternalLinkage, "shader_func", module.get());
+	BasicBlock *bb = BasicBlock::Create(context, "EntryBlock", function);
+	IRBuilder<> builder(bb);
+
+	Value *input_value = builder.CreateLoad(global_struct_value);
+
+	auto gep0 = builder.CreateConstGEP2_32(nullptr, input_value, 0, 0);
+	auto var0 = builder.CreatePointerCast(gep0,Type::getFloatPtrTy(context));
+	auto value0 = builder.CreateLoad(var0);
+
+	auto gep1 = builder.CreateConstGEP2_32(nullptr, input_value, 0, 1);
+	auto var1 = builder.CreatePointerCast(gep1, Type::getFloatPtrTy(context));
+	auto value1 = builder.CreateLoad(var1);
+
+//	Value *constant_delta = ConstantFP::get(context, APFloat(2.0f));
+//	builder.CreateStore(constant_delta, input_value);
+
+	auto var = builder.CreateFAdd(value0, value1);
+	builder.CreateRet(var);
+
+	// call the function compiled by llvm
+	const auto shader_func = get_function<float(*)()>("shader_func");
+
+	const auto local_value = shader_func();
+	EXPECT_EQ(local_value, gs.m_data0 + gs.m_data1);
 }
 
 TEST_F(LLVM, Multi_Thread) {
