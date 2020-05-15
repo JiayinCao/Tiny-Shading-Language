@@ -15,6 +15,7 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
+#include <stdio.h>
 #include "llvm/ExecutionEngine/Orc/LLJIT.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
@@ -29,6 +30,8 @@
 #include "thirdparty/gtest/gtest.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "include/closure.h"
+
 using namespace llvm;
 
 // The purpose of these unit tests is to make sure the LLVM version that it is used to compile TSL supports the basic
@@ -422,7 +425,7 @@ TEST_F(LLVM, Global_Input_And_Ouput) {
  *       return gs.m_data0 + gs.m_data1;
  *   }
  */
-TEST_F(LLVM, Global_Structure) {
+TEST_F(LLVM, Global_Structure_Input) {
 	struct Global_Structure{
 		float	m_data0 = 23.0f;
 		float 	m_data1 = 122.0f;
@@ -452,9 +455,6 @@ TEST_F(LLVM, Global_Structure) {
 	auto var1 = builder.CreatePointerCast(gep1, Type::getFloatPtrTy(context));
 	auto value1 = builder.CreateLoad(var1);
 
-//	Value *constant_delta = ConstantFP::get(context, APFloat(2.0f));
-//	builder.CreateStore(constant_delta, input_value);
-
 	auto var = builder.CreateFAdd(value0, value1);
 	builder.CreateRet(var);
 
@@ -463,6 +463,190 @@ TEST_F(LLVM, Global_Structure) {
 
 	const auto local_value = shader_func();
 	EXPECT_EQ(local_value, gs.m_data0 + gs.m_data1);
+}
+
+/*
+ * This is an unit test for global data struct as input.
+ *   struct Global_Structure{
+ *       int m_data0;
+ *       out int m_data1;
+ *   };
+ *
+ *   Global_Structure gs;
+ *
+ *   void shader_func(){
+ *       gs.m_data1 = gs.m_data0 * 2.0f;
+ *   }
+ */
+TEST_F(LLVM, Global_Structure_Output) {
+	struct Global_Structure{
+		float	m_data0 = 23.0f;
+		float 	m_data1 = 122.0f;
+	};
+	Global_Structure gs;
+
+	Type *struct_var_types[] = { Type::getFloatTy(context), Type::getFloatTy(context) };
+	auto *struct_type = StructType::create(struct_var_types, "Global_Structure")->getPointerTo();
+
+	Constant* input_addr = ConstantInt::get(Type::getInt64Ty(context), uintptr_t(&gs));
+	GlobalVariable* global_struct_value = new GlobalVariable(*module, struct_type, false, GlobalValue::ExternalLinkage, input_addr, "global_input");
+
+	// the main function to be executed
+	FunctionType* function_prototype = FunctionType::get(Type::getFloatTy(context), {}, false);
+
+	Function *function = Function::Create(function_prototype, Function::ExternalLinkage, "shader_func", module.get());
+	BasicBlock *bb = BasicBlock::Create(context, "EntryBlock", function);
+	IRBuilder<> builder(bb);
+
+	Value *input_value = builder.CreateLoad(global_struct_value);
+
+	auto gep0 = builder.CreateConstGEP2_32(nullptr, input_value, 0, 0);
+	auto var0 = builder.CreatePointerCast(gep0,Type::getFloatPtrTy(context));
+	auto value0 = builder.CreateLoad(var0);
+
+	Value *constant_multi = ConstantFP::get(context, APFloat(2.0f));
+	auto double_value0 = builder.CreateFMul(value0, constant_multi);
+
+	auto gep1 = builder.CreateConstGEP2_32(nullptr, input_value, 0, 1);
+	auto var1 = builder.CreatePointerCast(gep1, Type::getFloatPtrTy(context));
+	builder.CreateStore(double_value0, var1);
+	
+	builder.CreateRetVoid();
+
+	// call the function compiled by llvm
+	const auto shader_func = get_function<void(*)()>("shader_func");
+
+	shader_func();
+
+	EXPECT_EQ(gs.m_data1, 2.0f * gs.m_data0);
+}
+
+/*
+ * This is an unit test for global data struct as input.
+ *   struct Global_Structure{
+ *       int m_data0;
+ *       int m_data1;
+ *   };
+ *
+ *   float shader_func(){
+ *       Global_Structure gs;
+ *       gs.m_data0 = 34.0f;
+ *       gs.m_data1 = 32.0f;
+ *       return gs.m_data0 + gs.m_data1;
+ *   }
+ */
+TEST_F(LLVM, Local_Structure) {
+	Type *struct_var_types[] = { Type::getFloatTy(context), Type::getFloatTy(context) };
+	auto *struct_type = StructType::create(struct_var_types, "Global_Structure");
+
+	// the main function to be executed
+	FunctionType* function_prototype = FunctionType::get(Type::getFloatTy(context), {}, false);
+
+	Function *function = Function::Create(function_prototype, Function::ExternalLinkage, "shader_func", module.get());
+	BasicBlock *bb = BasicBlock::Create(context, "EntryBlock", function);
+	IRBuilder<> builder(bb);
+
+	// allocate an instance of struct
+	Value* num_allocate = llvm::ConstantInt::get (context, llvm::APInt(64,1));
+	AllocaInst* allocainst = builder.CreateAlloca(struct_type, num_allocate, "local_instance");
+
+	Value *constant0 = ConstantFP::get(context, APFloat(34.0f));
+	auto gep0 = builder.CreateConstGEP2_32(nullptr, allocainst, 0, 0);
+	auto var0 = builder.CreatePointerCast(gep0,Type::getFloatPtrTy(context));
+	auto store_inst0 = builder.CreateStore(constant0, var0);
+
+	Value *constant1 = ConstantFP::get(context, APFloat(32.0f));
+	auto gep1 = builder.CreateConstGEP2_32(nullptr, allocainst, 0, 1);
+	auto var1 = builder.CreatePointerCast(gep1, Type::getFloatPtrTy(context));
+	auto store_inst1 = builder.CreateStore(constant1, var1);
+
+	auto var = builder.CreateFAdd(store_inst0->getValueOperand(), store_inst1->getValueOperand());
+	builder.CreateRet(var);
+
+	// call the function compiled by llvm
+	const auto shader_func = get_function<float(*)()>("shader_func");
+
+	const auto local_value = shader_func();
+	EXPECT_EQ(local_value, 34.0f + 32.0f);
+}
+
+/*
+ * Fill the result with a structure allocated in LLVM.
+ *
+ *   out ClosureTree closure_tree;
+ *   void fake_shader(){
+ *       // this is not the real thing, it is just a test
+ *		 closure_tree = make_closure<Lambert>( 4.0f );
+ *   }
+ */
+TEST_F(LLVM, Closure_Tree_Output) {
+	// declare 'malloc' function in llvm module
+	std::vector<Type *> proto_args(1, Type::getInt32Ty(context));
+	Function *malloc_function = Function::Create(FunctionType::get(Type::getInt32PtrTy(context), proto_args, false), Function::ExternalLinkage, "malloc", module.get());
+
+	// data type for closure_tree
+	Type *closure_tree_var_types[] = { Type::getInt64PtrTy(context) };
+	auto *closure_tree_type = StructType::create(closure_tree_var_types, "ClosureTree");
+
+	// data type for ClosureTreeNodeBase
+	Type *closure_tree_node_base_var_types[] = { Type::getInt32Ty(context) };
+	auto *closure_tree_node_base_type = StructType::create(closure_tree_node_base_var_types, "ClosureTreeNodeBase");
+
+//	Type *closure_tree_node_add_var_types[] = { Type::getInt32Ty(context) , Type::getInt64PtrTy(context) , Type::getInt64PtrTy(context) };
+//	auto *closure_tree_node_add_type = StructType::create(closure_tree_node_add_var_types, "ClosureTreeNodeAdd");
+
+//	Type *closure_tree_node_mul_var_types[] = { Type::getInt64PtrTy(context) };
+//	auto *closure_tree_node_mul_type = StructType::create(closure_tree_node_mul_var_types, "ClosureTreeNodeMul");
+
+	// The result closure tree to be extracted
+	Tsl_Namespace::ClosureTree ct;
+
+	// Create the global parameter for shader to access
+	Constant* input_addr = ConstantInt::get(Type::getInt64Ty(context), uintptr_t(&ct));
+	GlobalVariable* global_struct_value = new GlobalVariable(*module, closure_tree_type->getPointerTo(), false, GlobalValue::ExternalLinkage, input_addr, "closure_tree");
+
+	// the main function to be executed
+	FunctionType* function_prototype = FunctionType::get(Type::getFloatTy(context), {}, false);
+
+	Function *function = Function::Create(function_prototype, Function::ExternalLinkage, "fake_shader", module.get());
+	BasicBlock *bb = BasicBlock::Create(context, "EntryBlock", function);
+	IRBuilder<> builder(bb);
+
+	// Load the pointer to the global structure
+	Value *input_value = builder.CreateLoad(global_struct_value);
+
+	// Get the 'm_root' parameter from ClosureTree
+	auto gep0 = builder.CreateConstGEP2_32(nullptr, input_value, 0, 0);
+	auto var0 = builder.CreatePointerCast(gep0, closure_tree_node_base_type->getPointerTo());
+
+	// Allocate memory on heap
+	std::vector<Value *> args(1, ConstantInt::get(context, APInt(32, sizeof(Tsl_Namespace::ClosureTreeNodeBase))));
+	Value* value = builder.CreateCall(malloc_function, args, "malloc");
+	Value* allocainst = builder.CreatePointerCast(value, closure_tree_node_base_type->getPointerTo());
+
+	// Store the lambert id, pretend it to be 1024
+	Value *constant0 = ConstantInt::get(context, APInt(32, 1024));
+	auto gep1 = builder.CreateConstGEP2_32(nullptr, allocainst, 0, 0);
+	builder.CreateStore(constant0, gep1);
+
+	// Store the allocated address to m_root
+	builder.CreateStore(allocainst, var0);
+
+	// It is done
+	builder.CreateRetVoid();
+
+	// call the function compiled by llvm
+	const auto shader_func = get_function<void(*)()>("fake_shader");
+
+	// shader execution.
+	shader_func();
+
+	// We should have a valid root and it should have an id that is 1024
+	EXPECT_NE(ct.m_root, nullptr);
+	EXPECT_EQ(ct.m_root->m_id, 1024);
+
+	// Clear the memory allocated
+	free(ct.m_root);
 }
 
 TEST_F(LLVM, Multi_Thread) {

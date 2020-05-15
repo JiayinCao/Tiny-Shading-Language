@@ -18,6 +18,7 @@
 #pragma once
 
 #include <memory>
+#include <type_traits>
 #include "tslversion.h"
 
 TSL_NAMESPACE_BEGIN
@@ -27,33 +28,39 @@ constexpr ClosureID INVALID_CLOSURE_ID = 0;
 constexpr ClosureID CLOSURE_ADD = -1;
 constexpr ClosureID CLOSURE_MUL = -2;
 
-struct ClosureAddNode;
-struct ClosureMulNode;
+struct ClosureTreeNodeAdd;
+struct ClosureTreeNodeMul;
 
-struct ClosureTreeNode {
+struct ClosureTreeNodeBase {
     ClosureID   m_id = INVALID_CLOSURE_ID;
 
-    const ClosureAddNode* as_add_node() const {
-        return reinterpret_cast<const ClosureAddNode*>(this);
+	ClosureTreeNodeAdd* as_add_node() {
+		return reinterpret_cast<ClosureTreeNodeAdd*>(this);
+	}
+
+    ClosureTreeNodeMul* as_mul_node() {
+        return reinterpret_cast<ClosureTreeNodeMul*>(this);
     }
-
-    const ClosureMulNode* as_mul_node() const {
-        return reinterpret_cast<const ClosureMulNode*>(this);
-    }
 };
 
-struct ClosureAddNode : public ClosureTreeNode {
-    std::unique_ptr<ClosureTreeNode> m_closure0 = nullptr;
-    std::unique_ptr<ClosureTreeNode> m_closure1 = nullptr;
+struct ClosureTreeNodeAdd : public ClosureTreeNodeBase {
+    ClosureTreeNodeBase*	m_closure0 = nullptr;
+    ClosureTreeNodeBase*	m_closure1 = nullptr;
 };
 
-struct ClosureMulNode : public ClosureTreeNode {
-    std::unique_ptr<ClosureTreeNode> m_closure = nullptr;
-    float m_weight = 1.0f;
+struct ClosureTreeNodeMul : public ClosureTreeNodeBase {
+	float m_weight = 1.0f;
+    ClosureTreeNodeBase*	m_closure = nullptr;
 };
+
+// It is very important to make sure the memory layout is as expected, there is no fancy stuff compiler is trying to do for these data structure.
+// Because the same data structure will be generated from LLVM, which will expect this exact memory layout. If there is miss-match, it will crash.
+static_assert( sizeof(ClosureTreeNodeBase) == sizeof(ClosureID) , "Invalid Closure Tree Node Size" );
+static_assert( sizeof(ClosureTreeNodeAdd) == sizeof(ClosureID) + 4 /* memory padding. */ + sizeof(ClosureTreeNodeBase*) * 2 , "Invalid ClosureTreeNodeAdd Node Size" );
+static_assert( sizeof(ClosureTreeNodeMul) == sizeof(ClosureID) + sizeof(float) + sizeof(ClosureTreeNodeBase*), "Invalid ClosureTreeNodeMul Node Size");
 
 struct ClosureTree {
-    std::unique_ptr<ClosureTreeNode> m_root = nullptr;
+    ClosureTreeNodeBase*	m_root = nullptr;
 };
 
 TSL_NAMESPACE_END
