@@ -33,6 +33,8 @@
   */
 
 #include <stdio.h>
+#include "gtest/gtest.h"
+
 #include "llvm/ExecutionEngine/Orc/LLJIT.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
@@ -43,8 +45,7 @@
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ExecutionEngine/MCJIT.h"
-
-#include "gtest/gtest.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 
@@ -595,7 +596,6 @@ TEST_F(LLVM, Local_Structure) {
  *		 closure_tree = make_closure<Lambert>();
  *   }
  */
-/*
 TEST_F(LLVM, Closure_Tree_Output) {
 	// declare 'malloc' function in llvm module
 	std::vector<Type*> proto_args(1, Type::getInt32Ty(context));
@@ -609,14 +609,14 @@ TEST_F(LLVM, Closure_Tree_Output) {
 	Type* closure_tree_node_base_var_types[] = { Type::getInt32Ty(context) };
 	auto* closure_tree_node_base_type = StructType::create(closure_tree_node_base_var_types, "ClosureTreeNodeBase");
 
-	//	Type *closure_tree_node_add_var_types[] = { Type::getInt32Ty(context) , Type::getInt64PtrTy(context) , Type::getInt64PtrTy(context) };
-	//	auto *closure_tree_node_add_type = StructType::create(closure_tree_node_add_var_types, "ClosureTreeNodeAdd");
-
-	//	Type *closure_tree_node_mul_var_types[] = { Type::getInt64PtrTy(context) };
-	//	auto *closure_tree_node_mul_type = StructType::create(closure_tree_node_mul_var_types, "ClosureTreeNodeMul");
-
+	struct FakeClosureNode {
+		unsigned int m_id = 0;
+	};
+	struct FakeClosureTree {
+		FakeClosureNode* m_root = nullptr;
+	};
 	// The result closure tree to be extracted
-	Tsl_Namespace::ClosureTree ct;
+	FakeClosureTree ct;
 
 	// Create the global parameter for shader to access
 	Constant* input_addr = ConstantInt::get(Type::getInt64Ty(context), uintptr_t(&ct));
@@ -637,7 +637,7 @@ TEST_F(LLVM, Closure_Tree_Output) {
 	auto var0 = builder.CreatePointerCast(gep0, closure_tree_node_base_type->getPointerTo());
 
 	// Allocate memory on heap
-	std::vector<Value*> args(1, ConstantInt::get(context, APInt(32, sizeof(Tsl_Namespace::ClosureTreeNodeBase))));
+	std::vector<Value*> args(1, ConstantInt::get(context, APInt(32, sizeof(FakeClosureNode))));
 	Value* value = builder.CreateCall(malloc_function, args, "malloc");
 	Value* allocainst = builder.CreatePointerCast(value, closure_tree_node_base_type->getPointerTo());
 
@@ -665,8 +665,56 @@ TEST_F(LLVM, Closure_Tree_Output) {
 	// Clear the memory allocated
 	free(ct.m_root);
 }
-*/
 
+/*
+ * Since llvm::context is not thread-safe, meaning each thread needs to have a local copy of llvm::context.
+ * This unit test is to verify a function defined in one unit test can be used in modules defined with other llvm::context.
+ * This is the foundation of multi-thread compliation of TSL.
+ */
+TEST_F(LLVM, Cross_Context) {
+	{
+		llvm::LLVMContext context0;
+		std::unique_ptr<llvm::Module> module0 = std::make_unique<llvm::Module>("module 1", context0);
+
+		// define a simple function that returns something random, like 123.
+		Function* one_function = Function::Create(FunctionType::get(Type::getInt32Ty(context0), {}, false), Function::ExternalLinkage, "one_function", module0.get());
+
+		BasicBlock* bb = BasicBlock::Create(context0, "EntryBlock", one_function);
+		IRBuilder<> builder(bb);
+		builder.CreateRet(builder.getInt32(123));
+
+
+		{
+			llvm::LLVMContext context1;
+			std::unique_ptr<llvm::Module> module = std::make_unique<llvm::Module>("module 1", context1);
+
+			// define a simple function that returns something random, like 123.
+			Function* one_function = Function::Create(FunctionType::get(Type::getInt32Ty(context1), {}, false), Function::ExternalLinkage, "one_function", module.get());
+
+			// this function does nothing but to call the one defined above.
+			Function* anothere_function = Function::Create(FunctionType::get(Type::getInt32Ty(context1), {}, false), Function::ExternalLinkage, "another_function", module.get());
+
+			BasicBlock* bb = BasicBlock::Create(context1, "EntryBlock", anothere_function);
+			IRBuilder<> builder(bb);
+			auto callinst = builder.CreateCall(one_function, {}, "one_function");
+			builder.CreateRet(callinst);
+			
+			// call 'another_function', expect 123 to be returned.
+			std::unique_ptr<llvm::ExecutionEngine> execute_engine = std::unique_ptr<ExecutionEngine>(llvm::EngineBuilder(std::move(module)).create());
+			execute_engine->addModule(CloneModule(*module0));
+
+			const auto shader_func = (int(*)())execute_engine->getFunctionAddress("another_function");
+			const int ret = shader_func();
+			EXPECT_EQ(ret, 123);
+		}
+
+	}
+}
+
+/*
+ * An unit test to verify LLVM is also stable in a multi-threaded environment.
+ * This unit test doesn't verify all cases, I may need to come up with a better unit test for it later.
+ */
 TEST_F(LLVM, Multi_Thread) {
 	auto thread_task = []() {
 		llvm::LLVMContext context;
@@ -749,7 +797,7 @@ TEST_F(LLVM, Multi_Thread) {
 	for (int i = 0; i < 16; ++i)
 		threads[i] = std::thread([&]() {
 		thread_task();
-			});
+	});
 
 	// making sure all threads are done
 	std::for_each(threads.begin(), threads.end(), [](std::thread& thread) { thread.join(); });
