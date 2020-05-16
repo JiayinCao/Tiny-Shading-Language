@@ -15,7 +15,8 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-#include <stdio.h>
+#include <chrono>
+#include <thread>
 #include "gtest/gtest.h"
 
 #include "llvm/ExecutionEngine/Orc/LLJIT.h"
@@ -787,12 +788,12 @@ TEST_F(LLVM, Multi_Thread_Compiling) {
 
 /*
  * Multi-thread shader execution.
- * Normally, this is not a problem, but this is to verify the LTS works as expected in LLVM.
+ * Normally, this feature is the foundation to support global input and also make it compatible with mult-thread shader execution.
  */
-TEST_F(LLVM, Multi_Thread_Execution) {
-	const float default_value = 1.0f;
+TEST_F(LLVM, DISABLED_Multi_Thread_Execution) {
+	const thread_local float default_value = 1.0f;
 	Constant* input_addr = ConstantInt::get(Type::getInt64Ty(context), uintptr_t(&default_value));
-	GlobalVariable* global_input_value = new GlobalVariable(*module, Type::getFloatPtrTy(context), false, GlobalValue::ExternalLinkage, input_addr, "global_input", nullptr, GlobalValue::GeneralDynamicTLSModel);
+	GlobalVariable* global_input_value = new GlobalVariable(*module, Type::getFloatPtrTy(context), false, GlobalValue::ExternalLinkage, nullptr, "global_input", nullptr, GlobalValue::GeneralDynamicTLSModel);
 
 	Function* set_constant_function = Function::Create(FunctionType::get(Type::getVoidTy(context), {Type::getFloatPtrTy(context)}, false), Function::ExternalLinkage, "set_global_input", module.get());
 	{
@@ -816,6 +817,8 @@ TEST_F(LLVM, Multi_Thread_Execution) {
 		builder.CreateRet(value);
 	}
 
+	module->print(errs(),nullptr);
+
 	std::unique_ptr<llvm::ExecutionEngine> execute_engine = std::unique_ptr<ExecutionEngine>(llvm::EngineBuilder(std::move(module)).create());
 	const auto set_constant = (void(*)(float*))execute_engine->getFunctionAddress("set_global_input");
 	const auto shader = (float(*)())execute_engine->getFunctionAddress("shader_function");
@@ -834,9 +837,9 @@ TEST_F(LLVM, Multi_Thread_Execution) {
 				// Intentionally creating some time bubble between setting and using the value in the hope that other threads will set this global value too
 				// This will increase the risk of breaking the unit test if the global value is not thread safe.
 				// ideally, it shouldn't affect the logic.
-				::_sleep(0.1f);
+				std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-				ret = shader();
+				auto ret = shader();
 				EXPECT_EQ(ret, tmp);
 			}
 		}, i);
