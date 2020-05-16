@@ -80,6 +80,3 @@ llvm_map_components_to_libnames(llvm_libs Core ExecutionEngine Interpreter MC MC
 
 # link llvm libaries
 target_link_libraries(Core_Lib ${llvm_libs})
-
-# hide the llvm generated project
-set_target_properties (intrinsics_gen PROPERTIES FOLDER LLVM_Generated)

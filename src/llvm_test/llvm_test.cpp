@@ -15,6 +15,23 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
+ /*
+	 This file is a part of Tiny-Shading-Language or TSL, an open-source cross
+	 platform programming shading language.
+
+	 Copyright (c) 2020-2020 by Jiayin Cao - All rights reserved.
+
+	 TSL is a free software written for educational purpose. Anyone can distribute
+	 or modify it under the the terms of the GNU General Public License Version 3 as
+	 published by the Free Software Foundation. However, there is NO warranty that
+	 all components are functional in a perfect manner. Without even the implied
+	 warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+	 General Public License for more details.
+
+	 You should have received a copy of the GNU General Public License along with
+	 this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
+  */
+
 #include <stdio.h>
 #include "llvm/ExecutionEngine/Orc/LLJIT.h"
 #include "llvm/IR/Function.h"
@@ -30,7 +47,6 @@
 #include "gtest/gtest.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "closure.h"
 
 using namespace llvm;
 
@@ -46,7 +62,7 @@ using namespace llvm;
 namespace {
 	class LLVM : public testing::Test {
 	public:
-		LLVM(){
+		LLVM() {
 			llvm::InitializeNativeTarget();
 			llvm::InitializeNativeTargetAsmPrinter();
 
@@ -56,16 +72,16 @@ namespace {
 
 		~LLVM() = default;
 
-		ExecutionEngine* get_execution_engine(){
-			if(nullptr == execute_engine)
+		ExecutionEngine* get_execution_engine() {
+			if (nullptr == execute_engine)
 				execute_engine = std::unique_ptr<ExecutionEngine>(llvm::EngineBuilder(std::move(module)).create());
 			return execute_engine.get();
 		}
 
 		template<class T>
-		T get_function(const char* function_name){
+		T get_function(const char* function_name) {
 			auto ee = get_execution_engine();
-			return (T) ee->getFunctionAddress(function_name);
+			return (T)ee->getFunctionAddress(function_name);
 		}
 
 		llvm::LLVMContext context;
@@ -82,8 +98,8 @@ namespace {
  * And it should return 123 when JITed.
  */
 TEST_F(LLVM, JIT) {
-	Function *function = Function::Create(FunctionType::get(Type::getInt32Ty(context), {}, false), Function::ExternalLinkage, "return_123", module.get());
-	BasicBlock *bb = BasicBlock::Create(context, "EntryBlock", function);
+	Function* function = Function::Create(FunctionType::get(Type::getInt32Ty(context), {}, false), Function::ExternalLinkage, "return_123", module.get());
+	BasicBlock* bb = BasicBlock::Create(context, "EntryBlock", function);
 	IRBuilder<> builder(bb);
 	builder.CreateRet(builder.getInt32(123));
 
@@ -100,7 +116,7 @@ TEST_F(LLVM, JIT) {
  * And it should return what external_cpp_function returns when JITed.
  */
 
-extern "C" DLLEXPORT float llvm_test_external_cpp_function( float x ) {
+extern "C" DLLEXPORT float llvm_test_external_cpp_function(float x) {
 	return x * x;
 }
 
@@ -109,16 +125,16 @@ TEST_F(LLVM, JIT_Ext_Func) {
 
 	// create external function prototype
 	// this should perfectly match 'llvm_test_external_cpp_function' defined above.
-	std::vector<Type *> proto_args(1, Type::getFloatTy(context));
-	Function *ext_function = Function::Create(FunctionType::get(Type::getFloatTy(context), proto_args, false), Function::ExternalLinkage, "llvm_test_external_cpp_function", module.get());
+	std::vector<Type*> proto_args(1, Type::getFloatTy(context));
+	Function* ext_function = Function::Create(FunctionType::get(Type::getFloatTy(context), proto_args, false), Function::ExternalLinkage, "llvm_test_external_cpp_function", module.get());
 
 	// the main function to be executed
-	Function *function = Function::Create(FunctionType::get(Type::getFloatTy(context), {}, false), Function::ExternalLinkage, "my_proxy_function", module.get());
-	BasicBlock *bb = BasicBlock::Create(context, "EntryBlock", function);
+	Function* function = Function::Create(FunctionType::get(Type::getFloatTy(context), {}, false), Function::ExternalLinkage, "my_proxy_function", module.get());
+	BasicBlock* bb = BasicBlock::Create(context, "EntryBlock", function);
 	IRBuilder<> builder(bb);
 
 	// call the external defined function in C++, llvm_test_external_cpp_function
-	std::vector<Value *> args(1, ConstantFP::get(context, APFloat(input_var)));
+	std::vector<Value*> args(1, ConstantFP::get(context, APFloat(input_var)));
 	Value* value = builder.CreateCall(ext_function, args, "calltmp");
 
 	// return whatever the call returns
@@ -126,7 +142,7 @@ TEST_F(LLVM, JIT_Ext_Func) {
 
 	// execute the jited function
 	GenericValue gv = get_execution_engine()->runFunction(function, {});
-	
+
 	const float expected_result = llvm_test_external_cpp_function(input_var);
 	EXPECT_EQ(gv.FloatVal, expected_result);
 }
@@ -136,16 +152,16 @@ TEST_F(LLVM, External_Call) {
 
 	// create external function prototype
 	// this should perfectly match 'llvm_test_external_cpp_function' defined above.
-	std::vector<Type *> proto_args(1, Type::getFloatTy(context));
-	Function *ext_function = Function::Create(FunctionType::get(Type::getFloatTy(context), proto_args, false), Function::ExternalLinkage, "llvm_test_external_cpp_function", module.get());
+	std::vector<Type*> proto_args(1, Type::getFloatTy(context));
+	Function* ext_function = Function::Create(FunctionType::get(Type::getFloatTy(context), proto_args, false), Function::ExternalLinkage, "llvm_test_external_cpp_function", module.get());
 
 	// the main function to be executed
-	Function *function = Function::Create(FunctionType::get(Type::getFloatTy(context), {}, false), Function::ExternalLinkage, "my_proxy_function", module.get());
-	BasicBlock *bb = BasicBlock::Create(context, "EntryBlock", function);
+	Function* function = Function::Create(FunctionType::get(Type::getFloatTy(context), {}, false), Function::ExternalLinkage, "my_proxy_function", module.get());
+	BasicBlock* bb = BasicBlock::Create(context, "EntryBlock", function);
 	IRBuilder<> builder(bb);
 
 	// call the external defined function in C++, llvm_test_external_cpp_function
-	std::vector<Value *> args(1);
+	std::vector<Value*> args(1);
 	args[0] = ConstantFP::get(context, APFloat(input_var));
 	Value* value = builder.CreateCall(ext_function, args, "calltmp");
 
@@ -165,23 +181,23 @@ TEST_F(LLVM, JIT_Function_Pointer) {
 
 	// create external function prototype
 	// this should perfectly match 'llvm_test_external_cpp_function' defined above.
-	std::vector<Type *> proto_args(1, Type::getFloatTy(context));
-	Function *ext_function = Function::Create(FunctionType::get(Type::getFloatTy(context), proto_args, false), Function::ExternalLinkage, "llvm_test_external_cpp_function", module.get());
+	std::vector<Type*> proto_args(1, Type::getFloatTy(context));
+	Function* ext_function = Function::Create(FunctionType::get(Type::getFloatTy(context), proto_args, false), Function::ExternalLinkage, "llvm_test_external_cpp_function", module.get());
 
 	// the main function to be executed
-	Function *function = Function::Create(FunctionType::get(Type::getFloatTy(context), {}, false), Function::ExternalLinkage, "my_proxy_function", module.get());
-	BasicBlock *bb = BasicBlock::Create(context, "EntryBlock", function);
+	Function* function = Function::Create(FunctionType::get(Type::getFloatTy(context), {}, false), Function::ExternalLinkage, "my_proxy_function", module.get());
+	BasicBlock* bb = BasicBlock::Create(context, "EntryBlock", function);
 	IRBuilder<> builder(bb);
 
 	// call the external defined function in C++, llvm_test_external_cpp_function
-	std::vector<Value *> args(1, ConstantFP::get(context, APFloat(input_var)));
+	std::vector<Value*> args(1, ConstantFP::get(context, APFloat(input_var)));
 	Value* value = builder.CreateCall(ext_function, args, "calltmp");
 
 	// return whatever the call returns
 	builder.CreateRet(value);
 
 	// get the function pointer
- 	const auto shader_func = get_function<float(*)(float)>("my_proxy_function");
+	const auto shader_func = get_function<float(*)(float)>("my_proxy_function");
 
 	const float returned_value = shader_func(input_var);
 	const float expected_result = llvm_test_external_cpp_function(input_var);
@@ -199,16 +215,16 @@ TEST_F(LLVM, Output_Arg) {
 	const float constant_var = 12.0;
 
 	// the main function to be executed
-	std::vector<Type*> arg_types( 1 );
+	std::vector<Type*> arg_types(1);
 	arg_types[0] = Type::getFloatPtrTy(context);
 	FunctionType* function_prototype = FunctionType::get(Type::getVoidTy(context), arg_types, false);
 
-	Function *function = Function::Create(function_prototype, Function::ExternalLinkage, "shader_func", module.get());
-	BasicBlock *bb = BasicBlock::Create(context, "EntryBlock", function);
+	Function* function = Function::Create(function_prototype, Function::ExternalLinkage, "shader_func", module.get());
+	BasicBlock* bb = BasicBlock::Create(context, "EntryBlock", function);
 	IRBuilder<> builder(bb);
 
 	// there should be exactly one argument
-	EXPECT_EQ( function->arg_size() , 1 );
+	EXPECT_EQ(function->arg_size(), 1);
 
 	auto var_ptr = function->args().begin();
 	Value* value = ConstantFP::get(context, APFloat(constant_var));
@@ -238,23 +254,23 @@ extern "C" DLLEXPORT void external_func_cpp(float* x) {
 TEST_F(LLVM, Passthrough_Pointer) {
 	// create external function prototype
 	// this should perfectly match 'external_func_cpp' defined above.
-	std::vector<Type *> proto_args(1, Type::getFloatPtrTy(context));
-	Function *ext_function = Function::Create(FunctionType::get(Type::getVoidTy(context), proto_args, false), Function::ExternalLinkage, "external_func_cpp", module.get());
+	std::vector<Type*> proto_args(1, Type::getFloatPtrTy(context));
+	Function* ext_function = Function::Create(FunctionType::get(Type::getVoidTy(context), proto_args, false), Function::ExternalLinkage, "external_func_cpp", module.get());
 
 	// the main function to be executed
-	std::vector<Type*> arg_types( 1 );
+	std::vector<Type*> arg_types(1);
 	arg_types[0] = Type::getFloatPtrTy(context);
 	FunctionType* function_prototype = FunctionType::get(Type::getVoidTy(context), arg_types, false);
 
-	Function *function = Function::Create(function_prototype, Function::ExternalLinkage, "shader_func", module.get());
-	BasicBlock *bb = BasicBlock::Create(context, "EntryBlock", function);
+	Function* function = Function::Create(function_prototype, Function::ExternalLinkage, "shader_func", module.get());
+	BasicBlock* bb = BasicBlock::Create(context, "EntryBlock", function);
 	IRBuilder<> builder(bb);
 
 	// there should be exactly one argument
-	EXPECT_EQ( function->arg_size() , 1 );
+	EXPECT_EQ(function->arg_size(), 1);
 
 	// call the external defined function in C++, llvm_test_external_cpp_function
-	std::vector<Value *> args(1);
+	std::vector<Value*> args(1);
 	args[0] = function->getArg(0);
 	builder.CreateCall(ext_function, args, "calltmp");
 
@@ -285,21 +301,21 @@ TEST_F(LLVM, Passthrough_Pointer) {
  * At the end of the day, arg0 should be 123.0f, arg1 should be 2.0f.
  */
 
-/*
-extern "C" DLLEXPORT void inner_function(float arg0 , float* arg1) {
-	arg0 = 2.0f;
-	*arg1 = 2.0f;
-}
-*/
+ /*
+ extern "C" DLLEXPORT void inner_function(float arg0 , float* arg1) {
+	 arg0 = 2.0f;
+	 *arg1 = 2.0f;
+ }
+ */
 
 TEST_F(LLVM, In_and_Out) {
 	// create external function prototype
 	// this should perfectly match 'external_func_cpp' defined above.
-	std::vector<Type *> proto_args0 = {Type::getFloatTy(context), Type::getFloatPtrTy(context)};
-	Function *inner_function = Function::Create(FunctionType::get(Type::getVoidTy(context), proto_args0, false), Function::ExternalLinkage, "inner_function", module.get());
+	std::vector<Type*> proto_args0 = { Type::getFloatTy(context), Type::getFloatPtrTy(context) };
+	Function* inner_function = Function::Create(FunctionType::get(Type::getVoidTy(context), proto_args0, false), Function::ExternalLinkage, "inner_function", module.get());
 
 	{
-		BasicBlock *bb = BasicBlock::Create(context, "EntryBlock", inner_function);
+		BasicBlock* bb = BasicBlock::Create(context, "EntryBlock", inner_function);
 		IRBuilder<> builder(bb);
 
 		// declare the local variables
@@ -322,12 +338,12 @@ TEST_F(LLVM, In_and_Out) {
 	}
 
 	// the main function to be executed
-	std::vector<Type *> proto_args1 = {Type::getFloatPtrTy(context), Type::getFloatPtrTy(context)};
+	std::vector<Type*> proto_args1 = { Type::getFloatPtrTy(context), Type::getFloatPtrTy(context) };
 	FunctionType* function_prototype = FunctionType::get(Type::getVoidTy(context), proto_args1, false);
 
-	Function *outter_function = Function::Create(function_prototype, Function::ExternalLinkage, "outter_function", module.get());
+	Function* outter_function = Function::Create(function_prototype, Function::ExternalLinkage, "outter_function", module.get());
 	{
-		BasicBlock *bb = BasicBlock::Create(context, "EntryBlock", outter_function);
+		BasicBlock* bb = BasicBlock::Create(context, "EntryBlock", outter_function);
 		IRBuilder<> builder(bb);
 
 		auto local_param0 = builder.CreateAlloca(Type::getFloatTy(context), nullptr);
@@ -356,7 +372,7 @@ TEST_F(LLVM, In_and_Out) {
 	// call the function compiled by llvm
 	const auto shader_func = get_function<void(*)(float*, float*)>("outter_function");
 	float local_value0 = 10.0f, local_value1 = 20.0f;
-	shader_func(&local_value0 , &local_value1);
+	shader_func(&local_value0, &local_value1);
 
 	EXPECT_EQ(local_value0, 123.0f);
 	EXPECT_EQ(local_value1, 2.0f);
@@ -383,16 +399,16 @@ TEST_F(LLVM, Global_Input_And_Ouput) {
 	// the main function to be executed
 	FunctionType* function_prototype = FunctionType::get(Type::getFloatTy(context), {}, false);
 
-	Function *function = Function::Create(function_prototype, Function::ExternalLinkage, "shader_func", module.get());
-	BasicBlock *bb = BasicBlock::Create(context, "EntryBlock", function);
+	Function* function = Function::Create(function_prototype, Function::ExternalLinkage, "shader_func", module.get());
+	BasicBlock* bb = BasicBlock::Create(context, "EntryBlock", function);
 	IRBuilder<> builder(bb);
 
-	Value *input_value_addr = builder.CreateLoad(global_input_value);
-	Value *input_value = builder.CreateLoad(input_value_addr);
+	Value* input_value_addr = builder.CreateLoad(global_input_value);
+	Value* input_value = builder.CreateLoad(input_value_addr);
 
-	Value *constant_delta = ConstantFP::get(context, APFloat(2.0f));
+	Value* constant_delta = ConstantFP::get(context, APFloat(2.0f));
 	Value* add_result = builder.CreateFAdd(input_value, constant_delta);
-	Value *output_value_addr = builder.CreateLoad(global_output_value);
+	Value* output_value_addr = builder.CreateLoad(global_output_value);
 	builder.CreateStore(add_result, output_value_addr);
 
 	builder.CreateRet(input_value);
@@ -426,14 +442,14 @@ TEST_F(LLVM, Global_Input_And_Ouput) {
  *   }
  */
 TEST_F(LLVM, Global_Structure_Input) {
-	struct Global_Structure{
+	struct Global_Structure {
 		float	m_data0 = 23.0f;
 		float 	m_data1 = 122.0f;
 	};
 	Global_Structure gs;
 
-	Type *struct_var_types[] = { Type::getFloatTy(context), Type::getFloatTy(context) };
-	auto *struct_type = StructType::create(struct_var_types, "Global_Structure")->getPointerTo();
+	Type* struct_var_types[] = { Type::getFloatTy(context), Type::getFloatTy(context) };
+	auto* struct_type = StructType::create(struct_var_types, "Global_Structure")->getPointerTo();
 
 	Constant* input_addr = ConstantInt::get(Type::getInt64Ty(context), uintptr_t(&gs));
 	GlobalVariable* global_struct_value = new GlobalVariable(*module, struct_type, false, GlobalValue::ExternalLinkage, input_addr, "global_input");
@@ -441,14 +457,14 @@ TEST_F(LLVM, Global_Structure_Input) {
 	// the main function to be executed
 	FunctionType* function_prototype = FunctionType::get(Type::getFloatTy(context), {}, false);
 
-	Function *function = Function::Create(function_prototype, Function::ExternalLinkage, "shader_func", module.get());
-	BasicBlock *bb = BasicBlock::Create(context, "EntryBlock", function);
+	Function* function = Function::Create(function_prototype, Function::ExternalLinkage, "shader_func", module.get());
+	BasicBlock* bb = BasicBlock::Create(context, "EntryBlock", function);
 	IRBuilder<> builder(bb);
 
-	Value *input_value = builder.CreateLoad(global_struct_value);
+	Value* input_value = builder.CreateLoad(global_struct_value);
 
 	auto gep0 = builder.CreateConstGEP2_32(nullptr, input_value, 0, 0);
-	auto var0 = builder.CreatePointerCast(gep0,Type::getFloatPtrTy(context));
+	auto var0 = builder.CreatePointerCast(gep0, Type::getFloatPtrTy(context));
 	auto value0 = builder.CreateLoad(var0);
 
 	auto gep1 = builder.CreateConstGEP2_32(nullptr, input_value, 0, 1);
@@ -479,14 +495,14 @@ TEST_F(LLVM, Global_Structure_Input) {
  *   }
  */
 TEST_F(LLVM, Global_Structure_Output) {
-	struct Global_Structure{
+	struct Global_Structure {
 		float	m_data0 = 23.0f;
 		float 	m_data1 = 122.0f;
 	};
 	Global_Structure gs;
 
-	Type *struct_var_types[] = { Type::getFloatTy(context), Type::getFloatTy(context) };
-	auto *struct_type = StructType::create(struct_var_types, "Global_Structure")->getPointerTo();
+	Type* struct_var_types[] = { Type::getFloatTy(context), Type::getFloatTy(context) };
+	auto* struct_type = StructType::create(struct_var_types, "Global_Structure")->getPointerTo();
 
 	Constant* input_addr = ConstantInt::get(Type::getInt64Ty(context), uintptr_t(&gs));
 	GlobalVariable* global_struct_value = new GlobalVariable(*module, struct_type, false, GlobalValue::ExternalLinkage, input_addr, "global_input");
@@ -494,23 +510,23 @@ TEST_F(LLVM, Global_Structure_Output) {
 	// the main function to be executed
 	FunctionType* function_prototype = FunctionType::get(Type::getFloatTy(context), {}, false);
 
-	Function *function = Function::Create(function_prototype, Function::ExternalLinkage, "shader_func", module.get());
-	BasicBlock *bb = BasicBlock::Create(context, "EntryBlock", function);
+	Function* function = Function::Create(function_prototype, Function::ExternalLinkage, "shader_func", module.get());
+	BasicBlock* bb = BasicBlock::Create(context, "EntryBlock", function);
 	IRBuilder<> builder(bb);
 
-	Value *input_value = builder.CreateLoad(global_struct_value);
+	Value* input_value = builder.CreateLoad(global_struct_value);
 
 	auto gep0 = builder.CreateConstGEP2_32(nullptr, input_value, 0, 0);
-	auto var0 = builder.CreatePointerCast(gep0,Type::getFloatPtrTy(context));
+	auto var0 = builder.CreatePointerCast(gep0, Type::getFloatPtrTy(context));
 	auto value0 = builder.CreateLoad(var0);
 
-	Value *constant_multi = ConstantFP::get(context, APFloat(2.0f));
+	Value* constant_multi = ConstantFP::get(context, APFloat(2.0f));
 	auto double_value0 = builder.CreateFMul(value0, constant_multi);
 
 	auto gep1 = builder.CreateConstGEP2_32(nullptr, input_value, 0, 1);
 	auto var1 = builder.CreatePointerCast(gep1, Type::getFloatPtrTy(context));
 	builder.CreateStore(double_value0, var1);
-	
+
 	builder.CreateRetVoid();
 
 	// call the function compiled by llvm
@@ -536,26 +552,26 @@ TEST_F(LLVM, Global_Structure_Output) {
  *   }
  */
 TEST_F(LLVM, Local_Structure) {
-	Type *struct_var_types[] = { Type::getFloatTy(context), Type::getFloatTy(context) };
-	auto *struct_type = StructType::create(struct_var_types, "Global_Structure");
+	Type* struct_var_types[] = { Type::getFloatTy(context), Type::getFloatTy(context) };
+	auto* struct_type = StructType::create(struct_var_types, "Global_Structure");
 
 	// the main function to be executed
 	FunctionType* function_prototype = FunctionType::get(Type::getFloatTy(context), {}, false);
 
-	Function *function = Function::Create(function_prototype, Function::ExternalLinkage, "shader_func", module.get());
-	BasicBlock *bb = BasicBlock::Create(context, "EntryBlock", function);
+	Function* function = Function::Create(function_prototype, Function::ExternalLinkage, "shader_func", module.get());
+	BasicBlock* bb = BasicBlock::Create(context, "EntryBlock", function);
 	IRBuilder<> builder(bb);
 
 	// allocate an instance of struct
-	Value* num_allocate = llvm::ConstantInt::get (context, llvm::APInt(64,1));
+	Value* num_allocate = llvm::ConstantInt::get(context, llvm::APInt(64, 1));
 	AllocaInst* allocainst = builder.CreateAlloca(struct_type, num_allocate, "local_instance");
 
-	Value *constant0 = ConstantFP::get(context, APFloat(34.0f));
+	Value* constant0 = ConstantFP::get(context, APFloat(34.0f));
 	auto gep0 = builder.CreateConstGEP2_32(nullptr, allocainst, 0, 0);
-	auto var0 = builder.CreatePointerCast(gep0,Type::getFloatPtrTy(context));
+	auto var0 = builder.CreatePointerCast(gep0, Type::getFloatPtrTy(context));
 	auto store_inst0 = builder.CreateStore(constant0, var0);
 
-	Value *constant1 = ConstantFP::get(context, APFloat(32.0f));
+	Value* constant1 = ConstantFP::get(context, APFloat(32.0f));
 	auto gep1 = builder.CreateConstGEP2_32(nullptr, allocainst, 0, 1);
 	auto var1 = builder.CreatePointerCast(gep1, Type::getFloatPtrTy(context));
 	auto store_inst1 = builder.CreateStore(constant1, var1);
@@ -579,24 +595,25 @@ TEST_F(LLVM, Local_Structure) {
  *		 closure_tree = make_closure<Lambert>();
  *   }
  */
+/*
 TEST_F(LLVM, Closure_Tree_Output) {
 	// declare 'malloc' function in llvm module
-	std::vector<Type *> proto_args(1, Type::getInt32Ty(context));
-	Function *malloc_function = Function::Create(FunctionType::get(Type::getInt32PtrTy(context), proto_args, false), Function::ExternalLinkage, "malloc", module.get());
+	std::vector<Type*> proto_args(1, Type::getInt32Ty(context));
+	Function* malloc_function = Function::Create(FunctionType::get(Type::getInt32PtrTy(context), proto_args, false), Function::ExternalLinkage, "malloc", module.get());
 
 	// data type for closure_tree
-	Type *closure_tree_var_types[] = { Type::getInt64PtrTy(context) };
-	auto *closure_tree_type = StructType::create(closure_tree_var_types, "ClosureTree");
+	Type* closure_tree_var_types[] = { Type::getInt64PtrTy(context) };
+	auto* closure_tree_type = StructType::create(closure_tree_var_types, "ClosureTree");
 
 	// data type for ClosureTreeNodeBase
-	Type *closure_tree_node_base_var_types[] = { Type::getInt32Ty(context) };
-	auto *closure_tree_node_base_type = StructType::create(closure_tree_node_base_var_types, "ClosureTreeNodeBase");
+	Type* closure_tree_node_base_var_types[] = { Type::getInt32Ty(context) };
+	auto* closure_tree_node_base_type = StructType::create(closure_tree_node_base_var_types, "ClosureTreeNodeBase");
 
-//	Type *closure_tree_node_add_var_types[] = { Type::getInt32Ty(context) , Type::getInt64PtrTy(context) , Type::getInt64PtrTy(context) };
-//	auto *closure_tree_node_add_type = StructType::create(closure_tree_node_add_var_types, "ClosureTreeNodeAdd");
+	//	Type *closure_tree_node_add_var_types[] = { Type::getInt32Ty(context) , Type::getInt64PtrTy(context) , Type::getInt64PtrTy(context) };
+	//	auto *closure_tree_node_add_type = StructType::create(closure_tree_node_add_var_types, "ClosureTreeNodeAdd");
 
-//	Type *closure_tree_node_mul_var_types[] = { Type::getInt64PtrTy(context) };
-//	auto *closure_tree_node_mul_type = StructType::create(closure_tree_node_mul_var_types, "ClosureTreeNodeMul");
+	//	Type *closure_tree_node_mul_var_types[] = { Type::getInt64PtrTy(context) };
+	//	auto *closure_tree_node_mul_type = StructType::create(closure_tree_node_mul_var_types, "ClosureTreeNodeMul");
 
 	// The result closure tree to be extracted
 	Tsl_Namespace::ClosureTree ct;
@@ -608,24 +625,24 @@ TEST_F(LLVM, Closure_Tree_Output) {
 	// the main function to be executed
 	FunctionType* function_prototype = FunctionType::get(Type::getFloatTy(context), {}, false);
 
-	Function *function = Function::Create(function_prototype, Function::ExternalLinkage, "fake_shader", module.get());
-	BasicBlock *bb = BasicBlock::Create(context, "EntryBlock", function);
+	Function* function = Function::Create(function_prototype, Function::ExternalLinkage, "fake_shader", module.get());
+	BasicBlock* bb = BasicBlock::Create(context, "EntryBlock", function);
 	IRBuilder<> builder(bb);
 
 	// Load the pointer to the global structure
-	Value *input_value = builder.CreateLoad(global_struct_value);
+	Value* input_value = builder.CreateLoad(global_struct_value);
 
 	// Get the 'm_root' parameter from ClosureTree
 	auto gep0 = builder.CreateConstGEP2_32(nullptr, input_value, 0, 0);
 	auto var0 = builder.CreatePointerCast(gep0, closure_tree_node_base_type->getPointerTo());
 
 	// Allocate memory on heap
-	std::vector<Value *> args(1, ConstantInt::get(context, APInt(32, sizeof(Tsl_Namespace::ClosureTreeNodeBase))));
+	std::vector<Value*> args(1, ConstantInt::get(context, APInt(32, sizeof(Tsl_Namespace::ClosureTreeNodeBase))));
 	Value* value = builder.CreateCall(malloc_function, args, "malloc");
 	Value* allocainst = builder.CreatePointerCast(value, closure_tree_node_base_type->getPointerTo());
 
 	// Store the lambert id, pretend it to be 1024
-	Value *constant0 = ConstantInt::get(context, APInt(32, 1024));
+	Value* constant0 = ConstantInt::get(context, APInt(32, 1024));
 	auto gep1 = builder.CreateConstGEP2_32(nullptr, allocainst, 0, 0);
 	builder.CreateStore(constant0, gep1);
 
@@ -648,6 +665,7 @@ TEST_F(LLVM, Closure_Tree_Output) {
 	// Clear the memory allocated
 	free(ct.m_root);
 }
+*/
 
 TEST_F(LLVM, Multi_Thread) {
 	auto thread_task = []() {
@@ -730,8 +748,8 @@ TEST_F(LLVM, Multi_Thread) {
 	std::vector<std::thread> threads(16);
 	for (int i = 0; i < 16; ++i)
 		threads[i] = std::thread([&]() {
-			thread_task();
-		});
+		thread_task();
+			});
 
 	// making sure all threads are done
 	std::for_each(threads.begin(), threads.end(), [](std::thread& thread) { thread.join(); });

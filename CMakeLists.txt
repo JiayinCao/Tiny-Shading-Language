@@ -97,3 +97,7 @@ macro(source_group_by_dir source_files)
 endmacro(source_group_by_dir)
 
 add_subdirectory( src/core_lib )
+add_subdirectory( src/llvm_test )
+
+# hide the llvm generated project
+set_target_properties (intrinsics_gen PROPERTIES FOLDER LLVM_Generated)
