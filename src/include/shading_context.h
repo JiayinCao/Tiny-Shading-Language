@@ -19,6 +19,7 @@
 
 #include <unordered_map>
 #include <memory>
+#include <string>
 #include "tslversion.h"
 #include "closure.h"
 #include "export.h"
