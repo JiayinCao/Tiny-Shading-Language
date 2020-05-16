@@ -82,7 +82,7 @@ debug:
 
 test:
 	echo ${YELLOW}Running unit tests${NOCOLOR}
-	# ./bin/tsl_r
+	./bin/tsl_test_r
 	./bin/llvm_test_r
 
 update_dep:

@@ -22,14 +22,13 @@
 #include <string>
 #include "tslversion.h"
 #include "closure.h"
-#include "export.h"
 
 TSL_NAMESPACE_BEGIN
 
 class ShadingSystem;
 class TslCompiler;
 
-class TSL_EXPORTED ShaderUnit {
+class ShaderUnit {
 public:
     //! @brief  Constructor.
     //!
@@ -54,7 +53,7 @@ protected:
  * A shader group itself is also a shader unit, which is a quite useful feature to get recursive
  * node supported in certain material editors.
  */
-class TSL_EXPORTED ShaderGroup : public ShaderUnit{
+class ShaderGroup : public ShaderUnit{
 public:
     //! @brief  Constructor.
     //!
@@ -88,7 +87,7 @@ private:
  * Since shading_context is available in each thread, things like shader compilation and shader 
  * execution could be exectued in multi-threaded too.
  */
-class TSL_EXPORTED ShadingContext {
+class ShadingContext {
 public:
     //! @brief  Destructor.
     ~ShadingContext();
