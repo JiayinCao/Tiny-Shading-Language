@@ -56,7 +56,7 @@ source_group( "flex and bison" FILES ${flex_bison} )
 set(generated_src ${TSL_SOURCE_DIR}/generated_src/compiled_lex.cpp ${TSL_SOURCE_DIR}/generated_src/compiled_grammar.cpp ${TSL_SOURCE_DIR}/generated_src/compiled_grammar.hpp)
 
 # add executable, this will be converted to a library in the future
-add_library(Core_Lib ${all_files} ${generated_src} ${flex_bison})
+add_library(TSL_Lib ${all_files} ${generated_src} ${flex_bison})
 add_custom_command( OUTPUT ${generated_src}
                     COMMAND make generate_src
                     WORKING_DIRECTORY ${TSL_SOURCE_DIR})
@@ -65,8 +65,8 @@ add_custom_command( OUTPUT ${generated_src}
 source_group( "generated src" FILES ${generated_src} )
 
 # Setup correct output name for different configurations
-set_target_properties( Core_Lib PROPERTIES RELEASE_OUTPUT_NAME "tsl_r" )
-set_target_properties( Core_Lib PROPERTIES DEBUG_OUTPUT_NAME "tsl_d" )
+set_target_properties( TSL_Lib PROPERTIES RELEASE_OUTPUT_NAME "tsl_r" )
+set_target_properties( TSL_Lib PROPERTIES DEBUG_OUTPUT_NAME "tsl_d" )
 
 if (TSL_PLATFORM_MAC OR TSL_PLATFORM_LINUX)
    set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -pthread -O3")
@@ -74,11 +74,11 @@ endif()
 
 if (TSL_PLATFORM_WIN)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244 /wd4146 /wd4267 /wd4141 /wd4624 /wd4005 /wd4996" )
-    set_target_properties( Core_Lib PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} /MD" )
+    set_target_properties( TSL_Lib PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} /MD" )
 endif()
 
 # specify the llvm library to link
 llvm_map_components_to_libnames(llvm_libs Core ExecutionEngine Interpreter MC MCJIT Support nativecodegen)
 
 # link llvm libaries
-target_link_libraries(Core_Lib ${llvm_libs})
+target_link_libraries(TSL_Lib ${llvm_libs})
