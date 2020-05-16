@@ -15,23 +15,6 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
- /*
-	 This file is a part of Tiny-Shading-Language or TSL, an open-source cross
-	 platform programming shading language.
-
-	 Copyright (c) 2020-2020 by Jiayin Cao - All rights reserved.
-
-	 TSL is a free software written for educational purpose. Anyone can distribute
-	 or modify it under the the terms of the GNU General Public License Version 3 as
-	 published by the Free Software Foundation. However, there is NO warranty that
-	 all components are functional in a perfect manner. Without even the implied
-	 warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-	 General Public License for more details.
-
-	 You should have received a copy of the GNU General Public License along with
-	 this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
-  */
-
 #include <stdio.h>
 #include "gtest/gtest.h"
 
@@ -715,7 +698,7 @@ TEST_F(LLVM, Cross_Context) {
  * An unit test to verify LLVM is also stable in a multi-threaded environment.
  * This unit test doesn't verify all cases, I may need to come up with a better unit test for it later.
  */
-TEST_F(LLVM, Multi_Thread) {
+TEST_F(LLVM, Multi_Thread_Compiling) {
 	auto thread_task = []() {
 		llvm::LLVMContext context;
 		std::unique_ptr<llvm::Module> module = nullptr;
@@ -794,10 +777,70 @@ TEST_F(LLVM, Multi_Thread) {
 	};
 
 	std::vector<std::thread> threads(16);
-	for (int i = 0; i < 16; ++i)
-		threads[i] = std::thread([&]() {
-		thread_task();
-	});
+	for (int i = 0; i < 16; ++i){
+		threads[i] = std::thread([&]() { thread_task(); });
+	}
+
+	// making sure all threads are done
+	std::for_each(threads.begin(), threads.end(), [](std::thread& thread) { thread.join(); });
+}
+
+/*
+ * Multi-thread shader execution.
+ * Normally, this is not a problem, but this is to verify the LTS works as expected in LLVM.
+ */
+TEST_F(LLVM, Multi_Thread_Execution) {
+	const float default_value = 1.0f;
+	Constant* input_addr = ConstantInt::get(Type::getInt64Ty(context), uintptr_t(&default_value));
+	GlobalVariable* global_input_value = new GlobalVariable(*module, Type::getFloatPtrTy(context), false, GlobalValue::ExternalLinkage, input_addr, "global_input", nullptr, GlobalValue::GeneralDynamicTLSModel);
+
+	Function* set_constant_function = Function::Create(FunctionType::get(Type::getVoidTy(context), {Type::getFloatPtrTy(context)}, false), Function::ExternalLinkage, "set_global_input", module.get());
+	{
+		BasicBlock* bb = BasicBlock::Create(context, "set_global_input_EntryBlock", set_constant_function);
+		IRBuilder<> builder(bb);
+
+		Value* value = set_constant_function->getArg(0);
+		builder.CreateStore(value, global_input_value);
+		builder.CreateRetVoid();
+	}
+
+	Function* shader_function = Function::Create(FunctionType::get(Type::getFloatTy(context), {}, false), Function::ExternalLinkage, "shader_function", module.get());
+	{
+		BasicBlock* bb = BasicBlock::Create(context, "shader_function_EntryBlock", shader_function);
+		IRBuilder<> builder(bb);
+
+		Value* value_ptr = builder.CreateLoad(global_input_value);
+		Value* value = builder.CreateLoad(value_ptr);
+		//auto t = ConstantFP::get(context, APFloat(123.0f));
+
+		builder.CreateRet(value);
+	}
+
+	std::unique_ptr<llvm::ExecutionEngine> execute_engine = std::unique_ptr<ExecutionEngine>(llvm::EngineBuilder(std::move(module)).create());
+	const auto set_constant = (void(*)(float*))execute_engine->getFunctionAddress("set_global_input");
+	const auto shader = (float(*)())execute_engine->getFunctionAddress("shader_function");
+
+	auto ret = shader();
+	EXPECT_EQ(ret, 1.0f);
+
+	std::vector<std::thread> threads(16);
+	for (int i = 0; i < 16; ++i) {
+		threads[i] = std::thread([&](int tid) {
+			int k = 0;
+			while( k++ < 100 ){
+				float tmp = (float)i * 1024.0f + (float) k * 13.0f;
+				set_constant(&tmp);
+
+				// Intentionally creating some time bubble between setting and using the value in the hope that other threads will set this global value too
+				// This will increase the risk of breaking the unit test if the global value is not thread safe.
+				// ideally, it shouldn't affect the logic.
+				::_sleep(0.1f);
+
+				ret = shader();
+				EXPECT_EQ(ret, tmp);
+			}
+		}, i);
+	}
 
 	// making sure all threads are done
 	std::for_each(threads.begin(), threads.end(), [](std::thread& thread) { thread.join(); });
