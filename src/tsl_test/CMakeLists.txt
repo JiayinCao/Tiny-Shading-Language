@@ -53,3 +53,5 @@ endif()
 if (TSL_PLATFORM_WIN)
     set_target_properties( TSL_Test PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} /MD" )
 endif()
+
+target_link_libraries(TSL_Test Core_Lib)
