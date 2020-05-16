@@ -33,8 +33,17 @@ source_group( "thirdparty/gtest" FILES ${gtest_files} )
 # include directories
 include_directories( "${TSL_SOURCE_DIR}/src/thirdparty" ${LLVM_INCLUDE_DIR} )
 
+# specify the output directory
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY            "${TSL_SOURCE_DIR}/bin")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE    "${TSL_SOURCE_DIR}/bin")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG      "${TSL_SOURCE_DIR}/bin")
+
 # an unit test project to verify features are ready in LLVM library
 add_executable(LLVM_Test ${all_files})
+
+# Setup correct output name for different configurations
+set_target_properties( LLVM_Test PROPERTIES RELEASE_OUTPUT_NAME "llvm_test_r" )
+set_target_properties( LLVM_Test PROPERTIES DEBUG_OUTPUT_NAME "llvm_test_d" )
 
 # disable all warnings generated from LLVM
 if (TSL_PLATFORM_WIN)

@@ -95,6 +95,7 @@ if "%GENERATE_SRC%" == "1" (
 if "%UNIT_TEST%" == "1" (
 	echo [33mRunning unit tests[0m
 	.\bin\tsl_r.exe
+	.\bin\llvm_test_r.exe
 )
 
 if "%FULL%" == "1" (
