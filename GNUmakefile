@@ -82,8 +82,8 @@ debug:
 
 test:
 	echo ${YELLOW}Running unit tests${NOCOLOR}
-	./bin/tsl_r
-	./bin/llvm_test_r
+	# ./bin/tsl_r
+	# ./bin/llvm_test_r
 
 update_dep:
 	echo ${YELLOW}Downloading dependencies ${NOCOLOR}

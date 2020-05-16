@@ -17,6 +17,7 @@
 
 #include "shading_context.h"
 #include "shading_system.h"
+#include "compiler/compiler.h"
 
 TSL_NAMESPACE_BEGIN
 
@@ -40,6 +41,7 @@ void ShaderGroup::add_shader_group(const ShaderUnit* shader_unit) {
 }
 
 ShadingContext::ShadingContext(ShadingSystem& shading_system):m_shading_system(shading_system) {
+    m_compiler = std::make_unique<TslCompiler>();
 }
 
 ShadingContext::~ShadingContext() {
@@ -56,7 +58,7 @@ ShaderUnit* ShadingContext::compile_shader_unit(const std::string& name, const c
     m_shading_system.m_shader_units[name] = std::make_unique<ShaderUnit>(name);
 
     std::string dummy;
-    const bool ret = m_compiler.compile(source, dummy);
+    const bool ret = m_compiler->compile(source, dummy);
     if (!ret)
         return nullptr;
 
@@ -71,7 +73,7 @@ ShaderGroup* ShadingContext::make_shader_group(const std::string& name) {
     if (m_shading_system.m_shader_units.count(name))
         return nullptr;
 
-    auto shader_group = new ShaderGroup(name, m_compiler);
+    auto shader_group = new ShaderGroup(name, *m_compiler);
     m_shading_system.m_shader_units[name] = std::unique_ptr<ShaderUnit>(shader_group);
     return shader_group;
 }

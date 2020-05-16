@@ -20,14 +20,15 @@
 #include <unordered_map>
 #include <memory>
 #include "tslversion.h"
-#include "compiler/compiler.h"
 #include "closure.h"
+#include "export.h"
 
 TSL_NAMESPACE_BEGIN
 
 class ShadingSystem;
+class TslCompiler;
 
-class ShaderUnit {
+class TSL_EXPORTED ShaderUnit {
 public:
     //! @brief  Constructor.
     //!
@@ -52,7 +53,7 @@ protected:
  * A shader group itself is also a shader unit, which is a quite useful feature to get recursive
  * node supported in certain material editors.
  */
-class ShaderGroup : public ShaderUnit{
+class TSL_EXPORTED ShaderGroup : public ShaderUnit{
 public:
     //! @brief  Constructor.
     //!
@@ -86,7 +87,7 @@ private:
  * Since shading_context is available in each thread, things like shader compilation and shader 
  * execution could be exectued in multi-threaded too.
  */
-class ShadingContext {
+class TSL_EXPORTED ShadingContext {
 public:
     //! @brief  Destructor.
     ~ShadingContext();
@@ -121,7 +122,7 @@ private:
     ShadingContext(ShadingSystem& shading_system);
 
     /**< TSL compiler. */
-    TslCompiler m_compiler;
+    std::unique_ptr<TslCompiler> m_compiler;
 
     /**< Shading system owning the context. */
     ShadingSystem& m_shading_system;

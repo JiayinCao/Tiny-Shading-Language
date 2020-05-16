@@ -23,11 +23,12 @@
 #include <mutex>
 #include "tslversion.h"
 #include "closure.h"
+#include "export.h"
 
 TSL_NAMESPACE_BEGIN
 
-class ShadingContext;
-class ShaderUnit;
+class TSL_EXPORTED ShadingContext;
+class TSL_EXPORTED ShaderUnit;
 
 //! @brief  Shading system is the root interface exposed through TSL system.
 /*
@@ -36,7 +37,7 @@ class ShaderUnit;
  * It owns all memory allocated of the system, it will also deallocate all memory allocated so there is no need
  * manually maintain memory allocated through this interface.
  */
-class ShadingSystem {
+class TSL_EXPORTED ShadingSystem {
 public:
     //! @brief  Constructor.
     ShadingSystem();

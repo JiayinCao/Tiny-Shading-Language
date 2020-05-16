@@ -22,19 +22,19 @@ file(GLOB_RECURSE project_cs *.c)
 file(GLOB_RECURSE project_ccs *.cc)
 
 # group all categories of files into one macro
-set(all_files ${project_headers} ${project_cpps} ${project_cs} ${project_ccs} ${gtest_files} )
+set(all_files ${project_headers} ${project_cpps} ${project_cs} ${project_ccs} ${gtest_files} ${tsl_include})
 
 # give each file a proper folder based on its path
 source_group_by_dir(all_files)
 
 # a separate folder for files outside this folder
-source_group( "generated src" FILES ${tsl_include} )
-source_group( "thirdparty/gtest" FILES ${gtest_files} )
+source_group( "tsl_include" FILES ${tsl_include} )
+source_group( "google test" FILES ${gtest_files} )
 
 # specify the output directory
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY            "${TSL_SOURCE_DIR}/bin")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE    "${TSL_SOURCE_DIR}/bin")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG      "${TSL_SOURCE_DIR}/bin")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY            "${TSL_SOURCE_DIR}/bin")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE    "${TSL_SOURCE_DIR}/bin")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG      "${TSL_SOURCE_DIR}/bin")
 
 # default including folders, it is intentional to leave src folder unspecified to avoid using incorrect header files from other projects
 include_directories( "${TSL_SOURCE_DIR}/src/core_lib" "${TSL_SOURCE_DIR}/src/include" "${TSL_SOURCE_DIR}/src/thirdparty" ${LLVM_INCLUDE_DIR} )
@@ -45,6 +45,9 @@ add_definitions( -DYY_NO_UNISTD_H )
 # make sure bison tells what is wrong
 add_definitions( -DYYERROR_VERBOSE )
 
+# inform the source code it is building tsl
+add_definitions( -DBUILDING_TSL )
+
 # no need to compile the code, but it is handy to loop them in the project for easy access
 # hopefully this line won't introduce any trouble on any platforms since they are treated as input files for compiler.
 set(flex_bison ${TSL_SOURCE_DIR}/src/core_lib/compiler/lex.l ${TSL_SOURCE_DIR}/src/core_lib/compiler/grammar.y)
@@ -54,7 +57,7 @@ source_group( "flex and bison" FILES ${flex_bison} )
 set(generated_src ${TSL_SOURCE_DIR}/generated_src/compiled_lex.cpp ${TSL_SOURCE_DIR}/generated_src/compiled_grammar.cpp ${TSL_SOURCE_DIR}/generated_src/compiled_grammar.hpp)
 
 # add executable, this will be converted to a library in the future
-add_executable(Core_Lib ${all_files} ${generated_src} ${flex_bison})
+add_library(Core_Lib ${all_files} ${generated_src} ${flex_bison})
 add_custom_command( OUTPUT ${generated_src}
                     COMMAND make generate_src
                     WORKING_DIRECTORY ${TSL_SOURCE_DIR})
@@ -71,7 +74,7 @@ if (TSL_PLATFORM_MAC OR TSL_PLATFORM_LINUX)
 endif()
 
 if (TSL_PLATFORM_WIN)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244 /wd4146 /wd4267 /wd4141 /wd4624 /wd4005 /wd4996 /MD" )
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244 /wd4146 /wd4267 /wd4141 /wd4624 /wd4005 /wd4996" )
     set_target_properties( Core_Lib PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} /MD" )
 endif()
 

@@ -22,37 +22,30 @@ file(GLOB_RECURSE project_cs *.c)
 file(GLOB_RECURSE project_ccs *.cc)
 
 # group all categories of files into one macro
-set(all_files ${project_headers} ${project_cpps} ${project_cs} ${project_ccs} ${gtest_files})
+set(all_files ${project_headers} ${project_cpps} ${project_cs} ${project_ccs} ${gtest_files} ${tsl_include})
 
 # give each file a proper folder based on its path
 source_group_by_dir(all_files)
 
 # a separate folder for files outside this folder
+source_group( "tsl_include" FILES ${tsl_include} )
 source_group( "google test" FILES ${gtest_files} )
 
 # include directories
-include_directories( "${TSL_SOURCE_DIR}/src/thirdparty" ${LLVM_INCLUDE_DIR} )
+include_directories( "${TSL_SOURCE_DIR}/src/thirdparty" "${TSL_SOURCE_DIR}/src/include" )
 
 # specify the output directory
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY            "${TSL_SOURCE_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE    "${TSL_SOURCE_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG      "${TSL_SOURCE_DIR}/bin")
 
-# an unit test project to verify features are ready in LLVM library
-add_executable(LLVM_Test ${all_files})
+# unit test project to make sure TSL is functional properly
+add_executable(TSL_Test ${all_files})
 
 # Setup correct output name for different configurations
-set_target_properties( LLVM_Test PROPERTIES RELEASE_OUTPUT_NAME "llvm_test_r" )
-set_target_properties( LLVM_Test PROPERTIES DEBUG_OUTPUT_NAME "llvm_test_d" )
+set_target_properties( TSL_Test PROPERTIES RELEASE_OUTPUT_NAME "tsl_test_r" )
+set_target_properties( TSL_Test PROPERTIES DEBUG_OUTPUT_NAME "tsl_test_d" )
 
-# disable all warnings generated from LLVM
 if (TSL_PLATFORM_WIN)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244 /wd4146 /wd4267 /wd4141 /wd4624 /wd4005 /wd4996" )
-    set_target_properties( LLVM_Test PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} /MD" )
+    set_target_properties( TSL_Test PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} /MD" )
 endif()
-
-# specify the llvm library to link
-llvm_map_components_to_libnames(llvm_libs Core ExecutionEngine Interpreter MC MCJIT Support nativecodegen)
-
-# link llvm libaries
-target_link_libraries(LLVM_Test ${llvm_libs})

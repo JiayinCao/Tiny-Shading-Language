@@ -76,11 +76,6 @@ find_package(GTEST REQUIRED CONFIG)
 # this is all include files of TSL core library
 file(GLOB_RECURSE tsl_include src/include/*.h)
 
-# third-party llvm-libraries
-file(GLOB_RECURSE thirdparty_headers src/thirparty/*.h src/thirparty/*.hpp)
-file(GLOB_RECURSE thirdparty_cpps    src/thirparty/*.cpp)
-file(GLOB_RECURSE thirdparty_ccs     src/thirparty/*.cc)
-
 # a common utility helper macro to group files
 macro(source_group_by_dir source_files)
     set(sgbd_cur_dir ${CMAKE_CURRENT_SOURCE_DIR})
@@ -98,6 +93,7 @@ endmacro(source_group_by_dir)
 
 add_subdirectory( src/core_lib )
 add_subdirectory( src/llvm_test )
+add_subdirectory( src/tsl_test )
 
 # hide the llvm generated project
 set_target_properties (intrinsics_gen PROPERTIES FOLDER LLVM_Generated)

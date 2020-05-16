@@ -27,7 +27,7 @@
   #include <stdio.h>
   #include <stdlib.h>
   #include "tslversion.h"
-  #include "compiler/platform.h"
+  #include "platform.h"
   #include "compiler/compiler_impl.h"
   #include "compiled_grammar.hpp"
 
