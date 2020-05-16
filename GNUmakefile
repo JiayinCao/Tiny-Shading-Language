@@ -69,8 +69,8 @@ generate_src:
 	rm -rf generated_src
 	mkdir generated_src
 
-	bison   -d src/compiler/grammar.y -o generated_src/compiled_grammar.cpp
-	flex    src/compiler/lex.l
+	bison   -d src/core_lib/compiler/grammar.y -o generated_src/compiled_grammar.cpp
+	flex    src/core_lib/compiler/lex.l
 
 release:
 	echo ${YELLOW}Building release${NOCOLOR}

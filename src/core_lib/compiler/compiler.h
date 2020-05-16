@@ -19,7 +19,7 @@
 
 #include <memory>
 #include <string>
-#include "include/tslversion.h"
+#include "tslversion.h"
 #include "compiler_impl.h"
 
 TSL_NAMESPACE_BEGIN

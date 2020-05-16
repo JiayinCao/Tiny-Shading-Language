@@ -15,8 +15,8 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-#include "include/shading_system.h"
-#include "include/shading_context.h"
+#include "shading_system.h"
+#include "shading_context.h"
 
 TSL_NAMESPACE_BEGIN
 

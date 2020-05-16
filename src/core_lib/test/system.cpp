@@ -15,13 +15,17 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-#include <iostream>
-#include "include/tslversion.h"
-#include "thirdparty/gtest/gtest.h"
+#include "gtest/gtest.h"
+#include "shading_system.h"
 
-int main(int argc, char** argv){
-    std::cout << "--------------------------  " TSL_INTRO_STRING "  --------------------------" << std::endl;
+USE_TSL_NAMESPACE
 
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+TEST(TSL, Basic) {
+    ShadingSystem ss;
+
+    // allocate a shading context
+    auto sc = ss.make_shading_context();
+
+    // make sure the context is allocated.
+    EXPECT_NE(sc, nullptr);
 }

@@ -88,8 +88,8 @@ if "%GENERATE_SRC%" == "1" (
 	powershell Remove-Item -path ./generated_src -recurse -ErrorAction Ignore
 	mkdir generated_src
 
-	.\dependencies\flex_bison\win_bison.exe -d .\src\compiler\grammar.y -o .\generated_src\compiled_grammar.cpp
-	.\dependencies\flex_bison\win_flex.exe .\src\compiler\lex.l
+	.\dependencies\flex_bison\win_bison.exe -d .\src\core_lib\compiler\grammar.y -o .\generated_src\compiled_grammar.cpp
+	.\dependencies\flex_bison\win_flex.exe .\src\core_lib\compiler\lex.l
 )
 
 if "%UNIT_TEST%" == "1" (
