@@ -376,10 +376,12 @@ TEST_F(LLVM, In_and_Out) {
 TEST_F(LLVM, Global_Input_And_Ouput) {
 	float constant_input = 0.0f;
 	float global_output = 0.0f;
-	Constant* input_addr = ConstantInt::get(Type::getInt64Ty(context), uintptr_t(&constant_input));
-	GlobalVariable* global_input_value = new GlobalVariable(*module, Type::getFloatPtrTy(context), true, GlobalValue::ExternalLinkage, input_addr, "global_input");
+	auto input_addr = ConstantInt::get(Type::getInt64Ty(context), uintptr_t(&constant_input));
+    auto ptr_input_addr = ConstantExpr::getIntToPtr(input_addr, Type::getFloatPtrTy(context));
+	GlobalVariable* global_input_value = new GlobalVariable(*module, Type::getFloatPtrTy(context), true, GlobalValue::ExternalLinkage, ptr_input_addr, "global_input");
 	Constant* output_addr = ConstantInt::get(Type::getInt64Ty(context), uintptr_t(&global_output));
-	GlobalVariable* global_output_value = new GlobalVariable(*module, Type::getFloatPtrTy(context), false, GlobalValue::ExternalLinkage, output_addr, "global_output");
+    auto ptr_output_addr = ConstantExpr::getIntToPtr(output_addr, Type::getFloatPtrTy(context));
+	GlobalVariable* global_output_value = new GlobalVariable(*module, Type::getFloatPtrTy(context), false, GlobalValue::ExternalLinkage, ptr_output_addr, "global_output");
 
 	// the main function to be executed
 	FunctionType* function_prototype = FunctionType::get(Type::getFloatTy(context), {}, false);
@@ -437,7 +439,8 @@ TEST_F(LLVM, Global_Structure_Input) {
 	auto* struct_type = StructType::create(struct_var_types, "Global_Structure")->getPointerTo();
 
 	Constant* input_addr = ConstantInt::get(Type::getInt64Ty(context), uintptr_t(&gs));
-	GlobalVariable* global_struct_value = new GlobalVariable(*module, struct_type, false, GlobalValue::ExternalLinkage, input_addr, "global_input");
+    auto ptr_input_addr = ConstantExpr::getIntToPtr(input_addr, struct_type);
+	GlobalVariable* global_struct_value = new GlobalVariable(*module, struct_type, false, GlobalValue::ExternalLinkage, ptr_input_addr, "global_input");
 
 	// the main function to be executed
 	FunctionType* function_prototype = FunctionType::get(Type::getFloatTy(context), {}, false);
@@ -490,10 +493,11 @@ TEST_F(LLVM, Global_Structure_Output) {
 	auto* struct_type = StructType::create(struct_var_types, "Global_Structure")->getPointerTo();
 
 	Constant* input_addr = ConstantInt::get(Type::getInt64Ty(context), uintptr_t(&gs));
-	GlobalVariable* global_struct_value = new GlobalVariable(*module, struct_type, false, GlobalValue::ExternalLinkage, input_addr, "global_input");
+    auto ptr_input_addr = ConstantExpr::getIntToPtr(input_addr, struct_type);
+	GlobalVariable* global_struct_value = new GlobalVariable(*module, struct_type, false, GlobalValue::ExternalLinkage, ptr_input_addr, "global_input");
 
 	// the main function to be executed
-	FunctionType* function_prototype = FunctionType::get(Type::getFloatTy(context), {}, false);
+	FunctionType* function_prototype = FunctionType::get(Type::getVoidTy(context), {}, false);
 
 	Function* function = Function::Create(function_prototype, Function::ExternalLinkage, "shader_func", module.get());
 	BasicBlock* bb = BasicBlock::Create(context, "EntryBlock", function);
@@ -587,11 +591,13 @@ TEST_F(LLVM, Closure_Tree_Output) {
 
 	// data type for closure_tree
 	Type* closure_tree_var_types[] = { Type::getInt64PtrTy(context) };
-	auto* closure_tree_type = StructType::create(closure_tree_var_types, "ClosureTree");
+	auto closure_tree_type = StructType::create(closure_tree_var_types, "ClosureTree");
+    auto closure_tree_type_ptr = closure_tree_type->getPointerTo();
 
 	// data type for ClosureTreeNodeBase
 	Type* closure_tree_node_base_var_types[] = { Type::getInt32Ty(context) };
-	auto* closure_tree_node_base_type = StructType::create(closure_tree_node_base_var_types, "ClosureTreeNodeBase");
+	auto closure_tree_node_base = StructType::create(closure_tree_node_base_var_types, "ClosureTreeNodeBase");
+    auto closure_tree_node_base_ptr = closure_tree_node_base->getPointerTo();
 
 	struct FakeClosureNode {
 		unsigned int m_id = 0;
@@ -604,7 +610,8 @@ TEST_F(LLVM, Closure_Tree_Output) {
 
 	// Create the global parameter for shader to access
 	Constant* input_addr = ConstantInt::get(Type::getInt64Ty(context), uintptr_t(&ct));
-	GlobalVariable* global_struct_value = new GlobalVariable(*module, closure_tree_type->getPointerTo(), false, GlobalValue::ExternalLinkage, input_addr, "closure_tree");
+    auto ptr_input_addr = ConstantExpr::getIntToPtr(input_addr, closure_tree_type_ptr);
+	GlobalVariable* global_struct_value = new GlobalVariable(*module, closure_tree_type_ptr, false, GlobalValue::ExternalLinkage, ptr_input_addr, "closure_tree");
 
 	// the main function to be executed
 	FunctionType* function_prototype = FunctionType::get(Type::getFloatTy(context), {}, false);
@@ -618,12 +625,12 @@ TEST_F(LLVM, Closure_Tree_Output) {
 
 	// Get the 'm_root' parameter from ClosureTree
 	auto gep0 = builder.CreateConstGEP2_32(nullptr, input_value, 0, 0);
-	auto var0 = builder.CreatePointerCast(gep0, closure_tree_node_base_type->getPointerTo());
+	auto var0 = builder.CreatePointerCast(gep0, closure_tree_node_base_ptr);
 
 	// Allocate memory on heap
 	std::vector<Value*> args(1, ConstantInt::get(context, APInt(32, sizeof(FakeClosureNode))));
 	Value* value = builder.CreateCall(malloc_function, args, "malloc");
-	Value* allocainst = builder.CreatePointerCast(value, closure_tree_node_base_type->getPointerTo());
+	Value* allocainst = builder.CreatePointerCast(value, closure_tree_node_base_ptr);
 
 	// Store the lambert id, pretend it to be 1024
 	Value* constant0 = ConstantInt::get(context, APInt(32, 1024));
@@ -786,65 +793,66 @@ TEST_F(LLVM, Multi_Thread_Compiling) {
 	std::for_each(threads.begin(), threads.end(), [](std::thread& thread) { thread.join(); });
 }
 
-/*
- * Multi-thread shader execution.
- * Normally, this feature is the foundation to support global input and also make it compatible with mult-thread shader execution.
- */
+ /*
+  * Multi-thread shader execution.
+  * Normally, this feature is the foundation to support global input and also make it compatible with mult-thread shader execution.
+  */
 TEST_F(LLVM, DISABLED_Multi_Thread_Execution) {
-	const thread_local float default_value = 1.0f;
-	Constant* input_addr = ConstantInt::get(Type::getInt64Ty(context), uintptr_t(&default_value));
-	GlobalVariable* global_input_value = new GlobalVariable(*module, Type::getFloatPtrTy(context), false, GlobalValue::ExternalLinkage, nullptr, "global_input", nullptr, GlobalValue::GeneralDynamicTLSModel);
+    const thread_local float default_value = 1.0f;
+    Constant* input_addr = ConstantInt::get(Type::getInt64Ty(context), uintptr_t(&default_value));
+    auto ptr_input_addr = ConstantExpr::getIntToPtr(input_addr, Type::getFloatPtrTy(context));
+    GlobalVariable* global_input_value = new GlobalVariable(*module, Type::getFloatPtrTy(context), false, GlobalValue::ExternalLinkage, ptr_input_addr, "global_input", nullptr, GlobalValue::GeneralDynamicTLSModel);
 
-	Function* set_constant_function = Function::Create(FunctionType::get(Type::getVoidTy(context), {Type::getFloatPtrTy(context)}, false), Function::ExternalLinkage, "set_global_input", module.get());
-	{
-		BasicBlock* bb = BasicBlock::Create(context, "set_global_input_EntryBlock", set_constant_function);
-		IRBuilder<> builder(bb);
+    Function* set_constant_function = Function::Create(FunctionType::get(Type::getVoidTy(context), { Type::getFloatPtrTy(context) }, false), Function::ExternalLinkage, "set_global_input", module.get());
+    {
+        BasicBlock* bb = BasicBlock::Create(context, "set_global_input_EntryBlock", set_constant_function);
+        IRBuilder<> builder(bb);
 
-		Value* value = set_constant_function->getArg(0);
-		builder.CreateStore(value, global_input_value);
-		builder.CreateRetVoid();
-	}
+        Value* value = set_constant_function->getArg(0);
+        builder.CreateStore(value, global_input_value);
+        builder.CreateRetVoid();
+    }
 
-	Function* shader_function = Function::Create(FunctionType::get(Type::getFloatTy(context), {}, false), Function::ExternalLinkage, "shader_function", module.get());
-	{
-		BasicBlock* bb = BasicBlock::Create(context, "shader_function_EntryBlock", shader_function);
-		IRBuilder<> builder(bb);
+    Function* shader_function = Function::Create(FunctionType::get(Type::getFloatTy(context), {}, false), Function::ExternalLinkage, "shader_function", module.get());
+    {
+        BasicBlock* bb = BasicBlock::Create(context, "shader_function_EntryBlock", shader_function);
+        IRBuilder<> builder(bb);
 
-		Value* value_ptr = builder.CreateLoad(global_input_value);
-		Value* value = builder.CreateLoad(value_ptr);
-		//auto t = ConstantFP::get(context, APFloat(123.0f));
+        Value* value_ptr = builder.CreateLoad(global_input_value);
+        Value* value = builder.CreateLoad(value_ptr);
+        //auto t = ConstantFP::get(context, APFloat(123.0f));
 
-		builder.CreateRet(value);
-	}
+        builder.CreateRet(value);
+    }
 
-	module->print(errs(),nullptr);
+    module->print(errs(), nullptr);
 
-	std::unique_ptr<llvm::ExecutionEngine> execute_engine = std::unique_ptr<ExecutionEngine>(llvm::EngineBuilder(std::move(module)).create());
-	const auto set_constant = (void(*)(float*))execute_engine->getFunctionAddress("set_global_input");
-	const auto shader = (float(*)())execute_engine->getFunctionAddress("shader_function");
+    std::unique_ptr<llvm::ExecutionEngine> execute_engine = std::unique_ptr<ExecutionEngine>(llvm::EngineBuilder(std::move(module)).create());
+    const auto set_constant = (void(*)(float*))execute_engine->getFunctionAddress("set_global_input");
+    const auto shader = (float(*)())execute_engine->getFunctionAddress("shader_function");
 
-	auto ret = shader();
-	EXPECT_EQ(ret, 1.0f);
+    auto ret = shader();
+    EXPECT_EQ(ret, 1.0f);
 
-	std::vector<std::thread> threads(16);
-	for (int i = 0; i < 16; ++i) {
-		threads[i] = std::thread([&](int tid) {
-			int k = 0;
-			while( k++ < 100 ){
-				float tmp = (float)i * 1024.0f + (float) k * 13.0f;
-				set_constant(&tmp);
+    std::vector<std::thread> threads(16);
+    for (int i = 0; i < 16; ++i) {
+        threads[i] = std::thread([&](int tid) {
+            int k = 0;
+            while (k++ < 100) {
+                float tmp = (float)i * 1024.0f + (float)k * 13.0f;
+                set_constant(&tmp);
 
-				// Intentionally creating some time bubble between setting and using the value in the hope that other threads will set this global value too
-				// This will increase the risk of breaking the unit test if the global value is not thread safe.
-				// ideally, it shouldn't affect the logic.
-				std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                // Intentionally creating some time bubble between setting and using the value in the hope that other threads will set this global value too
+                // This will increase the risk of breaking the unit test if the global value is not thread safe.
+                // ideally, it shouldn't affect the logic.
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-				auto ret = shader();
-				EXPECT_EQ(ret, tmp);
-			}
-		}, i);
-	}
+                auto ret = shader();
+                EXPECT_EQ(ret, tmp);
+            }
+            }, i);
+    }
 
-	// making sure all threads are done
-	std::for_each(threads.begin(), threads.end(), [](std::thread& thread) { thread.join(); });
+    // making sure all threads are done
+    std::for_each(threads.begin(), threads.end(), [](std::thread& thread) { thread.join(); });
 }
