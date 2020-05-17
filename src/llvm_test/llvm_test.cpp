@@ -795,44 +795,34 @@ TEST_F(LLVM, Multi_Thread_Compiling) {
 /*
  * Multi-thread shader execution.
  * Normally, this feature is the foundation to support global input and also make it compatible with mult-thread shader execution.
+ *
+ * For some reason, GlobalVariable with local thread storage is not functional as epxected on Windows, but it does work on Ubuntu.
+ * However, due to the inconsistant behavior across multiple platforms, I will have to seek for other solution to support global parameters.
  */
-
 TEST_F(LLVM, DISABLED_Multi_Thread_Execution) {
-    setCurrentDebugType("jit");
-    llvm::DebugFlag = true;
+    //setCurrentDebugType("jit");
+    //llvm::DebugFlag = true;
 
-    volatile int k = 0;
-
-	const thread_local float defualt_value = 123;
+	const float defualt_value = 12.0f;
     auto int_address = uintptr_t(&defualt_value);
 	Constant* input_addr = ConstantInt::get(Type::getInt64Ty(context), int_address);
     auto addr = ConstantExpr::getIntToPtr(input_addr, Type::getFloatPtrTy(context));
-	//GlobalVariable* global_input_value = new GlobalVariable(*module, Type::getInt32Ty(context), false, GlobalValue::ExternalLinkage, nullptr, "global_input", nullptr, GlobalValue::GeneralDynamicTLSModel);
     GlobalVariable* global_input_value = new GlobalVariable(*module, Type::getFloatPtrTy(context), false, GlobalValue::InternalLinkage, addr, "global_input", nullptr);
-    // global_input_value->setInitializer(input_addr);
+    
+    global_input_value->setThreadLocal(true);
 
-    const int dv2 = 32;
-    //Constant* input_addr2 = ConstantInt::get(Type::getInt32Ty(context), dv2);
-    //global_input_value->setInitializer(input_addr2);
-
-    //global_input_value->setExternallyInitialized(true);
-    //global_input_value->setThreadLocal(true);
-
-	setCurrentDebugType("jit");
-	llvm::DebugFlag = true;
-
-	/*
 	Function* set_constant_function = Function::Create(FunctionType::get(Type::getVoidTy(context), {Type::getInt32PtrTy(context)}, false), Function::ExternalLinkage, "set_global_input", module.get());
 	{
 		BasicBlock* bb = BasicBlock::Create(context, "set_global_input_EntryBlock", set_constant_function);
 		IRBuilder<> builder(bb);
 
 		Value* value = set_constant_function->getArg(0);
-		builder.CreateStore(value, global_input_value);
+        Value* allocainst = builder.CreatePointerCast(value, Type::getFloatPtrTy(context));
+
+		builder.CreateStore(allocainst, global_input_value);
 		builder.CreateRetVoid();
 	}
-	*/
-
+	
 	Function* shader_function = Function::Create(FunctionType::get(Type::getFloatTy(context), {}, false), Function::ExternalLinkage, "shader_function", module.get());
 	{
 		BasicBlock* bb = BasicBlock::Create(context, "shader_function_EntryBlock", shader_function);
@@ -842,31 +832,14 @@ TEST_F(LLVM, DISABLED_Multi_Thread_Execution) {
 		builder.CreateRet(value);
 	}
 
-	module->print(errs(),nullptr);
-
-    for (auto& global : module->globals()) {
-        int k = 0;
-    }
-
 	std::unique_ptr<llvm::ExecutionEngine> execute_engine = std::unique_ptr<ExecutionEngine>(llvm::EngineBuilder(std::move(module)).create());
 
-    execute_engine->DisableLazyCompilation(true);
-
-	const thread_local int defualt_value2 = 22;
-	if(true)
-	{
-        Constant* input_addr = ConstantInt::get(Type::getInt32Ty(context), defualt_value2);
-		volatile auto ga = (void*) execute_engine->getOrEmitGlobalVariable(global_input_value);
-		execute_engine->InitializeMemory(input_addr, ga);
-	}
-
-	//const auto set_constant = (void(*)(float*))execute_engine->getFunctionAddress("set_global_input");
+	const auto set_constant = (void(*)(float*))execute_engine->getFunctionAddress("set_global_input");
 	const auto shader = (float(*)())execute_engine->getFunctionAddress("shader_function");
 
     float ret = shader();
-	EXPECT_EQ(ret, 1.0f);
+	EXPECT_EQ(ret, 12.0f);
 
-	/*
 	std::vector<std::thread> threads(16);
 	for (int i = 0; i < 16; ++i) {
 		threads[i] = std::thread([&](int tid) {
@@ -885,12 +858,15 @@ TEST_F(LLVM, DISABLED_Multi_Thread_Execution) {
 			}
 		}, i);
 	}
-	*/
 
 	// making sure all threads are done
-	// std::for_each(threads.begin(), threads.end(), [](std::thread& thread) { thread.join(); });
+    std::for_each(threads.begin(), threads.end(), [](std::thread& thread) { thread.join(); });
 }
 
+/*
+ * For some reason, GlobalVariable with local thread storage is not functional as epxected on Windows, but it does work on Ubuntu.
+ * However, due to the inconsistant behavior across multiple platforms, I will have to seek for other solution to support global parameters.
+ */
 TEST_F(LLVM, DISABLED_LTS_GlobalVariable) {
     setCurrentDebugType("jit");
     llvm::DebugFlag = true;
@@ -898,12 +874,13 @@ TEST_F(LLVM, DISABLED_LTS_GlobalVariable) {
     InitializeNativeTarget();
     InitializeNativeTargetAsmPrinter();
 
-    Constant* init_value = ConstantInt::get(Type::getInt32Ty(context), APInt(32,12));
+    Constant* init_value = Constant::getAllOnesValue(Type::getInt32Ty(context));// ConstantInt::get(Type::getInt32Ty(context), APInt(32, 12));
 
-    GlobalVariable* bsp = new GlobalVariable(*module, Type::getInt32Ty(context), false, GlobalValue::ExternalLinkage, init_value, "bsp", 0);
+    GlobalVariable* bsp = new GlobalVariable(*module, Type::getInt32Ty(context), false, GlobalValue::InternalLinkage, init_value, "bsp", 0);
 
     // uncommenting this line will lead to crash in this function ( shader() )
     bsp->setThreadLocal(true);
+    bsp->setInitializer(init_value);
 
     auto DL = module->getDataLayout();
     Align MaxAlignment(std::max(DL.getABITypeAlignment(Type::getInt32Ty(context)), DL.getABITypeAlignment(Type::getInt32Ty(context))));
@@ -919,6 +896,5 @@ TEST_F(LLVM, DISABLED_LTS_GlobalVariable) {
     auto TheExecutionEngine = std::unique_ptr<ExecutionEngine>(llvm::EngineBuilder(std::move(module)).create());
     const auto shader = (int(*)())TheExecutionEngine->getFunctionAddress("main");
     
-    //printf("%d\n", shader());
-    system("pause");
+    EXPECT_EQ(shader(), -1);
 }
