@@ -192,8 +192,10 @@ TEST(Functions, CONFIG_DECORATOR ) {
 					 in const float arg2 = 3.0,
 					 const in matrix mat,
                      in float input_arg = 0.2 <<< >>> ,
-                     out float arg2 = 2.0 <<< >>> ){
+                     out float last_arg = 2.0 <<< >>> ){
             arg2 = input_arg + 2.0;
+
+            return arg0 + arg1;
         }
     )");
 }
@@ -208,6 +210,18 @@ TEST(Functions, Simple_Test) {
 			}
 
             arg2 = k == 100 ? 122.0 : 22.0;
+        }
+    )");
+}
+
+TEST(Functions, Single_Return) {
+    validate_shader(R"(
+        shader main(int arg0 = 0,
+                    int arg1 = 2,
+                    int arg2 = 3,
+                    int arg3 = 4,
+                    int arg4 = 5){
+			return ( ( arg0 + arg1 ) * arg2 + arg3 / arg4 ) & arg0;
         }
     )");
 }

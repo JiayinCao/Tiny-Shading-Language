@@ -106,6 +106,10 @@ bool TslCompiler_Impl::compile(const char* source_code, std::string& tso) {
 		compile_context.builder = &builder;
 		llvm::Function* function = m_ast_root->codegen(compile_context);
 
+        // it should be safe to assume llvm function has to be generated, otherwise, the shader is invalid.
+        if (!function)
+            return false;
+
 #ifdef DEBUG_OUTPUT
 		if( function )
 			function->print(llvm::errs());

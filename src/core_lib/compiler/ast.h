@@ -348,6 +348,8 @@ class AstNode_VariableRef : public AstNode_Lvalue {
 public:
     AstNode_VariableRef(const char* name) : m_name(name) {}
 
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
     void print() const override;
 
 private:

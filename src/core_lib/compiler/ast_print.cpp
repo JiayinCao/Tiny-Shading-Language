@@ -65,7 +65,6 @@ void AstNode_FunctionBody::print() const{
 	while(statement){
 		statement->print();
 		statement = statement->getSibling();
-		std::cout << "}" <<std::endl;
 	}
 
 	std::cout<<"}"<<std::endl;

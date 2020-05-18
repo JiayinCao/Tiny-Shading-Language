@@ -15,6 +15,7 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
+#include <iostream>
 #include "llvm/ExecutionEngine/Orc/LLJIT.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
@@ -72,23 +73,7 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 	variable = m_variables;
 	int i = 0;
 	while( variable ){
-        const auto name = variable->get_var_name();
-        const auto type = llvm_type_from_data_type( variable->dataType() , *context.context );
-        const auto init = variable->get_init();
-        
-        args[i++] = type;
-        
-        // // there is duplicated names, emit an warning!!
-        // // However, there is no log system in the compiler for now, I need to handle this later.
-        // if( 0 != context.m_var_symbols.count(name) ){
-        //    return nullptr;
-        // }
-
-        // // allocate the variable on stack
-        // Value* init_value = init ? init->codegen(context) : nullptr;
-        // auto alloc_var = context.builder->CreateAlloca(type, init_value);
-        // context.m_var_symbols[name] = alloc_var;
-
+        args[i++] = llvm_type_from_data_type(variable->dataType(), *context.context);
 		variable = castType<AstNode_VariableDecl>(variable->getSibling());
 	}
 
@@ -115,6 +100,28 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
         // create a separate code block
 	    llvm::BasicBlock *BB = llvm::BasicBlock::Create(*context.context, "entry", function);
 	    context.builder->SetInsertPoint(BB);
+
+        // push the argument into the symbol table first
+        variable = m_variables;
+        while (variable) {
+            const auto name = variable->get_var_name();
+            const auto type = llvm_type_from_data_type(variable->dataType(), *context.context);
+            const auto init = variable->get_init();
+
+            // there is duplicated names, emit an warning!!
+            // However, there is no log system in the compiler for now, I need to handle this later.
+            if( 0 != context.m_var_symbols.count(name) ){
+                std::cout << "Duplicated argument named : " << name << std::endl;
+                return nullptr;
+            }
+
+            // allocate the variable on stack
+            Value* init_value = init ? init->codegen(context) : nullptr;
+            auto alloc_var = context.builder->CreateAlloca(type, init_value);
+            context.m_var_symbols[name] = alloc_var;
+
+            variable = castType<AstNode_VariableDecl>(variable->getSibling());
+        }
 
         auto statement = m_body->m_statements;
         while (statement) {
@@ -273,6 +280,20 @@ llvm::Value* AstNode_Statement_Return::codegen(LLVM_Compile_Context& context) co
 
     auto ret_value = m_expression->codegen(context);
     return context.builder->CreateRet(ret_value);
+}
+
+llvm::Value* AstNode_VariableRef::codegen(LLVM_Compile_Context& context) const {
+    // just find it in the symbol table
+    auto it = context.m_var_symbols.find(m_name);
+
+    // undefined variabled referenced here, emit warning
+    if (it == context.m_var_symbols.end()) {
+        std::cout << "Undefined variable : " << m_name << std::endl;
+        return nullptr;
+    }
+
+    auto value_ptr = it->second;
+    return context.builder->CreateLoad(value_ptr);
 }
 
 TSL_NAMESPACE_END
