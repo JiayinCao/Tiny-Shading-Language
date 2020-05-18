@@ -62,7 +62,7 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 	AstNode_VariableDecl* variable = m_variables;
 	while( variable ){
 		++arg_cnt;
-		variable = castType<AstNode_VariableDecl>(variable->getSibling());
+		variable = castType<AstNode_VariableDecl>(variable->get_sibling());
 	}
 
     // clear the symbol maps, no global var for now
@@ -73,8 +73,8 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 	variable = m_variables;
 	int i = 0;
 	while( variable ){
-        args[i++] = llvm_type_from_data_type(variable->dataType(), *context.context);
-		variable = castType<AstNode_VariableDecl>(variable->getSibling());
+        args[i++] = llvm_type_from_data_type(variable->data_type(), *context.context);
+		variable = castType<AstNode_VariableDecl>(variable->get_sibling());
 	}
 
 	// parse return types
@@ -93,7 +93,7 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 	variable = m_variables;
 	for (auto &arg : function->args()) {
 		arg.setName(variable->get_var_name());
-		variable = castType<AstNode_VariableDecl>(variable->getSibling());
+		variable = castType<AstNode_VariableDecl>(variable->get_sibling());
 	}
 
     if( m_body ){
@@ -105,7 +105,7 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
         variable = m_variables;
         while (variable) {
             const auto name = variable->get_var_name();
-            const auto type = llvm_type_from_data_type(variable->dataType(), *context.context);
+            const auto type = llvm_type_from_data_type(variable->data_type(), *context.context);
             const auto init = variable->get_init();
 
             // there is duplicated names, emit an warning!!
@@ -120,13 +120,13 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
             auto alloc_var = context.builder->CreateAlloca(type, init_value);
             context.m_var_symbols[name] = alloc_var;
 
-            variable = castType<AstNode_VariableDecl>(variable->getSibling());
+            variable = castType<AstNode_VariableDecl>(variable->get_sibling());
         }
 
         auto statement = m_body->m_statements;
         while (statement) {
             statement->codegen(context);
-            statement = (AstNode_Statement*)statement->getSibling();
+            statement = (AstNode_Statement*)statement->get_sibling();
         }
     }
 
@@ -294,6 +294,31 @@ llvm::Value* AstNode_VariableRef::codegen(LLVM_Compile_Context& context) const {
 
     auto value_ptr = it->second;
     return context.builder->CreateLoad(value_ptr);
+}
+
+llvm::Value* AstNode_Statement_VariableDecls::codegen(LLVM_Compile_Context& context) const {
+    AstNode_VariableDecl* decl = m_var_decls;
+    while (decl) {
+        auto name = decl->get_var_name();
+        auto type = llvm_type_from_data_type(decl->data_type(), *context.context);
+        auto init = decl->get_init();
+
+        // there is duplicated names, emit an warning!!
+        // However, there is no log system in the compiler for now, I need to handle this later.
+        if (0 != context.m_var_symbols.count(name)) {
+            std::cout << "Duplicated argument named : " << name << std::endl;
+            return nullptr;
+        }
+
+        // allocate the variable on stack
+        Value* init_value = init ? init->codegen(context) : nullptr;
+        auto alloc_var = context.builder->CreateAlloca(type, init_value);
+        context.m_var_symbols[name] = alloc_var;
+
+        decl = castType<AstNode_VariableDecl>(decl->get_sibling());
+    }
+
+    return nullptr;
 }
 
 TSL_NAMESPACE_END

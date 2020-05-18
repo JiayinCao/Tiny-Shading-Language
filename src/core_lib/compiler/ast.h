@@ -88,11 +88,11 @@ public:
 #endif
     }
 
-    AstNode* getSibling() {
+    AstNode* get_sibling() {
         return m_next_sibling;
     }
 
-    const AstNode* getSibling() const {
+    const AstNode* get_sibling() const {
         return m_next_sibling;
     }
 
@@ -325,7 +325,7 @@ public:
 
 	void printVariableOnly() const;
 
-	DataType dataType() const{
+	DataType data_type() const{
 		return m_type;
 	}
 
@@ -583,6 +583,8 @@ private:
 class AstNode_Statement_VariableDecls: public AstNode_Statement {
 public:
 	AstNode_Statement_VariableDecls(AstNode_VariableDecl* var_decls) :m_var_decls(var_decls) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
 	void print() const override;
 

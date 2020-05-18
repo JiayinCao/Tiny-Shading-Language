@@ -46,7 +46,7 @@ void AstNode_FunctionPrototype::print() const{
 			std::cout << ", ";
 
 		param_node->print();
-		param_node = param_node->getSibling();
+		param_node = param_node->get_sibling();
 
 		first = false;
 	}
@@ -64,7 +64,7 @@ void AstNode_FunctionBody::print() const{
 	AstNode* statement = m_statements;
 	while(statement){
 		statement->print();
-		statement = statement->getSibling();
+		statement = statement->get_sibling();
 	}
 
 	std::cout<<"}"<<std::endl;
@@ -81,7 +81,7 @@ void AstNode_FunctionCall::print() const {
             std::cout << " , ";
 
         param_node->print();
-        param_node = param_node->getSibling();
+        param_node = param_node->get_sibling();
 
         first = false;
     }
@@ -351,7 +351,7 @@ void AstNode_Statement_CompoundExpression::print() const {
 		if( !is_first )
 			std::cout<<", ";
 		expression->print();
-		expression = expression->getSibling();
+		expression = expression->get_sibling();
 
 		is_first = false;
 	}
@@ -421,17 +421,17 @@ void AstNode_Statement_VariableDecls::print() const {
 	AstNode_VariableDecl* variable = m_var_decls;
 	while( variable ){
 		if( is_first ){
-			type = variable->dataType();
-			std::cout<<str_from_data_type(variable->dataType())<<" ";
+			type = variable->data_type();
+			std::cout<<str_from_data_type(variable->data_type())<<" ";
 			is_first = false;
 		}else
 			std::cout<<", ";
 
 		variable->printVariableOnly();
-		variable = castType<AstNode_VariableDecl>(variable->getSibling());
+		variable = castType<AstNode_VariableDecl>(variable->get_sibling());
 
 		if(variable)
-			assert(variable->dataType() == type);
+			assert(variable->data_type() == type);
 	}
 
 	std::cout<<";"<<std::endl;

@@ -20,6 +20,8 @@
 TEST(Math, Full_Test) {
     validate_shader(R"(
         shader func(){
+            int a = 1 , b = 2;
+
             int sum_test = a + b;
             sum_test += c;
 
@@ -41,6 +43,8 @@ TEST(Math, Full_Test) {
 TEST(Math, Bit_Operation) {
     validate_shader(R"(
         shader func(){
+            int a = 1 , b = 2;
+
             int sum_test = ( a & b ) ^ ( a | b );
 
             if( flag && flag2 )

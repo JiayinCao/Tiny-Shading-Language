@@ -28,6 +28,7 @@ TEST(Expression, Simple_Test) {
 TEST(Expression, MathOperation) {
     validate_shader(R"(
         shader func(){
+            int a = 23;
             int k = a + 2;
             int k2 = k - a;
             int g = k * k;
