@@ -360,6 +360,8 @@ class AstNode_ExpAssign : public AstNode_Expression {
 public:
     AstNode_ExpAssign(AstNode_Lvalue* var, AstNode_Expression* exp) :m_var(var), m_expression(exp) {}
 
+	llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
 protected:
     AstNode_Lvalue* m_var;
     AstNode_Expression* m_expression;
@@ -449,6 +451,8 @@ class AstNode_Unary_Pos : public AstNode_Expression {
 public:
     AstNode_Unary_Pos(AstNode_Expression* exp) : m_exp(exp) {}
 
+	llvm::Value* codegen(LLVM_Compile_Context& context) const;
+
     void print() const override;
 
 private:
@@ -458,6 +462,8 @@ private:
 class AstNode_Unary_Neg : public AstNode_Expression {
 public:
     AstNode_Unary_Neg(AstNode_Expression* exp) : m_exp(exp) {}
+
+	llvm::Value* codegen(LLVM_Compile_Context& context) const;
 
     void print() const override;
 
@@ -560,6 +566,8 @@ private:
 class AstNode_Statement_CompoundExpression : public AstNode_Statement {
 public:
 	AstNode_Statement_CompoundExpression(AstNode_Expression* expression) : m_expression(expression) {}
+
+	llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
 	void print() const override;
 

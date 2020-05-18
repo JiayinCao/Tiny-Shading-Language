@@ -116,8 +116,14 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
             }
 
             // allocate the variable on stack
-            Value* init_value = init ? init->codegen(context) : nullptr;
-            auto alloc_var = context.builder->CreateAlloca(type, init_value);
+            auto alloc_var = context.builder->CreateAlloca(type, nullptr, name);
+
+			// initialize it if necessary
+			if (init) {
+				Value* init_value = init->codegen(context);
+				context.builder->CreateStore(init_value, alloc_var);
+			}
+
             context.m_var_symbols[name] = alloc_var;
 
             variable = castType<AstNode_VariableDecl>(variable->get_sibling());
@@ -286,7 +292,7 @@ llvm::Value* AstNode_VariableRef::codegen(LLVM_Compile_Context& context) const {
     // just find it in the symbol table
     auto it = context.m_var_symbols.find(m_name);
 
-    // undefined variabled referenced here, emit warning
+    // undefined variable referenced here, emit warning
     if (it == context.m_var_symbols.end()) {
         std::cout << "Undefined variable : " << m_name << std::endl;
         return nullptr;
@@ -311,14 +317,49 @@ llvm::Value* AstNode_Statement_VariableDecls::codegen(LLVM_Compile_Context& cont
         }
 
         // allocate the variable on stack
-        Value* init_value = init ? init->codegen(context) : nullptr;
-        auto alloc_var = context.builder->CreateAlloca(type, init_value);
+        auto alloc_var = context.builder->CreateAlloca(type, nullptr, name);
+
+		// initialize it if necessary
+		if(init){
+			Value* init_value = init->codegen(context);
+
+			if(init_value)
+				context.builder->CreateStore(init_value, alloc_var);
+		}
+
         context.m_var_symbols[name] = alloc_var;
 
         decl = castType<AstNode_VariableDecl>(decl->get_sibling());
     }
 
     return nullptr;
+}
+
+llvm::Value* AstNode_ExpAssign::codegen(LLVM_Compile_Context& context) const{
+	auto var = m_var->codegen(context);
+	auto value = m_expression->codegen(context);
+
+	context.builder->CreateStore(value, var);
+	return value;
+}
+
+llvm::Value* AstNode_Statement_CompoundExpression::codegen(LLVM_Compile_Context& context) const{
+	return m_expression->codegen(context);
+}
+
+llvm::Value* AstNode_Unary_Pos::codegen(LLVM_Compile_Context& context) const {
+	return m_exp->codegen(context);
+}
+
+llvm::Value* AstNode_Unary_Neg::codegen(LLVM_Compile_Context& context) const{
+	auto operand = m_exp->codegen(context);
+
+	if (operand->getType() == llvm::Type::getFloatTy(*context.context))
+		return context.builder->CreateFNeg(operand);
+	if (operand->getType() == llvm::Type::getInt32Ty(*context.context))
+		return context.builder->CreateNeg(operand);
+
+	return nullptr;
 }
 
 TSL_NAMESPACE_END

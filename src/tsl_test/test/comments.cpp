@@ -28,9 +28,9 @@ TEST(Comments, Full_Test){
             //* this should be valid
 
             // This is an ugly line that is full of comments, but it is a valid one.
-            /* start from here */ int /* I'm here. */ k /* I'm also here. */ = /* Here again. */ 0 /* again */;
+            /* start from here */ int /* I'm here. */ k /* I'm also here. */ = /* Here again. */ 123 /* again */;
 
-            int kk = 0; // this should be fine too.
+            int kk = 43; // this should be fine too.
         }
 
         /* I'm not a blocker. // */

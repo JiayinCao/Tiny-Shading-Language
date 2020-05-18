@@ -80,8 +80,8 @@ TEST(Variables, Only_Global_Variables) {
 TEST(Variables, Recursive_Variables) {
     validate_shader(R"(
         shader func(){
-            data.time = 0.0;
-            data_array[0].t.da[2] = 2;
+            // data.time = 0.0;
+            // data_array[0].t.da[2] = 2;
         }
     )");
 }

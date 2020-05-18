@@ -114,9 +114,9 @@ TEST(Functions, Shader_Single_Argument_With_Metadata_and_Default ) {
 TEST(Functions, Shader_Multi_Arguments_With_Metadata_and_Default ) {
     validate_shader(R"(
         shader shader_func( float arg0 = 0.0 <<< >>>,
-                            int   arg1 = 1  <<< >>> ,
-                            int   arg2      <<<>>> ,
-                            int   arg3      ){
+                            int	  arg1 = 0  <<< >>> ,
+                            int   arg2 = 2  <<<>>> ,
+                            int   arg3 = 1  ){
         }
     )");
 }

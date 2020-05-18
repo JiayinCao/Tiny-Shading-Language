@@ -20,7 +20,7 @@
 TEST(Math, Full_Test) {
     validate_shader(R"(
         shader func(){
-            int a = 1 , b = 2;
+            int a = 1 , b = 2 , c = 4;
 
             int sum_test = a + b;
             sum_test += c;

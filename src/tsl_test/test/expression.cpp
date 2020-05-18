@@ -20,7 +20,7 @@
 TEST(Expression, Simple_Test) {
     validate_shader(R"(
         shader func(){
-            int k = g;
+            int k = 234234;
         }
     )");
 }

@@ -161,6 +161,27 @@ TEST_F(LLVM, External_Call) {
 	EXPECT_EQ(gv.FloatVal, expected_result);
 }
 
+TEST_F(LLVM, Return_One) {
+	// the main function to be executed
+	Function* function = Function::Create(FunctionType::get(Type::getInt32Ty(context), {}, false), Function::ExternalLinkage, "function", module.get());
+	BasicBlock* bb = BasicBlock::Create(context, "EntryBlock", function);
+	IRBuilder<> builder(bb);
+
+	// a mutable variable with default value of 1
+	Value* num_allocate = llvm::ConstantInt::get(context, llvm::APInt(32, 1));
+	Value* allocated = builder.CreateAlloca(Type::getInt32Ty(context), nullptr);
+	builder.CreateStore(llvm::ConstantInt::get(context, llvm::APInt(32, 1)), allocated);
+	Value* ret = builder.CreateLoad(allocated);
+
+	// return whatever the call returns
+	builder.CreateRet(ret);
+
+	// execute the jited function
+	auto func = get_function<int(*)()>("function");
+	auto ret_value = func();
+	EXPECT_EQ(ret_value, 1);
+}
+
 TEST_F(LLVM, JIT_Function_Pointer) {
 	const float input_var = 12.0;
 
