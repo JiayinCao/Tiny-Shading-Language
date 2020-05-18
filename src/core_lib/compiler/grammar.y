@@ -194,7 +194,7 @@ SHADER_DEF:
 
 		AstNode_FunctionBody*	body = AstNode::castType<AstNode_FunctionBody>($6);
 		AstNode_Shader* shader = new AstNode_Shader(proto, body);
-		tsl_compiler->push_root_ast(shader);
+		tsl_compiler->push_function(shader, true);
 	};
 
 SHADER_FUNCTION_ARGUMENT_DECLS:
@@ -234,10 +234,8 @@ FUNCTION_DEF:
 		AstNode_FunctionPrototype*	proto = new AstNode_FunctionPrototype($2, variables, $1);
 
 		AstNode_FunctionBody*	body = AstNode::castType<AstNode_FunctionBody>($6);
-		AstNode* root = new AstNode_FunctionDefinition(proto, body);
-
-		// to be done later
-		// tsl_compiler->push_root_ast(root);
+		AstNode_FunctionDefinition* function_defintion = new AstNode_FunctionDefinition(proto, body);
+        tsl_compiler->push_function(function_defintion);
 	};
 
 FUNCTION_ARGUMENT_DECLS:

@@ -100,13 +100,16 @@ protected:
     AstNode* m_next_sibling = nullptr;
 };
 
-class AstNode_Expression : public AstNode {
-
+class AstNode_Expression : public AstNode, LLVM_Value {
+public:
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 };
 
 class AstNode_Literal_Int : public AstNode_Expression {
 public:
     AstNode_Literal_Int(int val) : m_val(val) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 
@@ -117,6 +120,8 @@ private:
 class AstNode_Literal_Flt : public AstNode_Expression {
 public:
     AstNode_Literal_Flt(float val) : m_val(val) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 
@@ -137,12 +142,16 @@ class AstNode_Binary_Add : public AstNode_Binary {
 public:
     AstNode_Binary_Add(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
 
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
     void print() const override;
 };
 
 class AstNode_Binary_Minus : public AstNode_Binary {
 public:
     AstNode_Binary_Minus(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 };
@@ -151,12 +160,16 @@ class AstNode_Binary_Multi : public AstNode_Binary {
 public:
     AstNode_Binary_Multi(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
 
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
     void print() const override;
 };
 
 class AstNode_Binary_Div : public AstNode_Binary {
 public:
     AstNode_Binary_Div(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 };
@@ -165,12 +178,16 @@ class AstNode_Binary_Mod : public AstNode_Binary {
 public:
     AstNode_Binary_Mod(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
 
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
     void print() const override;
 };
 
 class AstNode_Binary_And : public AstNode_Binary {
 public:
     AstNode_Binary_And(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 };
@@ -179,12 +196,16 @@ class AstNode_Binary_Or : public AstNode_Binary {
 public:
     AstNode_Binary_Or(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
 
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
     void print() const override;
 };
 
 class AstNode_Binary_Eq : public AstNode_Binary {
 public:
     AstNode_Binary_Eq(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 };
@@ -242,6 +263,8 @@ class AstNode_Binary_Bit_And : public AstNode_Binary {
 public:
     AstNode_Binary_Bit_And(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
 
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
     void print() const override;
 };
 
@@ -249,12 +272,16 @@ class AstNode_Binary_Bit_Or : public AstNode_Binary {
 public:
     AstNode_Binary_Bit_Or(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
 
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
     void print() const override;
 };
 
 class AstNode_Binary_Bit_Xor : public AstNode_Binary {
 public:
     AstNode_Binary_Bit_Xor(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 };
@@ -501,12 +528,19 @@ private:
 };
 
 
-class AstNode_Statement : public AstNode {
+class AstNode_Statement : public AstNode, LLVM_Value {
+public:
+    // this is to be deleted once all statements have this implementation
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override {
+        return nullptr;
+    }
 };
 
 class AstNode_Statement_Return : public AstNode_Statement {
 public:
 	AstNode_Statement_Return(AstNode_Expression* expression) : m_expression(expression) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
 	void print() const override;
 

@@ -15,18 +15,22 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-#include "llvm/ADT/APFloat.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/DerivedTypes.h"
+#include "llvm/ExecutionEngine/Orc/LLJIT.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/Module.h"
+#include "llvm/Support/InitLLVM.h"
+#include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/ExecutionEngine/MCJIT.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/Type.h"
-#include "llvm/IR/Verifier.h"
 #include "ast.h"
+
+using namespace llvm;
 
 TSL_NAMESPACE_BEGIN
 
@@ -101,23 +105,23 @@ llvm::Function* AstNode_Shader::codegen( LLVM_Compile_Context& context ) const{
 	llvm::BasicBlock *BB = llvm::BasicBlock::Create(*context.context, "entry", function);
 	context.builder->SetInsertPoint(BB);
 
+    /*
 	context.builder->CreateRetVoid();
 	if( !llvm::verifyFunction(*function) ){
 		function->eraseFromParent();
 		return nullptr;
 	}
+    */
+
+    m_body->codegen(context);
+
+	// Finish off the function.
+	//context.builder->CreateRet(ret_val);
+
+	// Validate the generated code, checking for consistency.
+	// llvm::verifyFunction(*function);
 
 	return function;
-
-	if (llvm::Value *ret_val = m_body->codegen(context)) {
-		// Finish off the function.
-		context.builder->CreateRet(ret_val);
-
-		// Validate the generated code, checking for consistency.
-		llvm::verifyFunction(*function);
-
-		return function;
-	}
 
 	// failed to create the function, erase it then.
 	function->eraseFromParent();
@@ -125,7 +129,157 @@ llvm::Function* AstNode_Shader::codegen( LLVM_Compile_Context& context ) const{
 }
 
 llvm::Value* AstNode_FunctionBody::codegen( LLVM_Compile_Context& context ) const{
+    auto statement = m_statements;
+    while (statement) {
+        statement->codegen(context);
+        statement = (AstNode_Statement*)statement->getSibling();
+    }
 	return nullptr;
+}
+
+llvm::Value* AstNode_Expression::codegen(LLVM_Compile_Context& context) const {
+    return ConstantFP::get(*context.context, APFloat(1.0f));
+}
+
+llvm::Value* AstNode_Literal_Int::codegen(LLVM_Compile_Context& context) const {
+    return ConstantInt::get(*context.context, APInt(32, m_val));
+}
+
+llvm::Value* AstNode_Literal_Flt::codegen(LLVM_Compile_Context& context) const {
+    return ConstantFP::get(*context.context, APFloat(m_val));
+}
+
+llvm::Value* AstNode_Binary_Add::codegen(LLVM_Compile_Context& context) const {
+    Value* left = m_left->codegen(context);
+    Value* right = m_right->codegen(context);
+
+    if (left->getType() == llvm::Type::getFloatTy(*context.context) && right->getType() == llvm::Type::getFloatTy(*context.context))
+        return context.builder->CreateFAdd(left, right);
+    if (left->getType() == llvm::Type::getInt32Ty(*context.context) && right->getType() == llvm::Type::getInt32Ty(*context.context))
+        return context.builder->CreateAdd(left, right);
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Binary_Minus::codegen(LLVM_Compile_Context& context) const {
+    Value* left = m_left->codegen(context);
+    Value* right = m_right->codegen(context);
+
+    if (left->getType() == llvm::Type::getFloatTy(*context.context) && right->getType() == llvm::Type::getFloatTy(*context.context))
+        return context.builder->CreateFSub(left, right);
+    if (left->getType() == llvm::Type::getInt32Ty(*context.context) && right->getType() == llvm::Type::getInt32Ty(*context.context))
+        return context.builder->CreateSub(left, right);
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Binary_Multi::codegen(LLVM_Compile_Context& context) const {
+    Value* left = m_left->codegen(context);
+    Value* right = m_right->codegen(context);
+
+    if (left->getType() == llvm::Type::getFloatTy(*context.context) && right->getType() == llvm::Type::getFloatTy(*context.context))
+        return context.builder->CreateFMul(left, right);
+    if (left->getType() == llvm::Type::getInt32Ty(*context.context) && right->getType() == llvm::Type::getInt32Ty(*context.context))
+        return context.builder->CreateMul(left, right);
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Binary_Div::codegen(LLVM_Compile_Context& context) const {
+    Value* left = m_left->codegen(context);
+    Value* right = m_right->codegen(context);
+
+    if (left->getType() == llvm::Type::getFloatTy(*context.context) && right->getType() == llvm::Type::getFloatTy(*context.context))
+        return context.builder->CreateFDiv(left, right);
+    if (left->getType() == llvm::Type::getInt32Ty(*context.context) && right->getType() == llvm::Type::getInt32Ty(*context.context))
+        return context.builder->CreateSDiv(left, right);
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Binary_Mod::codegen(LLVM_Compile_Context& context) const {
+    Value* left = m_left->codegen(context);
+    Value* right = m_right->codegen(context);
+
+    // not quite sure what to call for now
+//    if (left->getType() == llvm::Type::getInt32Ty(*context.context) && right->getType() == llvm::Type::getInt32Ty(*context.context))
+//        return context.builder->CreateSDiv(left, right);
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Binary_And::codegen(LLVM_Compile_Context& context) const {
+    Value* left = m_left->codegen(context);
+    Value* right = m_right->codegen(context);
+
+    // not quite sure what to call for now
+//    if (left->getType() == llvm::Type::getInt32Ty(*context.context) && right->getType() == llvm::Type::getInt32Ty(*context.context))
+//          return context.builder->CreateAnd(left, right);
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Binary_Or::codegen(LLVM_Compile_Context& context) const {
+    Value* left = m_left->codegen(context);
+    Value* right = m_right->codegen(context);
+
+    // not quite sure what to call for now
+//    if (left->getType() == llvm::Type::getInt32Ty(*context.context) && right->getType() == llvm::Type::getInt32Ty(*context.context))
+//        return context.builder->CreateOr(left, right);
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Binary_Eq::codegen(LLVM_Compile_Context& context) const {
+    Value* left = m_left->codegen(context);
+    Value* right = m_right->codegen(context);
+
+    // not quite sure what to call for now
+    if (left->getType() == llvm::Type::getInt32Ty(*context.context) && right->getType() == llvm::Type::getInt32Ty(*context.context))
+        return context.builder->CreateOr(left, right);
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Binary_Bit_And::codegen(LLVM_Compile_Context& context) const {
+    Value* left = m_left->codegen(context);
+    Value* right = m_right->codegen(context);
+
+    // not quite sure what to call for now
+    if (left->getType() == llvm::Type::getInt32Ty(*context.context) && right->getType() == llvm::Type::getInt32Ty(*context.context))
+        return context.builder->CreateAnd(left, right);
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Binary_Bit_Or::codegen(LLVM_Compile_Context& context) const {
+    Value* left = m_left->codegen(context);
+    Value* right = m_right->codegen(context);
+
+    // not quite sure what to call for now
+    if (left->getType() == llvm::Type::getInt32Ty(*context.context) && right->getType() == llvm::Type::getInt32Ty(*context.context))
+        return context.builder->CreateOr(left, right);
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Binary_Bit_Xor::codegen(LLVM_Compile_Context& context) const {
+    Value* left = m_left->codegen(context);
+    Value* right = m_right->codegen(context);
+
+    // not quite sure what to call for now
+    if (left->getType() == llvm::Type::getInt32Ty(*context.context) && right->getType() == llvm::Type::getInt32Ty(*context.context))
+        return context.builder->CreateXor(left, right);
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Statement_Return::codegen(LLVM_Compile_Context& context) const {
+    if (!m_expression)
+        return context.builder->CreateRetVoid();
+
+    auto ret_value = m_expression->codegen(context);
+    return context.builder->CreateRet(ret_value);
 }
 
 TSL_NAMESPACE_END

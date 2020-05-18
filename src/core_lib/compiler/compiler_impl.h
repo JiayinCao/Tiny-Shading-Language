@@ -19,12 +19,14 @@
 
 #include "llvm/IR/LLVMContext.h"
 #include <string>
+#include <vector>
 #include "tslversion.h"
 #include "types.h"
 
 TSL_NAMESPACE_BEGIN
 
 class AstNode_Shader;
+class AstNode_FunctionDefinition;
 
 //! @brief  Internal compiler implementation.
 /**
@@ -53,10 +55,10 @@ public:
     //! @return                 Get the internal scanner, which will be used by bison generated code.
     void*   get_scanner();
 
-    //! @brief  Update root node
+    //! @brief  Update a function definition.
     //!
-    //! @param  node             Push the root node of the program.
-    void    push_root_ast(AstNode_Shader* node);
+    //! @param  node             Push a function node in the compiler.
+    void    push_function(AstNode_FunctionDefinition* node, bool is_shader = false);
 
 	//! @brief	Parameter type cache.
 	//!
@@ -76,6 +78,9 @@ private:
 
     // root ast node of the parsed program
     AstNode_Shader* m_ast_root = nullptr;
+
+    // global functions defined in this module
+    std::vector<AstNode_FunctionDefinition*>    m_functions;
 
 	// data type cache
 	DataType	m_type_cache = DataType::VOID;
