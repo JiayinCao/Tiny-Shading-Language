@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include <string>
+#include <unordered_map>
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
@@ -31,6 +32,8 @@ struct LLVM_Compile_Context{
 	llvm::LLVMContext*	context = nullptr;
 	llvm::Module*		module = nullptr;
 	llvm::IRBuilder<>*	builder = nullptr;
+
+    std::unordered_map<std::string, llvm::Value*>  m_var_symbols;
 };
 
 class LLVM_Value{
@@ -326,10 +329,14 @@ public:
 		return m_type;
 	}
 
-	const char* getVarName() const {
+	const char* get_var_name() const {
 		return m_name.c_str();
 	}
 
+    const AstNode_Expression* get_init() const{
+        return m_init_exp;
+    }
+    
 private:
 	const std::string		m_name;
 	const DataType			m_type;
@@ -626,12 +633,16 @@ public:
 
 private:
 	AstNode_Statement*	m_statements;
+
+    // allow prototype to access its private data
+    friend class AstNode_FunctionPrototype;
 };
 
 class AstNode_FunctionPrototype : public AstNode, LLVM_Function {
 public:
-	AstNode_FunctionPrototype(const char* func_name, AstNode_VariableDecl* variables, DataType type = DataType::VOID)
-		:m_name(func_name), m_variables(variables), m_return_type(type){}
+	AstNode_FunctionPrototype(const char* func_name, AstNode_VariableDecl* variables, 
+                              AstNode_FunctionBody* body, bool is_shader = false, DataType type = DataType::VOID)
+		                     :m_name(func_name), m_variables(variables), m_body(body), m_is_shader(is_shader), m_return_type(type){}
 
 	llvm::Function* codegen( LLVM_Compile_Context& context ) const override;
 
@@ -640,27 +651,9 @@ public:
 private:
 	const std::string		m_name;
 	AstNode_VariableDecl*	m_variables;
+    AstNode_FunctionBody*   m_body;
+    const bool              m_is_shader;
 	DataType				m_return_type;
-};
-
-class AstNode_FunctionDefinition : public AstNode {
-public:
-	AstNode_FunctionDefinition(AstNode_FunctionPrototype* proto, AstNode_FunctionBody* body) : m_proto(proto), m_body(body) {}
-
-	void print() const override;
-
-protected:
-	AstNode_FunctionPrototype*	m_proto;
-	AstNode_FunctionBody*		m_body;
-};
-
-class AstNode_Shader : public AstNode_FunctionDefinition, LLVM_Function{
-public:
-	AstNode_Shader(AstNode_FunctionPrototype* proto, AstNode_FunctionBody* body) : AstNode_FunctionDefinition(proto, body) {}
-
-	llvm::Function* codegen( LLVM_Compile_Context& context ) const override;
-
-	void print() const override;
 };
 
 TSL_NAMESPACE_END

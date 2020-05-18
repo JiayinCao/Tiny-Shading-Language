@@ -52,16 +52,9 @@ void AstNode_FunctionPrototype::print() const{
 	}
 
 	std::cout << ")";
-}
 
-void AstNode_FunctionDefinition::print() const {
-	m_proto->print();
-	m_body->print();
-}
-
-void AstNode_Shader::print() const {
-	m_proto->print();
-	m_body->print();
+	if( m_body )
+		m_body->print();
 }
 
 void AstNode_FunctionBody::print() const{
@@ -72,6 +65,7 @@ void AstNode_FunctionBody::print() const{
 	while(statement){
 		statement->print();
 		statement = statement->getSibling();
+		std::cout << "}" <<std::endl;
 	}
 
 	std::cout<<"}"<<std::endl;

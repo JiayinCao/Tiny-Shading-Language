@@ -189,12 +189,10 @@ GLOBAL_STATEMENT:
 // Shader is the only unit that can be exposed in the group.
 SHADER_DEF:
 	SHADER_FUNC_ID ID "(" SHADER_FUNCTION_ARGUMENT_DECLS ")" FUNCTION_BODY {
-		AstNode_VariableDecl*	variables = AstNode::castType<AstNode_VariableDecl>($4);
-		AstNode_FunctionPrototype*	proto = new AstNode_FunctionPrototype($2, variables);
-
-		AstNode_FunctionBody*	body = AstNode::castType<AstNode_FunctionBody>($6);
-		AstNode_Shader* shader = new AstNode_Shader(proto, body);
-		tsl_compiler->push_function(shader, true);
+		AstNode_FunctionBody*		body = AstNode::castType<AstNode_FunctionBody>($6);
+		AstNode_VariableDecl*		variables = AstNode::castType<AstNode_VariableDecl>($4);
+		AstNode_FunctionPrototype*	function = new AstNode_FunctionPrototype($2, variables, body, true);
+		tsl_compiler->push_function(function, true);
 	};
 
 SHADER_FUNCTION_ARGUMENT_DECLS:
@@ -229,13 +227,11 @@ ARGUMENT_METADATA:
 // Standard function definition
 FUNCTION_DEF:
 	TYPE ID "(" FUNCTION_ARGUMENT_DECLS ")" FUNCTION_BODY {
-		DataType type = $1;
-		AstNode_VariableDecl*	variables = AstNode::castType<AstNode_VariableDecl>($4);
-		AstNode_FunctionPrototype*	proto = new AstNode_FunctionPrototype($2, variables, $1);
+		AstNode_FunctionBody*		body = AstNode::castType<AstNode_FunctionBody>($6);
+		AstNode_VariableDecl*		variables = AstNode::castType<AstNode_VariableDecl>($4);
+		AstNode_FunctionPrototype*	function = new AstNode_FunctionPrototype($2, variables, body, $1);
 
-		AstNode_FunctionBody*	body = AstNode::castType<AstNode_FunctionBody>($6);
-		AstNode_FunctionDefinition* function_defintion = new AstNode_FunctionDefinition(proto, body);
-        tsl_compiler->push_function(function_defintion);
+        tsl_compiler->push_function(function);
 	};
 
 FUNCTION_ARGUMENT_DECLS:

@@ -64,12 +64,31 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 		variable = castType<AstNode_VariableDecl>(variable->getSibling());
 	}
 
+    // clear the symbol maps, no global var for now
+    context.m_var_symbols.clear();
+
 	// parse argument types
 	std::vector<llvm::Type*>	args(arg_cnt);
 	variable = m_variables;
 	int i = 0;
 	while( variable ){
-		args[i++] = llvm_type_from_data_type( variable->dataType() , *context.context );
+        const auto name = variable->get_var_name();
+        const auto type = llvm_type_from_data_type( variable->dataType() , *context.context );
+        const auto init = variable->get_init();
+        
+        args[i++] = type;
+        
+        // // there is duplicated names, emit an warning!!
+        // // However, there is no log system in the compiler for now, I need to handle this later.
+        // if( 0 != context.m_var_symbols.count(name) ){
+        //    return nullptr;
+        // }
+
+        // // allocate the variable on stack
+        // Value* init_value = init ? init->codegen(context) : nullptr;
+        // auto alloc_var = context.builder->CreateAlloca(type, init_value);
+        // context.m_var_symbols[name] = alloc_var;
+
 		variable = castType<AstNode_VariableDecl>(variable->getSibling());
 	}
 
@@ -88,52 +107,26 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 	// For debugging purposes, set the name of all arguments
 	variable = m_variables;
 	for (auto &arg : function->args()) {
-		arg.setName(variable->getVarName());
+		arg.setName(variable->get_var_name());
 		variable = castType<AstNode_VariableDecl>(variable->getSibling());
 	}
 
-	return function;
-}
+    if( m_body ){
+        // create a separate code block
+	    llvm::BasicBlock *BB = llvm::BasicBlock::Create(*context.context, "entry", function);
+	    context.builder->SetInsertPoint(BB);
 
-llvm::Function* AstNode_Shader::codegen( LLVM_Compile_Context& context ) const{
-	// declare the function prototype
-	llvm::Function* function = m_proto->codegen( context );
-	if( !function )
-		return nullptr;
-
-	// create a separate code block
-	llvm::BasicBlock *BB = llvm::BasicBlock::Create(*context.context, "entry", function);
-	context.builder->SetInsertPoint(BB);
-
-    /*
-	context.builder->CreateRetVoid();
-	if( !llvm::verifyFunction(*function) ){
-		function->eraseFromParent();
-		return nullptr;
-	}
-    */
-
-    m_body->codegen(context);
-
-	// Finish off the function.
-	//context.builder->CreateRet(ret_val);
-
-	// Validate the generated code, checking for consistency.
-	// llvm::verifyFunction(*function);
-
-	return function;
-
-	// failed to create the function, erase it then.
-	function->eraseFromParent();
-	return nullptr;
-}
-
-llvm::Value* AstNode_FunctionBody::codegen( LLVM_Compile_Context& context ) const{
-    auto statement = m_statements;
-    while (statement) {
-        statement->codegen(context);
-        statement = (AstNode_Statement*)statement->getSibling();
+        auto statement = m_body->m_statements;
+        while (statement) {
+            statement->codegen(context);
+            statement = (AstNode_Statement*)statement->getSibling();
+        }
     }
+
+	return function;
+}
+
+llvm::Value* AstNode_FunctionBody::codegen( LLVM_Compile_Context& context ) const{    
 	return nullptr;
 }
 

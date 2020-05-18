@@ -6,7 +6,7 @@
             "type": "cppdbg",
             "request": "launch",
             "preLaunchTask": "Build (Release)",
-            "program": "${workspaceFolder}/../bin/tsl_r",
+            "program": "${workspaceFolder}/../bin/tsl_test_r",
             "args": [""],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/../bin",
@@ -20,7 +20,29 @@
             },
             "windows":{
                 "type": "cppvsdbg",
-                "program": "${workspaceFolder}/../bin/tsl_r.exe"
+                "program": "${workspaceFolder}/../bin/tsl_test_r.exe"
+            }
+        },
+        {
+            "name": "Run Debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "preLaunchTask": "Build (Debug)",
+            "program": "${workspaceFolder}/../bin/tsl_test_d",
+            "args": [""],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/../bin",
+            "environment": [],
+            "externalConsole": true,
+            "osx":{
+                "MIMode": "lldb"
+            },
+            "linux":{
+                "MIMode":"gdb"
+            },
+            "windows":{
+                "type": "cppvsdbg",
+                "program": "${workspaceFolder}/../bin/tsl_test_d.exe"
             }
         }
     ]
