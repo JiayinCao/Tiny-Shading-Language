@@ -451,7 +451,7 @@ class AstNode_Unary_Pos : public AstNode_Expression {
 public:
     AstNode_Unary_Pos(AstNode_Expression* exp) : m_exp(exp) {}
 
-	llvm::Value* codegen(LLVM_Compile_Context& context) const;
+	llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 
@@ -463,7 +463,7 @@ class AstNode_Unary_Neg : public AstNode_Expression {
 public:
     AstNode_Unary_Neg(AstNode_Expression* exp) : m_exp(exp) {}
 
-	llvm::Value* codegen(LLVM_Compile_Context& context) const;
+	llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 
@@ -657,6 +657,10 @@ public:
 		                     :m_name(func_name), m_variables(variables), m_body(body), m_is_shader(is_shader), m_return_type(type){}
 
 	llvm::Function* codegen( LLVM_Compile_Context& context ) const override;
+
+    const std::string& get_function_name() const{
+        return m_name;
+    }
 
 	void print() const override;
 

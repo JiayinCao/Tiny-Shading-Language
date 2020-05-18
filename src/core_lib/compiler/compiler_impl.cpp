@@ -25,8 +25,11 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Verifier.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 #include "compiler_impl.h"
 #include "ast.h"
+#include "shader_unit_pvt.h"
+#include "shading_context.h"
 
 // a temporary ugly solution for debugging for now
 // #define DEBUG_OUTPUT
@@ -70,7 +73,7 @@ void* TslCompiler_Impl::get_scanner() {
     return m_scanner;
 }
 
-bool TslCompiler_Impl::compile(const char* source_code, std::string& tso) {
+bool TslCompiler_Impl::compile(const char* source_code, ShaderUnit* su) {
 #ifdef DEBUG_OUTPUT
     std::cout << source_code << std::endl;
 #endif
@@ -92,7 +95,12 @@ bool TslCompiler_Impl::compile(const char* source_code, std::string& tso) {
     if( parsing_result != 0 )
 		return false;
 
-	llvm::Module* module = new llvm::Module("shader", m_llvm_context);
+    auto su_pvt = su->get_shader_unit_data();
+
+    // shader_unit_pvt holds the life time of this module, whenever it is needed by execution engine
+    // another module is cloned from this one.
+    su_pvt->m_module = std::make_unique<llvm::Module>("shader", m_llvm_context);
+    auto module = su_pvt->m_module.get();
 	if(!module)
 		return false;
 
@@ -114,6 +122,12 @@ bool TslCompiler_Impl::compile(const char* source_code, std::string& tso) {
 		if( function )
 			function->print(llvm::errs());
 #endif
+
+        // get the function pointer through execution engine
+        // su_pvt->m_execution_engine = std::unique_ptr<llvm::ExecutionEngine>(llvm::EngineBuilder(llvm::CloneModule(*module)).create());
+
+        // resolve the function pointer
+        // su_pvt->m_function_pointer = su_pvt->m_execution_engine->getFunctionAddress(m_ast_root->get_function_name());
 	}
 
 	return true;

@@ -15,17 +15,25 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-#include "compiler.h"
-#include "compiler_impl.h"
+#pragma once
+
+#include "llvm/IR/Module.h"
+#include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "tslversion.h"
 
 TSL_NAMESPACE_BEGIN
 
-TslCompiler::TslCompiler(){
-    m_compiler = std::make_unique<TslCompiler_Impl>();
-}
+// This data structure hides all LLVM related data from ShaderUnit.
+struct ShaderUnit_Pvt{
+public:
+    // the llvm module owned by this shader unit
+    std::unique_ptr<llvm::Module> m_module = nullptr;
 
-bool TslCompiler::compile(const char* source_code, ShaderUnit* su) const {
-    return m_compiler->compile(source_code, su);
-}
+    // the execute engine for this module
+    std::unique_ptr<llvm::ExecutionEngine> m_execution_engine = nullptr;
+
+    // the function address for host code to call
+    uint64_t m_function_pointer = uint64_t(nullptr);
+};
 
 TSL_NAMESPACE_END

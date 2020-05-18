@@ -18,10 +18,20 @@
 #include "shading_context.h"
 #include "shading_system.h"
 #include "compiler/compiler.h"
+#include "compiler/shader_unit_pvt.h"
 
 TSL_NAMESPACE_BEGIN
 
 ShaderUnit::ShaderUnit(const std::string& name) :m_name(name) {
+    m_shader_unit_data = new ShaderUnit_Pvt();
+}
+
+ShaderUnit::~ShaderUnit(){
+    delete m_shader_unit_data;
+}
+
+uint64_t ShaderUnit::get_function() const{
+    return m_shader_unit_data->m_function_pointer;
 }
 
 ShaderGroup::ShaderGroup(const std::string& name, const TslCompiler& compiler)
@@ -55,14 +65,16 @@ ShaderUnit* ShadingContext::compile_shader_unit(const std::string& name, const c
     if (m_shading_system.m_shader_units.count(name))
         return nullptr;
 
+    // allocate the shader unit entry
     m_shading_system.m_shader_units[name] = std::make_unique<ShaderUnit>(name);
+    auto shader_unit = m_shading_system.m_shader_units[name].get();
 
-    std::string dummy;
-    const bool ret = m_compiler->compile(source, dummy);
+    // compile the shader unit
+    const bool ret = m_compiler->compile(source, shader_unit);
     if (!ret)
         return nullptr;
 
-    return m_shading_system.m_shader_units[name].get();
+    return shader_unit;
 }
 
 ShaderGroup* ShadingContext::make_shader_group(const std::string& name) {
@@ -76,11 +88,6 @@ ShaderGroup* ShadingContext::make_shader_group(const std::string& name) {
     auto shader_group = new ShaderGroup(name, *m_compiler);
     m_shading_system.m_shader_units[name] = std::unique_ptr<ShaderUnit>(shader_group);
     return shader_group;
-}
-
-void ShadingContext::execute_shader_group(const ShaderGroup* shader_group, ClosureTree& closure) const {
-    if (!shader_group)
-        return;
 }
 
 TSL_NAMESPACE_END

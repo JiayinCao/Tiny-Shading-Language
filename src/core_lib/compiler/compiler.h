@@ -42,8 +42,8 @@ public:
     //! it should be thread-safe.
     //!
     //! @param  source_code     The source code of the shader module.
-    //! @param  tso             Output object string.
-    bool compile(const char* source_code, std::string& tso) const;
+    //! @param  su              The shader unit owning this piece of source code.
+    bool compile(const char* source_code, ShaderUnit* su) const;
     
 private:
     std::unique_ptr<TslCompiler_Impl> m_compiler = nullptr;

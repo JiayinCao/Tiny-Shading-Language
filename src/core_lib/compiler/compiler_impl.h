@@ -26,6 +26,7 @@
 TSL_NAMESPACE_BEGIN
 
 class AstNode_FunctionPrototype;
+class ShaderUnit;
 
 //! @brief  Internal compiler implementation.
 /**
@@ -46,8 +47,8 @@ public:
     //! it should be thread-safe.
     //!
     //! @param  source_code     The source code of the shader module.
-    //! @param  tso             Output object string.
-    bool    compile(const char* source_code, std::string& tso);
+    //! @param  su              The shader unit owning this piece of source code.
+    bool    compile(const char* source_code, ShaderUnit* su);
 
     //! @brief  Get scanner of the compiler
     //!

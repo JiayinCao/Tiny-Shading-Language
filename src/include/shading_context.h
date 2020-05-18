@@ -27,6 +27,7 @@ TSL_NAMESPACE_BEGIN
 
 class ShadingSystem;
 class TslCompiler;
+struct ShaderUnit_Pvt;
 
 class ShaderUnit {
 public:
@@ -36,15 +37,28 @@ public:
     ShaderUnit(const std::string& name);
 
     //! @brief  Destructor.
-    virtual ~ShaderUnit() = default;
+    virtual ~ShaderUnit();
 
     //! @brief  Get name of the shader unit.
     const std::string& get_name() const {
         return m_name;
     }
 
+    //! @brief  Get the internal representation of this shader unit
+    ShaderUnit_Pvt* get_shader_unit_data(){
+        return m_shader_unit_data;
+    }
+
+    //! @brief  Get the function pointer to execute the shader.
+    //!
+    //! @return     A function pointer points to code memory.
+    uint64_t get_function() const;
+
 protected:
     const std::string m_name;
+
+    /**< A private data structure hiding all LLVM details. */
+    ShaderUnit_Pvt* m_shader_unit_data = nullptr;
 };
 
 //! @brief  Shader group is a basic unit of shader execution.
@@ -107,12 +121,6 @@ public:
     //! @param source   Source code of the shader.
     //! @return         A pointer to shader unit.
     ShaderUnit*  compile_shader_unit(const std::string& name, const char* source);
-
-    //! @brief  Execution of a shader group.
-    //!
-    //! @param shader_group  Shader group to be executed.
-    //! @param closure       The resulting closure tree.
-    void         execute_shader_group(const ShaderGroup* shader_group, ClosureTree& closure) const;
 
 private:
     //! @brief  Constructor.

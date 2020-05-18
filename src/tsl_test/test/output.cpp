@@ -15,17 +15,29 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-#include "compiler.h"
-#include "compiler_impl.h"
+#include "test_common.h"
 
-TSL_NAMESPACE_BEGIN
+TEST(Output, DISABLED_One_Output) {
+    auto shader_source = R"(
+        shader function_name( out float data ){
+            data = 2.0;
+        }
+    )";
 
-TslCompiler::TslCompiler(){
-    m_compiler = std::make_unique<TslCompiler_Impl>();
+    // the shading system of TSL
+    ShadingSystem shading_system;
+
+    // create a separate shading context
+    auto shading_context = shading_system.make_shading_context();
+
+    // try compiling the above resources
+    const auto shader_unit = shading_context->compile_shader_unit("test", shader_source);
+
+    // get the function pointer
+    auto raw_function = (void(*)(float*))shader_unit->get_function();
+
+    // try calling the function and expect 2.0 since this is what the shader does
+    float test_value = 1.0f;
+    //raw_function(&test_value);
+    EXPECT_EQ(test_value, 2.0f);
 }
-
-bool TslCompiler::compile(const char* source_code, ShaderUnit* su) const {
-    return m_compiler->compile(source_code, su);
-}
-
-TSL_NAMESPACE_END
