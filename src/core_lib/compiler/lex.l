@@ -94,6 +94,7 @@ whitespace               [ \t\r\n\f]+
 ">>>"                     { return METADATA_END; }
 "int"                     { return TYPE_INT; }
 "float"                   { return TYPE_FLOAT; }
+"double"                  { return TYPE_DOUBLE; }
 "void"                    { return TYPE_VOID; }
 "matrix"                  { return TYPE_MATRIX; }
 "float3"                  { return TYPE_FLOAT3; }

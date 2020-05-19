@@ -45,6 +45,8 @@ static inline llvm::Type* llvm_type_from_data_type( const DataType type , llvm::
 		return llvm::Type::getFloatPtrTy(context);
 	case DataType::FLOAT4:
 		return llvm::Type::getFloatPtrTy(context);
+    case DataType::DOUBLE:
+        return llvm::Type::getDoubleTy(context);
 	case DataType::MATRIX:
 		return llvm::Type::getFloatPtrTy(context);
 	case DataType::VOID:
@@ -73,7 +75,8 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 	variable = m_variables;
 	int i = 0;
 	while( variable ){
-        args[i++] = llvm_type_from_data_type(variable->data_type(), *context.context);
+        auto raw_type = llvm_type_from_data_type(variable->data_type(), *context.context);
+        args[i++] = (variable->get_config() & VariableConfig::OUTPUT) ? raw_type->getPointerTo() : raw_type;
 		variable = castType<AstNode_VariableDecl>(variable->get_sibling());
 	}
 
@@ -96,16 +99,26 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 		variable = castType<AstNode_VariableDecl>(variable->get_sibling());
 	}
 
+    // no function overloading for simplicity, at least for now.
+    if (context.m_func_symbols.count(m_name) != 0) {
+        std::cout << "Duplicated function named : " << m_name << std::endl;
+        function->eraseFromParent();
+        return nullptr;
+    }
+
+    context.m_func_symbols[m_name] = function;
+
     if( m_body ){
         // create a separate code block
 	    llvm::BasicBlock *BB = llvm::BasicBlock::Create(*context.context, "entry", function);
 	    context.builder->SetInsertPoint(BB);
 
         // push the argument into the symbol table first
+        int i = 0;
         variable = m_variables;
         while (variable) {
             const auto name = variable->get_var_name();
-            const auto type = llvm_type_from_data_type(variable->data_type(), *context.context);
+            const auto raw_type = llvm_type_from_data_type(variable->data_type(), *context.context);
             const auto init = variable->get_init();
 
             // there is duplicated names, emit an warning!!
@@ -115,18 +128,21 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
                 return nullptr;
             }
 
-            // allocate the variable on stack
-            auto alloc_var = context.builder->CreateAlloca(type, nullptr, name);
+            auto arg = function->getArg(i);
+            if (variable->get_config() & VariableConfig::OUTPUT) {
+                context.m_var_symbols[name] = arg;
+            } else {
+                // allocate the variable on stack
+                auto alloc_var = context.builder->CreateAlloca(raw_type, nullptr, name);
 
-			// initialize it if necessary
-			if (init) {
-				Value* init_value = init->codegen(context);
-				context.builder->CreateStore(init_value, alloc_var);
-			}
-
-            context.m_var_symbols[name] = alloc_var;
+                // duplicate the value so that it can be a copy instead of a reference.
+                context.builder->CreateStore(arg, alloc_var);
+                
+                context.m_var_symbols[name] = alloc_var;
+            }
 
             variable = castType<AstNode_VariableDecl>(variable->get_sibling());
+            ++i;
         }
 
         auto statement = m_body->m_statements;
@@ -298,8 +314,20 @@ llvm::Value* AstNode_VariableRef::codegen(LLVM_Compile_Context& context) const {
         return nullptr;
     }
 
-    auto value_ptr = it->second;
-    return context.builder->CreateLoad(value_ptr);
+    return context.builder->CreateLoad(it->second);
+}
+
+llvm::Value* AstNode_VariableRef::get_value_address(LLVM_Compile_Context& context) const {
+    // just find it in the symbol table
+    auto it = context.m_var_symbols.find(m_name);
+
+    // undefined variable referenced here, emit warning
+    if (it == context.m_var_symbols.end()) {
+        std::cout << "Undefined variable : " << m_name << std::endl;
+        return nullptr;
+    }
+
+    return it->second;
 }
 
 llvm::Value* AstNode_Statement_VariableDecls::codegen(LLVM_Compile_Context& context) const {
@@ -336,7 +364,7 @@ llvm::Value* AstNode_Statement_VariableDecls::codegen(LLVM_Compile_Context& cont
 }
 
 llvm::Value* AstNode_ExpAssign::codegen(LLVM_Compile_Context& context) const{
-	auto var = m_var->codegen(context);
+	auto var = m_var->get_value_address(context);
 	auto value = m_expression->codegen(context);
 
 	context.builder->CreateStore(value, var);
@@ -360,6 +388,23 @@ llvm::Value* AstNode_Unary_Neg::codegen(LLVM_Compile_Context& context) const{
 		return context.builder->CreateNeg(operand);
 
 	return nullptr;
+}
+
+llvm::Value* AstNode_FunctionCall::codegen(LLVM_Compile_Context& context) const {
+    auto it = context.m_func_symbols.find(m_name);
+    if (it == context.m_func_symbols.end()) {
+        std::cout << "Undefined function " << m_name << "." << std::endl;
+        return nullptr;
+    }
+
+    std::vector<Value*> args;
+    AstNode_Expression* node = m_variables;
+    while (node) {
+        args.push_back(node->codegen(context));
+        node = castType<AstNode_Expression>(node->get_sibling());
+    }
+
+    return context.builder->CreateCall(it->second, args);
 }
 
 TSL_NAMESPACE_END

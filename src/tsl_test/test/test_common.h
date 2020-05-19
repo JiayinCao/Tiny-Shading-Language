@@ -32,3 +32,15 @@ inline void validate_shader(const char* shader_source, bool valid = true, TslCom
 
     EXPECT_EQ(ret, valid);
 }
+
+template<class T>
+inline T compile_shader(const char* shader_source, ShadingSystem& shading_system) {
+    auto shading_context = shading_system.make_shading_context();
+
+    const auto shader_unit = shading_context->compile_shader_unit("test", shader_source);
+    const auto ret = shader_unit != nullptr;
+
+    if (!shader_unit)
+        return nullptr;
+    return (T)shader_unit->get_function();
+}

@@ -32,14 +32,18 @@ TEST(Functions, Non_Shader) {
 
 TEST(Functions, Mixed_Shader) {
     validate_shader(R"(
-        int none_shader_func(){}
+        int none_shader_func111(){
+            return 3;
+        }
         
         shader shader_func()
         {
             {}
         }
 
-        float non_shader_func2(){}
+        float non_shader_func222(){
+            return 1.0;
+        }
     )");
 }
 

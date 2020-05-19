@@ -57,16 +57,20 @@ ShadingContext::ShadingContext(ShadingSystem& shading_system):m_shading_system(s
 ShadingContext::~ShadingContext() {
 }
 
-ShaderUnit* ShadingContext::compile_shader_unit(const std::string& name, const char* source) {
-    // making sure only one of the context can access the data at a time
-    std::lock_guard<std::mutex> lock(m_shading_system.m_shader_unit_mutex);
+ShaderUnit* ShadingContext::compile_shader_unit(const std::string& name, const char* source) const {
+    // make sure the lock doesn't cover compiling
+    {
+        // making sure only one of the context can access the data at a time
+        std::lock_guard<std::mutex> lock(m_shading_system.m_shader_unit_mutex);
 
-    // if the shader group is created before, return nullptr.
-    if (m_shading_system.m_shader_units.count(name))
-        return nullptr;
+        // if the shader group is created before, return nullptr.
+        if (m_shading_system.m_shader_units.count(name))
+            return nullptr;
 
-    // allocate the shader unit entry
-    m_shading_system.m_shader_units[name] = std::make_unique<ShaderUnit>(name);
+        // allocate the shader unit entry
+        m_shading_system.m_shader_units[name] = std::make_unique<ShaderUnit>(name);
+    }
+
     auto shader_unit = m_shading_system.m_shader_units[name].get();
 
     // compile the shader unit

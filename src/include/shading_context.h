@@ -120,7 +120,7 @@ public:
     //! @param name     Name of the shader unit
     //! @param source   Source code of the shader.
     //! @return         A pointer to shader unit.
-    ShaderUnit*  compile_shader_unit(const std::string& name, const char* source);
+    ShaderUnit*  compile_shader_unit(const std::string& name, const char* source) const;
 
 private:
     //! @brief  Constructor.

@@ -161,6 +161,34 @@ TEST_F(LLVM, External_Call) {
 	EXPECT_EQ(gv.FloatVal, expected_result);
 }
 
+TEST_F(LLVM, System_Call) {
+    const double input_var = 12.0;
+
+    // create external function prototype
+    std::vector<Type*> proto_args(1, Type::getDoubleTy(context));
+    Function* ext_function = Function::Create(FunctionType::get(Type::getDoubleTy(context), proto_args, false), Function::ExternalLinkage, "cos", module.get());
+
+    // the main function to be executed
+    Function* function = Function::Create(FunctionType::get(Type::getDoubleTy(context), {}, false), Function::ExternalLinkage, "my_proxy_function", module.get());
+    BasicBlock* bb = BasicBlock::Create(context, "EntryBlock", function);
+    IRBuilder<> builder(bb);
+
+    // call the external defined function in C++, llvm_test_external_cpp_function
+    std::vector<Value*> args(1);
+    args[0] = ConstantFP::get(context, APFloat(input_var));
+    Value* value = builder.CreateCall(ext_function, args, "calltmp");
+
+    // return whatever the call returns
+    builder.CreateRet(value);
+
+    // execute the jited function
+    std::vector<GenericValue> noargs;
+    GenericValue gv = get_execution_engine()->runFunction(function, {});
+
+    const float expected_result = cos(input_var);
+    EXPECT_NEAR(gv.DoubleVal/expected_result, 1.0, 0.01);
+}
+
 TEST_F(LLVM, Return_One) {
 	// the main function to be executed
 	Function* function = Function::Create(FunctionType::get(Type::getInt32Ty(context), {}, false), Function::ExternalLinkage, "function", module.get());

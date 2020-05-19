@@ -26,6 +26,7 @@ enum DataType : int{
 	VOID	= 0,
 	INT		,
 	FLOAT	,
+    DOUBLE  ,
 	BOOL	,
 	FLOAT3	,
 	FLOAT4	,
@@ -46,6 +47,8 @@ inline const char* str_from_data_type( const DataType type ){
 		return "float4";
 	case DataType::MATRIX:
 		return "matrix";
+    case DataType::DOUBLE:
+        return "double";
 	default:
 		break;
 	}

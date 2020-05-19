@@ -33,7 +33,8 @@ struct LLVM_Compile_Context{
 	llvm::Module*		module = nullptr;
 	llvm::IRBuilder<>*	builder = nullptr;
 
-    std::unordered_map<std::string, llvm::Value*>  m_var_symbols;
+    std::unordered_map<std::string, llvm::Value*>       m_var_symbols;
+    std::unordered_map<std::string, llvm::Function*>    m_func_symbols;
 };
 
 class LLVM_Value{
@@ -293,6 +294,8 @@ class AstNode_FunctionCall : public AstNode_Expression {
 public:
     AstNode_FunctionCall(const char* func_name, AstNode_Expression* variables) : m_name(func_name), m_variables(variables) {}
 
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
     void print() const override;
 
 private:
@@ -313,7 +316,10 @@ private:
 };
 
 class AstNode_Lvalue : public AstNode_Expression {
-
+public:
+    virtual llvm::Value* get_value_address(LLVM_Compile_Context& context) const {
+        return nullptr;
+    }
 };
 
 class AstNode_VariableDecl : public AstNode {
@@ -336,6 +342,10 @@ public:
     const AstNode_Expression* get_init() const{
         return m_init_exp;
     }
+
+    VariableConfig get_config() const {
+        return m_config;
+    }
     
 private:
 	const std::string		m_name;
@@ -349,6 +359,8 @@ public:
     AstNode_VariableRef(const char* name) : m_name(name) {}
 
     llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
+    llvm::Value* get_value_address(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 

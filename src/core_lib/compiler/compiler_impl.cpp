@@ -26,6 +26,7 @@
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/ExecutionEngine/MCJIT.h"
 #include "compiler_impl.h"
 #include "ast.h"
 #include "shader_unit_pvt.h"
@@ -112,7 +113,15 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnit* su) {
 		compile_context.context = &m_llvm_context;
 		compile_context.module = module;
 		compile_context.builder = &builder;
+
+        // code gen for all functions
+        for( auto& function : m_functions )
+            function->codegen(compile_context);
+
 		llvm::Function* function = m_ast_root->codegen(compile_context);
+
+        // tmp solution
+        compile_context.builder->CreateRetVoid();
 
         // it should be safe to assume llvm function has to be generated, otherwise, the shader is invalid.
         if (!function)
@@ -124,10 +133,10 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnit* su) {
 #endif
 
         // get the function pointer through execution engine
-        // su_pvt->m_execution_engine = std::unique_ptr<llvm::ExecutionEngine>(llvm::EngineBuilder(llvm::CloneModule(*module)).create());
+        su_pvt->m_execution_engine = std::unique_ptr<llvm::ExecutionEngine>(llvm::EngineBuilder(std::move(su_pvt->m_module)).create());
 
         // resolve the function pointer
-        // su_pvt->m_function_pointer = su_pvt->m_execution_engine->getFunctionAddress(m_ast_root->get_function_name());
+        su_pvt->m_function_pointer = su_pvt->m_execution_engine->getFunctionAddress(m_ast_root->get_function_name());
 	}
 
 	return true;

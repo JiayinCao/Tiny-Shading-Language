@@ -17,27 +17,35 @@
 
 #include "test_common.h"
 
-TEST(Output, DISABLED_One_Output) {
+TEST(VerifyOutput, Basic_Output) {
     auto shader_source = R"(
         shader function_name( out float data ){
             data = 2.0;
         }
     )";
 
-    // the shading system of TSL
     ShadingSystem shading_system;
+    auto func_ptr = compile_shader<void(*)(float*)>(shader_source, shading_system);
 
-    // create a separate shading context
-    auto shading_context = shading_system.make_shading_context();
-
-    // try compiling the above resources
-    const auto shader_unit = shading_context->compile_shader_unit("test", shader_source);
-
-    // get the function pointer
-    auto raw_function = (void(*)(float*))shader_unit->get_function();
-
-    // try calling the function and expect 2.0 since this is what the shader does
     float test_value = 1.0f;
-    //raw_function(&test_value);
+    func_ptr(&test_value);
     EXPECT_EQ(test_value, 2.0f);
+}
+
+TEST(VerifyOutput, Complex_Output) {
+    auto shader_source = R"(
+        shader function_name( float arg0 , float arg1 , float arg2 , out float oarg0 , out float oarg1 ){
+            oarg0 = ( arg0 + arg1 ) * arg2;
+            oarg1 = ( arg0 - arg1 ) / arg2 * oarg0;
+        }
+    )";
+
+    ShadingSystem shading_system;
+    auto func_ptr = compile_shader<void(*)(float, float, float, float*, float*)>(shader_source, shading_system);
+
+    float arg0 = 2.0f, arg1 = 3.0f, arg2 = 0.5f;
+    float oarg0 = 0.0f, oarg1 = 0.0f;
+    func_ptr(arg0, arg1, arg2, &oarg0, &oarg1);
+    EXPECT_EQ(oarg0, (arg0 + arg1) * arg2);
+    EXPECT_EQ(oarg1, (arg0 - arg1) / arg2 * oarg0);
 }

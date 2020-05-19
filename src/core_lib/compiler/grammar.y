@@ -64,6 +64,7 @@
 %token SHADER_FUNC_ID
 %token <i> TYPE_INT	    "int"
 %token <i> TYPE_FLOAT	"float"
+%token <i> TYPE_DOUBLE  "double"
 %token <i> TYPE_MATRIX  "matrix"
 %token <i> TYPE_FLOAT3  "float3"
 %token <i> TYPE_BOOL	"bool"
@@ -229,7 +230,7 @@ FUNCTION_DEF:
 	TYPE ID "(" FUNCTION_ARGUMENT_DECLS ")" FUNCTION_BODY {
 		AstNode_FunctionBody*		body = AstNode::castType<AstNode_FunctionBody>($6);
 		AstNode_VariableDecl*		variables = AstNode::castType<AstNode_VariableDecl>($4);
-		AstNode_FunctionPrototype*	function = new AstNode_FunctionPrototype($2, variables, body, $1);
+		AstNode_FunctionPrototype*	function = new AstNode_FunctionPrototype($2, variables, body, false, $1);
 
         tsl_compiler->push_function(function);
 	};
@@ -309,7 +310,12 @@ FUNCTION_BODY:
 	"{" STATEMENTS "}" {
 		AstNode_Statement*	statements = AstNode::castType<AstNode_Statement>($2);
 		$$ = new AstNode_FunctionBody(statements);
-	};
+	}
+    |
+    ";"
+    {
+        $$ = nullptr;
+    };
 
 STATEMENTS:
 	STATEMENT STATEMENTS {
@@ -814,6 +820,11 @@ TYPE:
 		$$ = DataType::FLOAT;
 		tsl_compiler->cache_next_data_type($$);
 	}
+    |
+    "double" {
+        $$ = DataType::DOUBLE;
+        tsl_compiler->cache_next_data_type($$);
+    }
 	|
 	"matrix" {
 		$$ = DataType::MATRIX;

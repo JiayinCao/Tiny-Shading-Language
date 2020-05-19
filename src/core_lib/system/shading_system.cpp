@@ -15,12 +15,15 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
+#include "llvm/Support/TargetSelect.h"
 #include "shading_system.h"
 #include "shading_context.h"
 
 TSL_NAMESPACE_BEGIN
 
 ShadingSystem::ShadingSystem() {
+    llvm::InitializeNativeTarget();
+    llvm::InitializeNativeTargetAsmPrinter();
 }
 
 ShadingSystem::~ShadingSystem() {

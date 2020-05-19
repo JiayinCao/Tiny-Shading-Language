@@ -33,7 +33,7 @@ public:
     std::unique_ptr<llvm::ExecutionEngine> m_execution_engine = nullptr;
 
     // the function address for host code to call
-    uint64_t m_function_pointer = uint64_t(nullptr);
+    uint64_t m_function_pointer = 0;
 };
 
 TSL_NAMESPACE_END
