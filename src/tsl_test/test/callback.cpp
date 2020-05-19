@@ -69,16 +69,18 @@ TEST(CallbackFunction, Complex_Callback) {
         shader function_name( float arg0 , out float data ){
             float local = 1.0;
             float a = arg0 / local;
-            float b = (custom_square(a) + local) * (arg0 + 3.0);
+            float b = (custom_square(custom_square(a)) + local) * (arg0 + 3.0);
             data = custom_square(b+local);
+            data = data * 2.0;
         }
     )";
 
     auto referenced_func = [](float arg0) {
         float local = 1.0;
         float a = arg0 / local;
-        float b = (custom_square(a) + local) * (arg0 + 3.0);
-        return custom_square(b + local);
+        float b = (custom_square(custom_square(a)) + local) * (arg0 + 3.0f);
+        float data = custom_square(b + local);
+        return data * 2.0f;
     };
 
     ShadingSystem shading_system;

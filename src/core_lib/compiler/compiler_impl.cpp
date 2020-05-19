@@ -26,14 +26,18 @@
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/Transforms/InstCombine/InstCombine.h"
+#include "llvm/Transforms/Scalar/GVN.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/ExecutionEngine/MCJIT.h"
+
 #include "compiler_impl.h"
 #include "ast.h"
 #include "shader_unit_pvt.h"
 #include "shading_context.h"
 
 // a temporary ugly solution for debugging for now
-// #define DEBUG_OUTPUT
+#define DEBUG_OUTPUT
 
 #ifdef DEBUG_OUTPUT
 #include <iostream>
@@ -105,6 +109,28 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnit* su) {
 	if(!module)
 		return false;
 
+    {
+        // get the function pointer through execution engine
+        su_pvt->m_execution_engine = std::unique_ptr<llvm::ExecutionEngine>(llvm::EngineBuilder(std::move(su_pvt->m_module)).create());
+
+        // Open a new module.
+        module->setDataLayout(su_pvt->m_execution_engine->getTargetMachine()->createDataLayout());
+
+        // Create a new pass manager attached to it.
+        su_pvt->m_fpm = std::make_unique<llvm::legacy::FunctionPassManager>(module);
+
+        // Do simple "peephole" optimizations and bit-twiddling optzns.
+        su_pvt->m_fpm->add(llvm::createInstructionCombiningPass());
+        // Reassociate expressions.
+        su_pvt->m_fpm->add(llvm::createReassociatePass());
+        // Eliminate Common SubExpressions.
+        su_pvt->m_fpm->add(llvm::createGVNPass());
+        // Simplify the control flow graph (deleting unreachable blocks, etc).
+        su_pvt->m_fpm->add(llvm::createCFGSimplificationPass());
+
+        su_pvt->m_fpm->doInitialization();
+    }
+
 	// if there is a legit shader defined, generate LLVM IR
 	if(m_ast_root){
 		llvm::IRBuilder<> builder(m_llvm_context);
@@ -127,13 +153,13 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnit* su) {
         if (!function)
             return false;
 
+        // optimization pass, this is pretty cool because I don't have to implement those sophisticated optimiation algorithms.
+        su_pvt->m_fpm->run(*function);
+
 #ifdef DEBUG_OUTPUT
 		if( function )
 			function->print(llvm::errs());
 #endif
-
-        // get the function pointer through execution engine
-        su_pvt->m_execution_engine = std::unique_ptr<llvm::ExecutionEngine>(llvm::EngineBuilder(std::move(su_pvt->m_module)).create());
 
         // resolve the function pointer
         su_pvt->m_function_pointer = su_pvt->m_execution_engine->getFunctionAddress(m_ast_root->get_function_name());

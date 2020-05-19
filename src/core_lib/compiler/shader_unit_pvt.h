@@ -19,6 +19,7 @@
 
 #include "llvm/IR/Module.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "tslversion.h"
 
 TSL_NAMESPACE_BEGIN
@@ -31,6 +32,9 @@ public:
 
     // the execute engine for this module
     std::unique_ptr<llvm::ExecutionEngine> m_execution_engine = nullptr;
+
+    // the legacy manager, this is for optimization
+    std::unique_ptr<llvm::legacy::FunctionPassManager> m_fpm = nullptr;
 
     // the function address for host code to call
     uint64_t m_function_pointer = 0;
