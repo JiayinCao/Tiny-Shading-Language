@@ -38,10 +38,10 @@ TEST(Thread, Full_Test) {
                     R"(
                     shader func(){
                         int flag = 1;
-
+                        int flag2 = 3;
                         if( flag ){
                             if( flag2 )
-                                flag = false;
+                                flag = 0;
                             int test = 0;
                         }
 

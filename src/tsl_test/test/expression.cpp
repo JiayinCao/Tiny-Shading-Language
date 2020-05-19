@@ -53,16 +53,6 @@ TEST(Expression, Recursive_Compound_Expression) {
     )");
 }
 
-TEST(Expression, Ternary_Operation) {
-    validate_shader(R"(
-        shader func(){
-            int g = ( 1 + 2 , ( 34 + k ) ) ? a : ( b + func() );
-
-            int k = g ? ( 2 ? 2 : 3 ) : ( 43 ? ( g ? a : b ) : b );
-        }
-    )");
-}
-
 TEST(Expression, Type_Cast) {
     validate_shader(R"(
         shader func(){

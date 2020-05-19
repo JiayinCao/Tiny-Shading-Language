@@ -37,7 +37,7 @@
 #include "shading_context.h"
 
 // a temporary ugly solution for debugging for now
-#define DEBUG_OUTPUT
+// #define DEBUG_OUTPUT
 
 #ifdef DEBUG_OUTPUT
 #include <iostream>
@@ -70,7 +70,7 @@ void TslCompiler_Impl::push_function(AstNode_FunctionPrototype* node, const bool
         m_functions.push_back(node);
 
 #ifdef DEBUG_OUTPUT    
-    node->print();
+//    node->print();
 #endif
 }
 
@@ -157,8 +157,7 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnit* su) {
         su_pvt->m_fpm->run(*function);
 
 #ifdef DEBUG_OUTPUT
-		if( function )
-			function->print(llvm::errs());
+		module->print(llvm::errs(), nullptr);
 #endif
 
         // resolve the function pointer

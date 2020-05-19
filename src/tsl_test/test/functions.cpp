@@ -229,3 +229,68 @@ TEST(Functions, Single_Return) {
         }
     )");
 }
+
+TEST(Functions, Call_AnotherFunction) {
+    validate_shader(R"(
+        int helper_func( int k ){
+            return k * k;
+        }
+
+        shader main(int arg0 = 0,
+                    out int arg2 = 5){
+			arg2 = helper_func( arg0 );
+        }
+    )");
+}
+
+static int factorial_reference(int k) {
+    if (k == 0)
+        return 1;
+    return k * factorial_reference(k - 1);
+};
+
+TEST(Functions, Factorial) {
+    auto shader_source = R"(
+        int factorial( int k ){
+            if( k == 0 )
+                return 1;
+            return k * factorial( k - 1 );
+        }
+
+        shader main(int arg0 = 0, out int arg2 = 5){
+			arg2 = factorial( arg0 );
+        }
+    )";
+
+    ShadingSystem shading_system;
+    auto func_ptr = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+
+    int test_value = 1;
+    func_ptr(10, &test_value);
+    EXPECT_EQ(test_value, factorial_reference(10));
+}
+
+static int fibonacci(int k) {
+    if (k <= 1) return k;
+    return fibonacci(k - 1) + fibonacci(k - 2);
+}
+
+TEST(Functions, Fibonacci) {
+    auto shader_source = R"(
+        int fibonacci( int k ){
+            if( k <= 1 ) return k;
+            return fibonacci(k-1) + fibonacci(k-2);
+        }
+        
+        shader main(int arg0, out int arg2){
+			arg2 = fibonacci( arg0 );
+        }
+    )";
+
+    ShadingSystem shading_system;
+    auto func_ptr = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+
+    int test_value = 1;
+    func_ptr(10, &test_value);
+    EXPECT_EQ(test_value, fibonacci(10));
+}

@@ -47,7 +47,7 @@ TEST(Math, Bit_Operation) {
 
             int sum_test = ( a & b ) ^ ( a | b );
 
-            if( flag && flag2 )
+            if( a && b )
             {  
                 sum_test = ( a & b ) ^ ( a | b );
             }

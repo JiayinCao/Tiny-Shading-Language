@@ -253,12 +253,73 @@ llvm::Value* AstNode_Binary_Or::codegen(LLVM_Compile_Context& context) const {
 }
 
 llvm::Value* AstNode_Binary_Eq::codegen(LLVM_Compile_Context& context) const {
-    Value* left = m_left->codegen(context);
-    Value* right = m_right->codegen(context);
+    auto left = m_left->codegen(context);
+    auto right = m_right->codegen(context);
 
-    // not quite sure what to call for now
-    if (left->getType() == llvm::Type::getInt32Ty(*context.context) && right->getType() == llvm::Type::getInt32Ty(*context.context))
-        return context.builder->CreateOr(left, right);
+    if (left->getType() == llvm::Type::getFloatTy(*context.context))
+        return context.builder->CreateFCmpOEQ(left, right);
+    else
+        return context.builder->CreateICmpEQ(left, right);
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Binary_Ne::codegen(LLVM_Compile_Context& context) const {
+    auto left = m_left->codegen(context);
+    auto right = m_right->codegen(context);
+
+    if (left->getType() == llvm::Type::getFloatTy(*context.context))
+        return context.builder->CreateFCmpONE(left, right);
+    else
+        return context.builder->CreateICmpNE(left, right);
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Binary_G::codegen(LLVM_Compile_Context& context) const {
+    auto left = m_left->codegen(context);
+    auto right = m_right->codegen(context);
+
+    if (left->getType() == llvm::Type::getFloatTy(*context.context))
+        return context.builder->CreateFCmpOGT(left, right);
+    else
+        return context.builder->CreateICmpSGT(left, right);
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Binary_L::codegen(LLVM_Compile_Context& context) const {
+    auto left = m_left->codegen(context);
+    auto right = m_right->codegen(context);
+
+    if (left->getType() == llvm::Type::getFloatTy(*context.context))
+        return context.builder->CreateFCmpOLT(left, right);
+    else
+        return context.builder->CreateICmpSLT(left, right);
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Binary_Ge::codegen(LLVM_Compile_Context& context) const {
+    auto left = m_left->codegen(context);
+    auto right = m_right->codegen(context);
+
+    if (left->getType() == llvm::Type::getFloatTy(*context.context))
+        return context.builder->CreateFCmpOGE(left, right);
+    else
+        return context.builder->CreateICmpSGE(left, right);
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Binary_Le::codegen(LLVM_Compile_Context& context) const {
+    auto left = m_left->codegen(context);
+    auto right = m_right->codegen(context);
+
+    if (left->getType() == llvm::Type::getFloatTy(*context.context))
+        return context.builder->CreateFCmpOLE(left, right);
+    else
+        return context.builder->CreateICmpSLE(left, right);
 
     return nullptr;
 }
@@ -405,6 +466,56 @@ llvm::Value* AstNode_FunctionCall::codegen(LLVM_Compile_Context& context) const 
     }
 
     return context.builder->CreateCall(it->second, args);
+}
+
+llvm::Value* AstNode_Ternary::codegen(LLVM_Compile_Context& context) const {
+    auto cond = m_condition->codegen(context);
+    auto true_exp = m_true_expr->codegen(context);
+    auto false_exp = m_false_expr->codegen(context);
+    return context.builder->CreateSelect(cond, true_exp, false_exp);
+}
+
+llvm::Value* AstNode_Statement_Conditinon::codegen(LLVM_Compile_Context& context) const {
+    auto& llvm_context = *context.context;
+    auto& builder = *context.builder;
+    
+    auto cond = m_condition->codegen(context);
+
+    // this should not happen, but it happens due to incomplete implementation.
+    if (!cond)
+        return nullptr;
+
+    /*
+    if (cond->getType() == llvm::Type::getFloatTy(*context.context))
+        cond = builder.CreateFCmpONE( cond, ConstantFP::get(llvm_context, APFloat(0.0)) );
+    else
+        cond = builder.CreateICmpNE( cond, ConstantInt::get(llvm_context, APInt(32,0)) );
+    */
+
+    auto function = context.builder->GetInsertBlock()->getParent();
+
+    BasicBlock* then_bb = BasicBlock::Create(llvm_context, "then", function);
+    BasicBlock* else_bb = BasicBlock::Create(llvm_context, "else");
+    BasicBlock* merge_bb = BasicBlock::Create(llvm_context, "ifcont");
+
+    builder.CreateCondBr(cond, then_bb, else_bb);
+
+    builder.SetInsertPoint(then_bb);
+    if(m_true_statements)
+        m_true_statements->codegen(context);
+    builder.CreateBr(merge_bb);
+
+    function->getBasicBlockList().push_back(else_bb);
+
+    builder.SetInsertPoint(else_bb);
+    if(m_false_statements)
+        m_false_statements->codegen(context);
+    builder.CreateBr(merge_bb);
+
+    function->getBasicBlockList().push_back(merge_bb);
+    builder.SetInsertPoint(merge_bb);
+
+    return nullptr;
 }
 
 TSL_NAMESPACE_END

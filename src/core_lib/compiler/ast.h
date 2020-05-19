@@ -218,12 +218,16 @@ class AstNode_Binary_Ne : public AstNode_Binary {
 public:
     AstNode_Binary_Ne(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
 
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
     void print() const override;
 };
 
 class AstNode_Binary_G : public AstNode_Binary {
 public:
     AstNode_Binary_G(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 };
@@ -232,6 +236,8 @@ class AstNode_Binary_L : public AstNode_Binary {
 public:
     AstNode_Binary_L(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
 
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
     void print() const override;
 };
 
@@ -239,12 +245,16 @@ class AstNode_Binary_Ge : public AstNode_Binary {
 public:
     AstNode_Binary_Ge(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
 
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
     void print() const override;
 };
 
 class AstNode_Binary_Le : public AstNode_Binary {
 public:
     AstNode_Binary_Le(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 };
@@ -306,6 +316,8 @@ private:
 class AstNode_Ternary : public AstNode_Expression {
 public:
     AstNode_Ternary(AstNode_Expression* condition, AstNode_Expression* true_exp, AstNode_Expression* false_exp) :m_condition(condition), m_true_expr(true_exp), m_false_expr(false_exp) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 
@@ -591,6 +603,8 @@ class AstNode_Statement_Conditinon : public AstNode_Statement {
 public:
 	AstNode_Statement_Conditinon(AstNode_Expression* cond, AstNode_Statement* true_statements , AstNode_Statement* false_statements = nullptr) 
 		: m_condition(cond), m_true_statements(true_statements), m_false_statements(false_statements) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
 	void print() const override;
 

@@ -17,25 +17,42 @@
 
 #include "test_common.h"
 
-TEST(Logic, Full_Test) {
-    validate_shader(R"(
-        shader func(){
-            int flag = 1;
-
-            if( flag ){
-                if( flag2 )
-                    flag = false;
-                int test = 0;
-            }
-
-            if( !flag ){
-            }else
-
-            {
-                int k = 0;
-            }
+TEST(Logic, Basic_Test) {
+    auto shader_source = R"(
+        shader function_name( int arg0 , out float data ){
+            if( arg0 != 0 )
+                data = 3.0;
+            else
+                data = 2.0;
         }
-    )");
+    )";
+
+    ShadingSystem shading_system;
+    auto func_ptr = compile_shader<void(*)(int,float*)>(shader_source, shading_system);
+
+    float test_value = 1.0f;
+    func_ptr(2, &test_value);
+    EXPECT_EQ(test_value, 3.0f);
+
+    func_ptr(0, &test_value);
+    EXPECT_EQ(test_value, 2.0f);
+}
+
+TEST(Logic, Ternary_Operation) {
+    auto shader_source = R"(
+        shader func(int a, int b, int c, out int o0 , out int o1){
+            o0 = ( a != 0 ) ? b : c;
+            o1 = ( o0 < 100 ) ? c : 12;
+        }
+    )";
+
+    ShadingSystem shading_system;
+    auto func_ptr = compile_shader<void(*)(int, int, int, int*, int*)>(shader_source, shading_system);
+
+    int a = 12, b = 32, c = 0, o0 = 0, o1 = 0;
+    func_ptr(a, b, c, &o0, &o1);
+    EXPECT_EQ(o0, 32);
+    EXPECT_EQ(o1, 0);
 }
 
 TEST(Logic, Compound_Condition) {
