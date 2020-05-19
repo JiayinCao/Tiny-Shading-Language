@@ -15,6 +15,7 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
+#include <math.h>
 #include "test_common.h"
 
 #ifdef _WIN32
