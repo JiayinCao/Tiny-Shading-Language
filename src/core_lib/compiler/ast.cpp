@@ -472,6 +472,13 @@ llvm::Value* AstNode_Ternary::codegen(LLVM_Compile_Context& context) const {
     auto cond = m_condition->codegen(context);
     auto true_exp = m_true_expr->codegen(context);
     auto false_exp = m_false_expr->codegen(context);
+
+    // this is to support implicty bool conversion
+    if (cond->getType() == llvm::Type::getFloatTy(*context.context))
+        cond = context.builder->CreateFCmpONE(cond, ConstantFP::get(*context.context, APFloat(0.0)));
+    else if (!cond->getType()->isIntegerTy(1))
+        cond = context.builder->CreateICmpNE(cond, ConstantInt::get(*context.context, APInt(cond->getType()->getIntegerBitWidth(), 0)));
+
     return context.builder->CreateSelect(cond, true_exp, false_exp);
 }
 
@@ -485,12 +492,11 @@ llvm::Value* AstNode_Statement_Conditinon::codegen(LLVM_Compile_Context& context
     if (!cond)
         return nullptr;
 
-    /*
+    // this is to support implicty bool conversion
     if (cond->getType() == llvm::Type::getFloatTy(*context.context))
-        cond = builder.CreateFCmpONE( cond, ConstantFP::get(llvm_context, APFloat(0.0)) );
-    else
-        cond = builder.CreateICmpNE( cond, ConstantInt::get(llvm_context, APInt(32,0)) );
-    */
+        cond = builder.CreateFCmpONE(cond, ConstantFP::get(llvm_context, APFloat(0.0)));
+    else if (!cond->getType()->isIntegerTy(1))
+        cond = builder.CreateICmpNE(cond, ConstantInt::get(llvm_context, APInt(cond->getType()->getIntegerBitWidth(), 0)));
 
     auto function = context.builder->GetInsertBlock()->getParent();
 

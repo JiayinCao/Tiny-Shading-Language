@@ -20,7 +20,7 @@
 TEST(Logic, Basic_Test) {
     auto shader_source = R"(
         shader function_name( int arg0 , out float data ){
-            if( arg0 != 0 )
+            if( arg0 )
                 data = 3.0;
             else
                 data = 2.0;
@@ -41,7 +41,7 @@ TEST(Logic, Basic_Test) {
 TEST(Logic, Ternary_Operation) {
     auto shader_source = R"(
         shader func(int a, int b, int c, out int o0 , out int o1){
-            o0 = ( a != 0 ) ? b : c;
+            o0 = ( a ) ? b : c;
             o1 = ( o0 < 100 ) ? c : 12;
         }
     )";
