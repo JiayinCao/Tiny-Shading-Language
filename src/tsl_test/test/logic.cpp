@@ -55,7 +55,7 @@ TEST(Logic, Ternary_Operation) {
     EXPECT_EQ(o1, 0);
 }
 
-TEST(Logic, DISABLED_Logic_And) {
+TEST(Logic, Logic_And) {
     auto shader_source = R"(
         shader func(int a, int b, int c, out int o0 , out int o1){
             if( a && c ){

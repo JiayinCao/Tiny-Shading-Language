@@ -759,7 +759,7 @@ llvm::Value* AstNode_Statement_Condition::codegen(LLVM_Compile_Context& context)
         statement = castType<AstNode_Statement>(statement->get_sibling());
     }
     
-    if( nullptr == then_bb->getTerminator() )
+    if (function->getBasicBlockList().back().getTerminator() == nullptr)
         builder.CreateBr(merge_bb);
 
     if (else_bb) {
@@ -772,7 +772,7 @@ llvm::Value* AstNode_Statement_Condition::codegen(LLVM_Compile_Context& context)
             statement = castType<AstNode_Statement>(statement->get_sibling());
         }
 
-        if (nullptr == else_bb->getTerminator())
+        if (function->getBasicBlockList().back().getTerminator() == nullptr)
             builder.CreateBr(merge_bb);
     }
 

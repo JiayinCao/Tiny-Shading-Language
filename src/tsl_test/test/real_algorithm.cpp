@@ -162,7 +162,7 @@ TEST(Practical, Reverse_Integer) {
     verify_func(1);
     verify_func(23);
     verify_func(0);
-    verify_func(1);
+    verify_func(1231);
     verify_func(std::numeric_limits<int>::min());
     verify_func(std::numeric_limits<int>::max());
 }
