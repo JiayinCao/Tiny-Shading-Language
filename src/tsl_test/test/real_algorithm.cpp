@@ -181,7 +181,7 @@ bool isPalindrome_ref(int x) {
     int rev = 0;
     int old = x;
     while (x != 0) {
-        if (rev > INT_MAX / 10 || (rev == INT_MAX / 10 && rev > 7))
+        if (rev > std::numeric_limits<int>::max() / 10 || (rev == std::numeric_limits<int>::max() / 10 && rev > 7))
             return false;
 
         rev = (rev * 10) + (x % 10);
