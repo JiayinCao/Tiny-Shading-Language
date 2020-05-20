@@ -89,8 +89,9 @@ TEST(Variables, Recursive_Variables) {
 TEST(Variables, Inc_or_Dec) {
     validate_shader(R"(
         shader func(){
-            data.time++;
-            --data.time;
+            int d = 0;
+            d++;
+            --d;
         }
     )");
 }

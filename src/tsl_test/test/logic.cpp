@@ -55,59 +55,194 @@ TEST(Logic, Ternary_Operation) {
     EXPECT_EQ(o1, 0);
 }
 
-TEST(Logic, Compound_Condition) {
-    validate_shader(R"(
-        shader func(){
-            int flag = 1;
+TEST(Logic, Logic_And) {
+    auto shader_source = R"(
+        shader func(int a, int b, int c, out int o0 , out int o1){
+            if( a && c ){
+                o0 = a * b;
+            }else if( 0 ){
+                o0 = 12;
+            }else
+                o0 = ( a + b ) / b;
 
-            if( flag , asfdf ){
-                int test = 0;
-            }
+            o1 = ( a && c ) ? a * b : 12;
         }
-    )");
+    )";
+
+    ShadingSystem shading_system;
+    auto func_ptr = compile_shader<void(*)(int, int, int, int*, int*)>(shader_source, shading_system);
+
+    int a = 12, b = 32, c = 0, o0 = 0, o1 = 0;
+    func_ptr(a, b, c, &o0, &o1);
+    EXPECT_EQ(o0, (a + b) / b);
+    EXPECT_EQ(o1, 12);
 }
 
 TEST(Logic, While_Loop) {
-    validate_shader(R"(
-        shader func(){
-            int k = 0;
-            while( k++ < 100 ){
-                k += 1;
-                ++k;
-            }
+    auto shader_source = R"(
+        shader main( int cnt, out float arg2 ){
+			int k = cnt;
+			int g = 0;
+			while( k && --k ){
+                if( k % 3 == 1 )
+                    g = g + 1;
+			}
+
+            arg2 = g;
         }
-    )");
+    )";
+
+    ShadingSystem shading_system;
+    auto func_ptr = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+
+    int o1 = 0;
+    func_ptr(100, &o1);
+    EXPECT_EQ(o1, 99 / 3);
+
+    func_ptr(0, &o1);
+    EXPECT_EQ(o1, 0);
 }
 
 TEST(Logic, Do_While_Loop) {
-    validate_shader(R"(
-        shader func(){
-            int k = 0;
-            do{
-                k += 1;
-                ++k;
-            }while( k++ < 100 );
-
-            do
-                k += 1;
-            while( k++ < 100 );
+    auto shader_source = R"(
+        shader main( int cnt , out float arg2 ){
+			int k = 1;
+			int g = 0;
+			do{
+                if( k % 3 == 1 )
+                    g = g + 1;
+                k = k + 1;
+			}while( k < cnt );
+            
+            arg2 = g;
         }
-    )");
+    )";
+
+    ShadingSystem shading_system;
+    auto func_ptr = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+
+    int o1 = 0;
+    func_ptr(100, &o1);
+    EXPECT_EQ(o1, 99 / 3);
+
+    func_ptr(1, &o1);
+    EXPECT_EQ(o1, 1);
 }
 
 TEST(Logic, For_Loop) {
-    validate_shader(R"(
-        shader func(){
-            int k = 0;
-            for( ; k < 100 ; ++k ){
-                k += 2;
-            }
-
-            for( k = 2 ; k < 100 ; )
-                ++k;
-  
-            for( k = 1 ; k < 100 ; ++k )
-                ++k;
+    auto shader_source = R"(
+        shader main( int cnt , out float arg2 ){
+			int k = 1;
+			int g = 0;
+			for(; k < cnt ; ++k ){
+                if( k % 3 == 1 )
+                    g = g + 1;
+			}
+            
+            arg2 = g;
         }
-    )");
+    )";
+
+    ShadingSystem shading_system;
+    auto func_ptr = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+
+    int o1 = 0;
+    func_ptr(100, &o1);
+    EXPECT_EQ(o1, 99 / 3);
+
+    func_ptr(1, &o1);
+    EXPECT_EQ(o1, 0);
+}
+
+TEST(Logic, While_Break_Continue) {
+    auto shader_source = R"(
+        shader main( int cnt , out int arg2 ){
+			int k = 1;
+			int g = 0;
+			while( k < cnt ){
+                if( k % 3 == 0 ){
+                    k = k + 1;
+                    continue;
+                }
+
+                g = g + 1;
+                if( k > 20 )
+                   break;
+                k = k + 1;
+			}
+            
+            arg2 = g;
+        }
+    )";
+
+    ShadingSystem shading_system;
+    auto func_ptr = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+
+    int o1 = 0;
+    func_ptr(100, &o1);
+    EXPECT_EQ(15, o1);
+
+    func_ptr(1, &o1);
+    EXPECT_EQ(0, o1);
+}
+
+TEST(Logic, DoWhile_Break_Continue) {
+    auto shader_source = R"(
+        shader main( int cnt , out int arg2 ){
+			int k = 1;
+			int g = 0;
+			do{
+                if( k % 3 == 0 ){
+                    k = k + 1;
+                    continue;
+                }
+
+                g = g + 1;
+                if( k > 20 )
+                   break;
+                k = k + 1;
+			}while( k < cnt );
+            
+            arg2 = g;
+        }
+    )";
+
+    ShadingSystem shading_system;
+    auto func_ptr = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+
+    int o1 = 0;
+    func_ptr(100, &o1);
+    EXPECT_EQ(15, o1);
+
+    func_ptr(1, &o1);
+    EXPECT_EQ(1, o1);
+}
+
+TEST(Logic, For_Break_Continue) {
+    auto shader_source = R"(
+        shader main( int cnt , out int arg2 ){
+            int g = 0;
+            int kk = 0;
+            for( int k = 1 ; k < cnt ; ++k ){
+                if( k % 3 == 0 ){
+                    continue;
+                }
+
+                g = g + 1;
+                if( k > 20 )
+                   break;
+            }
+            arg2 = g;
+        }
+    )";
+
+    ShadingSystem shading_system;
+    auto func_ptr = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+
+    int o1 = 0;
+    func_ptr(100, &o1);
+    EXPECT_EQ(15, o1);
+
+    func_ptr(1, &o1);
+    EXPECT_EQ(0, o1);
 }

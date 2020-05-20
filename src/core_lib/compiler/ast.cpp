@@ -24,40 +24,15 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ExecutionEngine/MCJIT.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Module.h"
 #include "ast.h"
+#include "llvm_util.h"
 
 using namespace llvm;
 
 TSL_NAMESPACE_BEGIN
-
-static inline llvm::Type* llvm_type_from_data_type( const DataType type , llvm::LLVMContext& context ){
-	switch(type){
-	case DataType::INT:
-		return llvm::Type::getInt32Ty(context);
-	case DataType::FLOAT:
-		return llvm::Type::getFloatTy(context);
-	case DataType::FLOAT3:
-		return llvm::Type::getFloatPtrTy(context);
-	case DataType::FLOAT4:
-		return llvm::Type::getFloatPtrTy(context);
-    case DataType::DOUBLE:
-        return llvm::Type::getDoubleTy(context);
-	case DataType::MATRIX:
-		return llvm::Type::getFloatPtrTy(context);
-	case DataType::VOID:
-		return llvm::Type::getVoidTy(context);
-	case DataType::BOOL:
-		return llvm::Type::getInt1Ty(context);
-	default:
-		break;
-	}
-	return nullptr;
-}
 
 llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& context ) const {
 	int arg_cnt = 0;
@@ -75,13 +50,13 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 	variable = m_variables;
 	int i = 0;
 	while( variable ){
-        auto raw_type = llvm_type_from_data_type(variable->data_type(), *context.context);
+        auto raw_type = get_type_from_context(variable->data_type(), context);
         args[i++] = (variable->get_config() & VariableConfig::OUTPUT) ? raw_type->getPointerTo() : raw_type;
 		variable = castType<AstNode_VariableDecl>(variable->get_sibling());
 	}
 
 	// parse return types
-	llvm::Type* return_type = llvm_type_from_data_type( m_return_type , *context.context );
+	auto return_type = get_type_from_context(m_return_type , context);
 
 	// declare the function prototype
 	llvm::FunctionType *function_type = llvm::FunctionType::get(return_type, args, false);
@@ -118,7 +93,7 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
         variable = m_variables;
         while (variable) {
             const auto name = variable->get_var_name();
-            const auto raw_type = llvm_type_from_data_type(variable->data_type(), *context.context);
+            const auto raw_type = get_type_from_context(variable->data_type(), context);
             const auto init = variable->get_init();
 
             // there is duplicated names, emit an warning!!
@@ -159,104 +134,79 @@ llvm::Value* AstNode_FunctionBody::codegen( LLVM_Compile_Context& context ) cons
 	return nullptr;
 }
 
-llvm::Value* AstNode_Expression::codegen(LLVM_Compile_Context& context) const {
-    return ConstantFP::get(*context.context, APFloat(1.0f));
-}
-
 llvm::Value* AstNode_Literal_Int::codegen(LLVM_Compile_Context& context) const {
-    return ConstantInt::get(*context.context, APInt(32, m_val));
+    return get_llvm_constant_int(m_val, 32, context);
 }
 
 llvm::Value* AstNode_Literal_Flt::codegen(LLVM_Compile_Context& context) const {
-    return ConstantFP::get(*context.context, APFloat(m_val));
+    return get_llvm_constant_fp(m_val, context);
+}
+
+llvm::Value* AstNode_Literal_Bool::codegen(LLVM_Compile_Context& context) const {
+    return get_llvm_constant_int((int)m_val, 1, context);
 }
 
 llvm::Value* AstNode_Binary_Add::codegen(LLVM_Compile_Context& context) const {
-    Value* left = m_left->codegen(context);
-    Value* right = m_right->codegen(context);
-
-    if (left->getType() == llvm::Type::getFloatTy(*context.context) && right->getType() == llvm::Type::getFloatTy(*context.context))
-        return context.builder->CreateFAdd(left, right);
-    if (left->getType() == llvm::Type::getInt32Ty(*context.context) && right->getType() == llvm::Type::getInt32Ty(*context.context))
-        return context.builder->CreateAdd(left, right);
-
-    return nullptr;
+    auto left = m_left->codegen(context);
+    auto right = m_right->codegen(context);
+    return get_llvm_add(left, right, context);
 }
 
 llvm::Value* AstNode_Binary_Minus::codegen(LLVM_Compile_Context& context) const {
-    Value* left = m_left->codegen(context);
-    Value* right = m_right->codegen(context);
-
-    if (left->getType() == llvm::Type::getFloatTy(*context.context) && right->getType() == llvm::Type::getFloatTy(*context.context))
-        return context.builder->CreateFSub(left, right);
-    if (left->getType() == llvm::Type::getInt32Ty(*context.context) && right->getType() == llvm::Type::getInt32Ty(*context.context))
-        return context.builder->CreateSub(left, right);
-
-    return nullptr;
+    auto left = m_left->codegen(context);
+    auto right = m_right->codegen(context);
+    return get_llvm_sub(left, right, context);
 }
 
 llvm::Value* AstNode_Binary_Multi::codegen(LLVM_Compile_Context& context) const {
-    Value* left = m_left->codegen(context);
-    Value* right = m_right->codegen(context);
-
-    if (left->getType() == llvm::Type::getFloatTy(*context.context) && right->getType() == llvm::Type::getFloatTy(*context.context))
-        return context.builder->CreateFMul(left, right);
-    if (left->getType() == llvm::Type::getInt32Ty(*context.context) && right->getType() == llvm::Type::getInt32Ty(*context.context))
-        return context.builder->CreateMul(left, right);
-
-    return nullptr;
+    auto left = m_left->codegen(context);
+    auto right = m_right->codegen(context);
+    return get_llvm_mul(left, right, context);
 }
 
 llvm::Value* AstNode_Binary_Div::codegen(LLVM_Compile_Context& context) const {
-    Value* left = m_left->codegen(context);
-    Value* right = m_right->codegen(context);
-
-    if (left->getType() == llvm::Type::getFloatTy(*context.context) && right->getType() == llvm::Type::getFloatTy(*context.context))
-        return context.builder->CreateFDiv(left, right);
-    if (left->getType() == llvm::Type::getInt32Ty(*context.context) && right->getType() == llvm::Type::getInt32Ty(*context.context))
-        return context.builder->CreateSDiv(left, right);
-
-    return nullptr;
+    auto left = m_left->codegen(context);
+    auto right = m_right->codegen(context);
+    return get_llvm_div(left, right, context);
 }
 
 llvm::Value* AstNode_Binary_Mod::codegen(LLVM_Compile_Context& context) const {
-    Value* left = m_left->codegen(context);
-    Value* right = m_right->codegen(context);
+    auto left = m_left->codegen(context);
+    auto right = m_right->codegen(context);
 
-    // not quite sure what to call for now
-//    if (left->getType() == llvm::Type::getInt32Ty(*context.context) && right->getType() == llvm::Type::getInt32Ty(*context.context))
-//        return context.builder->CreateSDiv(left, right);
+    if (left->getType() == get_float_ty(context) && right->getType() == get_float_ty(context))
+        return context.builder->CreateFRem(left, right);
+    if (left->getType() == get_int_32_ty(context) && right->getType() == get_int_32_ty(context))
+        return context.builder->CreateSRem(left, right);
 
     return nullptr;
 }
 
 llvm::Value* AstNode_Binary_And::codegen(LLVM_Compile_Context& context) const {
-    Value* left = m_left->codegen(context);
-    Value* right = m_right->codegen(context);
+    auto left = m_left->codegen(context);
+    auto right = m_right->codegen(context);
 
-    // not quite sure what to call for now
-//    if (left->getType() == llvm::Type::getInt32Ty(*context.context) && right->getType() == llvm::Type::getInt32Ty(*context.context))
-//          return context.builder->CreateAnd(left, right);
+    left = convert_to_bool(left, context);
+    right = convert_to_bool(right, context);
 
-    return nullptr;
+    return context.builder->CreateAnd(left, right);
 }
 
 llvm::Value* AstNode_Binary_Or::codegen(LLVM_Compile_Context& context) const {
-    Value* left = m_left->codegen(context);
-    Value* right = m_right->codegen(context);
+    auto left = m_left->codegen(context);
+    auto right = m_right->codegen(context);
 
-    // not quite sure what to call for now
-//    if (left->getType() == llvm::Type::getInt32Ty(*context.context) && right->getType() == llvm::Type::getInt32Ty(*context.context))
-//        return context.builder->CreateOr(left, right);
+    left = convert_to_bool(left, context);
+    right = convert_to_bool(right, context);
 
-    return nullptr;
+    return context.builder->CreateOr(left, right);
 }
 
 llvm::Value* AstNode_Binary_Eq::codegen(LLVM_Compile_Context& context) const {
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
-    if (left->getType() == llvm::Type::getFloatTy(*context.context))
+    if (left->getType() == get_float_ty(context))
         return context.builder->CreateFCmpOEQ(left, right);
     else
         return context.builder->CreateICmpEQ(left, right);
@@ -268,7 +218,7 @@ llvm::Value* AstNode_Binary_Ne::codegen(LLVM_Compile_Context& context) const {
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
-    if (left->getType() == llvm::Type::getFloatTy(*context.context))
+    if (left->getType() == get_float_ty(context))
         return context.builder->CreateFCmpONE(left, right);
     else
         return context.builder->CreateICmpNE(left, right);
@@ -280,7 +230,7 @@ llvm::Value* AstNode_Binary_G::codegen(LLVM_Compile_Context& context) const {
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
-    if (left->getType() == llvm::Type::getFloatTy(*context.context))
+    if (left->getType() == get_float_ty(context))
         return context.builder->CreateFCmpOGT(left, right);
     else
         return context.builder->CreateICmpSGT(left, right);
@@ -292,7 +242,7 @@ llvm::Value* AstNode_Binary_L::codegen(LLVM_Compile_Context& context) const {
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
-    if (left->getType() == llvm::Type::getFloatTy(*context.context))
+    if (left->getType() == get_float_ty(context))
         return context.builder->CreateFCmpOLT(left, right);
     else
         return context.builder->CreateICmpSLT(left, right);
@@ -304,7 +254,7 @@ llvm::Value* AstNode_Binary_Ge::codegen(LLVM_Compile_Context& context) const {
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
-    if (left->getType() == llvm::Type::getFloatTy(*context.context))
+    if (left->getType() == get_float_ty(context))
         return context.builder->CreateFCmpOGE(left, right);
     else
         return context.builder->CreateICmpSGE(left, right);
@@ -316,7 +266,7 @@ llvm::Value* AstNode_Binary_Le::codegen(LLVM_Compile_Context& context) const {
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
-    if (left->getType() == llvm::Type::getFloatTy(*context.context))
+    if (left->getType() == get_float_ty(context))
         return context.builder->CreateFCmpOLE(left, right);
     else
         return context.builder->CreateICmpSLE(left, right);
@@ -324,34 +274,53 @@ llvm::Value* AstNode_Binary_Le::codegen(LLVM_Compile_Context& context) const {
     return nullptr;
 }
 
-llvm::Value* AstNode_Binary_Bit_And::codegen(LLVM_Compile_Context& context) const {
-    Value* left = m_left->codegen(context);
-    Value* right = m_right->codegen(context);
+llvm::Value* AstNode_Binary_Shl::codegen(LLVM_Compile_Context& context) const {
+    auto left = m_left->codegen(context);
+    auto right = m_right->codegen(context);
 
-    // not quite sure what to call for now
-    if (left->getType() == llvm::Type::getInt32Ty(*context.context) && right->getType() == llvm::Type::getInt32Ty(*context.context))
+    if (left->getType()->isIntegerTy() && right->getType()->isIntegerTy())
+        return context.builder->CreateShl(left, right);
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Binary_Shr::codegen(LLVM_Compile_Context& context) const {
+    auto left = m_left->codegen(context);
+    auto right = m_right->codegen(context);
+
+    if (left->getType()->isIntegerTy() && right->getType()->isIntegerTy())
+        return context.builder->CreateAShr(left, right);
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Binary_Bit_And::codegen(LLVM_Compile_Context& context) const {
+    auto left = m_left->codegen(context);
+    auto right = m_right->codegen(context);
+
+    if (left->getType()->isIntegerTy() && right->getType()->isIntegerTy())
         return context.builder->CreateAnd(left, right);
 
     return nullptr;
 }
 
 llvm::Value* AstNode_Binary_Bit_Or::codegen(LLVM_Compile_Context& context) const {
-    Value* left = m_left->codegen(context);
-    Value* right = m_right->codegen(context);
+    auto left = m_left->codegen(context);
+    auto right = m_right->codegen(context);
 
     // not quite sure what to call for now
-    if (left->getType() == llvm::Type::getInt32Ty(*context.context) && right->getType() == llvm::Type::getInt32Ty(*context.context))
+    if (left->getType()->isIntegerTy() && right->getType()->isIntegerTy())
         return context.builder->CreateOr(left, right);
 
     return nullptr;
 }
 
 llvm::Value* AstNode_Binary_Bit_Xor::codegen(LLVM_Compile_Context& context) const {
-    Value* left = m_left->codegen(context);
-    Value* right = m_right->codegen(context);
+    auto left = m_left->codegen(context);
+    auto right = m_right->codegen(context);
 
     // not quite sure what to call for now
-    if (left->getType() == llvm::Type::getInt32Ty(*context.context) && right->getType() == llvm::Type::getInt32Ty(*context.context))
+    if (left->getType()->isIntegerTy() && right->getType()->isIntegerTy())
         return context.builder->CreateXor(left, right);
 
     return nullptr;
@@ -395,7 +364,7 @@ llvm::Value* AstNode_Statement_VariableDecls::codegen(LLVM_Compile_Context& cont
     AstNode_VariableDecl* decl = m_var_decls;
     while (decl) {
         auto name = decl->get_var_name();
-        auto type = llvm_type_from_data_type(decl->data_type(), *context.context);
+        auto type = get_type_from_context(decl->data_type(), context);
         auto init = decl->get_init();
 
         // there is duplicated names, emit an warning!!
@@ -424,16 +393,259 @@ llvm::Value* AstNode_Statement_VariableDecls::codegen(LLVM_Compile_Context& cont
     return nullptr;
 }
 
-llvm::Value* AstNode_ExpAssign::codegen(LLVM_Compile_Context& context) const{
-	auto var = m_var->get_value_address(context);
-	auto value = m_expression->codegen(context);
+llvm::Value* AstNode_ExpAssign_Eq::codegen(LLVM_Compile_Context& context) const {
+    auto value_ptr = m_var->get_value_address(context);
+    auto to_assign = m_expression->codegen(context);
+    context.builder->CreateStore(to_assign, value_ptr);
+    return to_assign;
+}
 
-	context.builder->CreateStore(value, var);
-	return value;
+llvm::Value* AstNode_ExpAssign_AddEq::codegen(LLVM_Compile_Context& context) const {
+    auto value_ptr = m_var->get_value_address(context);
+    auto to_assign = m_expression->codegen(context);
+
+    auto value = context.builder->CreateLoad(value_ptr);
+    auto updated_value = get_llvm_add(value, to_assign, context);
+    context.builder->CreateStore(updated_value, value_ptr);
+
+    return updated_value;
+}
+
+llvm::Value* AstNode_ExpAssign_MinusEq::codegen(LLVM_Compile_Context& context) const {
+    auto value_ptr = m_var->get_value_address(context);
+    auto to_assign = m_expression->codegen(context);
+
+    auto value = context.builder->CreateLoad(value_ptr);
+    auto updated_value = get_llvm_sub(value, to_assign, context);
+    context.builder->CreateStore(updated_value, value_ptr);
+
+    return updated_value;
+}
+
+llvm::Value* AstNode_ExpAssign_MultiEq::codegen(LLVM_Compile_Context& context) const {
+    auto value_ptr = m_var->get_value_address(context);
+    auto to_assign = m_expression->codegen(context);
+
+    auto value = context.builder->CreateLoad(value_ptr);
+    auto updated_value = get_llvm_mul(value, to_assign, context);
+    context.builder->CreateStore(updated_value, value_ptr);
+
+    return updated_value;
+}
+
+llvm::Value* AstNode_ExpAssign_DivEq::codegen(LLVM_Compile_Context& context) const {
+    auto value_ptr = m_var->get_value_address(context);
+    auto to_assign = m_expression->codegen(context);
+
+    auto value = context.builder->CreateLoad(value_ptr);
+    auto updated_value = get_llvm_div(value, to_assign, context);
+    context.builder->CreateStore(updated_value, value_ptr);
+
+    return updated_value;
+}
+
+llvm::Value* AstNode_ExpAssign_ModEq::codegen(LLVM_Compile_Context& context) const {
+    auto value_ptr = m_var->get_value_address(context);
+    auto to_assign = m_expression->codegen(context);
+
+    auto value = context.builder->CreateLoad(value_ptr);
+    auto updated_value = get_llvm_mod(value, to_assign, context);
+    context.builder->CreateStore(updated_value, value_ptr);
+
+    return updated_value;
+}
+
+llvm::Value* AstNode_ExpAssign_AndEq::codegen(LLVM_Compile_Context& context) const {
+    auto value_ptr = m_var->get_value_address(context);
+    auto value = context.builder->CreateLoad(value_ptr);
+
+    if (!value->getType()->isIntegerTy()) {
+        // emit an error here, this is not allowed
+        return nullptr;
+    }
+
+    auto to_assign = m_expression->codegen(context);
+
+    if (!value->getType()->isIntegerTy()) {
+        // emit an error here, incorrect data type
+        return nullptr;
+    }
+
+    if (to_assign->getType()->getIntegerBitWidth() != value->getType()->getIntegerBitWidth()) {
+        // copy = ConstantInt::get(value->getType(), APInt(value->getType()->getIntegerBitWidth(), ))
+        to_assign = context.builder->CreateCast(Instruction::Trunc, to_assign, value->getType());
+    }
+
+    auto updated_value = context.builder->CreateAnd(value, to_assign);
+    context.builder->CreateStore(updated_value, value_ptr);
+
+    return updated_value;
+}
+
+llvm::Value* AstNode_ExpAssign_OrEq::codegen(LLVM_Compile_Context& context) const {
+    auto value_ptr = m_var->get_value_address(context);
+    auto value = context.builder->CreateLoad(value_ptr);
+
+    if (!value->getType()->isIntegerTy()) {
+        // emit an error here, this is not allowed
+        return nullptr;
+    }
+
+    auto to_assign = m_expression->codegen(context);
+
+    if (!value->getType()->isIntegerTy()) {
+        // emit an error here, incorrect data type
+        return nullptr;
+    }
+
+    if (to_assign->getType()->getIntegerBitWidth() != value->getType()->getIntegerBitWidth()) {
+        // copy = ConstantInt::get(value->getType(), APInt(value->getType()->getIntegerBitWidth(), ))
+        to_assign = context.builder->CreateCast(Instruction::Trunc, to_assign, value->getType());
+    }
+
+    auto updated_value = context.builder->CreateOr(value, to_assign);
+    context.builder->CreateStore(updated_value, value_ptr);
+
+    return updated_value;
+}
+
+llvm::Value* AstNode_ExpAssign_XorEq::codegen(LLVM_Compile_Context& context) const {
+    auto value_ptr = m_var->get_value_address(context);
+    auto value = context.builder->CreateLoad(value_ptr);
+
+    if (!value->getType()->isIntegerTy()) {
+        // emit an error here, this is not allowed
+        return nullptr;
+    }
+
+    auto to_assign = m_expression->codegen(context);
+
+    if (!value->getType()->isIntegerTy()) {
+        // emit an error here, incorrect data type
+        return nullptr;
+    }
+
+    if (to_assign->getType()->getIntegerBitWidth() != value->getType()->getIntegerBitWidth()) {
+        // copy = ConstantInt::get(value->getType(), APInt(value->getType()->getIntegerBitWidth(), ))
+        to_assign = context.builder->CreateCast(Instruction::Trunc, to_assign, value->getType());
+    }
+
+    auto updated_value = context.builder->CreateXor(value, to_assign);
+    context.builder->CreateStore(updated_value, value_ptr);
+
+    return updated_value;
+}
+
+llvm::Value* AstNode_ExpAssign_ShlEq::codegen(LLVM_Compile_Context& context) const {
+    auto value_ptr = m_var->get_value_address(context);
+    auto value = context.builder->CreateLoad(value_ptr);
+
+    if (!value->getType()->isIntegerTy()) {
+        // emit an error here, this is not allowed
+        return nullptr;
+    }
+
+    auto to_shift = m_expression->codegen(context);
+
+    if (!value->getType()->isIntegerTy()) {
+        // emit an error here, incorrect data type
+        return nullptr;
+    }
+
+    auto updated_value = context.builder->CreateShl(value, to_shift);
+    context.builder->CreateStore(updated_value, value_ptr);
+
+    return updated_value;
+}
+
+llvm::Value* AstNode_ExpAssign_ShrEq::codegen(LLVM_Compile_Context& context) const {
+    auto value_ptr = m_var->get_value_address(context);
+    auto value = context.builder->CreateLoad(value_ptr);
+
+    if (!value->getType()->isIntegerTy()) {
+        // emit an error here, this is not allowed
+        return nullptr;
+    }
+
+    auto to_shift = m_expression->codegen(context);
+
+    if (!value->getType()->isIntegerTy()) {
+        // emit an error here, incorrect data type
+        return nullptr;
+    }
+
+    auto updated_value = context.builder->CreateAShr(value, to_shift);
+    context.builder->CreateStore(updated_value, value_ptr);
+
+    return updated_value;
 }
 
 llvm::Value* AstNode_Statement_CompoundExpression::codegen(LLVM_Compile_Context& context) const{
 	return m_expression->codegen(context);
+}
+
+llvm::Value* AstNode_Expression_PreInc::codegen(LLVM_Compile_Context& context) const{
+    auto value_ptr = m_var->get_value_address(context);
+    auto value = context.builder->CreateLoad(value_ptr);
+    
+    if (value->getType()->isIntegerTy()) {
+        auto bw = value->getType()->getIntegerBitWidth();
+        auto one = ConstantInt::get(value->getType(), APInt(bw, 1));
+        auto updated_value = context.builder->CreateAdd(value, one);
+        context.builder->CreateStore(updated_value, value_ptr);
+        return updated_value;
+    }
+
+    // something is wrong here, we must be using this ++x for other type of data.
+    return value;
+}
+
+llvm::Value* AstNode_Expression_PreDec::codegen(LLVM_Compile_Context& context) const {
+    auto value_ptr = m_var->get_value_address(context);
+    auto value = context.builder->CreateLoad(value_ptr);
+
+    if (value->getType()->isIntegerTy()) {
+        auto bw = value->getType()->getIntegerBitWidth();
+        auto one = ConstantInt::get(value->getType(), APInt(bw, 1));
+        auto updated_value = context.builder->CreateSub(value, one);
+        context.builder->CreateStore(updated_value, value_ptr);
+        return updated_value;
+    }
+
+    // something is wrong here, we must be using this --x for other type of data.
+    return value;
+}
+
+llvm::Value* AstNode_Expression_PostInc::codegen(LLVM_Compile_Context& context) const {
+    auto value_ptr = m_var->get_value_address(context);
+    auto value = context.builder->CreateLoad(value_ptr);
+
+    if (value->getType()->isIntegerTy()) {
+        auto bw = value->getType()->getIntegerBitWidth();
+        auto one = ConstantInt::get(value->getType(), APInt(bw, 1));
+        auto updated_value = context.builder->CreateAdd(value, one);
+        context.builder->CreateStore(updated_value, value_ptr);
+        return value;
+    }
+
+    // something is wrong here, we must be using this x++ for other type of data.
+    return value;
+}
+
+llvm::Value* AstNode_Expression_PostDec::codegen(LLVM_Compile_Context& context) const {
+    auto value_ptr = m_var->get_value_address(context);
+    auto value = context.builder->CreateLoad(value_ptr);
+
+    if (value->getType()->isIntegerTy()) {
+        auto bw = value->getType()->getIntegerBitWidth();
+        auto one = ConstantInt::get(value->getType(), APInt(bw, 1));
+        auto updated_value = context.builder->CreateSub(value, one);
+        context.builder->CreateStore(updated_value, value_ptr);
+        return value;
+    }
+
+    // something is wrong here, we must be using this x-- for other type of data.
+    return value;
 }
 
 llvm::Value* AstNode_Unary_Pos::codegen(LLVM_Compile_Context& context) const {
@@ -443,12 +655,45 @@ llvm::Value* AstNode_Unary_Pos::codegen(LLVM_Compile_Context& context) const {
 llvm::Value* AstNode_Unary_Neg::codegen(LLVM_Compile_Context& context) const{
 	auto operand = m_exp->codegen(context);
 
-	if (operand->getType() == llvm::Type::getFloatTy(*context.context))
+	if (operand->getType() == get_float_ty(context))
 		return context.builder->CreateFNeg(operand);
-	if (operand->getType() == llvm::Type::getInt32Ty(*context.context))
+	if (operand->getType() == get_int_32_ty(context))
 		return context.builder->CreateNeg(operand);
 
 	return nullptr;
+}
+
+llvm::Value* AstNode_Unary_Not::codegen(LLVM_Compile_Context& context) const {
+    auto& llvm_context = *context.context;
+    auto& builder = *context.builder;
+
+    auto operand = m_exp->codegen(context);
+
+    // convert to bool if needed
+    operand = convert_to_bool(operand, context);
+
+    return builder.CreateNot(operand);
+}
+
+llvm::Value* AstNode_Unary_Compl::codegen(LLVM_Compile_Context& context) const {
+    auto& llvm_context = *context.context;
+    auto& builder = *context.builder;
+
+    auto operand = m_exp->codegen(context);
+
+    if (!operand->getType()->isIntegerTy()) {
+        // emit an error here
+        return nullptr;
+    }
+
+    auto zero = get_llvm_constant_int(0, operand->getType()->getIntegerBitWidth(), context);
+    return builder.CreateXor(zero, operand);
+}
+
+llvm::Value* AstNode_TypeCast::codegen(LLVM_Compile_Context& context) const {
+    // to be implemented.
+    auto value = m_exp->codegen(context);
+    return value;
 }
 
 llvm::Value* AstNode_FunctionCall::codegen(LLVM_Compile_Context& context) const {
@@ -473,11 +718,8 @@ llvm::Value* AstNode_Ternary::codegen(LLVM_Compile_Context& context) const {
     auto true_exp = m_true_expr->codegen(context);
     auto false_exp = m_false_expr->codegen(context);
 
-    // this is to support implicty bool conversion
-    if (cond->getType() == llvm::Type::getFloatTy(*context.context))
-        cond = context.builder->CreateFCmpONE(cond, ConstantFP::get(*context.context, APFloat(0.0)));
-    else if (!cond->getType()->isIntegerTy(1))
-        cond = context.builder->CreateICmpNE(cond, ConstantInt::get(*context.context, APInt(cond->getType()->getIntegerBitWidth(), 0)));
+    // convert to bool if needed
+    cond = convert_to_bool(cond, context);
 
     return context.builder->CreateSelect(cond, true_exp, false_exp);
 }
@@ -492,11 +734,8 @@ llvm::Value* AstNode_Statement_Conditinon::codegen(LLVM_Compile_Context& context
     if (!cond)
         return nullptr;
 
-    // this is to support implicty bool conversion
-    if (cond->getType() == llvm::Type::getFloatTy(*context.context))
-        cond = builder.CreateFCmpONE(cond, ConstantFP::get(llvm_context, APFloat(0.0)));
-    else if (!cond->getType()->isIntegerTy(1))
-        cond = builder.CreateICmpNE(cond, ConstantInt::get(llvm_context, APInt(cond->getType()->getIntegerBitWidth(), 0)));
+    // convert to bool if needed
+    cond = convert_to_bool(cond, context);
 
     auto function = context.builder->GetInsertBlock()->getParent();
 
@@ -520,6 +759,165 @@ llvm::Value* AstNode_Statement_Conditinon::codegen(LLVM_Compile_Context& context
 
     function->getBasicBlockList().push_back(merge_bb);
     builder.SetInsertPoint(merge_bb);
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Statement_Loop_While::codegen(LLVM_Compile_Context& context) const {
+    auto& llvm_context = *context.context;
+    auto& builder = *context.builder;
+
+    auto function = context.builder->GetInsertBlock()->getParent();
+    BasicBlock* loop_begin_bb = BasicBlock::Create(llvm_context, "loop_begin", function);
+    BasicBlock* loop_body_bb = BasicBlock::Create(llvm_context, "loop_body");
+    BasicBlock* loop_end_bb = BasicBlock::Create(llvm_context, "loop_end");
+
+    builder.CreateBr(loop_begin_bb);
+
+    // push the loop blocks
+    context.m_blocks.push(std::make_pair(loop_begin_bb, loop_end_bb));
+
+    builder.SetInsertPoint(loop_begin_bb);
+
+    auto cond = m_condition->codegen(context);
+    cond = convert_to_bool(cond, context);
+    builder.CreateCondBr(cond, loop_body_bb, loop_end_bb);
+
+    function->getBasicBlockList().push_back(loop_body_bb);
+    builder.SetInsertPoint(loop_body_bb);
+
+    auto statement = m_statements;
+    while (statement) {
+        statement->codegen(context);
+        statement = castType<AstNode_Statement>(statement->get_sibling());
+    }
+    builder.CreateBr(loop_begin_bb);
+
+    function->getBasicBlockList().push_back(loop_end_bb);
+    builder.SetInsertPoint(loop_end_bb);
+
+    // pop the loop blocks
+    context.m_blocks.pop();
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Statement_Loop_DoWhile::codegen(LLVM_Compile_Context& context) const {
+    auto& llvm_context = *context.context;
+    auto& builder = *context.builder;
+
+    auto function = context.builder->GetInsertBlock()->getParent();
+    BasicBlock* loop_bb = BasicBlock::Create(llvm_context, "loop_block", function);
+    BasicBlock* loop_end_bb = BasicBlock::Create(llvm_context, "loop_end");
+
+    // push the loop blocks
+    context.m_blocks.push(std::make_pair(loop_bb, loop_end_bb));
+
+    builder.CreateBr(loop_bb);
+
+    builder.SetInsertPoint(loop_bb);
+    auto statement = m_statements;
+    while (statement) {
+        statement->codegen(context);
+        statement = castType<AstNode_Statement>(statement->get_sibling());
+    }
+
+    auto cond = m_condition->codegen(context);
+    cond = convert_to_bool(cond, context);
+    builder.CreateCondBr(cond, loop_bb, loop_end_bb);
+
+    function->getBasicBlockList().push_back(loop_end_bb);
+    builder.SetInsertPoint(loop_end_bb);
+
+    // pop the loop blocks
+    context.m_blocks.pop();
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Statement_Loop_For::codegen(LLVM_Compile_Context& context) const {
+    auto& llvm_context = *context.context;
+    auto& builder = *context.builder;
+
+    auto function = context.builder->GetInsertBlock()->getParent();
+    BasicBlock* loop_begin_bb = BasicBlock::Create(llvm_context, "for_loop_block_begin");
+    BasicBlock* loop_body_bb = BasicBlock::Create(llvm_context, "for_loop_block_body");
+    BasicBlock* loop_iter_bb = BasicBlock::Create(llvm_context, "for_loop_block_iter");
+    BasicBlock* loop_end_bb = BasicBlock::Create(llvm_context, "for_loop_end");
+
+    auto condition_branch = [&]() {
+        if (m_condition) {
+            auto cond = m_condition->codegen(context);
+            cond = convert_to_bool(cond, context);
+            builder.CreateCondBr(cond, loop_body_bb, loop_end_bb);
+        }
+        else {
+            // unlike while loop, for loop does allow no condition cases.
+            builder.CreateBr(loop_body_bb);
+        }
+    };
+
+    if (m_init_exp)
+        m_init_exp->codegen(context);
+    builder.CreateBr(loop_begin_bb);
+
+    // push the loop blocks
+    context.m_blocks.push(std::make_pair(loop_iter_bb, loop_end_bb));
+
+    // the for loop begins from the condition blocks
+    function->getBasicBlockList().push_back(loop_begin_bb);
+    builder.SetInsertPoint(loop_begin_bb);
+    condition_branch();
+
+    // here is the body of the loop
+    function->getBasicBlockList().push_back(loop_body_bb);
+    builder.SetInsertPoint(loop_body_bb);
+    auto statement = m_statements;
+    while (statement) {
+        statement->codegen(context);
+        statement = castType<AstNode_Statement>(statement->get_sibling());
+    }
+    builder.CreateBr(loop_iter_bb);
+
+    // the iteration block
+    function->getBasicBlockList().push_back(loop_iter_bb);
+    builder.SetInsertPoint(loop_iter_bb);
+    if(m_iter_exp)
+        m_iter_exp->codegen(context);
+    builder.CreateBr(loop_begin_bb);
+
+    // the next block
+    function->getBasicBlockList().push_back(loop_end_bb);
+    builder.SetInsertPoint(loop_end_bb);
+
+    // pop the loop blocks
+    context.m_blocks.pop();
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Stament_Break::codegen(LLVM_Compile_Context& context) const {
+    BasicBlock* bb = BasicBlock::Create(*context.context, "next_block");
+
+    auto top = context.m_blocks.top();
+    context.builder->CreateBr(top.second);
+
+    auto function = context.builder->GetInsertBlock()->getParent();
+    function->getBasicBlockList().push_back(bb);
+    context.builder->SetInsertPoint(bb);
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Stament_Continue::codegen(LLVM_Compile_Context& context) const {
+    BasicBlock* bb = BasicBlock::Create(*context.context, "next_block");
+
+    auto top = context.m_blocks.top();
+    context.builder->CreateBr(top.first);
+
+    auto function = context.builder->GetInsertBlock()->getParent();
+    function->getBasicBlockList().push_back(bb);
+    context.builder->SetInsertPoint(bb);
 
     return nullptr;
 }

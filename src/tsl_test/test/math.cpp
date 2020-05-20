@@ -77,7 +77,7 @@ TEST(Math, Bit_Shifts) {
     validate_shader(R"(
         shader func(){
             int k = ( 1 << 2 ) << 3;
-            int k1 = ( k >> 1 ) | ( ( k << 3 ) , k ) ;
+            int k1 = ( k >> 1 ) | ( k << 3 );
         }
     )");
 }

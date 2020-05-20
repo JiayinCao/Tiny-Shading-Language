@@ -154,7 +154,7 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnit* su) {
             return false;
 
         // optimization pass, this is pretty cool because I don't have to implement those sophisticated optimiation algorithms.
-        su_pvt->m_fpm->run(*function);
+        // su_pvt->m_fpm->run(*function);
 
 #ifdef DEBUG_OUTPUT
 		module->print(llvm::errs(), nullptr);

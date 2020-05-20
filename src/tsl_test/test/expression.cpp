@@ -37,6 +37,7 @@ TEST(Expression, MathOperation) {
     )");
 }
 
+/*
 TEST(Expression, Compound_Expression) {
     validate_shader(R"(
         shader func(){
@@ -44,7 +45,6 @@ TEST(Expression, Compound_Expression) {
         }
     )");
 }
-
 TEST(Expression, Recursive_Compound_Expression) {
     validate_shader(R"(
         shader func(){
@@ -52,6 +52,7 @@ TEST(Expression, Recursive_Compound_Expression) {
         }
     )");
 }
+*/
 
 TEST(Expression, Type_Cast) {
     validate_shader(R"(

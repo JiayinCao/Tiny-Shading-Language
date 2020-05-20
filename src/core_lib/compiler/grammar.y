@@ -119,9 +119,13 @@
 %token FOR				"for"
 %token WHILE			"while"
 %token DO				"do"
+%token TRUE             "true"
+%token FALSE            "false"
+%token BREAK            "break"
+%token CONTINUE         "continue"
 
-%type <p> PROGRAM FUNCTION_ARGUMENT_DECL FUNCTION_ARGUMENT_DECLS SHADER_FUNCTION_ARGUMENT_DECLS FUNCTION_BODY VARIABLE_LVALUE ID_OR_FIELD FUNCTION_ARGUMENTS SHADER_FUNCTION_ARGUMENT_DECL
-%type <p> STATEMENT STATEMENTS STATEMENT_RETURN STATEMENT_EXPRESSION_OPT STATEMENT_COMPOUND_EXPRESSION STATEMENT_VARIABLES_DECLARATIONS VARIABLE_DECLARATION VARIABLE_DECLARATIONS STATEMENT_CONDITIONAL STATEMENT_LOOP STATEMENT_SCOPED
+%type <p> PROGRAM FUNCTION_ARGUMENT_DECL FUNCTION_ARGUMENT_DECLS SHADER_FUNCTION_ARGUMENT_DECLS FUNCTION_BODY VARIABLE_LVALUE ID_OR_FIELD FUNCTION_ARGUMENTS SHADER_FUNCTION_ARGUMENT_DECL FOR_INIT_STATEMENT
+%type <p> STATEMENT STATEMENTS STATEMENT_RETURN STATEMENT_EXPRESSION_OPT STATEMENT_COMPOUND_EXPRESSION STATEMENT_VARIABLES_DECLARATIONS VARIABLE_DECLARATION VARIABLE_DECLARATIONS STATEMENT_CONDITIONAL STATEMENT_LOOP STATEMENT_SCOPED STATEMENT_LOOPMOD
 %type <p> EXPRESSION_COMPOUND EXPRESSION_CONST EXPRESSION_BINARY EXPRESSION EXPRESSION_VARIABLE EXPRESSION_FUNCTION_CALL EXPRESSION_TERNARY EXPRESSION_COMPOUND_OPT EXPRESSION_SCOPED EXPRESSION_ASSIGN EXPRESSION_UNARY EXPRESSION_TYPECAST
 %type <c> OP_UNARY
 %type <t> TYPE
@@ -335,6 +339,8 @@ STATEMENT:
 	STATEMENT_SCOPED
 	|
 	STATEMENT_RETURN
+    |
+    STATEMENT_LOOPMOD
 	|
 	STATEMENT_VARIABLES_DECLARATIONS
 	|
@@ -344,6 +350,18 @@ STATEMENT:
 	|
 	STATEMENT_COMPOUND_EXPRESSION;
 
+STATEMENT_LOOPMOD:
+    "break" ";"
+    {
+        $$ = new AstNode_Stament_Break ();
+    }
+    | 
+    "continue" ";"
+    {
+        $$ = new AstNode_Stament_Continue ();
+    }
+    ;
+    
 STATEMENT_SCOPED:
 	"{" 
 		{ /* push a new scope here */ }
@@ -428,14 +446,19 @@ STATEMENT_LOOP:
 	}
 	|
 	"for" "(" FOR_INIT_STATEMENT EXPRESSION_COMPOUND_OPT ";" EXPRESSION_COMPOUND_OPT ")" STATEMENT {
-		$$ = nullptr;
+        AstNode_Statement*  init = AstNode::castType<AstNode_Statement>($3);
+        AstNode_Expression* cond = AstNode::castType<AstNode_Expression>($4);
+        AstNode_Expression* iter = AstNode::castType<AstNode_Expression>($6);
+		AstNode_Statement*	statements = AstNode::castType<AstNode_Statement>($8);
+		$$ = new AstNode_Statement_Loop_For(init, cond, iter, statements);
 	};
 	
 FOR_INIT_STATEMENT:
 	";"{
+        $$ = nullptr;
 	}
 	|
-	EXPRESSION_COMPOUND ";"{
+	STATEMENT_COMPOUND_EXPRESSION{
 	}
 	|
 	STATEMENT_VARIABLES_DECLARATIONS {
@@ -457,12 +480,16 @@ EXPRESSION_COMPOUND_OPT:
 
 EXPRESSION_COMPOUND:
 	EXPRESSION
+    /*
+    Comma operator provides very little value to the language, it is not supported for simplicity for now.
 	| 
 	EXPRESSION "," EXPRESSION_COMPOUND {
 		AstNode* exp = $1;
 		AstNode* extra_exp = $3;
 		$$ = exp->append( extra_exp );
-	};
+	}
+    */
+    ;
 
 // Exrpession always carries a value so that it can be used as input for anything needs a value,
 // like if condition, function parameter, etc.
@@ -741,7 +768,15 @@ EXPRESSION_CONST:
 	|
 	FLT_NUM {
 		$$ = new AstNode_Literal_Flt( $1 );
-	};
+	}
+    |
+    "true" {
+        $$ = new AstNode_Literal_Bool( true );
+    }
+    |
+    "false" {
+        $$ = new AstNode_Literal_Bool( false );
+    };
 
 // Scopped expression
 EXPRESSION_SCOPED:
@@ -763,7 +798,7 @@ EXPRESSION_VARIABLE:
 	}
 	|
 	VARIABLE_LVALUE REC_OR_DEC {
-		AstNode_Expression* exp = AstNode::castType<AstNode_Expression>($1);
+		AstNode_Lvalue* exp = AstNode::castType<AstNode_Lvalue>($1);
 		if( $2 == 1 )
 			$$ = new AstNode_Expression_PostInc(exp);
 		else if( $2 == 2 )
@@ -775,7 +810,7 @@ EXPRESSION_VARIABLE:
 	}
 	|
 	REC_OR_DEC VARIABLE_LVALUE {
-		AstNode_Expression* exp = AstNode::castType<AstNode_Expression>($2);
+		AstNode_Lvalue* exp = AstNode::castType<AstNode_Lvalue>($2);
 		if( $1 == 1 )
 			$$ = new AstNode_Expression_PreInc(exp);
 		else if( $1 == 2 )

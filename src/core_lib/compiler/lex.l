@@ -77,9 +77,13 @@ identifier               ({alpha}|[_])({alpha}|{digit}|[_])*
 whitespace               [ \t\r\n\f]+
 
 %%
+"true"                    { return TRUE; }
+"false"                   { return FALSE; }
 "do"                      { return DO; }
 "while"                   { return WHILE; }
 "for"                     { return FOR; }
+"break"                   { return BREAK; }
+"continue"                { return CONTINUE; }
 "if"                      { return IF; }
 "else"                    { return ELSE; }
 "++"                      { return INC_OP; }

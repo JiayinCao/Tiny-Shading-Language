@@ -209,8 +209,9 @@ TEST(Functions, Simple_Test) {
         shader main( out float arg2 ){
 			int k = 0;
 			
-			while( k++ < 100 )
+			while( k < 100 )
 			{
+                k = k + 1;
 			}
 
             arg2 = k == 100 ? 122.0 : 22.0;
@@ -252,7 +253,7 @@ static int factorial_reference(int k) {
 TEST(Functions, Factorial) {
     auto shader_source = R"(
         int factorial( int k ){
-            if( k == 0 )
+            if( !k )
                 return 1;
             return k * factorial( k - 1 );
         }

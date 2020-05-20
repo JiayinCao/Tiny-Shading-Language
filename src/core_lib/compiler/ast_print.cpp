@@ -28,6 +28,18 @@ void AstNode_Literal_Flt::print() const {
     std::cout << m_val;
 }
 
+void AstNode_Literal_Bool::print() const {
+    std::cout << m_val;
+}
+
+void AstNode_Stament_Break::print() const {
+    std::cout << "break";
+}
+
+void AstNode_Stament_Continue::print() const {
+    std::cout << "continue";
+}
+
 void AstNode_Ternary::print() const {
     m_condition->print();
 	std::cout << "?";
@@ -314,23 +326,23 @@ void AstNode_TypeCast::print() const {
 }
 
 void AstNode_Expression_PostInc::print() const {
-	m_exp->print();
+    m_var->print();
 	std::cout<<"++";
 }
 
 void AstNode_Expression_PostDec::print() const {
-	m_exp->print();
+	m_var->print();
 	std::cout << "--";
 }
 
 void AstNode_Expression_PreInc::print() const {
 	std::cout << "++";
-	m_exp->print();
+    m_var->print();
 }
 
 void AstNode_Expression_PreDec::print() const {
 	std::cout << "--";
-	m_exp->print();
+    m_var->print();
 }
 
 void AstNode_Statement_Return::print() const {

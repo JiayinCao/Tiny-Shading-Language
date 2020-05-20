@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include <string>
+#include <stack>
 #include <unordered_map>
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
@@ -35,6 +36,8 @@ struct LLVM_Compile_Context{
 
     std::unordered_map<std::string, llvm::Value*>       m_var_symbols;
     std::unordered_map<std::string, llvm::Function*>    m_func_symbols;
+
+    std::stack<std::pair<llvm::BasicBlock*, llvm::BasicBlock*>>  m_blocks;
 };
 
 class LLVM_Value{
@@ -104,9 +107,7 @@ protected:
     AstNode* m_next_sibling = nullptr;
 };
 
-class AstNode_Expression : public AstNode, LLVM_Value {
-public:
-    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+class AstNode_Expression : public AstNode, public LLVM_Value {
 };
 
 class AstNode_Literal_Int : public AstNode_Expression {
@@ -131,6 +132,18 @@ public:
 
 private:
     float m_val;
+};
+
+class AstNode_Literal_Bool: public AstNode_Expression{
+public:
+    AstNode_Literal_Bool(bool val) : m_val(val) {}
+
+    llvm::Value * codegen(LLVM_Compile_Context & context) const override;
+
+    void print() const override;
+
+private:
+    bool m_val;
 };
 
 class AstNode_Binary : public AstNode_Expression {
@@ -263,12 +276,16 @@ class AstNode_Binary_Shl : public AstNode_Binary {
 public:
     AstNode_Binary_Shl(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
 
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
     void print() const override;
 };
 
 class AstNode_Binary_Shr : public AstNode_Binary {
 public:
     AstNode_Binary_Shr(AstNode_Expression* left, AstNode_Expression* right) :AstNode_Binary(left, right) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 };
@@ -384,8 +401,6 @@ class AstNode_ExpAssign : public AstNode_Expression {
 public:
     AstNode_ExpAssign(AstNode_Lvalue* var, AstNode_Expression* exp) :m_var(var), m_expression(exp) {}
 
-	llvm::Value* codegen(LLVM_Compile_Context& context) const override;
-
 protected:
     AstNode_Lvalue* m_var;
     AstNode_Expression* m_expression;
@@ -395,12 +410,16 @@ class AstNode_ExpAssign_Eq : public AstNode_ExpAssign {
 public:
     AstNode_ExpAssign_Eq(AstNode_Lvalue* var, AstNode_Expression* exp) :AstNode_ExpAssign(var, exp) {}
 
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
     void print() const override;
 };
 
 class AstNode_ExpAssign_AddEq : public AstNode_ExpAssign {
 public:
     AstNode_ExpAssign_AddEq(AstNode_Lvalue* var, AstNode_Expression* exp) :AstNode_ExpAssign(var, exp) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 };
@@ -409,12 +428,16 @@ class AstNode_ExpAssign_MinusEq : public AstNode_ExpAssign {
 public:
     AstNode_ExpAssign_MinusEq(AstNode_Lvalue* var, AstNode_Expression* exp) :AstNode_ExpAssign(var, exp) {}
 
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
     void print() const override;
 };
 
 class AstNode_ExpAssign_MultiEq : public AstNode_ExpAssign {
 public:
     AstNode_ExpAssign_MultiEq(AstNode_Lvalue* var, AstNode_Expression* exp) :AstNode_ExpAssign(var, exp) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 };
@@ -423,12 +446,16 @@ class AstNode_ExpAssign_DivEq : public AstNode_ExpAssign {
 public:
     AstNode_ExpAssign_DivEq(AstNode_Lvalue* var, AstNode_Expression* exp) :AstNode_ExpAssign(var, exp) {}
 
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
     void print() const override;
 };
 
 class AstNode_ExpAssign_ModEq : public AstNode_ExpAssign {
 public:
     AstNode_ExpAssign_ModEq(AstNode_Lvalue* var, AstNode_Expression* exp) :AstNode_ExpAssign(var, exp) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 };
@@ -437,12 +464,16 @@ class AstNode_ExpAssign_AndEq : public AstNode_ExpAssign {
 public:
     AstNode_ExpAssign_AndEq(AstNode_Lvalue* var, AstNode_Expression* exp) :AstNode_ExpAssign(var, exp) {}
 
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
     void print() const override;
 };
 
 class AstNode_ExpAssign_OrEq : public AstNode_ExpAssign {
 public:
     AstNode_ExpAssign_OrEq(AstNode_Lvalue* var, AstNode_Expression* exp) :AstNode_ExpAssign(var, exp) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 };
@@ -451,6 +482,8 @@ class AstNode_ExpAssign_XorEq : public AstNode_ExpAssign {
 public:
     AstNode_ExpAssign_XorEq(AstNode_Lvalue* var, AstNode_Expression* exp) :AstNode_ExpAssign(var, exp) {}
 
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
     void print() const override;
 };
 
@@ -458,12 +491,16 @@ class AstNode_ExpAssign_ShlEq : public AstNode_ExpAssign {
 public:
     AstNode_ExpAssign_ShlEq(AstNode_Lvalue* var, AstNode_Expression* exp) :AstNode_ExpAssign(var, exp) {}
 
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
     void print() const override;
 };
 
 class AstNode_ExpAssign_ShrEq : public AstNode_ExpAssign {
 public:
     AstNode_ExpAssign_ShrEq(AstNode_Lvalue* var, AstNode_Expression* exp) :AstNode_ExpAssign(var, exp) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 };
@@ -499,6 +536,8 @@ class AstNode_Unary_Not : public AstNode_Expression {
 public:
     AstNode_Unary_Not(AstNode_Expression* exp) : m_exp(exp) {}
 
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
     void print() const override;
 
 private:
@@ -508,6 +547,8 @@ private:
 class AstNode_Unary_Compl : public AstNode_Expression {
 public:
     AstNode_Unary_Compl(AstNode_Expression* exp) : m_exp(exp) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 
@@ -519,6 +560,8 @@ class AstNode_TypeCast : public AstNode_Expression {
 public:
 	AstNode_TypeCast(AstNode_Expression* exp, DataType type) : m_exp(exp), m_target_type(type) {}
 
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
 	void print() const override;
 
 private:
@@ -528,51 +571,68 @@ private:
 
 class AstNode_Expression_PostInc : public AstNode_Expression {
 public:
-	AstNode_Expression_PostInc(AstNode_Expression* exp) : m_exp(exp){}
+	AstNode_Expression_PostInc(AstNode_Lvalue* var) : m_var(var){}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
 	void print() const override;
 
 private:
-	AstNode_Expression* m_exp;
+    AstNode_Lvalue* m_var;
 };
 
 class AstNode_Expression_PostDec : public AstNode_Expression {
 public:
-	AstNode_Expression_PostDec(AstNode_Expression* exp) : m_exp(exp) {}
+	AstNode_Expression_PostDec(AstNode_Lvalue* var) : m_var(var) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
 	void print() const override;
 
 private:
-	AstNode_Expression* m_exp;
+    AstNode_Lvalue* m_var;
 };
 
 class AstNode_Expression_PreInc : public AstNode_Expression {
 public:
-	AstNode_Expression_PreInc(AstNode_Expression* exp) : m_exp(exp) {}
+	AstNode_Expression_PreInc(AstNode_Lvalue* var) : m_var(var) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
 	void print() const override;
 
 private:
-	AstNode_Expression* m_exp;
+    AstNode_Lvalue* m_var;
 };
 
 class AstNode_Expression_PreDec : public AstNode_Expression {
 public:
-	AstNode_Expression_PreDec(AstNode_Expression* exp) : m_exp(exp) {}
+	AstNode_Expression_PreDec(AstNode_Lvalue* var) : m_var(var) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
 	void print() const override;
 
 private:
-	AstNode_Expression* m_exp;
+    AstNode_Lvalue* m_var;
 };
 
 
-class AstNode_Statement : public AstNode, LLVM_Value {
+class AstNode_Statement : public AstNode, public LLVM_Value {
+};
+
+class AstNode_Stament_Break : public AstNode_Statement {
 public:
-    // this is to be deleted once all statements have this implementation
-    llvm::Value* codegen(LLVM_Compile_Context& context) const override {
-        return nullptr;
-    }
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
+    void print() const override;
+};
+
+class AstNode_Stament_Continue : public AstNode_Statement {
+public:
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
+    void print() const override;
 };
 
 class AstNode_Statement_Return : public AstNode_Statement {
@@ -637,13 +697,15 @@ protected:
 
 class AstNode_Statement_Loop_For : public AstNode_Statement_Loop {
 public:
-	AstNode_Statement_Loop_For(AstNode_Expression* init_exp, AstNode_Expression* cond_exp, AstNode_Expression* iter_exp, AstNode_Statement* statements):
+	AstNode_Statement_Loop_For(AstNode_Statement* init_exp, AstNode_Expression* cond_exp, AstNode_Expression* iter_exp, AstNode_Statement* statements):
 		AstNode_Statement_Loop(cond_exp, statements), m_init_exp(init_exp), m_iter_exp(iter_exp){}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
 	void print() const override;
 
 private:
-	AstNode_Expression* m_init_exp;
+    AstNode_Statement* m_init_exp;
 	AstNode_Expression* m_iter_exp;
 };
 
@@ -651,12 +713,16 @@ class AstNode_Statement_Loop_While : public AstNode_Statement_Loop {
 public:
 	AstNode_Statement_Loop_While(AstNode_Expression* cond, AstNode_Statement* statements):AstNode_Statement_Loop(cond,statements){}
 
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
 	void print() const override;
 };
 
 class AstNode_Statement_Loop_DoWhile : public AstNode_Statement_Loop {
 public:
 	AstNode_Statement_Loop_DoWhile(AstNode_Expression* cond, AstNode_Statement* statements):AstNode_Statement_Loop(cond,statements){}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
 	void print() const override; 
 };
