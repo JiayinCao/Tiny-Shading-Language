@@ -146,9 +146,6 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnit* su) {
 
 		llvm::Function* function = m_ast_root->codegen(compile_context);
 
-        // tmp solution
-        compile_context.builder->CreateRetVoid();
-
         // it should be safe to assume llvm function has to be generated, otherwise, the shader is invalid.
         if (!function)
             return false;

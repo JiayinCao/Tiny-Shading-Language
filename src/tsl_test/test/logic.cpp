@@ -55,7 +55,7 @@ TEST(Logic, Ternary_Operation) {
     EXPECT_EQ(o1, 0);
 }
 
-TEST(Logic, Logic_And) {
+TEST(Logic, DISABLED_Logic_And) {
     auto shader_source = R"(
         shader func(int a, int b, int c, out int o0 , out int o1){
             if( a && c ){
@@ -80,7 +80,7 @@ TEST(Logic, Logic_And) {
 
 TEST(Logic, While_Loop) {
     auto shader_source = R"(
-        shader main( int cnt, out float arg2 ){
+        shader main( int cnt, out int arg2 ){
 			int k = cnt;
 			int g = 0;
 			while( k && --k ){
@@ -105,7 +105,7 @@ TEST(Logic, While_Loop) {
 
 TEST(Logic, Do_While_Loop) {
     auto shader_source = R"(
-        shader main( int cnt , out float arg2 ){
+        shader main( int cnt , out int arg2 ){
 			int k = 1;
 			int g = 0;
 			do{
@@ -131,7 +131,7 @@ TEST(Logic, Do_While_Loop) {
 
 TEST(Logic, For_Loop) {
     auto shader_source = R"(
-        shader main( int cnt , out float arg2 ){
+        shader main( int cnt , out int arg2 ){
 			int k = 1;
 			int g = 0;
 			for(; k < cnt ; ++k ){

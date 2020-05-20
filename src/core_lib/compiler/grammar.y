@@ -422,14 +422,14 @@ STATEMENT_CONDITIONAL:
 	"if" "(" EXPRESSION_COMPOUND ")" STATEMENT %prec IF_THEN {
 		AstNode_Expression* cond = AstNode::castType<AstNode_Expression>($3);
 		AstNode_Statement*	true_statements = AstNode::castType<AstNode_Statement>($5);
-		$$ = new AstNode_Statement_Conditinon( cond , true_statements );
+		$$ = new AstNode_Statement_Condition( cond , true_statements );
 	}
 	|
 	"if" "(" EXPRESSION_COMPOUND ")" STATEMENT "else" STATEMENT {
 		AstNode_Expression* cond = AstNode::castType<AstNode_Expression>($3);
 		AstNode_Statement*	true_statements = AstNode::castType<AstNode_Statement>($5);
 		AstNode_Statement*	false_statements = AstNode::castType<AstNode_Statement>($7);
-		$$ = new AstNode_Statement_Conditinon( cond, true_statements, false_statements );
+		$$ = new AstNode_Statement_Condition( cond, true_statements, false_statements );
 	};
 	
 STATEMENT_LOOP:

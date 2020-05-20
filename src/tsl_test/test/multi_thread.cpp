@@ -20,7 +20,7 @@
 #include "test_common.h"
 
 // LLVM is not properly configured to support multi-thread now
-TEST(Thread, Full_Test) {
+TEST(Thread, DISABLED_Full_Test) {
     // thread number, this should be large enough to make sure it fails if the compiler is not thread safe.
     constexpr int TN = 16;
 

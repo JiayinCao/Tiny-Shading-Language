@@ -659,9 +659,9 @@ private:
 	AstNode_Expression* m_expression;
 };
 
-class AstNode_Statement_Conditinon : public AstNode_Statement {
+class AstNode_Statement_Condition : public AstNode_Statement {
 public:
-	AstNode_Statement_Conditinon(AstNode_Expression* cond, AstNode_Statement* true_statements , AstNode_Statement* false_statements = nullptr) 
+	AstNode_Statement_Condition(AstNode_Expression* cond, AstNode_Statement* true_statements , AstNode_Statement* false_statements = nullptr) 
 		: m_condition(cond), m_true_statements(true_statements), m_false_statements(false_statements) {}
 
     llvm::Value* codegen(LLVM_Compile_Context& context) const override;

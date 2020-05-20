@@ -161,13 +161,13 @@ whitespace               [ \t\r\n\f]+
 
 {integer_numbers}         {
                                 // no over flow control for now
-                                yylval->i = atoi(yytext);
+                                yylval->i = std::atoi(yytext);
                                 return INT_NUM;
                           }
 
 {hex_numbers}             {
                                 // no over flow control for now
-                                yylval->i = atoi(yytext);
+                                yylval->i = std::stoi("0xeffffff", 0 , 16);
                                 return INT_NUM;
                           }
 

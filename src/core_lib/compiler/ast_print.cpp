@@ -370,7 +370,7 @@ void AstNode_Statement_CompoundExpression::print() const {
 	std::cout<<";"<<std::endl;
 }
 
-void AstNode_Statement_Conditinon::print() const {
+void AstNode_Statement_Condition::print() const {
 	std::cout<< "if(";
 	if(m_condition)
 		m_condition->print();

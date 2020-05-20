@@ -125,6 +125,10 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
             statement->codegen(context);
             statement = (AstNode_Statement*)statement->get_sibling();
         }
+
+        auto& last_block = function->getBasicBlockList().back();
+        if (nullptr == last_block.getTerminator())
+            context.builder->CreateRetVoid();
     }
 
 	return function;
@@ -724,7 +728,7 @@ llvm::Value* AstNode_Ternary::codegen(LLVM_Compile_Context& context) const {
     return context.builder->CreateSelect(cond, true_exp, false_exp);
 }
 
-llvm::Value* AstNode_Statement_Conditinon::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Statement_Condition::codegen(LLVM_Compile_Context& context) const {
     auto& llvm_context = *context.context;
     auto& builder = *context.builder;
     
@@ -740,22 +744,37 @@ llvm::Value* AstNode_Statement_Conditinon::codegen(LLVM_Compile_Context& context
     auto function = context.builder->GetInsertBlock()->getParent();
 
     BasicBlock* then_bb = BasicBlock::Create(llvm_context, "then", function);
-    BasicBlock* else_bb = BasicBlock::Create(llvm_context, "else");
+    BasicBlock* else_bb = m_false_statements ? BasicBlock::Create(llvm_context, "else") : nullptr;
     BasicBlock* merge_bb = BasicBlock::Create(llvm_context, "ifcont");
 
-    builder.CreateCondBr(cond, then_bb, else_bb);
+    if(else_bb)
+        builder.CreateCondBr(cond, then_bb, else_bb);
+    else
+        builder.CreateCondBr(cond, then_bb, merge_bb);
 
     builder.SetInsertPoint(then_bb);
-    if(m_true_statements)
-        m_true_statements->codegen(context);
-    builder.CreateBr(merge_bb);
+    auto statement = m_true_statements;
+    while (statement) {
+        statement->codegen(context);
+        statement = castType<AstNode_Statement>(statement->get_sibling());
+    }
+    
+    if( nullptr == then_bb->getTerminator() )
+        builder.CreateBr(merge_bb);
 
-    function->getBasicBlockList().push_back(else_bb);
+    if (else_bb) {
+        function->getBasicBlockList().push_back(else_bb);
+        builder.SetInsertPoint(else_bb);
 
-    builder.SetInsertPoint(else_bb);
-    if(m_false_statements)
-        m_false_statements->codegen(context);
-    builder.CreateBr(merge_bb);
+        auto statement = m_false_statements;
+        while (statement) {
+            statement->codegen(context);
+            statement = castType<AstNode_Statement>(statement->get_sibling());
+        }
+
+        if (nullptr == else_bb->getTerminator())
+            builder.CreateBr(merge_bb);
+    }
 
     function->getBasicBlockList().push_back(merge_bb);
     builder.SetInsertPoint(merge_bb);
