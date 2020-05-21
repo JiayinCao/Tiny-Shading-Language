@@ -404,13 +404,13 @@ public:
     llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
-    void printVariableOnly() const;
+    void printVariableOnly() const override;
 
-    DataType data_type() const {
+    DataType data_type() const override {
         return m_type;
     }
 
-    const char* get_var_name() const {
+    const char* get_var_name() const override{
         return m_name.c_str();
     }
 
@@ -418,11 +418,11 @@ public:
         return m_cnt;
     }
 
-    VariableConfig get_config() const {
+    VariableConfig get_config() const override {
         return m_config;
     }
 
-    const AstNode_Expression* get_init() const {
+    const AstNode_Expression* get_init() const override {
         // no support for now
         return nullptr;
     }

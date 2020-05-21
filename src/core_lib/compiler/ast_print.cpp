@@ -128,7 +128,7 @@ void AstNode_ArrayDecl::print() const {
 
     std::cout << str_from_data_type(m_type) << " " << m_name << "[";
     m_cnt->print();
-    "]";
+    std::cout << "]";
 }
 
 void AstNode_ArrayDecl::printVariableOnly() const {
