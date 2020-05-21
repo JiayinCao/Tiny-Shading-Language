@@ -196,10 +196,10 @@ TEST(Functions, CONFIG_DECORATOR ) {
 					 in const float arg2 = 3.0,
 					 const in matrix mat,
                      in float input_arg = 0.2 <<< >>> ,
-                     out float last_arg = 2.0 <<< >>> ){
+                     out int last_arg = 2.0 <<< >>> ){
             arg2 = input_arg + 2.0;
 
-            return arg0 + arg1;
+            last_arg = arg0 + arg1;
         }
     )");
 }
@@ -226,7 +226,8 @@ TEST(Functions, Single_Return) {
                     int arg2 = 3,
                     int arg3 = 4,
                     int arg4 = 5){
-			return ( ( arg0 + arg1 ) * arg2 + arg3 / arg4 ) & arg0;
+			 int a = ( ( arg0 + arg1 ) * arg2 + arg3 / arg4 ) & arg0;
+             return;
         }
     )");
 }

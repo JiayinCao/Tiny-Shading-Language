@@ -19,24 +19,26 @@
 
 TEST(Basic, MathOps) {
     auto shader_source = R"(
-        shader function_name( int a , int b , out int o0 , out int o1 , out int o2 , out int o3 ){
+        shader function_name(int a, int b, out int o0, out int o1, out int o2, out int o3, out int o4){
             o0 = a + b;
             o1 = a - b;
             o2 = a * b;
             o3 = a / b;
+            o4 = a % b;
         }
     )";
 
     ShadingSystem shading_system;
-    auto func_ptr = compile_shader<void(*)(int, int, int*, int*, int*, int*)>(shader_source, shading_system);
+    auto func_ptr = compile_shader<void(*)(int, int, int*, int*, int*, int*, int*)>(shader_source, shading_system);
 
     auto verify_func = [&](int a, int b) {
-        int o0, o1, o2, o3;
-        func_ptr(a, b, &o0, &o1, &o2, &o3);
+        int o0, o1, o2, o3, o4;
+        func_ptr(a, b, &o0, &o1, &o2, &o3, &o4);
         EXPECT_EQ(a + b, o0);
         EXPECT_EQ(a - b, o1);
         EXPECT_EQ(a * b, o2);
         EXPECT_EQ(a / b, o3);
+        EXPECT_EQ(a % b, o4);
     };
 
     verify_func(1, 1);

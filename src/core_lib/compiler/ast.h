@@ -29,13 +29,15 @@
 
 TSL_NAMESPACE_BEGIN
 
+class AstNode_FunctionPrototype;
+
 struct LLVM_Compile_Context{
 	llvm::LLVMContext*	context = nullptr;
 	llvm::Module*		module = nullptr;
 	llvm::IRBuilder<>*	builder = nullptr;
 
     std::unordered_map<std::string, llvm::Value*>       m_var_symbols;
-    std::unordered_map<std::string, llvm::Function*>    m_func_symbols;
+    std::unordered_map<std::string, std::pair<llvm::Function*, const AstNode_FunctionPrototype*>>    m_func_symbols;
 
     std::stack<std::pair<llvm::BasicBlock*, llvm::BasicBlock*>>  m_blocks;
 };
@@ -738,7 +740,6 @@ public:
 private:
 	AstNode_Statement*	m_statements;
 
-    // allow prototype to access its private data
     friend class AstNode_FunctionPrototype;
 };
 
@@ -762,6 +763,8 @@ private:
     AstNode_FunctionBody*   m_body;
     const bool              m_is_shader;
 	DataType				m_return_type;
+
+    friend class AstNode_FunctionCall;
 };
 
 TSL_NAMESPACE_END

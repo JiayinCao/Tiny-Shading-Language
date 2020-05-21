@@ -63,7 +63,7 @@ TEST(Variables, Local_Variables) {
     validate_shader(R"(
         shader func(){
             int k = 0;
-            float gg = 0;
+            float gg = 0.0;
             float t = 0.0, kkk = 0.0;
         }
     )");

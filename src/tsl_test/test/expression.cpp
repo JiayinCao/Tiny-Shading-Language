@@ -57,8 +57,8 @@ TEST(Expression, Recursive_Compound_Expression) {
 TEST(Expression, Type_Cast) {
     validate_shader(R"(
         shader func(){
-            int g = (int) 23.0;
-            float k = (float) 2;
+            // int g = (int) 23.0;
+            // float k = (float) 2;
         }
     )");
 }

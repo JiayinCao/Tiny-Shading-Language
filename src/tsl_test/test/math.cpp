@@ -88,7 +88,7 @@ TEST(Math, Unary_Operation) {
             int k = -2;
             int k1 = ~k ;
             
-            int k2 = !k;
+            bool k2 = !k;
             int k3 = -( +k2 );
         }
     )");

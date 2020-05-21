@@ -81,7 +81,7 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
         return nullptr;
     }
 
-    context.m_func_symbols[m_name] = function;
+    context.m_func_symbols[m_name] = std::make_pair(function, this);
 
     if( m_body ){
         // create a separate code block
@@ -707,14 +707,28 @@ llvm::Value* AstNode_FunctionCall::codegen(LLVM_Compile_Context& context) const 
         return nullptr;
     }
 
+    auto ast_func = it->second.second;
+
     std::vector<Value*> args;
     AstNode_Expression* node = m_variables;
+    AstNode_VariableDecl* var_decl = ast_func->m_variables;
     while (node) {
-        args.push_back(node->codegen(context));
+        if (var_decl->get_config() & VariableConfig::OUTPUT) {
+            // this node must be a LValue
+            AstNode_Lvalue* lvalue = dynamic_cast<AstNode_Lvalue*>(node);
+            if (!lvalue) {
+                // emit an error here, using a r-value for output
+                return nullptr;
+            }
+            args.push_back(lvalue->get_value_address(context));
+        } else {
+            args.push_back(node->codegen(context));
+        }
         node = castType<AstNode_Expression>(node->get_sibling());
+        var_decl = castType< AstNode_VariableDecl>(var_decl->get_sibling());
     }
 
-    return context.builder->CreateCall(it->second, args);
+    return context.builder->CreateCall(it->second.first, args);
 }
 
 llvm::Value* AstNode_Ternary::codegen(LLVM_Compile_Context& context) const {

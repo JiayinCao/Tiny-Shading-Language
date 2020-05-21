@@ -753,7 +753,7 @@ FUNCTION_ARGUMENTS:
 	|
 	EXPRESSION
 	|
-	FUNCTION_ARGUMENTS "," EXPRESSION {
+	EXPRESSION "," FUNCTION_ARGUMENTS {
 		AstNode* node_arg = $1;
 		AstNode* node_args = $3;
 		$$ = node_arg->append( node_args );
