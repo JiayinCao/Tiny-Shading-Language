@@ -27,6 +27,7 @@
 // in a correct way. The coding style is intentionally different and a bit un-elegant
 // so that it can test how robust the shading language is.
 
+#include <vector>
 #include "test_common.h"
 
 // Factorial number generation
@@ -180,7 +181,7 @@ TEST(Practical, Reverse_Integer) {
 //
 // Determine whether an integer is a palindrome. An integer is a palindrome when it reads the same backward as forward.
 
-bool isPalindrome(int x) {
+static bool isPalindrome(int x) {
     if (x < 0)
         return false;
 
@@ -247,7 +248,7 @@ TEST(Practical, Is_Palindrome) {
 //
 // Implement pow(x, n), which calculates x raised to the power n, (x^n).
 
-float myPow(float x, long long n) {
+static float myPow(float x, long long n) {
     if (n == 0)
         return 1.0;
 
@@ -299,7 +300,7 @@ TEST(Practical, myPow) {
 // You are climbing a stair case. It takes n steps to reach to the top.
 // Each time you can either climb 1 or 2 steps.In how many distinct ways can you climb to the top ?
 
-int climbStairs(int n) {
+static int climbStairs(int n) {
     if (n == 1) return 1;
     if (n == 2) return 2;
     int a = 1, b = 2, c = 3;
@@ -354,7 +355,7 @@ TEST(Practical, ClimbingStairs) {
 //
 // Given a range [m, n] where 0 <= m <= n <= 2147483647, return the bitwise AND of all numbers in this range, inclusive.
 
-int rangeBitwiseAnd(int m, int n) {
+static int rangeBitwiseAnd(int m, int n) {
     if (m == n)
         return m;
     return rangeBitwiseAnd(m >> 1, n >> 1) << 1;
@@ -401,7 +402,7 @@ TEST(Practical, RangeBitwiseAnd) {
 // numbers for which this process ends in 1 are happy numbers.
 // Return True if n is a happy number, and False if not.
 
-int next(int n) {
+static int next(int n) {
     int ret = 0;
     while (n) {
         int k = n % 10;
@@ -411,7 +412,7 @@ int next(int n) {
     return ret;
 }
 
-bool isHappy(int n) {
+static bool isHappy(int n) {
     int slow = n, fast = n;
     do {
         slow = next(slow);
@@ -479,7 +480,7 @@ TEST(Practical, HappyNumber) {
 //
 // Given an integer n, count the total number of digit 1 appearing in all non-negative integers less than or equal to n.
 
-int countDigitOne(int n) {
+static int countDigitOne(int n) {
     if (n <= 0) {
         return 0;
     }
@@ -554,7 +555,7 @@ TEST(Practical, CountDigitOne) {
 //
 // Given an integer, write a function to determine if it is a power of two.
 
-bool isPowerOfTwo(int n) {
+static bool isPowerOfTwo(int n) {
     return (n <= 0) ? false : !(n & (n - 1));
 }
 
@@ -594,7 +595,7 @@ TEST(Practical, PowerOfTwo) {
 //
 // Given a non-negative integer num, repeatedly add all its digits until the result has only one digit.
 
-int addDigits(int num) {
+static int addDigits(int num) {
     if (num == 0)
         return 0;
 
@@ -643,7 +644,7 @@ TEST(Practical, AddDigits) {
 // Write a program to check whether a given number is an ugly number.
 // Ugly numbers are positive numbers whose prime factors only include 2, 3, 5.
 
-bool isUgly(int num) {
+static bool isUgly(int num) {
     if (num == 0) return false;
     while (num % 2 == 0) num /= 2;
     while (num % 3 == 0) num /= 3;
@@ -693,7 +694,7 @@ TEST(Practical, IsUglyNumber) {
 // each time one of you take turns to remove 1 to 3 stones. The one who removes the last stone will
 // be the winner. You will take the first turn to remove the stones.
 
-int canWinNim(int n) {
+static int canWinNim(int n) {
     return n % 4;
 }
 
@@ -731,7 +732,7 @@ TEST(Practical, WinNim) {
 // Power of Three
 // https://leetcode.com/problems/power-of-three/
 
-bool isPowerOfThree(int n) {
+static bool isPowerOfThree(int n) {
     if (n < 1) return false;
     if (n == 1) return true;
     if (n > 1 && 1162261467 % n == 0)
@@ -785,13 +786,13 @@ TEST(Practical, PowerOfThree) {
 //  - Empty any of the jugs.
 //  - Pour water from one jug into another till the other jug is completely full or the first jug itself is empty.
 
-int gcd(int a, int b) {
+static int gcd(int a, int b) {
     if (b == 0)
         return a;
     return gcd(b, a % b);
 }
 
-bool canMeasureWater(int x, int y, int z) {
+static bool canMeasureWater(int x, int y, int z) {
     if (z == 0)
         return true;
 
@@ -852,7 +853,7 @@ TEST(Practical, CanMeasureWater) {
 // Given a positive integer num, write a function which returns True if num is a perfect square else False.
 // Unlike the original problem, overflow is not taken care of.
 
-bool isPerfectSquare(int n) {
+static bool isPerfectSquare(int n) {
     if (n <= 0) return false;
     if (n == 1) return true;
     for (int i = 2; i <= n / 2; i++) {
@@ -914,7 +915,7 @@ TEST(Practical, ValidPerfectSquare) {
 // We keep repeating the steps again, alternating left to right and right to left, until a single number remains.
 // Find the last number that remains starting with a list of length n.
 
-int lastRemaining(int n) {
+static int lastRemaining(int n) {
     if (n == 1)
         return 1;
     return 2 * (1 + n / 2 - lastRemaining(n / 2));
@@ -957,7 +958,7 @@ TEST(Practical, LastRemaining) {
 //  - If n is odd, you can replace n with either n + 1 or n - 1.
 // What is the minimum number of replacements needed for n to become 1?
 
-int integerReplacement(int n) {
+static int integerReplacement(int n) {
     if (n <= 1) return 0;
     if (n == 2147483647)
         return 32;
@@ -1015,7 +1016,7 @@ TEST(Practical, Integer_Replacement) {
 // Find the nth digit of the infinite integer sequence 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, ...
 
 // this doesn't handle negative 'n'
-int mypow(int x, int n) {
+static int mypow(int x, int n) {
     if (n == 0)
         return 1;
 
@@ -1023,7 +1024,7 @@ int mypow(int x, int n) {
     return (n % 2) ? half_power * half_power * x : half_power * half_power;
 }
 
-int findNthDigit(int n) {
+static int findNthDigit(int n) {
     int i = 1;
     int curNumLenCount = 1;
     int curCount = 0;
@@ -1094,7 +1095,7 @@ TEST(Practical, FindNthDigit) {
 // Given integers n and k, find the lexicographically k-th smallest integer in the range from 1 to n.
 // Note: 1 <= k <= n <= 10^9.
 
-int findKthNumber(int n, int k) {
+static int findKthNumber(int n, int k) {
     int cnt = 1;
     k--;
     while (k) {
@@ -1180,7 +1181,7 @@ TEST(Practical, FindKthNumber) {
 // They all look identical. If a pig drinks the poison it will die within 15 minutes. What is the minimum 
 // amount of pigs you need to figure out which bucket is poisonous within one hour?
 
-int poorPigs(int buckets, int minutesToDie, int minutesToTest) {
+static int poorPigs(int buckets, int minutesToDie, int minutesToTest) {
     int numIntervals = minutesToTest / minutesToDie + 1;
 
     if (buckets == 1)
@@ -1238,7 +1239,7 @@ TEST(Practical, PoorPigs) {
 //
 // Given a positive integer n, find the number of non-negative integers less than or equal to n, whose binary representations do NOT contain consecutive ones.
 
-void fun(int i, int& n, int& s) {
+static void fun(int i, int& n, int& s) {
     if (i <= n) {
         if (i & 1) {
             s += 1;
@@ -1267,7 +1268,7 @@ void fun(int i, int& n, int& s) {
     }
     return;
 }
-int findIntegers(int num) {
+static int findIntegers(int num) {
     int s = 1;
     if (num) {
         int n = num;
@@ -1333,5 +1334,137 @@ TEST(Practical, FindIntegers) {
     };
 
     for( int i = 0 ; i < 1024 ; ++i )
+        verify_func(i);
+}
+
+// Count Primes
+// https://leetcode.com/problems/count-primes/
+//
+// Count the number of prime numbers less than a non-negative number, n.
+
+static int countPrimes(int n) {
+    if (n < 2) return 0;
+
+    std::vector<int> a(n, 0);
+    int count = 0;
+
+    for (int i = 2; i < n; ++i) {
+        if (a[i] == 0) {
+            count++;
+            for (int j = 1; j * i < n; ++j) {
+                a[i * j] = 1;
+            }
+        }
+    }
+    return count;
+}
+
+TEST(Practical, CountPrimes) {
+    auto shader_source = R"(
+        int countPrimes(int n) {
+            if(n<2) return 0;
+        
+            int a[n];
+            for( int k = 0 ; k < n ; ++k )
+                a[k] = 0;
+        
+            int count = 0;
+            for(int i = 2; i<n; ++i){
+                if(a[i] == 0){
+                    count++;
+                    for(int j = 1; j*i<n; ++j){
+                        a[i*j] = 1;
+                    }
+                }
+            }
+            return count;
+        }
+
+        shader main( int m, out int o0 ){
+            o0 = countPrimes(m);
+        }
+    )";
+
+    ShadingSystem shading_system;
+    auto func_ptr = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+
+    auto verify_func = [&](int x) {
+        int o0;
+        func_ptr(x, &o0);
+        EXPECT_EQ(countPrimes(x), o0);
+    };
+
+    for (int i = 0; i < 1024; ++i)
+        verify_func(i);
+}
+
+// Ugly Number II
+// https://leetcode.com/problems/ugly-number-ii/
+//
+// Write a program to find the n-th ugly number.
+// Ugly numbers are positive numbers whose prime factors only include 2, 3, 5.
+
+static int min(int x, int y) {
+    return x < y ? x : y;
+}
+
+static int nthUglyNumber(int n) {
+    int i2 = 1, i3 = 1, i5 = 1;
+
+    std::vector<int> ugly(n+1);
+    ugly[1] = 1;
+
+    for (int i = 2; i <= n; i++) {
+        ugly[i] = min(ugly[i2] * 2, min(ugly[i3] * 3, ugly[i5] * 5));
+        if (ugly[i] == ugly[i2] * 2)
+            i2++;
+        if (ugly[i] == ugly[i3] * 3)
+            i3++;
+        if (ugly[i] == ugly[i5] * 5)
+            i5++;
+    }
+    return ugly[n];
+}
+
+TEST(Practical, NthUglyNumber) {
+    auto shader_source = R"(
+        int min( int x , int y ){
+            return x < y ? x: y;
+        }
+
+        int nthUglyNumber(int n) {
+            int i2 = 1, i3 = 1, i5 = 1;
+
+            int ugly[n + 1];
+            ugly[1] = 1;
+
+            for (int i = 2; i <= n; i++) {
+                ugly[i] = min(ugly[i2] * 2, min(ugly[i3] * 3, ugly[i5] * 5));
+                if (ugly[i] == ugly[i2] * 2)
+                    i2++;
+                if (ugly[i] == ugly[i3] * 3)
+                    i3++;
+                if (ugly[i] == ugly[i5] * 5)
+                    i5++;
+            }
+
+            return ugly[n];
+        }
+
+        shader main( int m, out int o0 ){
+            o0 = nthUglyNumber(m);
+        }
+    )";
+
+    ShadingSystem shading_system;
+    auto func_ptr = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+
+    auto verify_func = [&](int x) {
+        int o0;
+        func_ptr(x, &o0);
+        EXPECT_EQ(nthUglyNumber(x), o0);
+    };
+
+    for (int i = 1; i < 1024; ++i)
         verify_func(i);
 }

@@ -364,33 +364,89 @@ llvm::Value* AstNode_VariableRef::get_value_address(LLVM_Compile_Context& contex
     return it->second;
 }
 
+llvm::Value* AstNode_ArrayAccess::codegen(LLVM_Compile_Context& context) const {
+    auto var = m_var->get_value_address(context);
+    auto index = m_index->codegen(context);
+    
+    if (!is_llvm_integer(index)) {
+        // emit an error
+        return nullptr;
+    }
+
+    auto value_ptr = context.builder->CreateGEP(var, index);
+    return context.builder->CreateLoad(value_ptr);
+}
+
+llvm::Value* AstNode_ArrayAccess::get_value_address(LLVM_Compile_Context& context) const {
+    auto var = m_var->get_value_address(context);
+    auto index = m_index->codegen(context);
+
+    if (!is_llvm_integer(index)) {
+        // emit an error
+        return nullptr;
+    }
+
+    return context.builder->CreateGEP(var, index);
+}
+
+llvm::Value* AstNode_SingleVariableDecl::codegen(LLVM_Compile_Context& context) const {
+    auto name = m_name;
+    auto type = get_type_from_context(m_type, context);
+    auto init = m_init_exp;
+
+    // there is duplicated names, emit an warning!!
+    // However, there is no log system in the compiler for now, I need to handle this later.
+    if (0 != context.m_var_symbols.count(name)) {
+        std::cout << "Duplicated argument named : " << name << std::endl;
+        return nullptr;
+    }
+
+    // allocate the variable on stack
+    auto alloc_var = context.builder->CreateAlloca(type, nullptr, name);
+
+    // initialize it if necessary
+    if (init) {
+        Value* init_value = init->codegen(context);
+
+        if (init_value)
+            context.builder->CreateStore(init_value, alloc_var);
+    }
+
+    context.m_var_symbols[name] = alloc_var;
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_ArrayDecl::codegen(LLVM_Compile_Context& context) const {
+    auto name = m_name;
+
+    // there is duplicated names, emit an warning!!
+    // However, there is no log system in the compiler for now, I need to handle this later.
+    if (0 != context.m_var_symbols.count(name)) {
+        std::cout << "Duplicated argument named : " << name << std::endl;
+        return nullptr;
+    }
+    
+    auto type = get_type_from_context(m_type, context);
+    auto cnt = m_cnt->codegen(context);
+
+    if (!is_llvm_integer(cnt)) {
+        // emit error here, invalid array size
+        return nullptr;
+    }
+
+    // allocate the variable on stack
+    auto alloc_var = context.builder->CreateAlloca(type, cnt, name);
+
+    context.m_var_symbols[name] = alloc_var;
+
+    return nullptr;
+}
+
 llvm::Value* AstNode_Statement_VariableDecls::codegen(LLVM_Compile_Context& context) const {
     AstNode_VariableDecl* decl = m_var_decls;
     while (decl) {
-        auto name = decl->get_var_name();
-        auto type = get_type_from_context(decl->data_type(), context);
-        auto init = decl->get_init();
-
-        // there is duplicated names, emit an warning!!
-        // However, there is no log system in the compiler for now, I need to handle this later.
-        if (0 != context.m_var_symbols.count(name)) {
-            std::cout << "Duplicated argument named : " << name << std::endl;
-            return nullptr;
-        }
-
-        // allocate the variable on stack
-        auto alloc_var = context.builder->CreateAlloca(type, nullptr, name);
-
-		// initialize it if necessary
-		if(init){
-			Value* init_value = init->codegen(context);
-
-			if(init_value)
-				context.builder->CreateStore(init_value, alloc_var);
-		}
-
-        context.m_var_symbols[name] = alloc_var;
-
+        decl->codegen(context);
         decl = castType<AstNode_VariableDecl>(decl->get_sibling());
     }
 

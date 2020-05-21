@@ -148,3 +148,7 @@ inline llvm::Value* get_llvm_mod(llvm::Value* left, llvm::Value* right, Tsl_Name
 
     return nullptr;
 }
+
+inline bool is_llvm_integer(llvm::Value* value) {
+    return value->getType()->isIntegerTy();
+}

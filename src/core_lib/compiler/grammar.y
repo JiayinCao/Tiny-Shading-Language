@@ -259,14 +259,14 @@ FUNCTION_ARGUMENT_DECLS:
 FUNCTION_ARGUMENT_DECL:
 	ARGUMENT_CONFIGS_OPT TYPE ID {
 		VariableConfig config = $1;
-		AstNode_VariableDecl* node = new AstNode_VariableDecl($3, $2, config);
+		AstNode_SingleVariableDecl* node = new AstNode_SingleVariableDecl($3, $2, config);
 		$$ = node;
 	}
 	|
 	ARGUMENT_CONFIGS_OPT TYPE ID "=" EXPRESSION {
 		VariableConfig config = $1;
 		AstNode_Expression* init_exp = AstNode::castType<AstNode_Expression>($5);
-		AstNode_VariableDecl* node = new AstNode_VariableDecl($3, $2, config, init_exp);
+		AstNode_SingleVariableDecl* node = new AstNode_SingleVariableDecl($3, $2, config, init_exp);
 		$$ = node;
 	};
 
@@ -406,15 +406,22 @@ VARIABLE_DECLARATIONS:
 VARIABLE_DECLARATION:
 	ID {
 		const DataType type = tsl_compiler->data_type_cache();
-		AstNode_VariableDecl* node = new AstNode_VariableDecl($1, type);
+		AstNode_SingleVariableDecl* node = new AstNode_SingleVariableDecl($1, type);
 		$$ = node;
 	}
+    |
+    ID "[" EXPRESSION "]" {
+        const DataType type = tsl_compiler->data_type_cache();
+        AstNode_Expression* cnt = AstNode::castType<AstNode_Expression>($3);
+		AstNode_ArrayDecl* node = new AstNode_ArrayDecl($1, type, cnt);
+		$$ = node;
+    }
 	|
 	ID "=" EXPRESSION {
 		// initialization is not correctly handled yet.
 		const DataType type = tsl_compiler->data_type_cache();
 		AstNode_Expression* init_exp = AstNode::castType<AstNode_Expression>($3);
-		AstNode_VariableDecl* node = new AstNode_VariableDecl($1, type, VariableConfig::NONE, init_exp);
+		AstNode_SingleVariableDecl* node = new AstNode_SingleVariableDecl($1, type, VariableConfig::NONE, init_exp);
 		$$ = node;
 	};
 
@@ -832,15 +839,18 @@ REC_OR_DEC:
 
 // No up to two dimensional array supported for now.
 VARIABLE_LVALUE:
-	ID_OR_FIELD 
-	|
-	ID_OR_FIELD "[" EXPRESSION "]" {
-	};
+	ID_OR_FIELD;
 
 ID_OR_FIELD:
 	ID{
 		$$ = new AstNode_VariableRef($1);
 	}
+    |
+    VARIABLE_LVALUE "[" EXPRESSION "]"{
+        AstNode_Lvalue* var = AstNode::castType<AstNode_Lvalue>($1);
+        AstNode_Expression* index = AstNode::castType<AstNode_Expression>($3);
+        $$ = new AstNode_ArrayAccess(var, index);
+    }
 	|
 	VARIABLE_LVALUE "." ID {
 	};

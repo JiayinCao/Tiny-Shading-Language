@@ -353,28 +353,39 @@ public:
     }
 };
 
-class AstNode_VariableDecl : public AstNode {
+class AstNode_VariableDecl : public AstNode, public LLVM_Value {
 public:
-	AstNode_VariableDecl(const char* name, const DataType type, const VariableConfig config = VariableConfig::NONE, AstNode_Expression* init_exp = nullptr) 
+    virtual DataType data_type() const = 0;
+    virtual const char* get_var_name() const = 0;
+    virtual VariableConfig get_config() const = 0;
+    virtual const AstNode_Expression* get_init() const = 0;
+    virtual void printVariableOnly() const = 0;
+};
+
+class AstNode_SingleVariableDecl : public AstNode_VariableDecl {
+public:
+    AstNode_SingleVariableDecl(const char* name, const DataType type, const VariableConfig config = VariableConfig::NONE, AstNode_Expression* init_exp = nullptr)
 		: m_name(name), m_type(type), m_config(config), m_init_exp(init_exp) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
 	void print() const override;
 
-	void printVariableOnly() const;
+	void printVariableOnly() const override;
 
-	DataType data_type() const{
+	DataType data_type() const override{
 		return m_type;
 	}
 
-	const char* get_var_name() const {
+	const char* get_var_name() const override{
 		return m_name.c_str();
 	}
 
-    const AstNode_Expression* get_init() const{
+    const AstNode_Expression* get_init() const override{
         return m_init_exp;
     }
 
-    VariableConfig get_config() const {
+    VariableConfig get_config() const override {
         return m_config;
     }
     
@@ -383,6 +394,44 @@ private:
 	const DataType			m_type;
 	const VariableConfig	m_config;
 	AstNode_Expression*		m_init_exp;
+};
+
+class AstNode_ArrayDecl : public AstNode_VariableDecl {
+public:
+    AstNode_ArrayDecl(const char* name, const DataType type, AstNode_Expression* cnt, const VariableConfig config = VariableConfig::NONE)
+        : m_name(name), m_type(type), m_config(config), m_cnt(cnt) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
+    void print() const override;
+    void printVariableOnly() const;
+
+    DataType data_type() const {
+        return m_type;
+    }
+
+    const char* get_var_name() const {
+        return m_name.c_str();
+    }
+
+    const AstNode_Expression* get_cnt() const {
+        return m_cnt;
+    }
+
+    VariableConfig get_config() const {
+        return m_config;
+    }
+
+    const AstNode_Expression* get_init() const {
+        // no support for now
+        return nullptr;
+    }
+
+private:
+    const std::string		m_name;
+    const DataType			m_type;
+    const VariableConfig	m_config;
+    AstNode_Expression*     m_cnt;
 };
 
 class AstNode_VariableRef : public AstNode_Lvalue {
@@ -397,6 +446,21 @@ public:
 
 private:
 	const std::string	m_name;
+};
+
+class AstNode_ArrayAccess : public AstNode_Lvalue {
+public:
+    AstNode_ArrayAccess(AstNode_Lvalue* var, AstNode_Expression* index) : m_var(var), m_index(index) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
+    llvm::Value* get_value_address(LLVM_Compile_Context& context) const override;
+
+    void print() const override;
+
+private:
+    AstNode_Lvalue*     m_var;
+    AstNode_Expression* m_index;
 };
 
 class AstNode_ExpAssign : public AstNode_Expression {

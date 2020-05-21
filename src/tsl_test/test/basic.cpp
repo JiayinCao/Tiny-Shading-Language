@@ -119,3 +119,30 @@ TEST(Basic, And_Or_Xor) {
     verify_func(std::numeric_limits<int>::min(), 12);
     verify_func(std::numeric_limits<int>::max(), 12);
 }
+
+TEST(Basic, ArrayAccess) {
+    auto shader_source = R"(
+        shader function_name(int a, int b, out int o0){
+            int arr[10];
+            arr[9] = a + b;
+            o0 = arr[9];
+        }
+    )";
+
+    ShadingSystem shading_system;
+    auto func_ptr = compile_shader<void(*)(int, int, int*)>(shader_source, shading_system);
+
+    auto verify_func = [&](int a, int b) {
+        int o0;
+        func_ptr(a, b, &o0);
+        EXPECT_EQ(a + b, o0);
+    };
+
+    verify_func(1, 12);
+    verify_func(23, 0x3232);
+    verify_func(0, 0xffffffff);
+
+    // make sure it has the same overflow behavior as c++ code.
+    verify_func(std::numeric_limits<int>::min(), 12);
+    verify_func(std::numeric_limits<int>::max(), 12);
+}
