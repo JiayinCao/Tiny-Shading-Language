@@ -63,13 +63,8 @@ ClosureID ClosureRegister::register_closure_type(const std::string& name, Closur
     const std::string function_name = "make_closure_" + name;
 
     std::vector<Type*> arg_types;
-    for (auto& arg : arg_list) {
-        std::string name, type;
-        int offset;
-        std::tie(name, type, offset) = arg;
-
-        arg_types.push_back(get_type_from_context(type, llvm_compiling_context));
-    }
+    for (auto& arg : arg_list)
+        arg_types.push_back(get_type_from_context(arg.m_type, llvm_compiling_context));
 
     auto closure_tree_node_base = StructType::create(arg_types, closure_type);
 
@@ -90,29 +85,19 @@ ClosureID ClosureRegister::register_closure_type(const std::string& name, Closur
     for (int i = 0; i < arg_list.size(); ++i) {
         auto& arg = arg_list[i];
 
-        std::string name, type;
-        int offset;
-        std::tie(name, type, offset) = arg;
-
         // this obviously won't work for pointer type data, I will fix it later.
-        auto var_ptr = builder.CreateConstGEP1_32(nullptr, closure_ptr, offset);
+        auto var_ptr = builder.CreateConstGEP1_32(nullptr, closure_ptr, arg.m_offset);
         builder.CreateStore(function->getArg(i), var_ptr);
 
-        arg_types.push_back(get_type_from_context(type, llvm_compiling_context));
+        arg_types.push_back(get_type_from_context(arg.m_type, llvm_compiling_context));
     }
     
-
     builder.CreateRet(closure_ptr);
 
     // for debugging purpose, set the name of the arguments
     for( int i = 0 ; i < arg_list.size() ; ++i ){
         auto arg = function->getArg(i);
-
-        std::string name, type;
-        int offset;
-        std::tie(name, type, offset) = arg_list[i];
-
-        arg->setName(name);
+        arg->setName(arg_list[i].m_name);
     }
 
     m_module->print(errs(), nullptr);

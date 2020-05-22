@@ -21,6 +21,7 @@
 #include <type_traits>
 #include <stddef.h>
 #include <vector>
+#include <string>
 #include "tslversion.h"
 
 TSL_NAMESPACE_BEGIN
@@ -65,14 +66,23 @@ struct ClosureTree {
     ClosureTreeNodeBase*	m_root = nullptr;
 };
 
-typedef const std::vector<std::tuple<std::string, std::string, int>>  ClosureVarList;
+struct ClosureVar {
+    const std::string m_name;
+    const std::string m_type;
+    const int         m_offset;
+
+    ClosureVar(const std::string& name, const std::string& type, const int offset) :
+        m_name(name), m_type(type), m_offset(offset) {}
+};
+
+typedef std::vector<ClosureVar> ClosureVarList;
 
 #define DECLARE_CLOSURE_TYPE_BEGIN(T)           struct T {
 #define DECLARE_CLOSURE_TYPE_VAR(T,VT,V)        VT V;
 #define DECLARE_CLOSURE_TYPE_END()              static ClosureVarList m_offsets; };
 
 #define IMPLEMENT_CLOSURE_TYPE_BEGIN(T)         ClosureVarList T::m_offsets({
-#define IMPLEMENT_CLOSURE_TYPE_VAR(T,VT,V)      { #V, #VT, (int)offsetof(struct T, V) },
-#define IMPLEMENT_CLOSURE_TYPE_END()            });
+#define IMPLEMENT_CLOSURE_TYPE_VAR(T,VT,V)      { ClosureVar( #V, #VT, (int)offsetof(struct T, V) ) },
+#define IMPLEMENT_CLOSURE_TYPE_END()            } );
 
 TSL_NAMESPACE_END
