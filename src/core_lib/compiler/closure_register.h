@@ -22,6 +22,7 @@
 #include <string>
 #include <mutex>
 #include <memory>
+#include <unordered_map>
 #include "tslversion.h"
 #include "closure.h"
 
