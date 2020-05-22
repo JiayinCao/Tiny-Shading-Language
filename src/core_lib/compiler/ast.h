@@ -30,11 +30,16 @@
 TSL_NAMESPACE_BEGIN
 
 class AstNode_FunctionPrototype;
+class ClosureRegister;
 
 struct LLVM_Compile_Context{
 	llvm::LLVMContext*	context = nullptr;
 	llvm::Module*		module = nullptr;
 	llvm::IRBuilder<>*	builder = nullptr;
+
+    // closured touched in the shader
+    std::unordered_map<std::string, llvm::Function*> m_closures_maps;
+    std::unordered_map<std::string, llvm::Type*>     m_closure_type_maps;
 
     using Var_Symbol_Table_Stack = std::vector<std::unordered_map<std::string, llvm::Value*>>;
     using Func_Symbol_Table = std::unordered_map<std::string, std::pair<llvm::Function*, const AstNode_FunctionPrototype*>>;

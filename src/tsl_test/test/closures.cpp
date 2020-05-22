@@ -30,8 +30,7 @@ IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambert, int, base_color)
 IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambert, float, normal)
 IMPLEMENT_CLOSURE_TYPE_END()
 
-// not feature ready yet, working on it.
-TEST(Closure, DISABLED_RegisterClosure) {
+TEST(Closure, RegisterClosure) {
     ShadingSystem shading_system;
     auto shading_context = shading_system.make_shading_context();
 
@@ -40,13 +39,16 @@ TEST(Closure, DISABLED_RegisterClosure) {
 
     auto shader_source = R"(
         shader function_name(out closure o0){
-            o0 = make_closure<Lambert>( 1 , 2.0 );
+            o0 = make_closure<lambert>( 11 , 2.0 );
         }
     )";
 
-    ClosureTypeLambert lambert;
-    auto func_ptr = compile_shader<void(*)(ClosureTypeLambert*)>(shader_source, shading_system);
-    func_ptr(&lambert);
+    Tsl_Namespace::ClosureTreeNodeBase* root = nullptr;
 
+    auto func_ptr = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeBase**)>(shader_source, shading_system);
+    func_ptr(&root);
 
+    auto lambert_param = (ClosureTypeLambert*)root->m_params;
+    EXPECT_EQ(lambert_param->base_color, 11);
+    EXPECT_EQ(lambert_param->normal, 2.0f);
 }

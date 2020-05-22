@@ -52,7 +52,7 @@ void ShaderGroup::add_shader_group(const ShaderUnit* shader_unit) {
 }
 
 ShadingContext::ShadingContext(ShadingSystem& shading_system):m_shading_system(shading_system) {
-    m_compiler = std::make_unique<TslCompiler>(m_shading_system.m_closure_register->get_closure_module());
+    m_compiler = std::make_unique<TslCompiler>(*m_shading_system.m_closure_register);
 }
 
 ShadingContext::~ShadingContext() {

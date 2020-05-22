@@ -20,8 +20,8 @@
 
 TSL_NAMESPACE_BEGIN
 
-TslCompiler::TslCompiler(llvm::Module* module){
-    m_compiler = std::make_unique<TslCompiler_Impl>(module);
+TslCompiler::TslCompiler(ClosureRegister& closure_register){
+    m_compiler = std::make_unique<TslCompiler_Impl>(closure_register);
 }
 
 bool TslCompiler::compile(const char* source_code, ShaderUnit* su) const {

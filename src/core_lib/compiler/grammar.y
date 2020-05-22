@@ -772,6 +772,9 @@ EXPRESSION_MAKE_CLOSURE:
     {
         AstNode_Expression* args = AstNode::castType<AstNode_Expression>($6);
 		$$ = new AstNode_Expression_MakeClosure( $3 , args );
+
+        // notify the compiler to generate pre-decleration
+        tsl_compiler->closure_touched( $3 );
     };
 
 // None-shader function arguments

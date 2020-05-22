@@ -31,8 +31,8 @@ ShadingSystem::ShadingSystem() {
 }
 
 ShadingSystem::~ShadingSystem() {
-    if (m_closure_register)
-        delete m_closure_register;
+//    if (m_closure_register)
+//        delete m_closure_register;
 }
 
 ShadingContext* ShadingSystem::make_shading_context() {

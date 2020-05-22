@@ -30,11 +30,11 @@
 #include "llvm/Transforms/Scalar/GVN.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ExecutionEngine/MCJIT.h"
-
 #include "compiler_impl.h"
 #include "ast.h"
 #include "shader_unit_pvt.h"
 #include "shading_context.h"
+#include "closure_register.h"
 
 // a temporary ugly solution for debugging for now
 // #define DEBUG_OUTPUT
@@ -54,7 +54,7 @@ void makeVerbose(int verbose);
 
 TSL_NAMESPACE_BEGIN
 
-TslCompiler_Impl::TslCompiler_Impl( llvm::Module* module ):m_closure_module(module){
+TslCompiler_Impl::TslCompiler_Impl( ClosureRegister& closure_register ):m_closure_register(closure_register){
     reset();
 }
 
@@ -64,6 +64,8 @@ TslCompiler_Impl::~TslCompiler_Impl() {
 void TslCompiler_Impl::reset() {
     m_scanner = nullptr;
     m_ast_root = nullptr;
+
+    m_closures_in_shader.clear();
 }
 
 void TslCompiler_Impl::push_function(AstNode_FunctionPrototype* node, const bool is_shader) {
@@ -143,6 +145,13 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnit* su) {
 		compile_context.module = module;
 		compile_context.builder = &builder;
 
+        m_closure_register.declare_closure_tree_types(m_llvm_context, &compile_context.m_closure_type_maps);
+        for (auto& closure : m_closures_in_shader) {
+            // declare the function first.
+            auto function = m_closure_register.declare_closure_function(closure, compile_context);
+            compile_context.m_closures_maps[closure] = function;
+        }
+
         // code gen for all functions
         for( auto& function : m_functions )
             function->codegen(compile_context);
@@ -164,7 +173,7 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnit* su) {
 #endif
 
         // make sure to link the global closure model
-       //  su_pvt->m_execution_engine->addModule(CloneModule(*m_closure_module));
+        su_pvt->m_execution_engine->addModule(CloneModule(*m_closure_register.get_closure_module()));
 
         // resolve the function pointer
         su_pvt->m_function_pointer = su_pvt->m_execution_engine->getFunctionAddress(m_ast_root->get_function_name());

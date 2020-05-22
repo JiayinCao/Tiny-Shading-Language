@@ -34,7 +34,7 @@ class TslCompiler_Impl;
 class TslCompiler {
 public:
     //! Constructor does nothing but to construct the m_compiler data.
-    TslCompiler( llvm::Module* module );
+    TslCompiler(ClosureRegister& closure_register);
 
     //! @brief  Compile a shader.
     //!

@@ -34,8 +34,11 @@ constexpr ClosureID CLOSURE_MUL = -2;
 struct ClosureTreeNodeAdd;
 struct ClosureTreeNodeMul;
 
+using ClosureParamPtr = void*;
+
 struct ClosureTreeNodeBase {
-    ClosureID   m_id = INVALID_CLOSURE_ID;
+    ClosureID           m_id = INVALID_CLOSURE_ID;
+    ClosureParamPtr     m_params = nullptr;
 
 	ClosureTreeNodeAdd* as_add_node() {
 		return reinterpret_cast<ClosureTreeNodeAdd*>(this);
@@ -56,11 +59,11 @@ struct ClosureTreeNodeMul : public ClosureTreeNodeBase {
     ClosureTreeNodeBase*	m_closure = nullptr;
 };
 
-// It is very important to make sure the memory layout is as expected, there is no fancy stuff compiler is trying to do for these data structure.
-// Because the same data structure will be generated from LLVM, which will expect this exact memory layout. If there is miss-match, it will crash.
-static_assert( sizeof(ClosureTreeNodeBase) == sizeof(ClosureID) , "Invalid Closure Tree Node Size" );
-static_assert( sizeof(ClosureTreeNodeAdd) == sizeof(ClosureID) + 4 /* memory padding. */ + sizeof(ClosureTreeNodeBase*) * 2 , "Invalid ClosureTreeNodeAdd Node Size" );
-static_assert( sizeof(ClosureTreeNodeMul) == sizeof(ClosureID) + sizeof(float) + sizeof(ClosureTreeNodeBase*), "Invalid ClosureTreeNodeMul Node Size");
+// It is very important to make sure the memory layout is as expected, there should be no fancy stuff compiler is trying to do for these data structure.
+// Because the same data structure will also be generated from LLVM, which will expect this exact memory layout. If there is miss-match, it will crash.
+static_assert( sizeof(ClosureTreeNodeBase) == sizeof(ClosureID) + sizeof(ClosureParamPtr) + 4 /* memory padding. */, "Invalid Closure Tree Node Size" );
+static_assert( sizeof(ClosureTreeNodeAdd) == sizeof(ClosureTreeNodeBase) + sizeof(ClosureTreeNodeBase*) * 2 , "Invalid ClosureTreeNodeAdd Node Size" );
+static_assert( sizeof(ClosureTreeNodeMul) == sizeof(ClosureTreeNodeBase) + sizeof(float) + 4 /* memory padding. */ + sizeof(ClosureTreeNodeBase*), "Invalid ClosureTreeNodeMul Node Size");
 
 struct ClosureTree {
     ClosureTreeNodeBase*	m_root = nullptr;

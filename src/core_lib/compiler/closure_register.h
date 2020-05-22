@@ -28,6 +28,17 @@
 
 TSL_NAMESPACE_BEGIN
 
+struct LLVM_Compile_Context;
+
+struct ClosureItem {
+    const ClosureID         m_closure_id = INVALID_CLOSURE_ID;
+    const ClosureVarList&   m_var_list;
+    const int               m_structure_size;
+
+    ClosureItem(ClosureID id, ClosureVarList& var_list, int structure_size) 
+        : m_closure_id(id), m_var_list(var_list), m_structure_size(structure_size) {}
+};
+
 class ClosureRegister {
 public:
     // initialize the register
@@ -42,16 +53,23 @@ public:
     // get global closure maker module
     llvm::Module* get_closure_module();
 
+    // declare some global data structure type
+    void          declare_closure_tree_types(llvm::LLVMContext& context, std::unordered_map<std::string, llvm::Type*>* mapping = nullptr );
+
+    // get declaration
+    llvm::Function* declare_closure_function(const std::string& name, LLVM_Compile_Context& context);
+
 private:
     /**< a container holding all closures ids. */
-    std::unordered_map<std::string, ClosureID>  m_closures;
+    std::unordered_map<std::string, ClosureItem>  m_closures;
     /**< current allocated closure id. */
     int m_current_closure_id = INVALID_CLOSURE_ID + 1;
     /**< a mutex to make sure access to closure container is thread-safe. */
     std::mutex m_closure_mutex;
 
-    llvm::LLVMContext               m_llvm_context;
-    std::unique_ptr<llvm::Module>   m_module;
+    llvm::LLVMContext                               m_llvm_context;
+    std::unique_ptr<llvm::Module>                   m_module;
+    std::unordered_map<std::string, llvm::Type*>    m_typing_maps;
 };
 
 TSL_NAMESPACE_END

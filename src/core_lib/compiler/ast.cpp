@@ -29,6 +29,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "ast.h"
 #include "llvm_util.h"
+#include "closure_register.h"
 
 using namespace llvm;
 
@@ -791,8 +792,24 @@ llvm::Value* AstNode_TypeCast::codegen(LLVM_Compile_Context& context) const {
 }
 
 llvm::Value* AstNode_Expression_MakeClosure::codegen(LLVM_Compile_Context& context) const {
+    const auto function_name = "make_closure_" + m_name;
 
-    return nullptr;
+    if (context.m_closures_maps.count(m_name) == 0) {
+        // emit an error here, closure not registered
+        return nullptr;
+    }
+        
+    // declare the function first.
+    auto function = context.m_closures_maps[m_name];
+
+    std::vector<Value*> args;
+    AstNode_Expression* node = m_args;
+    while (node) {
+        args.push_back(node->codegen(context));
+        node = castType<AstNode_Expression>(node->get_sibling());
+    }
+
+    return context.builder->CreateCall(function, args);
 }
 
 llvm::Value* AstNode_FunctionCall::codegen(LLVM_Compile_Context& context) const {

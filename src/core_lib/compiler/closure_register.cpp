@@ -30,7 +30,9 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ExecutionEngine/MCJIT.h"
 #include "closure_register.h"
+#include "compiler/ast.h"
 #include "compiler/llvm_util.h"
+#include "closure.h"
 
 TSL_NAMESPACE_BEGIN
 
@@ -38,7 +40,27 @@ using namespace llvm;
 
 bool ClosureRegister::init() {
     m_module = std::make_unique<llvm::Module>("shader", m_llvm_context);
+
+    // declare some global data structure
+    declare_closure_tree_types(m_llvm_context);
+
     return true;
+}
+
+void ClosureRegister::declare_closure_tree_types(llvm::LLVMContext& context, std::unordered_map<std::string, llvm::Type*>* mapping) {
+    // ClosureTreeNodeBase, it has to have this 4 bytes memory padding in it so that the size is 8, otherwise, it will crash the system.
+    const auto closure_tree_node_base = "closure_base";
+    const std::vector<Type*> args_base = {
+        Type::getInt32Ty(m_llvm_context),        /* this matches to m_id in ClosureTreeNodeBase. */
+        Type::getInt32PtrTy(m_llvm_context)     /* this matches to m_params in ClosureTreeNodeBase. */
+    };
+
+    if(!mapping)
+        m_typing_maps["closure_base"] = StructType::create(args_base, closure_tree_node_base);
+    else
+        (*mapping)["closure_base"] = StructType::create(args_base, closure_tree_node_base);
+
+    // There should be two more to be defined.
 }
 
 llvm::Module* ClosureRegister::get_closure_module() {
@@ -66,33 +88,46 @@ ClosureID ClosureRegister::register_closure_type(const std::string& name, Closur
     for (auto& arg : arg_list)
         arg_types.push_back(get_type_from_context(arg.m_type, llvm_compiling_context));
 
-    auto closure_tree_node_base = StructType::create(arg_types, closure_type);
+    auto closure_param_type = StructType::create(arg_types, closure_type);
 
     // external declaration of malloc function
     std::vector<Type*> proto_args(1, Type::getInt32Ty(m_llvm_context));
     Function* malloc_function = Function::Create(FunctionType::get(Type::getInt32PtrTy(m_llvm_context), proto_args, false), Function::ExternalLinkage, "malloc", m_module.get());
 
     // the function to allocate the closure data structure
-    Function* function = Function::Create(FunctionType::get(closure_tree_node_base->getPointerTo(), arg_types, false), Function::ExternalLinkage, function_name, m_module.get());
+    auto closure_base_type = m_typing_maps["closure_base"];
+    auto ret_type = closure_base_type->getPointerTo();
+    Function* function = Function::Create(FunctionType::get(ret_type, arg_types, false), Function::ExternalLinkage, function_name, m_module.get());
     BasicBlock* bb = BasicBlock::Create(m_llvm_context, "EntryBlock", function);
     IRBuilder<> builder(bb);
 
-    // allocate a structure
-    std::vector<Value*> args(1, ConstantInt::get(m_llvm_context, APInt(32, structure_size)));
-    auto value = builder.CreateCall(malloc_function, args, "malloc");
-    auto closure_ptr = builder.CreatePointerCast(value, closure_tree_node_base->getPointerTo());
+    // allocate a structure for keeping parameters
+    auto value = builder.CreateCall(malloc_function, { ConstantInt::get(m_llvm_context, APInt(32, structure_size)) }, "malloc");
+    auto closure_param_ptr = builder.CreatePointerCast(value, closure_param_type->getPointerTo());
 
     for (int i = 0; i < arg_list.size(); ++i) {
         auto& arg = arg_list[i];
 
         // this obviously won't work for pointer type data, I will fix it later.
-        auto var_ptr = builder.CreateConstGEP1_32(nullptr, closure_ptr, arg.m_offset);
+        auto var_type = get_type_from_context(arg.m_type, llvm_compiling_context);
+        // auto var_ptr = builder.CreateConstGEP1_32(nullptr, closure_param_ptr, arg.m_offset / 4);
+        auto var_ptr = builder.CreateConstGEP2_32(nullptr, closure_param_ptr, 0, arg.m_offset / 4);
         builder.CreateStore(function->getArg(i), var_ptr);
 
         arg_types.push_back(get_type_from_context(arg.m_type, llvm_compiling_context));
     }
     
-    builder.CreateRet(closure_ptr);
+    // allocate closure tree node
+    value = builder.CreateCall(malloc_function, { ConstantInt::get(m_llvm_context, APInt(32, sizeof(ClosureTreeNodeBase))) }, "malloc");
+    auto closure_tree_node_ptr = builder.CreatePointerCast(value, closure_base_type->getPointerTo());
+
+    // assign the closure parameter pointer
+    auto gep = builder.CreateConstGEP2_32(nullptr, closure_tree_node_ptr, 0, 1);
+    auto dst_closure_param_ptr = builder.CreatePointerCast(gep, closure_param_type->getPointerTo()->getPointerTo());
+    builder.CreateStore(closure_param_ptr, dst_closure_param_ptr);
+
+    // return the tree node pointer
+    builder.CreateRet(closure_tree_node_ptr);
 
     // for debugging purpose, set the name of the arguments
     for( int i = 0 ; i < arg_list.size() ; ++i ){
@@ -100,9 +135,32 @@ ClosureID ClosureRegister::register_closure_type(const std::string& name, Closur
         arg->setName(arg_list[i].m_name);
     }
 
-    m_module->print(errs(), nullptr);
-    
-    return m_closures[name] = ++m_current_closure_id;
+    m_closures.insert(make_pair(name, ClosureItem(++m_current_closure_id, arg_list, structure_size)));
+
+    return m_current_closure_id;
+}
+
+llvm::Function* ClosureRegister::declare_closure_function(const std::string& name, LLVM_Compile_Context& context) {
+    auto it = m_closures.find(name);
+    if (it == m_closures.end())
+        return nullptr;
+
+    auto& llvm_context = *context.context;
+    auto& module = *context.module;
+    const auto& closure_item = it->second;
+
+    std::vector<Type*> arg_types;
+    for (auto& arg : closure_item.m_var_list)
+        arg_types.push_back(get_type_from_context(arg.m_type, context));
+
+    const std::string closure_type = "closure_type_" + name;
+    auto closure_tree_node_base = StructType::create(arg_types, closure_type);
+
+    // external declaration of malloc function
+    const std::string function_name = "make_closure_" + name;
+
+    auto ret_type = context.m_closure_type_maps["closure_base"]->getPointerTo();
+    return Function::Create(FunctionType::get(ret_type, arg_types, false), Function::ExternalLinkage, function_name, module);
 }
 
 TSL_NAMESPACE_END

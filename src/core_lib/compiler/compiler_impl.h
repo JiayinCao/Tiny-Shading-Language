@@ -28,6 +28,7 @@ TSL_NAMESPACE_BEGIN
 
 class AstNode_FunctionPrototype;
 class ShaderUnit;
+class ClosureRegister;
 
 //! @brief  Internal compiler implementation.
 /**
@@ -37,7 +38,7 @@ class ShaderUnit;
 class TslCompiler_Impl {
 public:
     //! @brief  Default constructor
-    TslCompiler_Impl( llvm::Module* module );
+    TslCompiler_Impl( ClosureRegister& closure_register );
 
     //! @brief  Destructor
     ~TslCompiler_Impl();
@@ -76,6 +77,11 @@ public:
 		return m_type_cache;
 	}
 
+    //! @brief  Ask the compiler to pre-declare make closure function
+    void        closure_touched(const std::string& name) {
+        m_closures_in_shader.insert(name);
+    }
+
 private:
     // flex scanner
     void* m_scanner = nullptr;
@@ -95,7 +101,10 @@ private:
     // local llvm context
     llvm::LLVMContext   m_llvm_context;
 
-    // the module to make closures
-    const llvm::Module* m_closure_module = nullptr;
+    // closure register
+    ClosureRegister&    m_closure_register;
+
+    // closured touched in the shader
+    std::unordered_set<std::string> m_closures_in_shader;
 };
 TSL_NAMESPACE_END

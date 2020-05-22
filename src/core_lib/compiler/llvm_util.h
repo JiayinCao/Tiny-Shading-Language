@@ -45,6 +45,10 @@ inline llvm::IntegerType*   get_int_32_ty(Tsl_Namespace::LLVM_Compile_Context& c
     return llvm::Type::getInt32Ty(get_llvm_context(context));
 }
 
+inline llvm::PointerType* get_int_32_ptr_ty(Tsl_Namespace::LLVM_Compile_Context& context) {
+    return llvm::Type::getInt32PtrTy(get_llvm_context(context));
+}
+
 inline llvm::Type*          get_float_ty(Tsl_Namespace::LLVM_Compile_Context& context) {
     return llvm::Type::getFloatTy(get_llvm_context(context));
 }
@@ -79,6 +83,8 @@ inline llvm::Type*          get_type_from_context(const Tsl_Namespace::DataType 
             return get_void_ty(context);
         case Tsl_Namespace::DataType::BOOL:
             return get_int_1_ty(context);
+        case Tsl_Namespace::DataType::CLOSURE:
+            return get_int_32_ptr_ty(context);
         default:
             break;
     }
