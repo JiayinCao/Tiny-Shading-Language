@@ -146,3 +146,76 @@ TEST(Basic, ArrayAccess) {
     verify_func(std::numeric_limits<int>::min(), 12);
     verify_func(std::numeric_limits<int>::max(), 12);
 }
+
+TEST(Basic, VariableLifeTime) {
+    auto shader_source = R"(
+        shader function_name(int a, out int o0, out int o1){
+            {
+                int a = 123;
+                o0 = 123;
+            }
+            o1 = a;
+        }
+    )";
+
+    ShadingSystem shading_system;
+    auto func_ptr = compile_shader<void(*)(int, int*, int*)>(shader_source, shading_system);
+
+    auto verify_func = [&](int a, int b) {
+        int o0, o1;
+        func_ptr(a, &o0, &o1);
+        EXPECT_EQ(123, o0);
+        EXPECT_EQ(a, o1);
+    };
+
+    verify_func(1, 12);
+    verify_func(23, 0x3232);
+    verify_func(0, 0xffffffff);
+
+    // make sure it has the same overflow behavior as c++ code.
+    verify_func(std::numeric_limits<int>::min(), 12);
+    verify_func(std::numeric_limits<int>::max(), 12);
+}
+
+TEST(Basic, InvalidVariableLifeTime0) {
+    validate_shader(R"(
+        shader function_name(int a, out int o0, out int o1){
+            {
+                int k = 0;
+            }
+            o1 = 0;
+        }
+    )");
+}
+
+TEST(Basic, InvalidVariableLifeTime1) {
+    validate_shader(R"(
+        shader function_name(int a, out int o0, out int o1){
+            if( a )
+                int k = 0;
+            o1 = 0;
+        }
+    )");
+}
+
+TEST(Basic, InvalidVariableLifeTime2) {
+    validate_shader(R"(
+        shader function_name(int a, out int o0, out int o1){
+            while( a )
+                int k = 0;
+            o1 = 0;
+        }
+    )");
+}
+
+TEST(Basic, InvalidVariableLifeTime3) {
+    validate_shader(R"(
+        shader function_name(int a, out int o0, out int o1){
+            do
+                int k = 0;
+            while( k );
+
+            o1 = 0;
+        }
+    )");
+}

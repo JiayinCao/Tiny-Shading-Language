@@ -32,11 +32,22 @@ void AstNode_Literal_Bool::print() const {
     std::cout << m_val;
 }
 
-void AstNode_Stament_Break::print() const {
+void AstNode_ScoppedStatement::print() const {
+    std::cout << "{" << std::endl;
+    m_statement->print();
+    std::cout << "}" << std::endl;
+}
+
+void AstNode_CompoundStatements::print() const {
+    for (auto statement : m_statements)
+        statement->print();
+}
+
+void AstNode_Statement_Break::print() const {
     std::cout << "break";
 }
 
-void AstNode_Stament_Continue::print() const {
+void AstNode_Statement_Continue::print() const {
     std::cout << "continue";
 }
 
@@ -80,6 +91,10 @@ void AstNode_FunctionBody::print() const{
 	}
 
 	std::cout<<"}"<<std::endl;
+}
+
+void AstNode_Expression_MakeClosure::print() const {
+
 }
 
 void AstNode_FunctionCall::print() const {

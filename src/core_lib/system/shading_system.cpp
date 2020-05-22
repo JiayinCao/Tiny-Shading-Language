@@ -15,18 +15,24 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-#include "llvm/Support/TargetSelect.h"
 #include "shading_system.h"
 #include "shading_context.h"
+#include "compiler/closure_register.h"
+#include "llvm/Support/TargetSelect.h"
 
 TSL_NAMESPACE_BEGIN
 
 ShadingSystem::ShadingSystem() {
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
+
+    m_closure_register = new ClosureRegister();
+    m_closure_register->init();
 }
 
 ShadingSystem::~ShadingSystem() {
+    if (m_closure_register)
+        delete m_closure_register;
 }
 
 ShadingContext* ShadingSystem::make_shading_context() {
@@ -37,13 +43,8 @@ ShadingContext* ShadingSystem::make_shading_context() {
     return shading_context;
 }
 
-ClosureID ShadingSystem::register_closure_id(const std::string& name) {
-    std::lock_guard<std::mutex> lock(m_closure_mutex);
-
-    if (m_closures.count(name))
-        return INVALID_CLOSURE_ID;
-
-    return m_closures[name] = ++m_current_closure_id;
+ClosureID ShadingSystem::register_closure_type(const std::string& name, ClosureVarList& mapping, int structure_size) {
+    return m_closure_register->register_closure_type(name, mapping, structure_size);
 }
 
 TSL_NAMESPACE_END

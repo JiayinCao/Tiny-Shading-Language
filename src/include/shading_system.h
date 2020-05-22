@@ -28,6 +28,7 @@ TSL_NAMESPACE_BEGIN
 
 class ShadingContext;
 class ShaderUnit;
+class ClosureRegister;
 
 //! @brief  Shading system is the root interface exposed through TSL system.
 /*
@@ -56,7 +57,7 @@ public:
     //!
     //! @param  name    Name of the closure.
     //! @return         Allocated closure id for the closure.
-    ClosureID register_closure_id(const std::string& name);
+    ClosureID register_closure_type(const std::string& name, ClosureVarList& mapping, int closure_size);
 
 private:
     std::unordered_set<std::unique_ptr<ShadingContext>>    m_contexts;         /**< Data structure holding all contexts. */
@@ -67,12 +68,8 @@ private:
     /**< a mutex to make sure shader_group access is thread-safe. */
     std::mutex m_shader_unit_mutex;
 
-    /**< a container holding all closures ids. */
-    std::unordered_map<std::string, ClosureID>  m_closures;
-    /**< current allocated closure id. */
-    int m_current_closure_id = INVALID_CLOSURE_ID + 1;
-    /**< a mutex to make sure access to closure container is thread-safe. */
-    std::mutex m_closure_mutex;
+    /**< Closure register */
+    ClosureRegister* m_closure_register = nullptr;
 
     friend class ShadingContext;
 };

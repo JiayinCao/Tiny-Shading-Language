@@ -77,6 +77,8 @@ identifier               ({alpha}|[_])({alpha}|{digit}|[_])*
 whitespace               [ \t\r\n\f]+
 
 %%
+"make_closure"            { return MAKE_CLOSURE; }
+"closure"                 { return CLOSURE; }
 "true"                    { return TRUE; }
 "false"                   { return FALSE; }
 "do"                      { return DO; }

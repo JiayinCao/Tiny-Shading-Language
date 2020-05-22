@@ -54,8 +54,11 @@ void makeVerbose(int verbose);
 
 TSL_NAMESPACE_BEGIN
 
-TslCompiler_Impl::TslCompiler_Impl(){
+TslCompiler_Impl::TslCompiler_Impl( llvm::Module* module ):m_closure_module(module){
     reset();
+}
+
+TslCompiler_Impl::~TslCompiler_Impl() {
 }
 
 void TslCompiler_Impl::reset() {
@@ -159,6 +162,9 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnit* su) {
 #ifdef DEBUG_OUTPUT
 		module->print(llvm::errs(), nullptr);
 #endif
+
+        // make sure to link the global closure model
+       //  su_pvt->m_execution_engine->addModule(CloneModule(*m_closure_module));
 
         // resolve the function pointer
         su_pvt->m_function_pointer = su_pvt->m_execution_engine->getFunctionAddress(m_ast_root->get_function_name());

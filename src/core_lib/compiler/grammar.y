@@ -123,10 +123,12 @@
 %token FALSE            "false"
 %token BREAK            "break"
 %token CONTINUE         "continue"
+%token CLOSURE          "closure"
+%token MAKE_CLOSURE     "make_closure"
 
 %type <p> PROGRAM FUNCTION_ARGUMENT_DECL FUNCTION_ARGUMENT_DECLS SHADER_FUNCTION_ARGUMENT_DECLS FUNCTION_BODY VARIABLE_LVALUE ID_OR_FIELD FUNCTION_ARGUMENTS SHADER_FUNCTION_ARGUMENT_DECL FOR_INIT_STATEMENT
 %type <p> STATEMENT STATEMENTS STATEMENT_RETURN STATEMENT_EXPRESSION_OPT STATEMENT_COMPOUND_EXPRESSION STATEMENT_VARIABLES_DECLARATIONS VARIABLE_DECLARATION VARIABLE_DECLARATIONS STATEMENT_CONDITIONAL STATEMENT_LOOP STATEMENT_SCOPED STATEMENT_LOOPMOD
-%type <p> EXPRESSION_COMPOUND EXPRESSION_CONST EXPRESSION_BINARY EXPRESSION EXPRESSION_VARIABLE EXPRESSION_FUNCTION_CALL EXPRESSION_TERNARY EXPRESSION_COMPOUND_OPT EXPRESSION_SCOPED EXPRESSION_ASSIGN EXPRESSION_UNARY EXPRESSION_TYPECAST
+%type <p> EXPRESSION_COMPOUND EXPRESSION_CONST EXPRESSION_BINARY EXPRESSION EXPRESSION_VARIABLE EXPRESSION_FUNCTION_CALL EXPRESSION_TERNARY EXPRESSION_COMPOUND_OPT EXPRESSION_SCOPED EXPRESSION_ASSIGN EXPRESSION_UNARY EXPRESSION_TYPECAST EXPRESSION_MAKE_CLOSURE
 %type <c> OP_UNARY
 %type <t> TYPE
 %type <i> REC_OR_DEC
@@ -322,13 +324,24 @@ FUNCTION_BODY:
     };
 
 STATEMENTS:
-	STATEMENT STATEMENTS {
-		AstNode* node_arg = $1;
-		AstNode* node_args = $2;
-		if(!node_arg)
-			$$ = node_args;
-		else
-			$$ = node_arg->append( node_args );
+	STATEMENTS STATEMENT{
+		AstNode_Statement* statements = AstNode::castType<AstNode_Statement>$1;
+		AstNode_Statement* statement = AstNode::castType<AstNode_Statement>$2;
+		if(!statements)
+			$$ = statement;
+		else if(!statement)
+			$$ = statements;
+        else{
+            if( auto compound_statement = AstNode::castType<AstNode_CompoundStatements>(statements, false) ){
+                compound_statement->append_statement(statement);
+                $$ = statements;
+            }else{
+                AstNode_CompoundStatements* ret = new AstNode_CompoundStatements();
+                ret->append_statement(statements);
+                ret->append_statement(statement);
+                $$ = ret;
+            }
+        }
 	}
 	|
 	/* empty */ {
@@ -353,23 +366,21 @@ STATEMENT:
 STATEMENT_LOOPMOD:
     "break" ";"
     {
-        $$ = new AstNode_Stament_Break ();
+        $$ = new AstNode_Statement_Break ();
     }
     | 
     "continue" ";"
     {
-        $$ = new AstNode_Stament_Continue ();
+        $$ = new AstNode_Statement_Continue ();
     }
     ;
     
 STATEMENT_SCOPED:
-	"{" 
-		{ /* push a new scope here */ }
-	STATEMENTS "}"
-		{
-			/* pop the scope from here */ 
-			$$ = $3;
-		}
+	"{" STATEMENTS "}"
+	{
+        AstNode_Statement* statement = AstNode::castType<AstNode_Statement>($2);
+        $$ = new AstNode_ScoppedStatement(statement);
+	}
 	;
 
 STATEMENT_RETURN:
@@ -517,7 +528,10 @@ EXPRESSION:
 	|
 	EXPRESSION_TYPECAST
 	|
-	EXPRESSION_VARIABLE {
+	EXPRESSION_VARIABLE
+    |
+    EXPRESSION_MAKE_CLOSURE
+    {
 	};
 
 EXPRESSION_UNARY:
@@ -752,6 +766,14 @@ EXPRESSION_FUNCTION_CALL:
 		$$ = new AstNode_FunctionCall( $1 , args );
 	};
 
+// a special function just for creating closure data structure.
+EXPRESSION_MAKE_CLOSURE:
+    "make_closure" "<" ID ">" "(" FUNCTION_ARGUMENTS ")"
+    {
+        AstNode_Expression* args = AstNode::castType<AstNode_Expression>($6);
+		$$ = new AstNode_Expression_MakeClosure( $3 , args );
+    };
+
 // None-shader function arguments
 FUNCTION_ARGUMENTS:
 	{
@@ -889,7 +911,13 @@ TYPE:
 	"void" {
 		$$ = DataType::VOID;
 		tsl_compiler->cache_next_data_type($$);
-	};
+	}
+    |
+    "closure" {
+        $$ = DataType::CLOSURE;
+		tsl_compiler->cache_next_data_type($$);
+    }
+    ;
 %%
 
 void yyerror(struct YYLTYPE* loc, void* x, char const * str){

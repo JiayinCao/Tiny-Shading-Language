@@ -20,6 +20,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include <string>
 #include <vector>
+#include <unordered_set>
 #include "tslversion.h"
 #include "types.h"
 
@@ -36,7 +37,10 @@ class ShaderUnit;
 class TslCompiler_Impl {
 public:
     //! @brief  Default constructor
-    TslCompiler_Impl();
+    TslCompiler_Impl( llvm::Module* module );
+
+    //! @brief  Destructor
+    ~TslCompiler_Impl();
 
     //! @brief  Nuke the state of the compiler so that it can be used for another pass of compiling.
     void    reset();
@@ -77,15 +81,21 @@ private:
     void* m_scanner = nullptr;
 
     // root ast node of the parsed program
-    AstNode_FunctionPrototype* m_ast_root = nullptr;
+    AstNode_FunctionPrototype*                  m_ast_root = nullptr;
 
     // global functions defined in this module
-    std::vector<AstNode_FunctionPrototype*>    m_functions;
+    std::vector<AstNode_FunctionPrototype*>     m_functions;
+
+    // registered closure types
+    std::unordered_set<std::string>             m_closures;
 
 	// data type cache
 	DataType	m_type_cache = DataType::VOID;
 
     // local llvm context
-    llvm::LLVMContext m_llvm_context;
+    llvm::LLVMContext   m_llvm_context;
+
+    // the module to make closures
+    const llvm::Module* m_closure_module = nullptr;
 };
 TSL_NAMESPACE_END

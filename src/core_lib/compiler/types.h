@@ -30,7 +30,8 @@ enum DataType : int{
 	BOOL	,
 	FLOAT3	,
 	FLOAT4	,
-	MATRIX	
+	MATRIX	,
+    CLOSURE
 };
 
 inline const char* str_from_data_type( const DataType type ){
@@ -49,6 +50,8 @@ inline const char* str_from_data_type( const DataType type ){
 		return "matrix";
     case DataType::DOUBLE:
         return "double";
+    case DataType::CLOSURE:
+        return "closure";
 	default:
 		break;
 	}

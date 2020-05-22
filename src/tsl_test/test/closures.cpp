@@ -1,0 +1,52 @@
+/*
+    This file is a part of Tiny-Shading-Language or TSL, an open-source cross
+    platform programming shading language.
+
+    Copyright (c) 2020-2020 by Jiayin Cao - All rights reserved.
+
+    TSL is a free software written for educational purpose. Anyone can distribute
+    or modify it under the the terms of the GNU General Public License Version 3 as
+    published by the Free Software Foundation. However, there is NO warranty that
+    all components are functional in a perfect manner. Without even the implied
+    warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+    General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along with
+    this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
+ */
+
+#include <unordered_map>
+#include <string>
+#include "test_common.h"
+#include "closure.h"
+
+DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeLambert)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, int, base_color)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, float, normal)
+DECLARE_CLOSURE_TYPE_END()
+
+IMPLEMENT_CLOSURE_TYPE_BEGIN(ClosureTypeLambert)
+IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambert, int, base_color)
+IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambert, float, normal)
+IMPLEMENT_CLOSURE_TYPE_END()
+
+// not feature ready yet, working on it.
+TEST(Closure, DISABLED_RegisterClosure) {
+    ShadingSystem shading_system;
+    auto shading_context = shading_system.make_shading_context();
+
+    // shading_system.register_closure_type<ClosureTypeLambert>("lambert");
+    shading_system.register_closure_type("lambert", ClosureTypeLambert::m_offsets, (int)sizeof(ClosureTypeLambert));
+
+    auto shader_source = R"(
+        shader function_name(out closure o0){
+            o0 = make_closure<Lambert>( 1 , 2.0 );
+        }
+    )";
+
+    ClosureTypeLambert lambert;
+    auto func_ptr = compile_shader<void(*)(ClosureTypeLambert*)>(shader_source, shading_system);
+    func_ptr(&lambert);
+
+
+}

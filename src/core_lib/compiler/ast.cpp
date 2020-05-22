@@ -34,6 +34,52 @@ using namespace llvm;
 
 TSL_NAMESPACE_BEGIN
 
+void LLVM_Compile_Context::reset() {
+    m_var_symbols.clear();
+    m_var_symbols.push_back({});    // this is for global variables
+}
+
+llvm::Value* LLVM_Compile_Context::get_var_symbol(const std::string& name, bool only_top_layer) {
+    if (only_top_layer) {
+        auto top = m_var_symbols.back();
+        auto it = top.find(name);
+        return it == top.end() ? nullptr : it->second;
+    } else {
+        auto it = m_var_symbols.rbegin();
+        while (it != m_var_symbols.rend()) {
+            auto var = it->find(name);
+            if (var != it->end())
+                return var->second;
+            ++it;
+        }
+    }
+
+    // emit error here, undefined symbol
+    return nullptr;
+}
+
+llvm::Value* LLVM_Compile_Context::push_var_symbol(const std::string& name, llvm::Value* value) {
+    auto top_layer = m_var_symbols.back();
+
+    if (top_layer.count(name)) {
+        // emit error here, variabled already defined.
+        return nullptr;
+    }
+
+    m_var_symbols.back()[name] = value;
+
+    // emit error here, undefined symbol
+    return nullptr;
+}
+
+void LLVM_Compile_Context::push_var_symbol_layer() {
+    m_var_symbols.push_back({});
+}
+
+void LLVM_Compile_Context::pop_var_symbol_layer() {
+    m_var_symbols.pop_back();
+}
+
 llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& context ) const {
 	int arg_cnt = 0;
 	AstNode_VariableDecl* variable = m_variables;
@@ -43,7 +89,7 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 	}
 
     // clear the symbol maps, no global var for now
-    context.m_var_symbols.clear();
+    context.push_var_symbol_layer();
 
 	// parse argument types
 	std::vector<llvm::Type*>	args(arg_cnt);
@@ -98,14 +144,14 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 
             // there is duplicated names, emit an warning!!
             // However, there is no log system in the compiler for now, I need to handle this later.
-            if( 0 != context.m_var_symbols.count(name) ){
+            if( nullptr != context.get_var_symbol(name, true) ){
                 std::cout << "Duplicated argument named : " << name << std::endl;
                 return nullptr;
             }
 
             auto arg = function->getArg(i);
             if (variable->get_config() & VariableConfig::OUTPUT) {
-                context.m_var_symbols[name] = arg;
+                context.push_var_symbol(name, arg);
             } else {
                 // allocate the variable on stack
                 auto alloc_var = context.builder->CreateAlloca(raw_type, nullptr, name);
@@ -113,7 +159,7 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
                 // duplicate the value so that it can be a copy instead of a reference.
                 context.builder->CreateStore(arg, alloc_var);
                 
-                context.m_var_symbols[name] = alloc_var;
+                context.push_var_symbol(name, alloc_var);
             }
 
             variable = castType<AstNode_VariableDecl>(variable->get_sibling());
@@ -130,6 +176,8 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
         if (nullptr == last_block.getTerminator())
             context.builder->CreateRetVoid();
     }
+
+    context.pop_var_symbol_layer();
 
 	return function;
 }
@@ -340,28 +388,14 @@ llvm::Value* AstNode_Statement_Return::codegen(LLVM_Compile_Context& context) co
 
 llvm::Value* AstNode_VariableRef::codegen(LLVM_Compile_Context& context) const {
     // just find it in the symbol table
-    auto it = context.m_var_symbols.find(m_name);
-
-    // undefined variable referenced here, emit warning
-    if (it == context.m_var_symbols.end()) {
-        std::cout << "Undefined variable : " << m_name << std::endl;
-        return nullptr;
-    }
-
-    return context.builder->CreateLoad(it->second);
+    auto var = context.get_var_symbol(m_name);
+    if (!var)
+        return var;
+    return context.builder->CreateLoad(var);
 }
 
 llvm::Value* AstNode_VariableRef::get_value_address(LLVM_Compile_Context& context) const {
-    // just find it in the symbol table
-    auto it = context.m_var_symbols.find(m_name);
-
-    // undefined variable referenced here, emit warning
-    if (it == context.m_var_symbols.end()) {
-        std::cout << "Undefined variable : " << m_name << std::endl;
-        return nullptr;
-    }
-
-    return it->second;
+    return context.get_var_symbol(m_name);
 }
 
 llvm::Value* AstNode_ArrayAccess::codegen(LLVM_Compile_Context& context) const {
@@ -396,7 +430,7 @@ llvm::Value* AstNode_SingleVariableDecl::codegen(LLVM_Compile_Context& context) 
 
     // there is duplicated names, emit an warning!!
     // However, there is no log system in the compiler for now, I need to handle this later.
-    if (0 != context.m_var_symbols.count(name)) {
+    if (nullptr != context.get_var_symbol(name, true)) {
         std::cout << "Duplicated argument named : " << name << std::endl;
         return nullptr;
     }
@@ -412,7 +446,7 @@ llvm::Value* AstNode_SingleVariableDecl::codegen(LLVM_Compile_Context& context) 
             context.builder->CreateStore(init_value, alloc_var);
     }
 
-    context.m_var_symbols[name] = alloc_var;
+    context.push_var_symbol(name, alloc_var);
 
     return nullptr;
 }
@@ -422,7 +456,7 @@ llvm::Value* AstNode_ArrayDecl::codegen(LLVM_Compile_Context& context) const {
 
     // there is duplicated names, emit an warning!!
     // However, there is no log system in the compiler for now, I need to handle this later.
-    if (0 != context.m_var_symbols.count(name)) {
+    if (nullptr != context.get_var_symbol(name, true)) {
         std::cout << "Duplicated argument named : " << name << std::endl;
         return nullptr;
     }
@@ -438,7 +472,7 @@ llvm::Value* AstNode_ArrayDecl::codegen(LLVM_Compile_Context& context) const {
     // allocate the variable on stack
     auto alloc_var = context.builder->CreateAlloca(type, cnt, name);
 
-    context.m_var_symbols[name] = alloc_var;
+    context.push_var_symbol(name, alloc_var);
 
     return nullptr;
 }
@@ -756,6 +790,11 @@ llvm::Value* AstNode_TypeCast::codegen(LLVM_Compile_Context& context) const {
     return value;
 }
 
+llvm::Value* AstNode_Expression_MakeClosure::codegen(LLVM_Compile_Context& context) const {
+
+    return nullptr;
+}
+
 llvm::Value* AstNode_FunctionCall::codegen(LLVM_Compile_Context& context) const {
     auto it = context.m_func_symbols.find(m_name);
     if (it == context.m_func_symbols.end()) {
@@ -822,6 +861,8 @@ llvm::Value* AstNode_Statement_Condition::codegen(LLVM_Compile_Context& context)
     else
         builder.CreateCondBr(cond, then_bb, merge_bb);
 
+    context.push_var_symbol_layer();
+
     builder.SetInsertPoint(then_bb);
     auto statement = m_true_statements;
     while (statement) {
@@ -849,6 +890,8 @@ llvm::Value* AstNode_Statement_Condition::codegen(LLVM_Compile_Context& context)
     function->getBasicBlockList().push_back(merge_bb);
     builder.SetInsertPoint(merge_bb);
 
+    context.pop_var_symbol_layer();
+
     return nullptr;
 }
 
@@ -864,6 +907,7 @@ llvm::Value* AstNode_Statement_Loop_While::codegen(LLVM_Compile_Context& context
     builder.CreateBr(loop_begin_bb);
 
     // push the loop blocks
+    context.push_var_symbol_layer();
     context.m_blocks.push(std::make_pair(loop_begin_bb, loop_end_bb));
 
     builder.SetInsertPoint(loop_begin_bb);
@@ -888,6 +932,8 @@ llvm::Value* AstNode_Statement_Loop_While::codegen(LLVM_Compile_Context& context
     // pop the loop blocks
     context.m_blocks.pop();
 
+    context.pop_var_symbol_layer();
+
     return nullptr;
 }
 
@@ -900,6 +946,7 @@ llvm::Value* AstNode_Statement_Loop_DoWhile::codegen(LLVM_Compile_Context& conte
     BasicBlock* loop_end_bb = BasicBlock::Create(llvm_context, "loop_end");
 
     // push the loop blocks
+    context.push_var_symbol_layer();
     context.m_blocks.push(std::make_pair(loop_bb, loop_end_bb));
 
     builder.CreateBr(loop_bb);
@@ -920,6 +967,7 @@ llvm::Value* AstNode_Statement_Loop_DoWhile::codegen(LLVM_Compile_Context& conte
 
     // pop the loop blocks
     context.m_blocks.pop();
+    context.pop_var_symbol_layer();
 
     return nullptr;
 }
@@ -951,6 +999,7 @@ llvm::Value* AstNode_Statement_Loop_For::codegen(LLVM_Compile_Context& context) 
     builder.CreateBr(loop_begin_bb);
 
     // push the loop blocks
+    context.push_var_symbol_layer();
     context.m_blocks.push(std::make_pair(loop_iter_bb, loop_end_bb));
 
     // the for loop begins from the condition blocks
@@ -981,11 +1030,32 @@ llvm::Value* AstNode_Statement_Loop_For::codegen(LLVM_Compile_Context& context) 
 
     // pop the loop blocks
     context.m_blocks.pop();
+    context.pop_var_symbol_layer();
 
     return nullptr;
 }
 
-llvm::Value* AstNode_Stament_Break::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_ScoppedStatement::codegen(LLVM_Compile_Context& context) const {
+    context.push_var_symbol_layer();
+    
+    if(m_statement)
+        m_statement->codegen(context);
+
+    context.pop_var_symbol_layer();
+    return nullptr;
+}
+
+void AstNode_CompoundStatements::append_statement(AstNode_Statement* statement) {
+    m_statements.push_back(statement);
+}
+
+llvm::Value* AstNode_CompoundStatements::codegen(LLVM_Compile_Context& context) const {
+    for (auto statement : m_statements)
+        statement->codegen(context);
+    return nullptr;
+}
+
+llvm::Value* AstNode_Statement_Break::codegen(LLVM_Compile_Context& context) const {
     BasicBlock* bb = BasicBlock::Create(*context.context, "next_block");
 
     auto top = context.m_blocks.top();
@@ -998,7 +1068,7 @@ llvm::Value* AstNode_Stament_Break::codegen(LLVM_Compile_Context& context) const
     return nullptr;
 }
 
-llvm::Value* AstNode_Stament_Continue::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Statement_Continue::codegen(LLVM_Compile_Context& context) const {
     BasicBlock* bb = BasicBlock::Create(*context.context, "next_block");
 
     auto top = context.m_blocks.top();

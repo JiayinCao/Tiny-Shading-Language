@@ -19,6 +19,7 @@
 #include "shading_system.h"
 #include "compiler/compiler.h"
 #include "compiler/shader_unit_pvt.h"
+#include "compiler/closure_register.h"
 
 TSL_NAMESPACE_BEGIN
 
@@ -51,7 +52,7 @@ void ShaderGroup::add_shader_group(const ShaderUnit* shader_unit) {
 }
 
 ShadingContext::ShadingContext(ShadingSystem& shading_system):m_shading_system(shading_system) {
-    m_compiler = std::make_unique<TslCompiler>();
+    m_compiler = std::make_unique<TslCompiler>(m_shading_system.m_closure_register->get_closure_module());
 }
 
 ShadingContext::~ShadingContext() {

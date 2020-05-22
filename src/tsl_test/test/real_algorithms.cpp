@@ -1468,3 +1468,115 @@ TEST(Practical, NthUglyNumber) {
     for (int i = 1; i < 1024; ++i)
         verify_func(i);
 }
+
+// Perfect Squares
+// https://leetcode.com/problems/perfect-squares/
+//
+// Given a positive integer n, find the least number of perfect square numbers (for example, 1, 4, 9, 16, ...) which sum to n.
+
+static int numSquares(int n) {
+    std::vector<int> dp(n + 1);
+    dp[0] = 0;
+    dp[1] = 1;
+    for (int i = 2; i <= n; i++) {
+        dp[i] = INT_MAX;
+        for (int j = 1; j * j <= i; j++) {
+            dp[i] = min(dp[i], dp[i - j * j] + 1);
+        }
+    }
+    return dp[n];
+}
+
+TEST(Practical, NumSquares) {
+    auto shader_source = R"(
+        int min( int a , int b ){
+            return a < b ? a : b;
+        }
+
+        int numSquares(int n) {
+            int dp[n + 1];
+            dp[0] = 0;
+            dp[1] = 1;
+            for (int i = 2; i <= n; i++) {
+                dp[i] = 0xefffffff;
+                for (int j = 1; j * j <= i; j++) {
+                    dp[i] = min(dp[i], dp[i - j * j] + 1);
+                }
+            }
+            return dp[n];
+        }
+
+        shader main( int m, out int o0 ){
+            o0 = numSquares(m);
+        }
+    )";
+
+    ShadingSystem shading_system;
+    auto func_ptr = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+
+    auto verify_func = [&](int x) {
+        int o0;
+        func_ptr(x, &o0);
+        EXPECT_EQ(numSquares(x), o0);
+    };
+
+    for (int i = 1; i < 1024; ++i)
+        verify_func(i);
+}
+
+// Number Complement
+// https://leetcode.com/problems/number-complement/
+//
+// Given a positive integer num, output its complement number. The complement strategy is to flip the bits of its binary representation.
+
+int findComplement(int n) {
+    int sum = 0, i = 0;
+    while (n) {
+        if (!(n & 1)) {
+            sum += mypow(2, i);
+        }
+        n >>= 1;
+        i++;
+    }
+    return sum;
+}
+
+TEST(Practical, FindComplement) {
+    auto shader_source = R"(
+        int mypow(int x, int n) {
+            if (n == 0)
+                return 1;
+
+            int half_power = mypow(x, n / 2);
+            return (n % 2) ? half_power * half_power * x : half_power * half_power;
+        }
+
+        int findComplement(int n) {
+            int sum = 0, i = 0;
+            while (n) {
+                if (!(n & 1)) {
+                    sum += mypow(2, i);
+                }
+                n >>= 1;
+                i++;
+            }
+            return sum;
+        }
+
+        shader main( int m, out int o0 ){
+            o0 = findComplement(m);
+        }
+    )";
+
+    ShadingSystem shading_system;
+    auto func_ptr = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+
+    auto verify_func = [&](int x) {
+        int o0;
+        func_ptr(x, &o0);
+        EXPECT_EQ(findComplement(x), o0);
+    };
+
+    for (int i = 1; i < 1024; ++i)
+        verify_func(i);
+}

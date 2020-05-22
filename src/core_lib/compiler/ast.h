@@ -36,10 +36,22 @@ struct LLVM_Compile_Context{
 	llvm::Module*		module = nullptr;
 	llvm::IRBuilder<>*	builder = nullptr;
 
-    std::unordered_map<std::string, llvm::Value*>       m_var_symbols;
-    std::unordered_map<std::string, std::pair<llvm::Function*, const AstNode_FunctionPrototype*>>    m_func_symbols;
+    using Var_Symbol_Table_Stack = std::vector<std::unordered_map<std::string, llvm::Value*>>;
+    using Func_Symbol_Table = std::unordered_map<std::string, std::pair<llvm::Function*, const AstNode_FunctionPrototype*>>;
+    using Block_Stack = std::stack<std::pair<llvm::BasicBlock*, llvm::BasicBlock*>>;
 
-    std::stack<std::pair<llvm::BasicBlock*, llvm::BasicBlock*>>  m_blocks;
+    Func_Symbol_Table       m_func_symbols;
+    Block_Stack             m_blocks;
+
+    llvm::Value* get_var_symbol(const std::string& name, bool only_top_layer = false);
+    llvm::Value* push_var_symbol(const std::string& name, llvm::Value* value);
+    void push_var_symbol_layer();
+    void pop_var_symbol_layer();
+
+    void reset();
+
+private:
+    Var_Symbol_Table_Stack  m_var_symbols;
 };
 
 class LLVM_Value{
@@ -65,13 +77,14 @@ public:
     }
     
     template<class T>
-    static T* castType(AstNode* node) {
+    static T* castType(AstNode* node, bool check = true) {
 #ifndef TSL_FINAL
         if (!node)
             return nullptr;
 
         T* ret = dynamic_cast<T*>(node);
-        assert(ret);
+        if(check)
+            assert(ret);
         return ret;
 #else
         // there is no need to pay run-time cost since we are sure the type is correct.
@@ -330,6 +343,19 @@ public:
 private:
     std::string m_name;
     AstNode_Expression* m_variables;
+};
+
+class AstNode_Expression_MakeClosure : public AstNode_Expression {
+public:
+    AstNode_Expression_MakeClosure(const char* closure_name, AstNode_Expression* args) : m_name(closure_name), m_args(args) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
+    void print() const override;
+
+private:
+    const std::string m_name;
+    AstNode_Expression* m_args;
 };
 
 class AstNode_Ternary : public AstNode_Expression {
@@ -683,18 +709,42 @@ private:
     AstNode_Lvalue* m_var;
 };
 
-
 class AstNode_Statement : public AstNode, public LLVM_Value {
 };
 
-class AstNode_Stament_Break : public AstNode_Statement {
+class AstNode_ScoppedStatement : public AstNode_Statement {
+public:
+    AstNode_ScoppedStatement(AstNode_Statement* statement) :m_statement(statement) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
+    void print() const override;
+
+private:
+    AstNode_Statement* m_statement;
+};
+
+class AstNode_CompoundStatements : public AstNode_Statement {
+public:
+    AstNode_CompoundStatements() {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+    void print() const override;
+
+    void append_statement(AstNode_Statement* statement);
+
+private:
+    std::vector<AstNode_Statement*> m_statements;
+};
+
+class AstNode_Statement_Break : public AstNode_Statement {
 public:
     llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 };
 
-class AstNode_Stament_Continue : public AstNode_Statement {
+class AstNode_Statement_Continue : public AstNode_Statement {
 public:
     llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 

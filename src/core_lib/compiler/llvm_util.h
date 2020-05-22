@@ -85,6 +85,26 @@ inline llvm::Type*          get_type_from_context(const Tsl_Namespace::DataType 
     return nullptr;
 }
 
+inline llvm::Type* get_type_from_context(const std::string& type, Tsl_Namespace::LLVM_Compile_Context& context) {
+    if( type == "int" )
+        return get_int_32_ty(context);
+    else if( type == "float" )
+        return get_float_ty(context);
+    else if( type == "float3" )
+        return get_float_ptr_ty(context);
+    else if( type == "float4" )
+        return get_float_ptr_ty(context);
+    else if( type == "double" )
+        return get_double_ty(context);
+    else if( type == "matrix" )
+        return get_float_ptr_ty(context);
+    else if( type == "void" )
+        return get_void_ty(context);
+    else if( type == "bool" )
+        return get_int_1_ty(context);
+    return nullptr;
+}
+
 inline llvm::Value*     get_llvm_constant_fp(const float v, Tsl_Namespace::LLVM_Compile_Context& context){
     auto& llvm_context = get_llvm_context(context);
     return llvm::ConstantFP::get(llvm_context, llvm::APFloat(v));

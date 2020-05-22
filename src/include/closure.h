@@ -19,6 +19,8 @@
 
 #include <memory>
 #include <type_traits>
+#include <stddef.h>
+#include <unordered_map>
 #include "tslversion.h"
 
 TSL_NAMESPACE_BEGIN
@@ -62,5 +64,15 @@ static_assert( sizeof(ClosureTreeNodeMul) == sizeof(ClosureID) + sizeof(float) +
 struct ClosureTree {
     ClosureTreeNodeBase*	m_root = nullptr;
 };
+
+typedef const std::vector<std::tuple<std::string, std::string, int>>  ClosureVarList;
+
+#define DECLARE_CLOSURE_TYPE_BEGIN(T)           struct T {
+#define DECLARE_CLOSURE_TYPE_VAR(T,VT,V)        VT V;
+#define DECLARE_CLOSURE_TYPE_END()              static ClosureVarList m_offsets; };
+
+#define IMPLEMENT_CLOSURE_TYPE_BEGIN(T)         ClosureVarList T::m_offsets({
+#define IMPLEMENT_CLOSURE_TYPE_VAR(T,VT,V)      { #V, #VT, (int)offsetof(struct T, V) },
+#define IMPLEMENT_CLOSURE_TYPE_END()            });
 
 TSL_NAMESPACE_END
