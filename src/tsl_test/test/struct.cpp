@@ -26,7 +26,42 @@ TEST(Struct, StructureDefine) {
 		};
 
         shader func(){
-            
+            struct vec3 light_dir;
+        }
+    )");
+}
+
+TEST(Struct, StructureDefineRecusive) {
+	validate_shader(R"(
+		struct vec2 {
+			float x;
+			float y;
+		};
+
+		struct vec3 {
+			struct vec2 xy;
+			float z;
+		};
+
+        shader func(){
+            struct vec3 light_dir;
+        }
+    )");
+}
+
+TEST(Struct, DISABLED_StructureAsArgument) {
+	validate_shader(R"(
+		struct vec2 {
+			float x;
+			float y;
+		};
+
+		struct vec3 {
+			struct vec2 xy;
+			float z;
+		};
+
+        shader func( struct vec3 light_dir ){
         }
     )");
 }

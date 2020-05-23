@@ -44,7 +44,7 @@
 	int								i; /* integer value or enum values. */
 	const char						*s;	/* string values. */
 	char							c; /* single char. */
-	Tsl_Namespace::DataType			t;	/* data type. */
+	Tsl_Namespace::DataTypeEnum		t;	/* data type. */
 	Tsl_Namespace::VariableConfig	vc; /* 'out', 'in' */
 }
 
@@ -906,42 +906,42 @@ ID_OR_FIELD:
 
 TYPE:
 	"int" {
-		$$ = DataType::INT;
+		$$ = DataTypeEnum::INT;
 		tsl_compiler->cache_next_data_type($$);
 	}
 	|
 	"float" {
-		$$ = DataType::FLOAT;
+		$$ = DataTypeEnum::FLOAT;
 		tsl_compiler->cache_next_data_type($$);
 	}
     |
     "double" {
-        $$ = DataType::DOUBLE;
+        $$ = DataTypeEnum::DOUBLE;
         tsl_compiler->cache_next_data_type($$);
     }
 	|
 	"matrix" {
-		$$ = DataType::MATRIX;
+		$$ = DataTypeEnum::MATRIX;
 		tsl_compiler->cache_next_data_type($$);
 	}
 	|
 	"float3" {
-		$$ = DataType::FLOAT3;
+		$$ = DataTypeEnum::FLOAT3;
 		tsl_compiler->cache_next_data_type($$);
 	}
 	|
 	"bool" {
-		$$ = DataType::BOOL;
+		$$ = DataTypeEnum::BOOL;
 		tsl_compiler->cache_next_data_type($$);
 	}
 	|
 	"void" {
-		$$ = DataType::VOID;
+		$$ = DataTypeEnum::VOID;
 		tsl_compiler->cache_next_data_type($$);
 	}
     |
     "closure" {
-        $$ = DataType::CLOSURE;
+        $$ = DataTypeEnum::CLOSURE;
 		tsl_compiler->cache_next_data_type($$);
     }
 	|
@@ -949,8 +949,10 @@ TYPE:
 		// this gramma is purely just to save me some time to implement the struct feature
 		// in an ideal world, it should just use the name of the struct, however it generates
 		// a conflict, I don't have time to dig in for now.
-		$$ = DataType::STRUCT;
-		tsl_compiler->cache_next_data_type($$, $2);
+		$$ = DataTypeEnum::STRUCT;
+
+		DataType type(DataTypeEnum::STRUCT, $2);
+		tsl_compiler->cache_next_data_type(type);
 	}
     ;
 %%

@@ -83,7 +83,7 @@ void TslCompiler_Impl::push_structure_declaration(AstNode_StructDeclaration* str
 	m_structures.push_back(structure);
 
 #ifdef DEBUG_OUTPUT
-	structure->print();
+	// structure->print();
 #endif
 }
 

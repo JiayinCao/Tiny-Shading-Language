@@ -74,13 +74,8 @@ public:
 	//! @brief	Parameter type cache.
 	//!
 	//! @param	type			Type of the parameter to be parsed.
-	void	cache_next_data_type(DataType type, const char* struct_name = nullptr ){
+	void	cache_next_data_type(const DataType& type){
 		m_type_cache = type;
-
-		if(struct_name)
-			m_type_name_cache = std::string(struct_name);
-		else
-			m_type_name_cache = "";
 	}
 
 	//! @brief	Acquire the cached data type.
@@ -109,8 +104,7 @@ private:
     std::unordered_set<std::string>             m_closures;
 
 	// data type cache
-	DataType	m_type_cache = DataType::VOID;
-	std::string m_type_name_cache;
+	DataType	m_type_cache = DataTypeEnum::VOID;
 
     // local llvm context
     llvm::LLVMContext   m_llvm_context;

@@ -66,25 +66,27 @@ inline llvm::Type*          get_void_ty(Tsl_Namespace::LLVM_Compile_Context& con
 }
 
 inline llvm::Type*          get_type_from_context(const Tsl_Namespace::DataType type, Tsl_Namespace::LLVM_Compile_Context& context){
-    switch (type) {
-        case Tsl_Namespace::DataType::INT:
+    switch (type.m_type) {
+        case Tsl_Namespace::DataTypeEnum::INT:
             return get_int_32_ty(context);
-        case Tsl_Namespace::DataType::FLOAT:
+        case Tsl_Namespace::DataTypeEnum::FLOAT:
             return get_float_ty(context);
-        case Tsl_Namespace::DataType::FLOAT3:
+        case Tsl_Namespace::DataTypeEnum::FLOAT3:
             return get_float_ptr_ty(context);
-        case Tsl_Namespace::DataType::FLOAT4:
+        case Tsl_Namespace::DataTypeEnum::FLOAT4:
             return get_float_ptr_ty(context);
-        case Tsl_Namespace::DataType::DOUBLE:
+        case Tsl_Namespace::DataTypeEnum::DOUBLE:
             return get_double_ty(context);
-        case Tsl_Namespace::DataType::MATRIX:
+        case Tsl_Namespace::DataTypeEnum::MATRIX:
             return get_float_ptr_ty(context);
-        case Tsl_Namespace::DataType::VOID:
+        case Tsl_Namespace::DataTypeEnum::VOID:
             return get_void_ty(context);
-        case Tsl_Namespace::DataType::BOOL:
+        case Tsl_Namespace::DataTypeEnum::BOOL:
             return get_int_1_ty(context);
-        case Tsl_Namespace::DataType::CLOSURE:
+        case Tsl_Namespace::DataTypeEnum::CLOSURE:
             return get_int_32_ptr_ty(context);
+		case Tsl_Namespace::DataTypeEnum::STRUCT:
+			return context.m_structure_type_maps[type.m_structure_name];
         default:
             break;
     }

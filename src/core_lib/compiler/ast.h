@@ -878,7 +878,7 @@ private:
 class AstNode_FunctionPrototype : public AstNode, LLVM_Function {
 public:
 	AstNode_FunctionPrototype(const char* func_name, AstNode_VariableDecl* variables, 
-                              AstNode_FunctionBody* body, bool is_shader = false, DataType type = DataType::VOID)
+                              AstNode_FunctionBody* body, bool is_shader = false, DataType type = DataTypeEnum::VOID)
 		                     :m_name(func_name), m_variables(variables), m_body(body), m_is_shader(is_shader), m_return_type(type){}
 
 	llvm::Function* codegen( LLVM_Compile_Context& context ) const override;

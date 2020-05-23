@@ -22,7 +22,7 @@
 
 TSL_NAMESPACE_BEGIN
 
-enum DataType : int{
+enum DataTypeEnum : int{
 	VOID	= 0,
 	INT		,
 	FLOAT	,
@@ -35,29 +35,48 @@ enum DataType : int{
 	STRUCT
 };
 
-inline const char* str_from_data_type( const DataType type ){
-	switch( type ){
-	case DataType::INT:
+struct DataType{
+	DataTypeEnum	m_type;
+	std::string		m_structure_name;	// this is only used for structure type
+
+	DataType(DataTypeEnum type, const std::string& name = "" ):m_type(type), m_structure_name(name){}
+	DataType& operator = ( DataTypeEnum type ){
+		m_type = type;
+		m_structure_name = "";
+		return *this;
+	}
+	~DataType() = default;
+
+	bool operator == ( const DataType& type ) const {
+		return m_type == type.m_type && m_structure_name == type.m_structure_name;
+	}
+};
+
+inline std::string str_from_data_type( const DataType& type ){
+	switch( type.m_type ){
+	case DataTypeEnum::INT:
 		return "int";
-	case DataType::FLOAT:
+	case DataTypeEnum::FLOAT:
 		return "float";
-	case DataType::FLOAT3:
+	case DataTypeEnum::FLOAT3:
 		return "float3";
-	case DataType::BOOL:
+	case DataTypeEnum::BOOL:
 		return "bool";
-	case DataType::FLOAT4:
+	case DataTypeEnum::FLOAT4:
 		return "float4";
-	case DataType::MATRIX:
+	case DataTypeEnum::MATRIX:
 		return "matrix";
-    case DataType::DOUBLE:
+    case DataTypeEnum::DOUBLE:
         return "double";
-    case DataType::CLOSURE:
+    case DataTypeEnum::CLOSURE:
         return "closure";
+	case DataTypeEnum::STRUCT:
+		return "struct " + type.m_structure_name;
 	default:
 		break;
 	}
 
-	assert( type == DataType::VOID );
+	assert( type.m_type == DataTypeEnum::VOID );
 	return "void";
 }
 
