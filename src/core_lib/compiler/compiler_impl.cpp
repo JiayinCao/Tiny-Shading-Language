@@ -34,7 +34,7 @@
 #include "ast.h"
 #include "shader_unit_pvt.h"
 #include "shading_context.h"
-#include "closure_register.h"
+#include "global_module.h"
 
 // a temporary ugly solution for debugging for now
 // #define DEBUG_OUTPUT
@@ -54,7 +54,7 @@ void makeVerbose(int verbose);
 
 TSL_NAMESPACE_BEGIN
 
-TslCompiler_Impl::TslCompiler_Impl( ClosureRegister& closure_register ):m_closure_register(closure_register){
+TslCompiler_Impl::TslCompiler_Impl( GlobalModule& global_module ):m_global_module(global_module){
     reset();
 }
 
@@ -126,7 +126,7 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnit* su) {
 
         // Do simple "peephole" optimizations and bit-twiddling optzns.
         su_pvt->m_fpm->add(llvm::createInstructionCombiningPass());
-        // Reassociate expressions.
+        // Re-associate expressions.
         su_pvt->m_fpm->add(llvm::createReassociatePass());
         // Eliminate Common SubExpressions.
         su_pvt->m_fpm->add(llvm::createGVNPass());
@@ -145,10 +145,11 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnit* su) {
 		compile_context.module = module;
 		compile_context.builder = &builder;
 
-        m_closure_register.declare_closure_tree_types(m_llvm_context, &compile_context.m_closure_type_maps);
+        m_global_module.declare_closure_tree_types(m_llvm_context, &compile_context.m_closure_type_maps);
+		m_global_module.declare_global_function(compile_context);
         for (auto& closure : m_closures_in_shader) {
             // declare the function first.
-            auto function = m_closure_register.declare_closure_function(closure, compile_context);
+            auto function = m_global_module.declare_closure_function(closure, compile_context);
             compile_context.m_closures_maps[closure] = function;
         }
 
@@ -156,24 +157,26 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnit* su) {
         for( auto& function : m_functions )
             function->codegen(compile_context);
 
+		// generate code for the shader in this module
 		llvm::Function* function = m_ast_root->codegen(compile_context);
 
         // it should be safe to assume llvm function has to be generated, otherwise, the shader is invalid.
         if (!function)
             return false;
 
-        // optimization pass, this is pretty cool because I don't have to implement those sophisticated optimiation algorithms.
-        su_pvt->m_fpm->run(*function);
+        // optimization pass, this is pretty cool because I don't have to implement those sophisticated optimization algorithms.
+        // su_pvt->m_fpm->run(*function);
 
         // make sure the function is valid
-        llvm::verifyFunction(*function);
+        //if( !llvm::verifyFunction(*function, &llvm::errs()) )
+		//	return false;
 
 #ifdef DEBUG_OUTPUT
 		module->print(llvm::errs(), nullptr);
 #endif
 
         // make sure to link the global closure model
-        su_pvt->m_execution_engine->addModule(CloneModule(*m_closure_register.get_closure_module()));
+        su_pvt->m_execution_engine->addModule(CloneModule(*m_global_module.get_closure_module()));
 
         // resolve the function pointer
         su_pvt->m_function_pointer = su_pvt->m_execution_engine->getFunctionAddress(m_ast_root->get_function_name());

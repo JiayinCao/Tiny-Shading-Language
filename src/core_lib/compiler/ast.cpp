@@ -29,7 +29,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "ast.h"
 #include "llvm_util.h"
-#include "closure_register.h"
+#include "global_module.h"
 
 using namespace llvm;
 
@@ -214,7 +214,57 @@ llvm::Value* AstNode_Binary_Minus::codegen(LLVM_Compile_Context& context) const 
 llvm::Value* AstNode_Binary_Multi::codegen(LLVM_Compile_Context& context) const {
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
-    return get_llvm_mul(left, right, context);
+
+	if(!m_left->is_closure() && !m_right->is_closure())
+		return get_llvm_mul(left, right, context);
+
+	// this must be a closure multiplied by a regular expression
+	if(m_left->is_closure() && m_right->is_closure()){
+		// emit an error, it is illegal to multiply two closures together.
+		return nullptr;
+	}
+
+	// auto& llvm_context = *context.context;
+	auto  module = context.module;
+	auto& builder = *context.builder;
+
+	auto closure = m_left->is_closure() ? left : right;
+	auto weight = m_left->is_closure() ? right : left;
+
+	auto malloc_function = context.m_func_symbols["malloc"].first;
+	if( !malloc_function ){
+		// this should not happen at all
+		return nullptr;
+	}
+
+	const auto closure_tree_node_type = context.m_closure_type_maps["closure_mul"];
+	const auto closure_tree_node_ptr_type = closure_tree_node_type->getPointerTo();
+
+	// allocate the tree data structure
+	std::vector<llvm::Value*> args = { ConstantInt::get(*context.context, APInt(32, sizeof(ClosureTreeNodeMul))) };
+	auto closure_tree_node_ptr = builder.CreateCall(malloc_function, args);
+	
+	auto converted_closure_tree_node_ptr = builder.CreatePointerCast(closure_tree_node_ptr, closure_tree_node_ptr_type);
+
+	// setup closure id
+	auto node_mul_id = get_llvm_constant_int(CLOSURE_MUL, 32, context);
+	auto gep0 = builder.CreateConstGEP2_32(nullptr, converted_closure_tree_node_ptr, 0, 0);
+	auto dst_closure_id_ptr = builder.CreatePointerCast(gep0, get_int_32_ptr_ty(context));
+	builder.CreateStore(node_mul_id, dst_closure_id_ptr);
+
+	/*
+	// assign the closure parameter pointer
+	auto gep1 = builder.CreateConstGEP2_32(nullptr, converted_closure_tree_node_ptr, 0, 2);
+	auto weight_ptr = builder.CreatePointerCast(gep1, get_float_ptr_ty(context));
+	builder.CreateStore(weight, weight_ptr);
+
+	// copy the pointer
+
+	auto gep2 = builder.CreateConstGEP2_32(nullptr, converted_closure_tree_node_ptr, 0, 3);
+	auto closure_ptr = builder.CreatePointerCast(gep2, closure->getType()->getPointerTo());
+	builder.CreateStore(closure, closure_ptr);
+	*/
+	return converted_closure_tree_node_ptr;
 }
 
 llvm::Value* AstNode_Binary_Div::codegen(LLVM_Compile_Context& context) const {

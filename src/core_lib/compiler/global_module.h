@@ -39,7 +39,7 @@ struct ClosureItem {
         : m_closure_id(id), m_var_list(var_list), m_structure_size(structure_size) {}
 };
 
-class ClosureRegister {
+class GlobalModule {
 public:
     // initialize the register
     bool init();
@@ -58,6 +58,8 @@ public:
 
     // get declaration
     llvm::Function* declare_closure_function(const std::string& name, LLVM_Compile_Context& context);
+	// declare global function
+	void			declare_global_function(LLVM_Compile_Context& context);
 
 private:
     /**< a container holding all closures ids. */
@@ -70,6 +72,9 @@ private:
     llvm::LLVMContext                               m_llvm_context;
     std::unique_ptr<llvm::Module>                   m_module;
     std::unordered_map<std::string, llvm::Type*>    m_typing_maps;
+
+	/**< The type of base closure node. */
+	const llvm::Type* m_closure_base_type = nullptr;
 };
 
 TSL_NAMESPACE_END

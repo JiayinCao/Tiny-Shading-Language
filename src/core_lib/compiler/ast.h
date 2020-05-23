@@ -30,7 +30,7 @@
 TSL_NAMESPACE_BEGIN
 
 class AstNode_FunctionPrototype;
-class ClosureRegister;
+class GlobalModule;
 
 struct LLVM_Compile_Context{
 	llvm::LLVMContext*	context = nullptr;
@@ -41,9 +41,9 @@ struct LLVM_Compile_Context{
     std::unordered_map<std::string, llvm::Function*> m_closures_maps;
     std::unordered_map<std::string, llvm::Type*>     m_closure_type_maps;
 
-    using Var_Symbol_Table_Stack = std::vector<std::unordered_map<std::string, llvm::Value*>>;
-    using Func_Symbol_Table = std::unordered_map<std::string, std::pair<llvm::Function*, const AstNode_FunctionPrototype*>>;
-    using Block_Stack = std::stack<std::pair<llvm::BasicBlock*, llvm::BasicBlock*>>;
+    using Var_Symbol_Table_Stack	= std::vector<std::unordered_map<std::string, llvm::Value*>>;
+    using Func_Symbol_Table			= std::unordered_map<std::string, std::pair<llvm::Function*, const AstNode_FunctionPrototype*>>;
+    using Block_Stack				= std::stack<std::pair<llvm::BasicBlock*, llvm::BasicBlock*>>;
 
     Func_Symbol_Table       m_func_symbols;
     Block_Stack             m_blocks;
@@ -128,6 +128,11 @@ protected:
 };
 
 class AstNode_Expression : public AstNode, public LLVM_Value {
+public:
+	virtual bool is_closure() const { return false; }
+
+protected:
+	bool	m_is_closure = false;
 };
 
 class AstNode_Literal_Int : public AstNode_Expression {
@@ -158,7 +163,7 @@ class AstNode_Literal_Bool: public AstNode_Expression{
 public:
     AstNode_Literal_Bool(bool val) : m_val(val) {}
 
-    llvm::Value * codegen(LLVM_Compile_Context & context) const override;
+    llvm::Value * codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 
@@ -357,6 +362,10 @@ public:
     llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
+
+	bool is_closure() const override {
+		return true;
+	}
 
 private:
     const std::string m_name;

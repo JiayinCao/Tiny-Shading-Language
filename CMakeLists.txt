@@ -23,6 +23,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+SET( LLVM_DEBUG  "NO"   CACHE BOOL "Compile with debug version llvm." )
+
 # this will avoid generate ZERO_CHECK project
 # set(CMAKE_SUPPRESS_REGENERATION true)
 
@@ -60,7 +62,13 @@ list (APPEND version_head "${TSL_SOURCE_DIR}/src/include/${versionfile}")
 
 # loading llvm library, this is mandatory for compiling TSL
 # make sure it looks for a local llvm library
-set(LLVM_DIR ${TSL_SOURCE_DIR}/dependencies/llvm/lib/cmake/llvm)
+
+if(LLVM_DEBUG)
+	set(LLVM_DIR ${TSL_SOURCE_DIR}/dependencies/llvm/lib/cmake/llvm_d)
+else()
+	set(LLVM_DIR ${TSL_SOURCE_DIR}/dependencies/llvm/lib/cmake/llvm)
+endif(LLVM_DEBUG)
+
 # find llvm librar${TSL_SOURCE_DIR}/thirdparty/gtesty
 find_package(LLVM REQUIRED CONFIG)
 # output some information to make sure llvm is correctly located

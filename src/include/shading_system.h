@@ -28,7 +28,7 @@ TSL_NAMESPACE_BEGIN
 
 class ShadingContext;
 class ShaderUnit;
-class ClosureRegister;
+class GlobalModule;
 
 //! @brief  Shading system is the root interface exposed through TSL system.
 /*
@@ -69,7 +69,7 @@ private:
     std::mutex m_shader_unit_mutex;
 
     /**< Closure register */
-    ClosureRegister* m_closure_register = nullptr;
+    GlobalModule* m_global_module = nullptr;
 
     friend class ShadingContext;
 };

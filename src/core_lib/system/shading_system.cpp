@@ -17,7 +17,7 @@
 
 #include "shading_system.h"
 #include "shading_context.h"
-#include "compiler/closure_register.h"
+#include "compiler/global_module.h"
 #include "llvm/Support/TargetSelect.h"
 
 TSL_NAMESPACE_BEGIN
@@ -26,13 +26,13 @@ ShadingSystem::ShadingSystem() {
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
 
-    m_closure_register = new ClosureRegister();
-    m_closure_register->init();
+    m_global_module = new GlobalModule();
+    m_global_module->init();
 }
 
 ShadingSystem::~ShadingSystem() {
-//    if (m_closure_register)
-//        delete m_closure_register;
+//    if (m_global_module)
+//        delete m_global_module;
 }
 
 ShadingContext* ShadingSystem::make_shading_context() {
@@ -44,7 +44,12 @@ ShadingContext* ShadingSystem::make_shading_context() {
 }
 
 ClosureID ShadingSystem::register_closure_type(const std::string& name, ClosureVarList& mapping, int structure_size) {
-    return m_closure_register->register_closure_type(name, mapping, structure_size);
+    return m_global_module->register_closure_type(name, mapping, structure_size);
+}
+
+template<class T>
+void test(){
+	std::cout<<"am"<<std::endl;
 }
 
 TSL_NAMESPACE_END

@@ -28,7 +28,7 @@ TSL_NAMESPACE_BEGIN
 
 class AstNode_FunctionPrototype;
 class ShaderUnit;
-class ClosureRegister;
+class GlobalModule;
 
 //! @brief  Internal compiler implementation.
 /**
@@ -38,7 +38,7 @@ class ClosureRegister;
 class TslCompiler_Impl {
 public:
     //! @brief  Default constructor
-    TslCompiler_Impl( ClosureRegister& closure_register );
+    TslCompiler_Impl( GlobalModule& global_module );
 
     //! @brief  Destructor
     ~TslCompiler_Impl();
@@ -102,7 +102,7 @@ private:
     llvm::LLVMContext   m_llvm_context;
 
     // closure register
-    ClosureRegister&    m_closure_register;
+    GlobalModule&    m_global_module;
 
     // closured touched in the shader
     std::unordered_set<std::string> m_closures_in_shader;
