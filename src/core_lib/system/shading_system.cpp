@@ -47,9 +47,4 @@ ClosureID ShadingSystem::register_closure_type(const std::string& name, ClosureV
     return m_global_module->register_closure_type(name, mapping, structure_size);
 }
 
-template<class T>
-void test(){
-	std::cout<<"am"<<std::endl;
-}
-
 TSL_NAMESPACE_END
