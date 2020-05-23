@@ -48,13 +48,7 @@ set_target_properties( LLVM_Test PROPERTIES DEBUG_OUTPUT_NAME "llvm_test_d" )
 # disable all warnings generated from LLVM
 if (TSL_PLATFORM_WIN)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244 /wd4146 /wd4267 /wd4141 /wd4624 /wd4005 /wd4996" )
-
-if(LLVM_DEBUG)
-	set_target_properties( TSL_Lib PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} /MDd" )
-else()
     set_target_properties( TSL_Lib PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} /MD" )
-endif()
-
 endif()
 
 # specify the llvm library to link

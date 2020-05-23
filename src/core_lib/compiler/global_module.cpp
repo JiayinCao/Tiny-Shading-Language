@@ -44,6 +44,10 @@ bool GlobalModule::init() {
     // declare some global data structure
     declare_closure_tree_types(m_llvm_context);
 
+    // this malloc needs to be replaced once the memory allocator is available
+    std::vector<Type*> proto_args(1, Type::getInt32Ty(m_llvm_context));
+    m_malloc_function = Function::Create(FunctionType::get(Type::getInt32PtrTy(m_llvm_context), proto_args, false), Function::ExternalLinkage, "malloc", m_module.get());
+
     return true;
 }
 
@@ -60,11 +64,21 @@ void GlobalModule::declare_closure_tree_types(llvm::LLVMContext& context, std::u
 	const auto closure_tree_node_mul = "closure_mul";
 	const std::vector<Type*> args_mul = {
 		Type::getInt32Ty(m_llvm_context),       /* m_id */
-		Type::getInt32PtrTy(m_llvm_context),     /* m_params */
+		Type::getInt32PtrTy(m_llvm_context),    /* m_params */
 		Type::getFloatTy(m_llvm_context),		/* m_weight */
 		Type::getInt32PtrTy(m_llvm_context)		/* m_closure */
 	};
 	auto closure_tree_node_mul_ty = StructType::create(args_mul, closure_tree_node_mul);
+
+    // ClosureTreeNodeMul
+    const auto closure_tree_node_add = "closure_add";
+    const std::vector<Type*> args_add = {
+        Type::getInt32Ty(m_llvm_context),       /* m_id */
+        Type::getInt32PtrTy(m_llvm_context),    /* m_params */
+        Type::getInt32PtrTy(m_llvm_context),    /* m_closure0 */
+        Type::getInt32PtrTy(m_llvm_context)		/* m_closure1 */
+    };
+    auto closure_tree_node_add_ty = StructType::create(args_add, closure_tree_node_add);
 
 	// keep track of the allocated type
 	if (!mapping) {
@@ -72,6 +86,7 @@ void GlobalModule::declare_closure_tree_types(llvm::LLVMContext& context, std::u
 	} else {
 		(*mapping)["closure_base"] = closure_tree_node_base_ty;
 		(*mapping)["closure_mul"] = closure_tree_node_mul_ty;
+        (*mapping)["closure_add"] = closure_tree_node_add_ty;
 	}
 }
 
@@ -106,16 +121,12 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureVa
 	// declare the closure parameter data structure
     const auto closure_param_type = StructType::create(arg_types, closure_type_name);
 
-    // this malloc needs to be replaced once the memory allocator is available
-    std::vector<Type*> proto_args(1, Type::getInt32Ty(m_llvm_context));
-    Function* malloc_function = Function::Create(FunctionType::get(Type::getInt32PtrTy(m_llvm_context), proto_args, false), Function::ExternalLinkage, "malloc", m_module.get());
-
     // the function to allocate the closure data structure
     Function* function = Function::Create(FunctionType::get(m_closure_base_type->getPointerTo(), arg_types, false), Function::ExternalLinkage, function_name, m_module.get());
     IRBuilder<> builder(BasicBlock::Create(m_llvm_context, "EntryBlock", function));
 
     // allocate a structure for keeping parameters
-    const auto param_table_ptr = builder.CreateCall(malloc_function, { ConstantInt::get(m_llvm_context, APInt(32, structure_size)) }, "malloc");
+    const auto param_table_ptr = builder.CreateCall(m_malloc_function, { ConstantInt::get(m_llvm_context, APInt(32, structure_size)) }, "malloc");
     const auto converted_param_table_ptr = builder.CreatePointerCast(param_table_ptr, closure_param_type->getPointerTo());
 
 	// copy all variables in this parameter table
@@ -129,7 +140,7 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureVa
     }
     
     // allocate closure tree node
-    auto closure_tree_node_ptr = builder.CreateCall(malloc_function, { ConstantInt::get(m_llvm_context, APInt(32, sizeof(ClosureTreeNodeBase))) });
+    auto closure_tree_node_ptr = builder.CreateCall(m_malloc_function, { ConstantInt::get(m_llvm_context, APInt(32, sizeof(ClosureTreeNodeBase))) });
     auto converted_closure_tree_node_ptr = builder.CreatePointerCast(closure_tree_node_ptr, m_closure_base_type->getPointerTo());
 
 	// setup closure id
@@ -173,8 +184,7 @@ llvm::Function* GlobalModule::declare_closure_function(const std::string& name, 
 
 void GlobalModule::declare_global_function(LLVM_Compile_Context& context){
 	// this malloc needs to be replaced once the memory allocator is available
-	Function* malloc_function = Function::Create(FunctionType::get(get_int_32_ty(context), { get_int_32_ty(context) }, false), Function::ExternalLinkage, "malloc", context.module);
-
+	Function* malloc_function = Function::Create(FunctionType::get(get_int_32_ptr_ty(context), { get_int_32_ty(context) }, false), Function::ExternalLinkage, "malloc", context.module);
 	context.m_func_symbols["malloc"] = std::make_pair(malloc_function, nullptr);
 }
 

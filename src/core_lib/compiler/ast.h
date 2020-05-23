@@ -130,9 +130,6 @@ protected:
 class AstNode_Expression : public AstNode, public LLVM_Value {
 public:
 	virtual bool is_closure() const { return false; }
-
-protected:
-	bool	m_is_closure = false;
 };
 
 class AstNode_Literal_Int : public AstNode_Expression {
@@ -187,6 +184,8 @@ public:
     llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
+
+    bool is_closure() const override;
 };
 
 class AstNode_Binary_Minus : public AstNode_Binary {
@@ -205,6 +204,8 @@ public:
     llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
+
+    bool is_closure() const override;
 };
 
 class AstNode_Binary_Div : public AstNode_Binary {

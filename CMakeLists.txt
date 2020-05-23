@@ -64,11 +64,12 @@ list (APPEND version_head "${TSL_SOURCE_DIR}/src/include/${versionfile}")
 # make sure it looks for a local llvm library
 
 if(LLVM_DEBUG)
-	set(LLVM_DIR ${TSL_SOURCE_DIR}/dependencies/llvm/lib/cmake/llvm_d)
+	set(LLVM_DIR ${TSL_SOURCE_DIR}/dependencies/llvm/lib/cmake/llvm)
 else()
 	set(LLVM_DIR ${TSL_SOURCE_DIR}/dependencies/llvm/lib/cmake/llvm)
 endif(LLVM_DEBUG)
 
+message(STATUS ${LLVM_DIR})
 # find llvm librar${TSL_SOURCE_DIR}/thirdparty/gtesty
 find_package(LLVM REQUIRED CONFIG)
 # output some information to make sure llvm is correctly located

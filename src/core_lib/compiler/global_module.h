@@ -74,7 +74,8 @@ private:
     std::unordered_map<std::string, llvm::Type*>    m_typing_maps;
 
 	/**< The type of base closure node. */
-	const llvm::Type* m_closure_base_type = nullptr;
+	const llvm::Type*   m_closure_base_type = nullptr;
+    llvm::Function*     m_malloc_function = nullptr;
 };
 
 TSL_NAMESPACE_END
