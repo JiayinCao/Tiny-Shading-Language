@@ -55,28 +55,28 @@ void GlobalModule::declare_closure_tree_types(llvm::LLVMContext& context, std::u
     // ClosureTreeNodeBase, it has to have this 4 bytes memory padding in it so that the size is 8, otherwise, it will crash the system.
     const auto closure_tree_node_base = "closure_base";
     const std::vector<Type*> args_base = {
-        Type::getInt32Ty(m_llvm_context),       /* m_id */
-        Type::getInt32PtrTy(m_llvm_context)     /* m_params */
+        Type::getInt32Ty(context),       /* m_id */
+        Type::getInt32PtrTy(context)     /* m_params */
     };
 	auto closure_tree_node_base_ty = StructType::create(args_base, closure_tree_node_base);
 
     // ClosureTreeNodeMul
 	const auto closure_tree_node_mul = "closure_mul";
 	const std::vector<Type*> args_mul = {
-		Type::getInt32Ty(m_llvm_context),       /* m_id */
-		Type::getInt32PtrTy(m_llvm_context),    /* m_params */
-		Type::getFloatTy(m_llvm_context),		/* m_weight */
-		Type::getInt32PtrTy(m_llvm_context)		/* m_closure */
+		Type::getInt32Ty(context),       /* m_id */
+		Type::getInt32PtrTy(context),    /* m_params */
+		Type::getFloatTy(context),		 /* m_weight */
+		Type::getInt32PtrTy(context)	 /* m_closure */
 	};
 	auto closure_tree_node_mul_ty = StructType::create(args_mul, closure_tree_node_mul);
 
     // ClosureTreeNodeMul
     const auto closure_tree_node_add = "closure_add";
     const std::vector<Type*> args_add = {
-        Type::getInt32Ty(m_llvm_context),       /* m_id */
-        Type::getInt32PtrTy(m_llvm_context),    /* m_params */
-        Type::getInt32PtrTy(m_llvm_context),    /* m_closure0 */
-        Type::getInt32PtrTy(m_llvm_context)		/* m_closure1 */
+        Type::getInt32Ty(context),       /* m_id */
+        Type::getInt32PtrTy(context),    /* m_params */
+        Type::getInt32PtrTy(context),    /* m_closure0 */
+        Type::getInt32PtrTy(context)	 /* m_closure1 */
     };
     auto closure_tree_node_add_ty = StructType::create(args_add, closure_tree_node_add);
 
