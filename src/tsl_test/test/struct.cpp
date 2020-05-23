@@ -49,7 +49,7 @@ TEST(Struct, StructureDefineRecusive) {
     )");
 }
 
-TEST(Struct, DISABLED_StructureAsArgument) {
+TEST(Struct, StructureAsArgument) {
 	validate_shader(R"(
 		struct vec2 {
 			float x;
@@ -61,7 +61,7 @@ TEST(Struct, DISABLED_StructureAsArgument) {
 			float z;
 		};
 
-        shader func( struct vec3 light_dir ){
+        shader func( struct vec3 light_dir , out struct vec2 output ){
         }
     )");
 }

@@ -461,7 +461,7 @@ void AstNode_Statement_Loop_DoWhile::print() const{
 
 void AstNode_Statement_VariableDecls::print() const {
 	bool is_first = true;
-	DataType type = DataTypeEnum::VOID;
+	DataType type = { DataTypeEnum::VOID , nullptr };
 
 	AstNode_VariableDecl* variable = m_var_decls;
 	while( variable ){

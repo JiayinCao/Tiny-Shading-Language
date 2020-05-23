@@ -40,11 +40,11 @@
 /* definitions of tokens and types passed by FLEX */
 %union {
     class AstNode 					*p;	/* pointers for the AST struct nodes */
-	float							f; /* floating point value cache. */
-	int								i; /* integer value or enum values. */
+	float							f;  /* floating point value cache. */
+	int								i;  /* integer value or enum values. */
 	const char						*s;	/* string values. */
-	char							c; /* single char. */
-	Tsl_Namespace::DataTypeEnum		t;	/* data type. */
+	char							c;  /* single char. */
+	Tsl_Namespace::DataType			t;	/* data type. */
 	Tsl_Namespace::VariableConfig	vc; /* 'out', 'in' */
 }
 
@@ -906,52 +906,54 @@ ID_OR_FIELD:
 
 TYPE:
 	"int" {
-		$$ = DataTypeEnum::INT;
+		$$ = { DataTypeEnum::INT , nullptr };
 		tsl_compiler->cache_next_data_type($$);
 	}
 	|
 	"float" {
-		$$ = DataTypeEnum::FLOAT;
+		$$ = { DataTypeEnum::FLOAT , nullptr };
 		tsl_compiler->cache_next_data_type($$);
 	}
     |
     "double" {
-        $$ = DataTypeEnum::DOUBLE;
+        $$ = { DataTypeEnum::DOUBLE , nullptr };
         tsl_compiler->cache_next_data_type($$);
     }
 	|
 	"matrix" {
-		$$ = DataTypeEnum::MATRIX;
+		$$ = { DataTypeEnum::MATRIX , nullptr };
 		tsl_compiler->cache_next_data_type($$);
 	}
 	|
 	"float3" {
-		$$ = DataTypeEnum::FLOAT3;
+		$$ = { DataTypeEnum::FLOAT3 , nullptr };
 		tsl_compiler->cache_next_data_type($$);
 	}
 	|
 	"bool" {
-		$$ = DataTypeEnum::BOOL;
+		$$ = { DataTypeEnum::BOOL , nullptr };
 		tsl_compiler->cache_next_data_type($$);
 	}
 	|
 	"void" {
-		$$ = DataTypeEnum::VOID;
+		$$ = { DataTypeEnum::VOID , nullptr };
 		tsl_compiler->cache_next_data_type($$);
 	}
     |
     "closure" {
-        $$ = DataTypeEnum::CLOSURE;
+        $$ = { DataTypeEnum::CLOSURE , nullptr };
 		tsl_compiler->cache_next_data_type($$);
     }
 	|
 	"struct" ID {
-		// this gramma is purely just to save me some time to implement the struct feature
-		// in an ideal world, it should just use the name of the struct, however it generates
+		// This gramma is purely just to save me some time to implement the struct feature.
+		// In an ideal world, it should just use the name of the struct, however it generates
 		// a conflict, I don't have time to dig in for now.
-		$$ = DataTypeEnum::STRUCT;
 
-		DataType type(DataTypeEnum::STRUCT, $2);
+		const char* s = tsl_compiler->claim_permanent_address($2);
+		DataType type = { DataTypeEnum::STRUCT , s };
+		$$ = type;
+
 		tsl_compiler->cache_next_data_type(type);
 	}
     ;

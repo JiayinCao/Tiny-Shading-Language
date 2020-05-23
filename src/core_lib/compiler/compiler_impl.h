@@ -88,6 +88,17 @@ public:
         m_closures_in_shader.insert(name);
     }
 
+	//! claim string, this will return a permanent address for each string, each unique string get their own ( one single ) address too.
+	const char*	claim_permanent_address(const char* str){
+		auto it = m_string_container.find(str);
+		if( it != m_string_container.end() )
+			return it->c_str();
+
+		m_string_container.insert( str );
+		
+		return m_string_container.find(str)->c_str();
+	}
+
 private:
     // flex scanner
     void* m_scanner = nullptr;
@@ -104,7 +115,7 @@ private:
     std::unordered_set<std::string>             m_closures;
 
 	// data type cache
-	DataType	m_type_cache = DataTypeEnum::VOID;
+	DataType	m_type_cache = { DataTypeEnum::VOID , nullptr };
 
     // local llvm context
     llvm::LLVMContext   m_llvm_context;
@@ -114,5 +125,9 @@ private:
 
     // closured touched in the shader
     std::unordered_set<std::string> m_closures_in_shader;
+
+	// a string holder, this is purely to workaround bison limitation because DateType can't be non-POD.
+	// an extra perk of doing this is to make DataType much cheaper.
+	std::unordered_set<std::string>	m_string_container;
 };
 TSL_NAMESPACE_END

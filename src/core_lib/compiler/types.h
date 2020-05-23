@@ -37,20 +37,20 @@ enum DataTypeEnum : int{
 
 struct DataType{
 	DataTypeEnum	m_type;
-	std::string		m_structure_name;	// this is only used for structure type
-
-	DataType(DataTypeEnum type, const std::string& name = "" ):m_type(type), m_structure_name(name){}
-	DataType& operator = ( DataTypeEnum type ){
-		m_type = type;
-		m_structure_name = "";
-		return *this;
-	}
-	~DataType() = default;
-
-	bool operator == ( const DataType& type ) const {
-		return m_type == type.m_type && m_structure_name == type.m_structure_name;
-	}
+	const char*		m_structure_name;	// this is only used for structure type
 };
+
+/*
+static inline DataType operator = (DataType& data_type , DataTypeEnum type_enum) {
+	data_type.m_type = type_enum;
+	data_type.m_structure_name = "";
+	return data_type;
+}
+*/
+
+static inline bool operator == (DataType& data_type0, DataType& data_type1) {
+	return data_type0.m_type == data_type1.m_type && data_type0.m_structure_name == data_type1.m_structure_name;
+}
 
 inline std::string str_from_data_type( const DataType& type ){
 	switch( type.m_type ){
@@ -71,7 +71,7 @@ inline std::string str_from_data_type( const DataType& type ){
     case DataTypeEnum::CLOSURE:
         return "closure";
 	case DataTypeEnum::STRUCT:
-		return "struct " + type.m_structure_name;
+		return "struct " + std::string(type.m_structure_name);
 	default:
 		break;
 	}
