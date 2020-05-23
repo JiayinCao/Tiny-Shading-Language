@@ -23,8 +23,6 @@ TEST(Struct, StructureDefine) {
 			float x;
 			float y;
 			float z;
-
-			vec2 vec;
 		};
 
         shader func(){
