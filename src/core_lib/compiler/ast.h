@@ -39,7 +39,7 @@ struct LLVM_Compile_Context{
 
     // closured touched in the shader
     std::unordered_map<std::string, llvm::Function*> m_closures_maps;
-    std::unordered_map<std::string, llvm::Type*>     m_closure_type_maps;
+	std::unordered_map<std::string, llvm::Type*>     m_structure_type_maps;
 
     using Var_Symbol_Table_Stack	= std::vector<std::unordered_map<std::string, llvm::Value*>>;
     using Func_Symbol_Table			= std::unordered_map<std::string, std::pair<llvm::Function*, const AstNode_FunctionPrototype*>>;
@@ -813,6 +813,9 @@ public:
 
 	void print() const override;
 
+	AstNode_VariableDecl* get_variable_decl(){
+		return m_var_decls;
+	}
 private:
 	AstNode_VariableDecl* m_var_decls;
 };
@@ -894,6 +897,19 @@ private:
 	DataType				m_return_type;
 
     friend class AstNode_FunctionCall;
+};
+
+class AstNode_StructDeclaration : public AstNode, LLVM_Value {
+public:
+	AstNode_StructDeclaration(const char* struct_name, AstNode_Statement_VariableDecls* members ) : m_name(struct_name), m_members(members) {}
+
+	llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
+	void print() const override;
+
+private:
+	std::string							m_name;
+	AstNode_Statement_VariableDecls*	m_members;
 };
 
 TSL_NAMESPACE_END

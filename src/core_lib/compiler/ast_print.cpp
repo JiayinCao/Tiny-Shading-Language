@@ -482,4 +482,14 @@ void AstNode_Statement_VariableDecls::print() const {
 	std::cout<<";"<<std::endl;
 }
 
+void AstNode_StructDeclaration::print() const{
+	std::cout << "struct " << m_name << "{" << std::endl;
+	auto member = m_members;
+	while(member){
+		member->print();
+		member = castType<AstNode_Statement_VariableDecls>(member->get_sibling());
+	}
+	std::cout << "};" << std::endl;
+}
+
 TSL_NAMESPACE_END

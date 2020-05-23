@@ -75,7 +75,15 @@ void TslCompiler_Impl::push_function(AstNode_FunctionPrototype* node, const bool
         m_functions.push_back(node);
 
 #ifdef DEBUG_OUTPUT    
-//    node->print();
+    // node->print();
+#endif
+}
+
+void TslCompiler_Impl::push_structure_declaration(AstNode_StructDeclaration* structure) {
+	m_structures.push_back(structure);
+
+#ifdef DEBUG_OUTPUT
+	structure->print();
 #endif
 }
 
@@ -145,13 +153,17 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnit* su) {
 		compile_context.module = module;
 		compile_context.builder = &builder;
 
-        m_global_module.declare_closure_tree_types(m_llvm_context, &compile_context.m_closure_type_maps);
+        m_global_module.declare_closure_tree_types(m_llvm_context, &compile_context.m_structure_type_maps);
 		m_global_module.declare_global_function(compile_context);
         for (auto& closure : m_closures_in_shader) {
             // declare the function first.
             auto function = m_global_module.declare_closure_function(closure, compile_context);
             compile_context.m_closures_maps[closure] = function;
         }
+
+		// generate all data structures first
+		for( auto& structure : m_structures )
+			structure->codegen(compile_context);
 
         // code gen for all functions
         for( auto& function : m_functions )

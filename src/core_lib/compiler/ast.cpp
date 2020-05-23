@@ -63,7 +63,7 @@ llvm::Value* LLVM_Compile_Context::push_var_symbol(const std::string& name, llvm
     auto top_layer = m_var_symbols.back();
 
     if (top_layer.count(name)) {
-        // emit error here, variabled already defined.
+        // emit error here, variable already defined.
         return nullptr;
     }
 
@@ -232,7 +232,7 @@ llvm::Value* AstNode_Binary_Add::codegen(LLVM_Compile_Context& context) const {
         return nullptr;
     }
 
-    const auto closure_tree_node_type = context.m_closure_type_maps["closure_add"];
+    const auto closure_tree_node_type = context.m_structure_type_maps["closure_add"];
     const auto closure_tree_node_ptr_type = closure_tree_node_type->getPointerTo();
 
     // allocate the tree data structure
@@ -300,7 +300,7 @@ llvm::Value* AstNode_Binary_Multi::codegen(LLVM_Compile_Context& context) const 
 		return nullptr;
 	}
 
-	const auto closure_tree_node_type = context.m_closure_type_maps["closure_mul"];
+	const auto closure_tree_node_type = context.m_structure_type_maps["closure_mul"];
 	const auto closure_tree_node_ptr_type = closure_tree_node_type->getPointerTo();
 
 	// allocate the tree data structure
@@ -1206,6 +1206,29 @@ llvm::Value* AstNode_Statement_Continue::codegen(LLVM_Compile_Context& context) 
     context.builder->SetInsertPoint(bb);
 
     return nullptr;
+}
+
+llvm::Value* AstNode_StructDeclaration::codegen(LLVM_Compile_Context& context) const {
+	if( context.m_structure_type_maps.count(m_name) )
+		return nullptr;
+
+	std::vector<llvm::Type*> member_types;
+	AstNode_Statement_VariableDecls* member = m_members;
+	while( member ){
+		const auto decl = member->get_variable_decl();
+		const auto type = decl->data_type();
+
+		auto llvm_type = get_type_from_context(type, context);
+		member_types.push_back(llvm_type);
+		member = castType<AstNode_Statement_VariableDecls>(member->get_sibling());
+	}
+	auto structure_type = StructType::create(member_types, m_name);
+	context.m_structure_type_maps[m_name] = structure_type;
+
+	// this is to be deleted, it is purely to prevent llvm from stripping the structure definition at the end of the day.
+	GlobalVariable* global_input_value = new GlobalVariable(*context.module, structure_type, true, GlobalValue::ExternalLinkage, nullptr, "global_input");
+
+	return nullptr;
 }
 
 TSL_NAMESPACE_END

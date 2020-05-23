@@ -178,7 +178,7 @@ llvm::Function* GlobalModule::declare_closure_function(const std::string& name, 
         arg_types.push_back(get_type_from_context(arg.m_type, context));
 
     const auto function_name = "make_closure_" + name;
-    const auto ret_type = context.m_closure_type_maps["closure_base"]->getPointerTo();
+    const auto ret_type = context.m_structure_type_maps["closure_base"]->getPointerTo();
     return Function::Create(FunctionType::get(ret_type, arg_types, false), Function::ExternalLinkage, function_name, *context.module);
 }
 

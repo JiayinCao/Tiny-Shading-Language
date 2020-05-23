@@ -27,6 +27,7 @@
 TSL_NAMESPACE_BEGIN
 
 class AstNode_FunctionPrototype;
+class AstNode_StructDeclaration;
 class ShaderUnit;
 class GlobalModule;
 
@@ -65,11 +66,21 @@ public:
     //! @param  node             Push a function node in the compiler.
     void    push_function(AstNode_FunctionPrototype* node, bool is_shader = false);
 
+	//! @brief	Push structure declaration.
+	//!
+	//! @param	node			Push a structure declaration.
+	void	push_structure_declaration(AstNode_StructDeclaration* structure);
+
 	//! @brief	Parameter type cache.
 	//!
 	//! @param	type			Type of the parameter to be parsed.
-	void	cache_next_data_type(DataType type){
+	void	cache_next_data_type(DataType type, const char* struct_name = nullptr ){
 		m_type_cache = type;
+
+		if(struct_name)
+			m_type_name_cache = std::string(struct_name);
+		else
+			m_type_name_cache = "";
 	}
 
 	//! @brief	Acquire the cached data type.
@@ -91,12 +102,15 @@ private:
 
     // global functions defined in this module
     std::vector<AstNode_FunctionPrototype*>     m_functions;
+	// global structure declaration in this module, maybe I should merge it with the above one
+	std::vector<AstNode_StructDeclaration*>		m_structures;
 
     // registered closure types
     std::unordered_set<std::string>             m_closures;
 
 	// data type cache
 	DataType	m_type_cache = DataType::VOID;
+	std::string m_type_name_cache;
 
     // local llvm context
     llvm::LLVMContext   m_llvm_context;
