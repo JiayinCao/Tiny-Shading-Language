@@ -77,6 +77,7 @@ identifier               ({alpha}|[_])({alpha}|{digit}|[_])*
 whitespace               [ \t\r\n\f]+
 
 %%
+"struct"				  { return STRUCT; }
 "make_closure"            { return MAKE_CLOSURE; }
 "closure"                 { return CLOSURE; }
 "true"                    { return TRUE; }

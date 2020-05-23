@@ -31,7 +31,8 @@ enum DataType : int{
 	FLOAT3	,
 	FLOAT4	,
 	MATRIX	,
-    CLOSURE
+    CLOSURE ,
+	STRUCT
 };
 
 inline const char* str_from_data_type( const DataType type ){
