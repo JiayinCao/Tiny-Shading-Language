@@ -189,6 +189,25 @@ void GlobalModule::declare_global_function(LLVM_Compile_Context& context){
 	// this malloc needs to be replaced once the memory allocator is available
 	Function* malloc_function = Function::Create(FunctionType::get(get_int_32_ptr_ty(context), { get_int_32_ty(context) }, false), Function::ExternalLinkage, "malloc", context.module);
 	context.m_func_symbols["malloc"] = std::make_pair(malloc_function, nullptr);
+
+	// add some intrinsic data structure
+	const auto float3_struct = "float3";
+	const std::vector<Type*> float3_members = {
+		get_float_ty(context),
+		get_float_ty(context),
+		get_float_ty(context)
+	};
+	auto closure_tree_node_base_ty = StructType::create(float3_members, float3_struct);
+
+	StructMemberTypeMetaData float3_meta_data;
+	float3_meta_data.m_llvm_type = closure_tree_node_base_ty;
+	float3_meta_data.m_member_types["x"] = { 0 , { DataTypeEnum::FLOAT , nullptr } };
+	float3_meta_data.m_member_types["y"] = { 1 , { DataTypeEnum::FLOAT , nullptr } };
+	float3_meta_data.m_member_types["z"] = { 2 , { DataTypeEnum::FLOAT , nullptr } };
+	float3_meta_data.m_member_types["r"] = { 0 , { DataTypeEnum::FLOAT , nullptr } };
+	float3_meta_data.m_member_types["g"] = { 1 , { DataTypeEnum::FLOAT , nullptr } };
+	float3_meta_data.m_member_types["b"] = { 2 , { DataTypeEnum::FLOAT , nullptr } };
+	context.m_structure_type_maps["float3"] = float3_meta_data;
 }
 
 TSL_NAMESPACE_END

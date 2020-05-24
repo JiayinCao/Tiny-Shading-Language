@@ -111,3 +111,25 @@ TEST(Struct, StructureAsArgument) {
 	EXPECT_EQ(3123.0f, v.x);
 	EXPECT_EQ(123.0f, v.y);
 }
+
+TEST(Struct, IntrinsicDataStructure) {
+	const auto shader_source = R"(
+        shader func( out vector output ){
+			output.x = 3123.0;
+			output.g = 12.0;
+			output.z = 23.0;
+        }
+    )";
+
+	struct float3 {
+		float x, y, z;
+	};
+	ShadingSystem shading_system;
+	auto func_ptr = compile_shader<void(*)(float3*)>(shader_source, shading_system);
+
+	float3 v;
+	func_ptr(&v);
+	EXPECT_EQ(3123.0f, v.x);
+	EXPECT_EQ(12.0f, v.y);
+	EXPECT_EQ(23.0f, v.z);
+}

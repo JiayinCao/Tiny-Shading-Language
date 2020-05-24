@@ -103,8 +103,8 @@ whitespace               [ \t\r\n\f]+
 "float"                   { return TYPE_FLOAT; }
 "double"                  { return TYPE_DOUBLE; }
 "void"                    { return TYPE_VOID; }
-"matrix"                  { return TYPE_MATRIX; }
-"float3"                  { return TYPE_FLOAT3; }
+"color"					  { return TYPE_COLOR; }
+"vector"				  { return TYPE_VECTOR; }
 "bool"                    { return TYPE_BOOL; }
 "."                       { return DOT; }
 "shader"                  { return SHADER_FUNC_ID; }

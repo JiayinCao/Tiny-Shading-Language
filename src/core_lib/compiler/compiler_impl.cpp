@@ -37,7 +37,7 @@
 #include "global_module.h"
 
 // a temporary ugly solution for debugging for now
-// #define DEBUG_OUTPUT
+#define DEBUG_OUTPUT
 
 #ifdef DEBUG_OUTPUT
 #include <iostream>

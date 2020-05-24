@@ -65,9 +65,9 @@
 %token <i> TYPE_INT	    "int"
 %token <i> TYPE_FLOAT	"float"
 %token <i> TYPE_DOUBLE  "double"
-%token <i> TYPE_MATRIX  "matrix"
-%token <i> TYPE_FLOAT3  "float3"
 %token <i> TYPE_BOOL	"bool"
+%token <i> TYPE_COLOR	"color"
+%token <i> TYPE_VECTOR	"vector"
 %token TYPE_VOID		"void"
 %token EOL              ";"
 %token L_CBRACKET       "{"
@@ -922,14 +922,20 @@ TYPE:
         tsl_compiler->cache_next_data_type($$);
     }
 	|
-	"matrix" {
-		$$ = { DataTypeEnum::MATRIX , nullptr };
-		tsl_compiler->cache_next_data_type($$);
+	"vector" {
+		const char* s = tsl_compiler->claim_permanent_address("float3");
+		DataType type = { DataTypeEnum::STRUCT , s };
+		$$ = type;
+
+		tsl_compiler->cache_next_data_type(type);
 	}
 	|
-	"float3" {
-		$$ = { DataTypeEnum::FLOAT3 , nullptr };
-		tsl_compiler->cache_next_data_type($$);
+	"color" {
+		const char* s = tsl_compiler->claim_permanent_address("float3");
+		DataType type = { DataTypeEnum::STRUCT , s };
+		$$ = type;
+
+		tsl_compiler->cache_next_data_type(type);
 	}
 	|
 	"bool" {
