@@ -44,14 +44,21 @@ TEST(Struct, StructureDefineRecusive) {
 			float z;
 		};
 
+		struct vec2 test(){
+			struct vec2 t;
+			t.y = 1233.0;
+			t.x = 0.0;
+			return t;
+		}
+
 		void helper( out struct vec2 v ){
-			v.y = 1233.0;
+			v = test();
 		}
 
         shader func( out struct vec3 light_dir ){
-			light_dir.xy.x = 111.0;
 			light_dir.z = 123.0;
 			helper( light_dir.xy );
+			light_dir.xy.x = 111.0;
         }
     )";
 
