@@ -40,14 +40,6 @@ struct DataType{
 	const char*		m_structure_name;	// this is only used for structure type
 };
 
-/*
-static inline DataType operator = (DataType& data_type , DataTypeEnum type_enum) {
-	data_type.m_type = type_enum;
-	data_type.m_structure_name = "";
-	return data_type;
-}
-*/
-
 static inline bool operator == (DataType& data_type0, DataType& data_type1) {
 	return data_type0.m_type == data_type1.m_type && data_type0.m_structure_name == data_type1.m_structure_name;
 }

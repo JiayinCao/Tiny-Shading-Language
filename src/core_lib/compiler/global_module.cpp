@@ -52,6 +52,8 @@ bool GlobalModule::init() {
 }
 
 void GlobalModule::declare_closure_tree_types(llvm::LLVMContext& context, StructSymbolTable* mapping) {
+	// N.B, this function implementation will be 'externally' defined in std.tsl
+
     // ClosureTreeNodeBase, it has to have this 4 bytes memory padding in it so that the size is 8, otherwise, it will crash the system.
     const auto closure_tree_node_base = "closure_base";
     const std::vector<Type*> args_base = {
@@ -84,9 +86,9 @@ void GlobalModule::declare_closure_tree_types(llvm::LLVMContext& context, Struct
 	if (!mapping) {
 		m_closure_base_type = StructType::create(args_base, closure_tree_node_base);
 	} else {
-		(*mapping)["closure_base"].first = closure_tree_node_base_ty;
-		(*mapping)["closure_mul"].first = closure_tree_node_mul_ty;
-		(*mapping)["closure_add"].first = closure_tree_node_add_ty;
+		(*mapping)["closure_base"].m_llvm_type = closure_tree_node_base_ty;
+		(*mapping)["closure_mul"].m_llvm_type = closure_tree_node_mul_ty;
+		(*mapping)["closure_add"].m_llvm_type = closure_tree_node_add_ty;
 	}
 }
 
@@ -178,7 +180,7 @@ llvm::Function* GlobalModule::declare_closure_function(const std::string& name, 
         arg_types.push_back(get_type_from_context(arg.m_type, context));
 
     const auto function_name = "make_closure_" + name;
-    const auto ret_type = context.m_structure_type_maps["closure_base"].first->getPointerTo();
+    const auto ret_type = context.m_structure_type_maps["closure_base"].m_llvm_type->getPointerTo();
     return Function::Create(FunctionType::get(ret_type, arg_types, false), Function::ExternalLinkage, function_name, *context.module);
 }
 

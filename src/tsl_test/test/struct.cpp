@@ -33,7 +33,7 @@ TEST(Struct, StructureDefine) {
 }
 
 TEST(Struct, StructureDefineRecusive) {
-	validate_shader(R"(
+	const auto shader_source = R"(
 		struct vec2 {
 			float x;
 			float y;
@@ -44,14 +44,36 @@ TEST(Struct, StructureDefineRecusive) {
 			float z;
 		};
 
-        shader func(){
-            struct vec3 light_dir;
+		void helper( out struct vec2 v ){
+			v.y = 1233.0;
+		}
+
+        shader func( out struct vec3 light_dir ){
+			light_dir.xy.x = 111.0;
+			light_dir.z = 123.0;
+			helper( light_dir.xy );
         }
-    )");
+    )";
+
+	struct vec2 {
+		float x, y;
+	};
+	struct vec3 {
+		vec2 xy;
+		float z;
+	};
+	ShadingSystem shading_system;
+	auto func_ptr = compile_shader<void(*)(vec3*)>(shader_source, shading_system);
+
+	vec3 v;
+	func_ptr(&v);
+	EXPECT_EQ(111.0f, v.xy.x);
+	EXPECT_EQ(1233.0f, v.xy.y);
+	EXPECT_EQ(123.0f, v.z);
 }
 
 TEST(Struct, StructureAsArgument) {
-	auto shader_source = R"(
+	const auto shader_source = R"(
 		struct vec2 {
 			float x;
 			float y;

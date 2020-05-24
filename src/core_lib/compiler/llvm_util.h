@@ -86,7 +86,7 @@ inline llvm::Type*          get_type_from_context(const Tsl_Namespace::DataType 
         case Tsl_Namespace::DataTypeEnum::CLOSURE:
             return get_int_32_ptr_ty(context);
 		case Tsl_Namespace::DataTypeEnum::STRUCT:
-			return context.m_structure_type_maps[type.m_structure_name].first;
+			return context.m_structure_type_maps[type.m_structure_name].m_llvm_type;
         default:
             break;
     }

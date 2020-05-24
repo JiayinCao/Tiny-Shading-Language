@@ -252,7 +252,7 @@ llvm::Value* AstNode_Binary_Add::codegen(LLVM_Compile_Context& context) const {
         return nullptr;
     }
 
-    const auto closure_tree_node_type = context.m_structure_type_maps["closure_add"].first;
+    const auto closure_tree_node_type = context.m_structure_type_maps["closure_add"].m_llvm_type;
     const auto closure_tree_node_ptr_type = closure_tree_node_type->getPointerTo();
 
     // allocate the tree data structure
@@ -320,7 +320,7 @@ llvm::Value* AstNode_Binary_Multi::codegen(LLVM_Compile_Context& context) const 
 		return nullptr;
 	}
 
-	const auto closure_tree_node_type = context.m_structure_type_maps["closure_mul"].first;
+	const auto closure_tree_node_type = context.m_structure_type_maps["closure_mul"].m_llvm_type;
 	const auto closure_tree_node_ptr_type = closure_tree_node_type->getPointerTo();
 
 	// allocate the tree data structure
@@ -1256,15 +1256,31 @@ llvm::Value* AstNode_StructDeclaration::codegen(LLVM_Compile_Context& context) c
 	auto struct_layout = data_layout.getStructLayout(structure_type);
 
 	auto& item = context.m_structure_type_maps[m_name];
-	item.first = structure_type;
+	item.m_llvm_type = structure_type;
 
 	member = m_members;
+
+	// I need to figure out the exact behavior of this 'CreateConstGEP2_32'!
+	/*
 	for (StructType::element_iterator EB = struct_layout_type->element_begin(), EI = EB, EE = struct_layout_type->element_end(); EI != EE; ++EI){
 		const auto offset = struct_layout->getElementOffset(EI - EB);
 		const auto decl = member->get_variable_decl();
 		const auto name = decl->get_var_name();
+		const auto type = decl->data_type();
 		
-		item.second[name] = (int)offset;
+		item.m_member_types[name] = std::make_pair(offset, type);
+		member = castType<AstNode_Statement_VariableDecls>(member->get_sibling());
+	}
+	*/
+
+	int i = 0;
+	member = m_members;
+	while (member) {
+		const auto decl = member->get_variable_decl();
+		const auto name = decl->get_var_name();
+		const auto type = decl->data_type();
+
+		item.m_member_types[name] = std::make_pair(i++, type);
 		member = castType<AstNode_Statement_VariableDecls>(member->get_sibling());
 	}
 
@@ -1294,22 +1310,21 @@ llvm::Value* AstNode_StructMemberRef::get_value_address(LLVM_Compile_Context& co
 	auto& data_type = context.m_structure_type_maps[var_type.m_structure_name];
 
 	// get the member offset
-	auto it = data_type.second.find(m_member);
-	if( it == data_type.second.end() ){
+	auto it = data_type.m_member_types.find(m_member);
+	if( it == data_type.m_member_types.end() ){
 		// emit an error here, undefined member access here
 		return nullptr;
 	}
 
 	// this is the member memory offset in term of bytes
-	const auto member_offset = it->second;
+	const auto member_offset = it->second.first;
 
 	// get the member address
-	auto member_value_ptr = context.builder->CreateConstGEP2_32(nullptr, var_value_ptr, 0, member_offset / 4);
+	auto member_value_ptr = context.builder->CreateConstGEP2_32(nullptr, var_value_ptr, 0, member_offset);
 	return  member_value_ptr;
 }
 
 DataType AstNode_StructMemberRef::get_var_type(LLVM_Compile_Context& context) const{
-	/*
 	const auto var_type = m_var->get_var_type(context);
 
 	if (!context.m_structure_type_maps.count(var_type.m_structure_name)) {
@@ -1324,12 +1339,16 @@ DataType AstNode_StructMemberRef::get_var_type(LLVM_Compile_Context& context) co
 	}
 
 	// access the member meta data
-	return context.m_structure_type_maps[var_type.m_structure_name];
+	auto& data_type = context.m_structure_type_maps[var_type.m_structure_name];
 
-	*/
+	// get the member offset
+	auto it = data_type.m_member_types.find(m_member);
+	if (it == data_type.m_member_types.end()) {
+		// emit an error here, undefined member access here
+		return DataType();
+	}
 
-	// not even sure if recursively access struct is supported now, need to follow up later.
-	return DataType();
+	return it->second.second;
 }
 
 TSL_NAMESPACE_END

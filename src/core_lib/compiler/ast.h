@@ -32,8 +32,13 @@ TSL_NAMESPACE_BEGIN
 class AstNode_FunctionPrototype;
 class GlobalModule;
 
+struct StructMemberTypeMetaData{
+	llvm::Type* m_llvm_type = nullptr;
+	std::unordered_map<std::string,std::pair<int,DataType>> m_member_types;
+};
+
 using VarMetaData = std::unordered_map<std::string, std::pair<llvm::Value*, DataType>>;
-using StructSymbolTable = std::unordered_map<std::string, std::pair<llvm::Type*, std::unordered_map<std::string,int>>>;
+using StructSymbolTable = std::unordered_map<std::string, StructMemberTypeMetaData>;
 
 struct LLVM_Compile_Context{
 	llvm::LLVMContext*	context = nullptr;
