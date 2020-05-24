@@ -105,9 +105,6 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureVa
     if (it != m_closures.end())
         return it->second.m_closure_id;
     
-	// it will for sure register this closure starting from here
-	++m_current_closure_id;
-
 	// construct the llvm compile context
     Tsl_Namespace::LLVM_Compile_Context llvm_compiling_context;
     llvm_compiling_context.module = m_module.get();
@@ -118,8 +115,13 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureVa
 
 	// assemble the variable types
     std::vector<Type*> arg_types;
-    for (auto& arg : arg_list)
-        arg_types.push_back(get_type_from_context(arg.m_type, llvm_compiling_context));
+    for (auto& arg : arg_list) {
+        auto type = get_type_from_context(arg.m_type, llvm_compiling_context);
+        // this is a VERY DIRTY hack, I'll try to get back to it once most features are done.
+        if (!type)
+            type = get_int_32_ptr_ty(llvm_compiling_context);
+        arg_types.push_back(type);
+    }
 
 	// declare the closure parameter data structure
     const auto closure_param_type = StructType::create(arg_types, closure_type_name);
@@ -137,7 +139,11 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureVa
         const auto& arg = arg_list[i];
 
         // this obviously won't work for pointer type data, I will fix it later.
-        const auto var_type = get_type_from_context(arg.m_type, llvm_compiling_context);
+        auto var_type = get_type_from_context(arg.m_type, llvm_compiling_context);
+        // this is a VERY DIRTY hack, I'll try to get back to it once most features are done.
+        if (!var_type)
+            var_type = get_int_32_ptr_ty(llvm_compiling_context);
+
         const auto var_ptr = builder.CreateConstGEP2_32(nullptr, converted_param_table_ptr, 0, arg.m_offset / 4);
         builder.CreateStore(function->getArg(i), var_ptr);
     }
@@ -168,7 +174,7 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureVa
 
     m_closures.insert(make_pair(name, ClosureItem(m_current_closure_id, arg_list, structure_size)));
 
-    return m_current_closure_id;
+    return m_current_closure_id++;
 }
 
 llvm::Function* GlobalModule::declare_closure_function(const std::string& name, LLVM_Compile_Context& context) {
@@ -177,8 +183,14 @@ llvm::Function* GlobalModule::declare_closure_function(const std::string& name, 
         return nullptr;
 
     std::vector<Type*> arg_types;
-    for (auto& arg : it->second.m_var_list)
-        arg_types.push_back(get_type_from_context(arg.m_type, context));
+    for (auto& arg : it->second.m_var_list) {
+        // this is a VERY DIRTY hack, I'll try to get back to it once most features are done.
+        auto var_type = get_type_from_context(arg.m_type, context);
+        if (!var_type)
+            var_type = get_int_32_ptr_ty(context);
+
+        arg_types.push_back(var_type);
+    }
 
     const auto function_name = "make_closure_" + name;
     const auto ret_type = context.m_structure_type_maps["closure_base"].m_llvm_type->getPointerTo();

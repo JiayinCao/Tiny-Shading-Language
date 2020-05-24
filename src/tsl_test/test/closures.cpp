@@ -40,6 +40,18 @@ IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float, roughness)
 IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float, specular)
 IMPLEMENT_CLOSURE_TYPE_END()
 
+DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeLayeredBxdf)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, float, roughness)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, float, specular)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, void*, closure)
+DECLARE_CLOSURE_TYPE_END()
+
+IMPLEMENT_CLOSURE_TYPE_BEGIN(ClosureTypeLayeredBxdf)
+IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, float, roughness)
+IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, float, specular)
+IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, void*, closure)
+IMPLEMENT_CLOSURE_TYPE_END()
+
 TEST(Closure, ClosureMake) {
     ShadingSystem shading_system;
     auto shading_context = shading_system.make_shading_context();
@@ -168,4 +180,38 @@ TEST(Closure, ClosureComplex) {
     auto microfacet_param = (ClosureTypeMicrofacet*)closure_add->m_closure1->m_params;
     EXPECT_EQ(microfacet_param->roughness, 123.0f);
     EXPECT_EQ(microfacet_param->specular, 5.0f);
+}
+
+TEST(Closure, ClosureAsOtherClosureInput) {
+    ShadingSystem shading_system;
+    auto shading_context = shading_system.make_shading_context();
+
+    // shading_system.register_closure_type<ClosureTypeLambert>("lambert");
+    auto closure_id_layered = shading_system.register_closure_type("layered_bxdf", ClosureTypeLayeredBxdf::m_offsets, (int)sizeof(ClosureTypeLayeredBxdf));
+    auto closure_id_microfacet = shading_system.register_closure_type("microfacet", ClosureTypeMicrofacet::m_offsets, (int)sizeof(ClosureTypeMicrofacet));
+
+    auto shader_source = R"(
+        shader closure_add(out closure o0){
+            closure bottom = make_closure<microfacet>( 123.0 , 5.0 );
+            o0 = make_closure<layered_bxdf>( 1233.0 , 4.0 , bottom );
+        }
+    )";
+
+    Tsl_Namespace::ClosureTreeNodeBase* root = nullptr;
+    auto func_ptr = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeBase**)>(shader_source, shading_system);
+    func_ptr(&root);
+
+    EXPECT_NE(root, nullptr);
+    EXPECT_EQ(root->m_id, closure_id_layered);
+    EXPECT_NE(root->m_params, nullptr);
+
+    ClosureTypeLayeredBxdf* layered_bxdf_params = (ClosureTypeLayeredBxdf*)root->m_params;
+    EXPECT_EQ(layered_bxdf_params->roughness, 1233.0);
+    EXPECT_EQ(layered_bxdf_params->specular, 4.0);
+
+    ClosureTreeNodeBase* bottom_bxdf = (ClosureTreeNodeBase*)layered_bxdf_params->closure;
+    ClosureTypeMicrofacet* mf_bxdf = (ClosureTypeMicrofacet*)bottom_bxdf->m_params;
+
+    EXPECT_EQ(mf_bxdf->roughness, 123.0f);
+    EXPECT_EQ(mf_bxdf->specular, 5.0f);
 }
