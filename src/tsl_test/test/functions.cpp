@@ -189,12 +189,12 @@ TEST(Functions, Function_As_Argument ) {
     )");
 }
 
-TEST(Functions, CONFIG_DECORATOR ) {
+TEST(Functions, Config_Decorator ) {
 	validate_shader(R"(
         shader main( int arg0 = 232 ,
 				     const int arg1 = 2,
 					 in const float arg2 = 3.0,
-					 const in matrix mat,
+					 // const in matrix mat,
                      in float input_arg = 0.2 <<< >>> ,
                      out int last_arg = 2.0 <<< >>> ){
             arg2 = input_arg + 2.0;
