@@ -52,6 +52,10 @@ endif()
 
 if (TSL_PLATFORM_WIN)
     set_target_properties( TSL_Test PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} /MD" )
+
+    # enable multi-thread compiling
+    SET(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} /MP${N}")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP${N}")
 endif()
 
 target_link_libraries(TSL_Test TSL_Lib)
