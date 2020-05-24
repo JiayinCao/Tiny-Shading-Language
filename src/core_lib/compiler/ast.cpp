@@ -1243,11 +1243,18 @@ llvm::Value* AstNode_StructDeclaration::codegen(LLVM_Compile_Context& context) c
 	std::vector<llvm::Type*> member_types;
 	AstNode_Statement_VariableDecls* member = m_members;
 	while( member ){
-		const auto decl = member->get_variable_decl();
-		const auto type = decl->data_type();
+		const auto decls = member->get_variable_decl();
 
-		auto llvm_type = get_type_from_context(type, context);
-		member_types.push_back(llvm_type);
+		auto decl = decls;
+		while (decl) {
+			const auto name = decl->get_var_name();
+			const auto type = decl->data_type();
+			auto llvm_type = get_type_from_context(type, context);
+			member_types.push_back(llvm_type);
+
+			decl = castType<AstNode_VariableDecl>(decl->get_sibling());
+		}
+
 		member = castType<AstNode_Statement_VariableDecls>(member->get_sibling());
 	}
 	auto structure_type = StructType::create(member_types, m_name);
@@ -1276,11 +1283,21 @@ llvm::Value* AstNode_StructDeclaration::codegen(LLVM_Compile_Context& context) c
 	int i = 0;
 	member = m_members;
 	while (member) {
-		const auto decl = member->get_variable_decl();
-		const auto name = decl->get_var_name();
-		const auto type = decl->data_type();
+		const auto decls = member->get_variable_decl();
 
-		item.m_member_types[name] = std::make_pair(i++, type);
+		bool type_pushed = false;
+
+		auto decl = decls;
+		while(decl){
+			const auto name = decl->get_var_name();
+			const auto type = decl->data_type();
+
+			item.m_member_types[name] = std::make_pair(i++, type);
+			type_pushed = true;
+
+			decl = castType<AstNode_VariableDecl>(decl->get_sibling());
+		}
+
 		member = castType<AstNode_Statement_VariableDecls>(member->get_sibling());
 	}
 
