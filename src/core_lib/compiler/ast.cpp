@@ -44,13 +44,13 @@ llvm::Value* LLVM_Compile_Context::get_var_symbol(const std::string& name, bool 
     if (only_top_layer) {
         auto top = m_var_symbols.back();
         auto it = top.find(name);
-        return it == top.end() ? nullptr : it->second;
+        return it == top.end() ? nullptr : it->second.first;
     } else {
         auto it = m_var_symbols.rbegin();
         while (it != m_var_symbols.rend()) {
             auto var = it->find(name);
             if (var != it->end())
-                return var->second;
+                return var->second.first;
             ++it;
         }
     }
@@ -59,7 +59,27 @@ llvm::Value* LLVM_Compile_Context::get_var_symbol(const std::string& name, bool 
     return nullptr;
 }
 
-llvm::Value* LLVM_Compile_Context::push_var_symbol(const std::string& name, llvm::Value* value) {
+DataType LLVM_Compile_Context::get_var_type(const std::string& name, bool only_top_layer){
+	if (only_top_layer) {
+		auto top = m_var_symbols.back();
+		auto it = top.find(name);
+		if( it != top.end() )
+			return it->second.second;
+	} else {
+		auto it = m_var_symbols.rbegin();
+		while (it != m_var_symbols.rend()) {
+			auto var = it->find(name);
+			if (var != it->end())
+				return var->second.second;
+			++it;
+		}
+	}
+
+	// emit error here, undefined symbol
+	return DataType();
+}
+
+llvm::Value* LLVM_Compile_Context::push_var_symbol(const std::string& name, llvm::Value* value, DataType type) {
     auto top_layer = m_var_symbols.back();
 
     if (top_layer.count(name)) {
@@ -67,7 +87,7 @@ llvm::Value* LLVM_Compile_Context::push_var_symbol(const std::string& name, llvm
         return nullptr;
     }
 
-    m_var_symbols.back()[name] = value;
+    m_var_symbols.back()[name] = std::make_pair(value, type);
 
     // emit error here, undefined symbol
     return nullptr;
@@ -152,7 +172,7 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 
             auto arg = function->getArg(i);
             if (variable->get_config() & VariableConfig::OUTPUT) {
-                context.push_var_symbol(name, arg);
+                context.push_var_symbol(name, arg, variable->data_type());
             } else {
                 // allocate the variable on stack
                 auto alloc_var = context.builder->CreateAlloca(raw_type, nullptr, name);
@@ -160,7 +180,7 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
                 // duplicate the value so that it can be a copy instead of a reference.
                 context.builder->CreateStore(arg, alloc_var);
                 
-                context.push_var_symbol(name, alloc_var);
+                context.push_var_symbol(name, alloc_var, variable->data_type());
             }
 
             variable = castType<AstNode_VariableDecl>(variable->get_sibling());
@@ -232,7 +252,7 @@ llvm::Value* AstNode_Binary_Add::codegen(LLVM_Compile_Context& context) const {
         return nullptr;
     }
 
-    const auto closure_tree_node_type = context.m_structure_type_maps["closure_add"];
+    const auto closure_tree_node_type = context.m_structure_type_maps["closure_add"].first;
     const auto closure_tree_node_ptr_type = closure_tree_node_type->getPointerTo();
 
     // allocate the tree data structure
@@ -300,7 +320,7 @@ llvm::Value* AstNode_Binary_Multi::codegen(LLVM_Compile_Context& context) const 
 		return nullptr;
 	}
 
-	const auto closure_tree_node_type = context.m_structure_type_maps["closure_mul"];
+	const auto closure_tree_node_type = context.m_structure_type_maps["closure_mul"].first;
 	const auto closure_tree_node_ptr_type = closure_tree_node_type->getPointerTo();
 
 	// allocate the tree data structure
@@ -509,6 +529,10 @@ llvm::Value* AstNode_VariableRef::get_value_address(LLVM_Compile_Context& contex
     return context.get_var_symbol(m_name);
 }
 
+DataType AstNode_VariableRef::get_var_type(LLVM_Compile_Context& context) const {
+	return context.get_var_type(m_name);
+}
+
 llvm::Value* AstNode_ArrayAccess::codegen(LLVM_Compile_Context& context) const {
     auto var = m_var->get_value_address(context);
     auto index = m_index->codegen(context);
@@ -534,6 +558,10 @@ llvm::Value* AstNode_ArrayAccess::get_value_address(LLVM_Compile_Context& contex
     return context.builder->CreateGEP(var, index);
 }
 
+DataType AstNode_ArrayAccess::get_var_type(LLVM_Compile_Context& context) const {
+	return m_var->get_var_type(context);
+}
+
 llvm::Value* AstNode_SingleVariableDecl::codegen(LLVM_Compile_Context& context) const {
     auto name = m_name;
     auto type = get_type_from_context(m_type, context);
@@ -557,7 +585,7 @@ llvm::Value* AstNode_SingleVariableDecl::codegen(LLVM_Compile_Context& context) 
             context.builder->CreateStore(init_value, alloc_var);
     }
 
-    context.push_var_symbol(name, alloc_var);
+    context.push_var_symbol(name, alloc_var, m_type);
 
     return nullptr;
 }
@@ -583,7 +611,7 @@ llvm::Value* AstNode_ArrayDecl::codegen(LLVM_Compile_Context& context) const {
     // allocate the variable on stack
     auto alloc_var = context.builder->CreateAlloca(type, cnt, name);
 
-    context.push_var_symbol(name, alloc_var);
+    context.push_var_symbol(name, alloc_var, m_type);
 
     return nullptr;
 }
@@ -1223,12 +1251,85 @@ llvm::Value* AstNode_StructDeclaration::codegen(LLVM_Compile_Context& context) c
 		member = castType<AstNode_Statement_VariableDecls>(member->get_sibling());
 	}
 	auto structure_type = StructType::create(member_types, m_name);
-	context.m_structure_type_maps[m_name] = structure_type;
+	auto data_layout = context.module->getDataLayout();
+	StructType *struct_layout_type = dyn_cast<StructType>(structure_type);
+	auto struct_layout = data_layout.getStructLayout(structure_type);
 
-	// this is to be deleted, it is purely to prevent llvm from stripping the structure definition at the end of the day.
-	GlobalVariable* global_input_value = new GlobalVariable(*context.module, structure_type, true, GlobalValue::ExternalLinkage, nullptr, "global_input");
+	auto& item = context.m_structure_type_maps[m_name];
+	item.first = structure_type;
+
+	member = m_members;
+	for (StructType::element_iterator EB = struct_layout_type->element_begin(), EI = EB, EE = struct_layout_type->element_end(); EI != EE; ++EI){
+		const auto offset = struct_layout->getElementOffset(EI - EB);
+		const auto decl = member->get_variable_decl();
+		const auto name = decl->get_var_name();
+		
+		item.second[name] = (int)offset;
+		member = castType<AstNode_Statement_VariableDecls>(member->get_sibling());
+	}
 
 	return nullptr;
+}
+
+llvm::Value* AstNode_StructMemberRef::codegen(LLVM_Compile_Context& context) const{
+	auto value_ptr = m_var->get_value_address(context);
+	return context.builder->CreateLoad(value_ptr);
+}
+
+llvm::Value* AstNode_StructMemberRef::get_value_address(LLVM_Compile_Context& context) const{
+	const auto var_type = m_var->get_var_type(context);
+
+	if( !context.m_structure_type_maps.count(var_type.m_structure_name) ){
+		// emit an error here, missing member variable referenced
+		return nullptr;
+	}
+
+	const auto var_value_ptr = m_var->get_value_address(context);
+	if( !var_value_ptr ){
+		// emit an error here, undefined var name
+		return nullptr;
+	}
+
+	// access the member meta data
+	auto& data_type = context.m_structure_type_maps[var_type.m_structure_name];
+
+	// get the member offset
+	auto it = data_type.second.find(m_member);
+	if( it == data_type.second.end() ){
+		// emit an error here, undefined member access here
+		return nullptr;
+	}
+
+	// this is the member memory offset in term of bytes
+	const auto member_offset = it->second;
+
+	// get the member address
+	auto member_value_ptr = context.builder->CreateConstGEP2_32(nullptr, var_value_ptr, 0, member_offset / 4);
+	return  member_value_ptr;
+}
+
+DataType AstNode_StructMemberRef::get_var_type(LLVM_Compile_Context& context) const{
+	/*
+	const auto var_type = m_var->get_var_type(context);
+
+	if (!context.m_structure_type_maps.count(var_type.m_structure_name)) {
+		// emit an error here, missing member variable referenced
+		return DataType();
+	}
+
+	const auto var_value_ptr = m_var->get_value_address(context);
+	if (!var_value_ptr) {
+		// emit an error here, undefined var name
+		return DataType();
+	}
+
+	// access the member meta data
+	return context.m_structure_type_maps[var_type.m_structure_name];
+
+	*/
+
+	// not even sure if recursively access struct is supported now, need to follow up later.
+	return DataType();
 }
 
 TSL_NAMESPACE_END

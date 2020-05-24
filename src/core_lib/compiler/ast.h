@@ -32,6 +32,9 @@ TSL_NAMESPACE_BEGIN
 class AstNode_FunctionPrototype;
 class GlobalModule;
 
+using VarMetaData = std::unordered_map<std::string, std::pair<llvm::Value*, DataType>>;
+using StructSymbolTable = std::unordered_map<std::string, std::pair<llvm::Type*, std::unordered_map<std::string,int>>>;
+
 struct LLVM_Compile_Context{
 	llvm::LLVMContext*	context = nullptr;
 	llvm::Module*		module = nullptr;
@@ -39,9 +42,9 @@ struct LLVM_Compile_Context{
 
     // closured touched in the shader
     std::unordered_map<std::string, llvm::Function*> m_closures_maps;
-	std::unordered_map<std::string, llvm::Type*>     m_structure_type_maps;
+	StructSymbolTable     m_structure_type_maps;
 
-    using Var_Symbol_Table_Stack	= std::vector<std::unordered_map<std::string, llvm::Value*>>;
+    using Var_Symbol_Table_Stack	= std::vector<VarMetaData>;
     using Func_Symbol_Table			= std::unordered_map<std::string, std::pair<llvm::Function*, const AstNode_FunctionPrototype*>>;
     using Block_Stack				= std::stack<std::pair<llvm::BasicBlock*, llvm::BasicBlock*>>;
 
@@ -49,7 +52,8 @@ struct LLVM_Compile_Context{
     Block_Stack             m_blocks;
 
     llvm::Value* get_var_symbol(const std::string& name, bool only_top_layer = false);
-    llvm::Value* push_var_symbol(const std::string& name, llvm::Value* value);
+	DataType	 get_var_type(const std::string& name, bool only_top_layer = false);
+    llvm::Value* push_var_symbol(const std::string& name, llvm::Value* value, DataType type);
     void push_var_symbol_layer();
     void pop_var_symbol_layer();
 
@@ -392,6 +396,8 @@ public:
     virtual llvm::Value* get_value_address(LLVM_Compile_Context& context) const {
         return nullptr;
     }
+
+	virtual DataType get_var_type(LLVM_Compile_Context& context) const = 0;
 };
 
 class AstNode_VariableDecl : public AstNode, public LLVM_Value {
@@ -485,6 +491,8 @@ public:
 
     void print() const override;
 
+	DataType get_var_type(LLVM_Compile_Context& context) const override;
+
 private:
 	const std::string	m_name;
 };
@@ -498,6 +506,8 @@ public:
     llvm::Value* get_value_address(LLVM_Compile_Context& context) const override;
 
     void print() const override;
+
+	DataType get_var_type(LLVM_Compile_Context& context) const override;
 
 private:
     AstNode_Lvalue*     m_var;
@@ -908,8 +918,24 @@ public:
 	void print() const override;
 
 private:
-	std::string							m_name;
+	const std::string					m_name;
 	AstNode_Statement_VariableDecls*	m_members;
+};
+
+class AstNode_StructMemberRef : public AstNode_Lvalue {
+public:
+	AstNode_StructMemberRef( AstNode_Lvalue* var , const char* member_name ) : m_var(var), m_member(member_name) {}
+
+	llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+	llvm::Value* get_value_address(LLVM_Compile_Context& context) const override;
+
+	void print() const override;
+
+	DataType get_var_type(LLVM_Compile_Context& context) const override;
+
+private:
+	AstNode_Lvalue*		m_var;
+	const std::string	m_member;
 };
 
 TSL_NAMESPACE_END

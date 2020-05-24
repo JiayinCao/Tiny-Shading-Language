@@ -902,6 +902,8 @@ ID_OR_FIELD:
     }
 	|
 	VARIABLE_LVALUE "." ID {
+		AstNode_Lvalue* var = AstNode::castType<AstNode_Lvalue>($1);
+		$$ = new AstNode_StructMemberRef(var, $3);
 	};
 
 TYPE:

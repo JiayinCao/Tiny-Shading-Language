@@ -25,6 +25,7 @@
 #include <unordered_map>
 #include "tslversion.h"
 #include "closure.h"
+#include "ast.h"
 
 TSL_NAMESPACE_BEGIN
 
@@ -54,7 +55,7 @@ public:
     llvm::Module* get_closure_module();
 
     // declare some global data structure type
-    void          declare_closure_tree_types(llvm::LLVMContext& context, std::unordered_map<std::string, llvm::Type*>* mapping = nullptr );
+    void          declare_closure_tree_types(llvm::LLVMContext& context, StructSymbolTable* mapping = nullptr );
 
     // get declaration
     llvm::Function* declare_closure_function(const std::string& name, LLVM_Compile_Context& context);

@@ -37,7 +37,7 @@
 #include "global_module.h"
 
 // a temporary ugly solution for debugging for now
-// #define DEBUG_OUTPUT
+#define DEBUG_OUTPUT
 
 #ifdef DEBUG_OUTPUT
 #include <iostream>
@@ -97,7 +97,7 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnit* su) {
 #endif
 
     // not verbose for now, this should be properly exported through compiler option later.
-    makeVerbose(false);
+    makeVerbose(true);
 
     // initialize flex scanner
     m_scanner = nullptr;

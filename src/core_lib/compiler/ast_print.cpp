@@ -492,4 +492,9 @@ void AstNode_StructDeclaration::print() const{
 	std::cout << "};" << std::endl;
 }
 
+void AstNode_StructMemberRef::print() const{
+	m_var->print();
+	std::cout<<"."<<m_member;
+}
+
 TSL_NAMESPACE_END
