@@ -72,10 +72,9 @@ struct ClosureTree {
 struct ClosureVar {
     const std::string m_name;
     const std::string m_type;
-    const int         m_offset;
 
-    ClosureVar(const std::string& name, const std::string& type, const int offset) :
-        m_name(name), m_type(type), m_offset(offset) {}
+    ClosureVar(const std::string& name, const std::string& type) :
+        m_name(name), m_type(type) {}
 };
 
 typedef std::vector<ClosureVar> ClosureVarList;
@@ -85,7 +84,7 @@ typedef std::vector<ClosureVar> ClosureVarList;
 #define DECLARE_CLOSURE_TYPE_END()              static ClosureVarList m_offsets; };
 
 #define IMPLEMENT_CLOSURE_TYPE_BEGIN(T)         ClosureVarList T::m_offsets({
-#define IMPLEMENT_CLOSURE_TYPE_VAR(T,VT,V)      { ClosureVar( #V, #VT, (int)offsetof(struct T, V) ) },
+#define IMPLEMENT_CLOSURE_TYPE_VAR(T,VT,V)      { ClosureVar( #V, #VT ) },
 #define IMPLEMENT_CLOSURE_TYPE_END()            } );
 
 TSL_NAMESPACE_END

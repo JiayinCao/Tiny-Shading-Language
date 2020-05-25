@@ -144,7 +144,7 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureVa
         if (!var_type)
             var_type = get_int_32_ptr_ty(llvm_compiling_context);
 
-        const auto var_ptr = builder.CreateConstGEP2_32(nullptr, converted_param_table_ptr, 0, arg.m_offset / 4);
+        const auto var_ptr = builder.CreateConstGEP2_32(nullptr, converted_param_table_ptr, 0, i);
         builder.CreateStore(function->getArg(i), var_ptr);
     }
     

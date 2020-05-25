@@ -52,6 +52,16 @@ IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, float, specular)
 IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, void*, closure)
 IMPLEMENT_CLOSURE_TYPE_END()
 
+DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeBxdfWithDouble)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeBxdfWithDouble, double, roughness)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeBxdfWithDouble, float, specular)
+DECLARE_CLOSURE_TYPE_END()
+
+IMPLEMENT_CLOSURE_TYPE_BEGIN(ClosureTypeBxdfWithDouble)
+IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeBxdfWithDouble, double, roughness)
+IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeBxdfWithDouble, float, specular)
+IMPLEMENT_CLOSURE_TYPE_END()
+
 TEST(Closure, ClosureMake) {
     ShadingSystem shading_system;
     auto shading_context = shading_system.make_shading_context();
@@ -75,6 +85,31 @@ TEST(Closure, ClosureMake) {
 	EXPECT_NE(root->m_params, nullptr);
     EXPECT_EQ(lambert_param->base_color, 11);
     EXPECT_EQ(lambert_param->normal, 2.0f);
+}
+
+// this needs to wait for TSL to support double literal and type conversion later.
+TEST(Closure, DISABLED_ClosureMakeWithDouble) {
+    ShadingSystem shading_system;
+    auto shading_context = shading_system.make_shading_context();
+
+    auto closure_id = shading_system.register_closure_type("bxdf_with_double", ClosureTypeBxdfWithDouble::m_offsets, (int)sizeof(ClosureTypeBxdfWithDouble));
+
+    auto shader_source = R"(
+        shader closure_make(out closure o0){
+            o0 = make_closure<bxdf_with_double>( 11.0 , 2.0 );
+        }
+    )";
+
+    Tsl_Namespace::ClosureTreeNodeBase* root = nullptr;
+    auto func_ptr = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeBase**)>(shader_source, shading_system);
+    func_ptr(&root);
+
+    auto bxdf_double_param = (ClosureTypeBxdfWithDouble*)root->m_params;
+    EXPECT_NE(root, nullptr);
+    EXPECT_EQ(root->m_id, closure_id);
+    EXPECT_NE(root->m_params, nullptr);
+    EXPECT_EQ(bxdf_double_param->roughness, 11.0);
+    EXPECT_EQ(bxdf_double_param->specular, 2.0f);
 }
 
 TEST(Closure, ClosureMul) {

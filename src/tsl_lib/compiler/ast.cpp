@@ -1267,19 +1267,6 @@ llvm::Value* AstNode_StructDeclaration::codegen(LLVM_Compile_Context& context) c
 
 	member = m_members;
 
-	// I need to figure out the exact behavior of this 'CreateConstGEP2_32'!
-	/*
-	for (StructType::element_iterator EB = struct_layout_type->element_begin(), EI = EB, EE = struct_layout_type->element_end(); EI != EE; ++EI){
-		const auto offset = struct_layout->getElementOffset(EI - EB);
-		const auto decl = member->get_variable_decl();
-		const auto name = decl->get_var_name();
-		const auto type = decl->data_type();
-		
-		item.m_member_types[name] = std::make_pair(offset, type);
-		member = castType<AstNode_Statement_VariableDecls>(member->get_sibling());
-	}
-	*/
-
 	int i = 0;
 	member = m_members;
 	while (member) {
@@ -1333,11 +1320,8 @@ llvm::Value* AstNode_StructMemberRef::get_value_address(LLVM_Compile_Context& co
 		return nullptr;
 	}
 
-	// this is the member memory offset in term of bytes
-	const auto member_offset = it->second.first;
-
 	// get the member address
-	auto member_value_ptr = context.builder->CreateConstGEP2_32(nullptr, var_value_ptr, 0, member_offset);
+	auto member_value_ptr = context.builder->CreateConstGEP2_32(nullptr, var_value_ptr, 0, it->second.first);
 	return  member_value_ptr;
 }
 
