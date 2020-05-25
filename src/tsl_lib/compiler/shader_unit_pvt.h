@@ -38,6 +38,14 @@ public:
 
     // the function address for host code to call
     uint64_t m_function_pointer = 0;
+
+    // global module
+    GlobalModule*    m_global_module = nullptr;
+
+    // llvm function pointer
+    llvm::Function* m_llvm_function = nullptr;
+    // root function name
+    std::string     m_root_function_name;
 };
 
 TSL_NAMESPACE_END

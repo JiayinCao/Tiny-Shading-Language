@@ -49,6 +49,11 @@ public:
         return m_shader_unit_data;
     }
 
+    //! @brief  Resolve the shader unit.
+    //!
+    //! @return Whether the shader is resolved successfully.
+    virtual bool    resolve();
+
     //! @brief  Get the function pointer to execute the shader.
     //!
     //! @return     A function pointer points to code memory.
@@ -59,6 +64,10 @@ protected:
 
     /**< A private data structure hiding all LLVM details. */
     ShaderUnit_Pvt* m_shader_unit_data = nullptr;
+
+    // This will be allowed once I have most feature completed.
+    const bool  m_allow_optimization = false;
+    const bool  m_allow_verification = false;
 };
 
 //! @brief  Shader group is a basic unit of shader execution.
@@ -78,12 +87,12 @@ public:
     //! @brief  Add a shader unit in the group.
     //!
     //! @param  shader_unit A shader unit to be added in the group.
-    void add_shader_group(const ShaderUnit* shader_unit);
+    void add_shader_unit(const ShaderUnit* shader_unit);
 
-    //! @brief  Compile the shader group.
+    //! @brief  Resolve the shader unit.
     //!
-    //! @return             Whether the shader group is compiled successcully.
-    bool compile();
+    //! @return Whether the shader is resolved successfully.
+    bool resolve() override;
 
 private:
     /**< TSL compiler of the owning context. */

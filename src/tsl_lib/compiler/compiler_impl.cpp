@@ -15,21 +15,9 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-#include "llvm/ADT/APFloat.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/Type.h"
-#include "llvm/IR/Verifier.h"
-#include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/Transforms/InstCombine/InstCombine.h"
-#include "llvm/Transforms/Scalar/GVN.h"
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/ExecutionEngine/MCJIT.h"
 #include "compiler_impl.h"
 #include "ast.h"
 #include "shader_unit_pvt.h"
@@ -122,28 +110,6 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnit* su) {
 	if(!module)
 		return false;
 
-    {
-        // get the function pointer through execution engine
-        su_pvt->m_execution_engine = std::unique_ptr<llvm::ExecutionEngine>(llvm::EngineBuilder(std::move(su_pvt->m_module)).create());
-
-        // Open a new module.
-        module->setDataLayout(su_pvt->m_execution_engine->getTargetMachine()->createDataLayout());
-
-        // Create a new pass manager attached to it.
-        su_pvt->m_fpm = std::make_unique<llvm::legacy::FunctionPassManager>(module);
-
-        // Do simple "peephole" optimizations and bit-twiddling optzns.
-        su_pvt->m_fpm->add(llvm::createInstructionCombiningPass());
-        // Re-associate expressions.
-        su_pvt->m_fpm->add(llvm::createReassociatePass());
-        // Eliminate Common SubExpressions.
-        su_pvt->m_fpm->add(llvm::createGVNPass());
-        // Simplify the control flow graph (deleting unreachable blocks, etc).
-        su_pvt->m_fpm->add(llvm::createCFGSimplificationPass());
-
-        su_pvt->m_fpm->doInitialization();
-    }
-
 	// if there is a legit shader defined, generate LLVM IR
 	if(m_ast_root){
 		llvm::IRBuilder<> builder(m_llvm_context);
@@ -170,29 +136,14 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnit* su) {
             function->codegen(compile_context);
 
 		// generate code for the shader in this module
-		llvm::Function* function = m_ast_root->codegen(compile_context);
+		su_pvt->m_llvm_function = m_ast_root->codegen(compile_context);
+        su_pvt->m_root_function_name = m_ast_root->get_function_name();
+        su_pvt->m_global_module = &m_global_module;
 
         // it should be safe to assume llvm function has to be generated, otherwise, the shader is invalid.
-        if (!function)
+        if (!su_pvt->m_llvm_function)
             return false;
-
-        // optimization pass, this is pretty cool because I don't have to implement those sophisticated optimization algorithms.
-        // su_pvt->m_fpm->run(*function);
-
-        // make sure the function is valid
-        //if( !llvm::verifyFunction(*function, &llvm::errs()) )
-		//	return false;
-
-#ifdef DEBUG_OUTPUT
-		module->print(llvm::errs(), nullptr);
-#endif
-
-        // make sure to link the global closure model
-        su_pvt->m_execution_engine->addModule(CloneModule(*m_global_module.get_closure_module()));
-
-        // resolve the function pointer
-        su_pvt->m_function_pointer = su_pvt->m_execution_engine->getFunctionAddress(m_ast_root->get_function_name());
-	}
+    }
 
 	return true;
 }

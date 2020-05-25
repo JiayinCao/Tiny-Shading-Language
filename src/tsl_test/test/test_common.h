@@ -40,6 +40,10 @@ inline T compile_shader(const char* shader_source, ShadingSystem& shading_system
     const auto shader_unit = shading_context->compile_shader_unit("test", shader_source);
     const auto ret = shader_unit != nullptr;
 
+    // resolve the shader before using it.
+    if(!shader_unit->resolve())
+        return nullptr;
+
     if (!shader_unit)
         return nullptr;
     return (T)shader_unit->get_function();
