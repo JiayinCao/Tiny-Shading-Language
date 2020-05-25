@@ -41,6 +41,7 @@
 %union {
     class AstNode 					*p;	/* pointers for the AST struct nodes */
 	float							f;  /* floating point value cache. */
+    double                          d;  /* double precision floating point value cache. */
 	int								i;  /* integer value or enum values. */
 	const char						*s;	/* string values. */
 	char							c;  /* single char. */
@@ -56,6 +57,7 @@
 %token <s> ID
 %token <i> INT_NUM
 %token <f> FLT_NUM
+%token <d> DBL_NUM
 %token INC_OP			"++"
 %token DEC_OP			"--"
 %token <vc> OUT			"out"
@@ -825,6 +827,10 @@ EXPRESSION_CONST:
 	FLT_NUM {
 		$$ = new AstNode_Literal_Flt( $1 );
 	}
+    |
+    DBL_NUM {
+        $$ = new AstNode_Literal_Double( $1 );
+    }
     |
     "true" {
         $$ = new AstNode_Literal_Bool( true );

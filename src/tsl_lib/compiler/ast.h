@@ -165,6 +165,18 @@ private:
     float m_val;
 };
 
+class AstNode_Literal_Double : public AstNode_Expression {
+public:
+    AstNode_Literal_Double(double val) : m_val(val) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
+    void print() const override;
+
+private:
+    double m_val;
+};
+
 class AstNode_Literal_Bool: public AstNode_Expression{
 public:
     AstNode_Literal_Bool(bool val) : m_val(val) {}

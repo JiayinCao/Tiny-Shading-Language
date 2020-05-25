@@ -28,6 +28,10 @@ void AstNode_Literal_Flt::print() const {
     std::cout << m_val;
 }
 
+void AstNode_Literal_Double::print() const {
+    std::cout << m_val;
+}
+
 void AstNode_Literal_Bool::print() const {
     std::cout << m_val;
 }

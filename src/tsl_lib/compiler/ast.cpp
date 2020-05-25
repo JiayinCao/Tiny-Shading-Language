@@ -215,6 +215,10 @@ llvm::Value* AstNode_Literal_Flt::codegen(LLVM_Compile_Context& context) const {
     return get_llvm_constant_fp(m_val, context);
 }
 
+llvm::Value* AstNode_Literal_Double::codegen(LLVM_Compile_Context& context) const {
+    return get_llvm_constant_fp(m_val, context);
+}
+
 llvm::Value* AstNode_Literal_Bool::codegen(LLVM_Compile_Context& context) const {
     return get_llvm_constant_int((int)m_val, 1, context);
 }

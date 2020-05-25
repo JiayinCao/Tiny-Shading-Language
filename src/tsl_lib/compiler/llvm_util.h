@@ -118,6 +118,11 @@ inline llvm::Value*     get_llvm_constant_fp(const float v, Tsl_Namespace::LLVM_
     return llvm::ConstantFP::get(llvm_context, llvm::APFloat(v));
 }
 
+inline llvm::Value*     get_llvm_constant_fp(const double v, Tsl_Namespace::LLVM_Compile_Context& context) {
+    auto& llvm_context = get_llvm_context(context);
+    return llvm::ConstantFP::get(llvm_context, llvm::APFloat(v));
+}
+
 inline llvm::Value*     get_llvm_constant_int(const int v, const int bw, Tsl_Namespace::LLVM_Compile_Context& context) {
     auto& llvm_context = get_llvm_context(context);
     return llvm::ConstantInt::get(llvm_context, llvm::APInt(bw, v));

@@ -88,7 +88,7 @@ TEST(Closure, ClosureMake) {
 }
 
 // this needs to wait for TSL to support double literal and type conversion later.
-TEST(Closure, DISABLED_ClosureMakeWithDouble) {
+TEST(Closure, ClosureMakeWithDouble) {
     ShadingSystem shading_system;
     auto shading_context = shading_system.make_shading_context();
 
@@ -96,7 +96,7 @@ TEST(Closure, DISABLED_ClosureMakeWithDouble) {
 
     auto shader_source = R"(
         shader closure_make(out closure o0){
-            o0 = make_closure<bxdf_with_double>( 11.0 , 2.0 );
+            o0 = make_closure<bxdf_with_double>( 11.0d , 2.0f );
         }
     )";
 

@@ -26,6 +26,7 @@
   #include <string.h>
   #include <stdio.h>
   #include <stdlib.h>
+  #include <iostream>
   #include "tslversion.h"
   #include "platform.h"
   #include "compiler/compiler_impl.h"
@@ -70,7 +71,8 @@ exp                      [eE][-+]?{digit}+
 flt1                     {digit}+\.{digit}*{exp}?
 flt2                     {digit}*\.{digit}+{exp}?
 flt3                     {digit}+{exp}
-float_numbers            {flt1}|{flt2}|{flt3}
+float_numbers            ({flt1}|{flt2}|{flt3})f?
+double_numbers           ({flt1}|{flt2}|{flt3})d
 one_line_comment         (\/\/)(.*\n)
 multi_line_comment       \/\*[^*]*\*+(?:[^\/*][^*]*\*+)*\/
 identifier               ({alpha}|[_])({alpha}|{digit}|[_])*
@@ -160,6 +162,11 @@ whitespace               [ \t\r\n\f]+
 {float_numbers}           { 
                                 yylval->f = atof(yytext);
                                 return FLT_NUM; 
+                          }
+
+{double_numbers}          {
+                                yylval->d = std::stod(yytext);
+                                return DBL_NUM;
                           }
 
 {integer_numbers}         {
