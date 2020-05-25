@@ -45,7 +45,7 @@ inline llvm::IntegerType*   get_int_32_ty(Tsl_Namespace::LLVM_Compile_Context& c
     return llvm::Type::getInt32Ty(get_llvm_context(context));
 }
 
-inline llvm::PointerType* get_int_32_ptr_ty(Tsl_Namespace::LLVM_Compile_Context& context) {
+inline llvm::PointerType*   get_int_32_ptr_ty(Tsl_Namespace::LLVM_Compile_Context& context) {
     return llvm::Type::getInt32PtrTy(get_llvm_context(context));
 }
 
@@ -71,14 +71,8 @@ inline llvm::Type*          get_type_from_context(const Tsl_Namespace::DataType 
             return get_int_32_ty(context);
         case Tsl_Namespace::DataTypeEnum::FLOAT:
             return get_float_ty(context);
-        case Tsl_Namespace::DataTypeEnum::FLOAT3:
-            return get_float_ptr_ty(context);
-        case Tsl_Namespace::DataTypeEnum::FLOAT4:
-            return get_float_ptr_ty(context);
         case Tsl_Namespace::DataTypeEnum::DOUBLE:
             return get_double_ty(context);
-        case Tsl_Namespace::DataTypeEnum::MATRIX:
-            return get_float_ptr_ty(context);
         case Tsl_Namespace::DataTypeEnum::VOID:
             return get_void_ty(context);
         case Tsl_Namespace::DataTypeEnum::BOOL:

@@ -28,9 +28,6 @@ enum DataTypeEnum : int{
 	FLOAT	,
     DOUBLE  ,
 	BOOL	,
-	FLOAT3	,
-	FLOAT4	,
-	MATRIX	,
     CLOSURE ,
 	STRUCT
 };
@@ -50,14 +47,8 @@ inline std::string str_from_data_type( const DataType& type ){
 		return "int";
 	case DataTypeEnum::FLOAT:
 		return "float";
-	case DataTypeEnum::FLOAT3:
-		return "float3";
 	case DataTypeEnum::BOOL:
 		return "bool";
-	case DataTypeEnum::FLOAT4:
-		return "float4";
-	case DataTypeEnum::MATRIX:
-		return "matrix";
     case DataTypeEnum::DOUBLE:
         return "double";
     case DataTypeEnum::CLOSURE:
