@@ -103,15 +103,59 @@ ShaderGroup::ShaderGroup(const std::string& name, const TslCompiler& compiler)
 }
 
 bool ShaderGroup::resolve(){
+    // if no root shader setup yet, return false
+    if (m_root_shader_unit_name == "")
+        return false;
+
+    // if we can't find the root shader, it should return false
+    if (0 == m_shader_units.count(m_root_shader_unit_name))
+        return false;
+
+    // essentially, this is a topological sort
+    std::unordered_set<const ShaderUnit*>   m_visited_shader_units;
+
+    // get the root shader
+    auto root_shader = m_shader_units[m_root_shader_unit_name];
+
+    // generate wrapper shader source code.
+    generate_shader_source(root_shader, m_visited_shader_units);
+
     // to be implemented
+    return true;
+}
+
+bool ShaderGroup::generate_shader_source(const ShaderUnit* su, std::unordered_set<const ShaderUnit*>& visited) {
+
     return false;
 }
 
-void ShaderGroup::add_shader_unit(const ShaderUnit* shader_unit) {
+void ShaderGroup::connect_shader_units(const std::string& ssu, const std::string& sspn, const std::string& tsu, const std::string& tspn) {
+    m_shader_unit_connections[ssu][sspn] = std::make_pair(tsu, tspn);
+}
+
+bool ShaderGroup::add_shader_unit(const ShaderUnit* shader_unit, const bool is_root) {
     if (!shader_unit)
-        return;
+        return false;
+
+    // get the name of the shader
+    const auto name = shader_unit->get_name();
+
+    // if an existed shader is added
+    if (m_shader_units.count(name)) {
+        if (m_shader_units[name] != shader_unit)
+            return false;
+    }
 
     m_shader_units[shader_unit->get_name()] = shader_unit;
+
+    if (is_root) {
+        // more than one root shader set in the group
+        if (m_root_shader_unit_name != "")
+            return false;
+        m_root_shader_unit_name = name;
+    }
+
+    return true;
 }
 
 ShadingContext::ShadingContext(ShadingSystem& shading_system):m_shading_system(shading_system) {

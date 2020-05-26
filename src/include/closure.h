@@ -81,10 +81,10 @@ typedef std::vector<ClosureVar> ClosureVarList;
 
 #define DECLARE_CLOSURE_TYPE_BEGIN(T)           struct T {
 #define DECLARE_CLOSURE_TYPE_VAR(T,VT,V)        VT V;
-#define DECLARE_CLOSURE_TYPE_END()              static ClosureVarList m_offsets; };
+#define DECLARE_CLOSURE_TYPE_END(T)             static ClosureVarList m_offsets; static ClosureID RegisterClosure( const std::string& , ShadingSystem& ); };
 
 #define IMPLEMENT_CLOSURE_TYPE_BEGIN(T)         ClosureVarList T::m_offsets({
 #define IMPLEMENT_CLOSURE_TYPE_VAR(T,VT,V)      { ClosureVar( #V, #VT ) },
-#define IMPLEMENT_CLOSURE_TYPE_END()            } );
+#define IMPLEMENT_CLOSURE_TYPE_END(T)            }); ClosureID T::RegisterClosure( const std::string& name , ShadingSystem& ss ) { return ss.register_closure_type( name , m_offsets , sizeof(T) ); }
 
 TSL_NAMESPACE_END

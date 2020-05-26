@@ -26,6 +26,7 @@
 #include "llvm/IR/IRBuilder.h"
 #include "tslversion.h"
 #include "types.h"
+#include "shader_unit_pvt.h"
 
 TSL_NAMESPACE_BEGIN
 
@@ -138,7 +139,7 @@ protected:
 
 class AstNode_Expression : public AstNode, public LLVM_Value {
 public:
-	virtual bool is_closure() const { return false; }
+	virtual bool is_closure(LLVM_Compile_Context& context) const { return false; }
 };
 
 class AstNode_Literal_Int : public AstNode_Expression {
@@ -206,7 +207,7 @@ public:
 
     void print() const override;
 
-    bool is_closure() const override;
+    bool is_closure(LLVM_Compile_Context& context) const override;
 };
 
 class AstNode_Binary_Minus : public AstNode_Binary {
@@ -226,7 +227,7 @@ public:
 
     void print() const override;
 
-    bool is_closure() const override;
+    bool is_closure(LLVM_Compile_Context& context) const override;
 };
 
 class AstNode_Binary_Div : public AstNode_Binary {
@@ -385,7 +386,7 @@ public:
 
     void print() const override;
 
-	bool is_closure() const override {
+	bool is_closure(LLVM_Compile_Context& context) const override {
 		return true;
 	}
 
@@ -509,6 +510,8 @@ public:
     void print() const override;
 
 	DataType get_var_type(LLVM_Compile_Context& context) const override;
+
+    bool is_closure(LLVM_Compile_Context& context) const override;
 
 private:
 	const std::string	m_name;
@@ -915,6 +918,8 @@ public:
     }
 
 	void print() const override;
+
+    void parse_shader_parameters(std::vector<ShaderArgMetaData>& params);
 
 private:
 	const std::string		m_name;

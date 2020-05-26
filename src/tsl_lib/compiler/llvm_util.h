@@ -24,6 +24,7 @@
 #include "llvm/IR/Type.h"
 #include "llvm/IR/IRBuilder.h"
 #include "ast.h"
+#include "shader_arg_types.h"
 
 inline llvm::LLVMContext&   get_llvm_context(Tsl_Namespace::LLVM_Compile_Context& context) {
     return *context.context;
@@ -85,6 +86,29 @@ inline llvm::Type*          get_type_from_context(const Tsl_Namespace::DataType 
             break;
     }
     return nullptr;
+}
+
+inline Tsl_Namespace::ShaderArgumentTypeEnum type_from_internal_type(const Tsl_Namespace::DataType type) {
+    switch (type.m_type) {
+    case Tsl_Namespace::DataTypeEnum::INT:
+        return Tsl_Namespace::ShaderArgumentTypeEnum::TSL_TYPE_INT;
+    case Tsl_Namespace::DataTypeEnum::FLOAT:
+        return Tsl_Namespace::ShaderArgumentTypeEnum::TSL_TYPE_FLOAT;
+    case Tsl_Namespace::DataTypeEnum::DOUBLE:
+        return Tsl_Namespace::ShaderArgumentTypeEnum::TSL_TYPE_DOUBLE;
+    case Tsl_Namespace::DataTypeEnum::BOOL:
+        return Tsl_Namespace::ShaderArgumentTypeEnum::TSL_TYPE_BOOL;
+    case Tsl_Namespace::DataTypeEnum::CLOSURE:
+        return Tsl_Namespace::ShaderArgumentTypeEnum::TSL_TYPE_CLOSURE;
+    case Tsl_Namespace::DataTypeEnum::STRUCT:
+        if("float3" == type.m_structure_name)
+            return Tsl_Namespace::ShaderArgumentTypeEnum::TSL_TYPE_FLOAT3;
+        else if("float4" == type.m_structure_name)
+            return Tsl_Namespace::ShaderArgumentTypeEnum::TSL_TYPE_FLOAT4;
+    default:
+        break;
+    }
+    return Tsl_Namespace::ShaderArgumentTypeEnum::TSL_TYPE_INVALID;
 }
 
 inline llvm::Type* get_type_from_context(const std::string& type, Tsl_Namespace::LLVM_Compile_Context& context) {

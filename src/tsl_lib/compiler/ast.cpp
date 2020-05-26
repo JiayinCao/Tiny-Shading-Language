@@ -196,6 +196,22 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 	return function;
 }
 
+void AstNode_FunctionPrototype::parse_shader_parameters(std::vector<ShaderArgMetaData>& params) {
+    params.clear();
+
+    const AstNode_VariableDecl* variable = m_variables;
+    while (variable) {
+        const auto raw_type = variable->data_type();
+
+        ShaderArgMetaData arg;
+        arg.m_name = variable->get_var_name();
+        arg.m_type = type_from_internal_type(raw_type);
+        arg.m_is_output = variable->get_config() & VariableConfig::OUTPUT;
+        params.push_back(arg);
+        variable = castType<const AstNode_VariableDecl>(variable->get_sibling());
+    }
+}
+
 llvm::Value* AstNode_FunctionBody::codegen( LLVM_Compile_Context& context ) const{    
 	return nullptr;
 }
@@ -216,24 +232,24 @@ llvm::Value* AstNode_Literal_Bool::codegen(LLVM_Compile_Context& context) const 
     return get_llvm_constant_int((int)m_val, 1, context);
 }
 
-bool AstNode_Binary_Add::is_closure() const {
-    if (m_left->is_closure() != m_right->is_closure()) {
+bool AstNode_Binary_Add::is_closure(LLVM_Compile_Context& context) const {
+    if (m_left->is_closure(context) != m_right->is_closure(context)) {
         // emit an error
         return false;
     }
 
-    return m_left->is_closure() && m_right->is_closure();
+    return m_left->is_closure(context) && m_right->is_closure(context);
 }
 
 llvm::Value* AstNode_Binary_Add::codegen(LLVM_Compile_Context& context) const {
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
-    if (!m_left->is_closure() && !m_right->is_closure())
+    if (!m_left->is_closure(context) && !m_right->is_closure(context))
         return get_llvm_add(left, right, context);
 
     // this must be a closure multiplied by a regular expression
-    if (!(m_left->is_closure() && m_right->is_closure())) {
+    if (!(m_left->is_closure(context) && m_right->is_closure(context))) {
         // emit an error, it is illegal to add a non-closure with a closure
 
         return nullptr;
@@ -282,24 +298,24 @@ llvm::Value* AstNode_Binary_Minus::codegen(LLVM_Compile_Context& context) const 
     return get_llvm_sub(left, right, context);
 }
 
-bool AstNode_Binary_Multi::is_closure() const {
-    if (m_left->is_closure() && m_right->is_closure()) {
+bool AstNode_Binary_Multi::is_closure(LLVM_Compile_Context& context) const {
+    if (m_left->is_closure(context) && m_right->is_closure(context)) {
         // emit an error
         return false;
     }
 
-    return m_left->is_closure() || m_right->is_closure();
+    return m_left->is_closure(context) || m_right->is_closure(context);
 }
 
 llvm::Value* AstNode_Binary_Multi::codegen(LLVM_Compile_Context& context) const {
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
-	if(!m_left->is_closure() && !m_right->is_closure())
+	if(!m_left->is_closure(context) && !m_right->is_closure(context))
 		return get_llvm_mul(left, right, context);
 
 	// this must be a closure multiplied by a regular expression
-	if(m_left->is_closure() && m_right->is_closure()){
+	if(m_left->is_closure(context) && m_right->is_closure(context)){
 		// emit an error, it is illegal to multiply two closures together.
 		return nullptr;
 	}
@@ -308,8 +324,8 @@ llvm::Value* AstNode_Binary_Multi::codegen(LLVM_Compile_Context& context) const 
 	auto  module = context.module;
 	auto& builder = *context.builder;
 
-	auto closure = m_left->is_closure() ? left : right;
-	auto weight = m_left->is_closure() ? right : left;
+	auto closure = m_left->is_closure(context) ? left : right;
+	auto weight = m_left->is_closure(context) ? right : left;
 
 	auto malloc_function = context.m_func_symbols["malloc"].first;
 	if( !malloc_function ){
@@ -524,6 +540,14 @@ llvm::Value* AstNode_VariableRef::codegen(LLVM_Compile_Context& context) const {
 
 llvm::Value* AstNode_VariableRef::get_value_address(LLVM_Compile_Context& context) const {
     return context.get_var_symbol(m_name);
+}
+
+bool AstNode_VariableRef::is_closure(LLVM_Compile_Context& context) const {
+    auto type = context.get_var_type(m_name);
+    if (DataTypeEnum::CLOSURE == type.m_type)
+        return true;
+
+    return false;
 }
 
 DataType AstNode_VariableRef::get_var_type(LLVM_Compile_Context& context) const {

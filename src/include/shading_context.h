@@ -18,6 +18,7 @@
 #pragma once
 
 #include <unordered_map>
+#include <unordered_set>
 #include <memory>
 #include <string>
 #include "tslversion.h"
@@ -80,19 +81,29 @@ class ShaderGroup : public ShaderUnit{
 public:
     //! @brief  Constructor.
     //!
-    //! @param  name        The name fo the shader group.
-    //! @param  compiler    A compiler belonging to the owning shading context.
+    //! @param  name            The name fo the shader group.
+    //! @param  compiler        A compiler belonging to the owning shading context.
     ShaderGroup(const std::string& name, const TslCompiler& compiler);
 
     //! @brief  Add a shader unit in the group.
     //!
-    //! @param  shader_unit A shader unit to be added in the group.
-    void add_shader_unit(const ShaderUnit* shader_unit);
+    //! @param  shader_unit     A shader unit to be added in the group.
+    //! @param  is_root         Whether the shader unit is the root of the group, there has to be exactly one root in each shader group.
+    //! @return                 Whether the shader unit is added in the group.
+    bool add_shader_unit(const ShaderUnit* shader_unit, const bool is_root = false);
 
     //! @brief  Resolve the shader unit.
     //!
     //! @return Whether the shader is resolved successfully.
     bool resolve() override;
+
+    //! @brief  Connect shader unit in the shader group.
+    //!
+    //! @param  ssu     source shader unit
+    //! @param  sspn    source shader parameter name
+    //! @param  tsu     target shader unit
+    //! @param  tspn    target shader parameter name
+    void connect_shader_units(const std::string& ssu, const std::string& sspn, const std::string& tsu, const std::string& tspn);
 
 private:
     /**< TSL compiler of the owning context. */
@@ -100,6 +111,16 @@ private:
 
     /**< Shader units belong to this group. */
     std::unordered_map<std::string, const ShaderUnit*> m_shader_units;
+
+    /**< Name of the root shader unit. */
+    std::string  m_root_shader_unit_name;
+
+    /**< Shader unit connection. */
+    using ShaderUnitConnection = std::unordered_map<std::string, std::unordered_map<std::string, std::pair<std::string, std::string>>>;
+    ShaderUnitConnection m_shader_unit_connections;
+
+    //! @brief  Generate shader group source code
+    bool    generate_shader_source(const ShaderUnit* su, std::unordered_set<const ShaderUnit*>& visited);
 };
 
 //! @brief  Shading context should be a per-thread resource that is for shader related stuff.

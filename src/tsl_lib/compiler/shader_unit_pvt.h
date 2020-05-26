@@ -21,8 +21,17 @@
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "tslversion.h"
+#include "shader_arg_types.h"
 
 TSL_NAMESPACE_BEGIN
+
+class GlobalModule;
+
+struct ShaderArgMetaData {
+    std::string             m_name;
+    ShaderArgumentTypeEnum  m_type = ShaderArgumentTypeEnum::TSL_TYPE_INVALID;
+    bool                    m_is_output = false;
+};
 
 // This data structure hides all LLVM related data from ShaderUnit.
 struct ShaderUnit_Pvt{
@@ -46,6 +55,8 @@ public:
     llvm::Function* m_llvm_function = nullptr;
     // root function name
     std::string     m_root_function_name;
+    // shader parameter
+    std::vector<ShaderArgMetaData>  m_shader_params;
 };
 
 TSL_NAMESPACE_END

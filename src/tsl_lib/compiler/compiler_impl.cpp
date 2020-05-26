@@ -124,6 +124,11 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnit* su) {
         for (auto& closure : m_closures_in_shader) {
             // declare the function first.
             auto function = m_global_module.declare_closure_function(closure, compile_context);
+
+            if (!function) {
+                // emit error here, unregistered closure touched
+                return false;
+            }
             compile_context.m_closures_maps[closure] = function;
         }
 
@@ -139,6 +144,9 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnit* su) {
 		su_pvt->m_llvm_function = m_ast_root->codegen(compile_context);
         su_pvt->m_root_function_name = m_ast_root->get_function_name();
         su_pvt->m_global_module = &m_global_module;
+
+        // parse shader parameters, this is for groupping shader units
+        m_ast_root->parse_shader_parameters(su_pvt->m_shader_params);
 
         // it should be safe to assume llvm function has to be generated, otherwise, the shader is invalid.
         if (!su_pvt->m_llvm_function)

@@ -20,54 +20,12 @@
 #include "test_common.h"
 #include "closure.h"
 
-DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeLambert)
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, int, base_color)
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, float, normal)
-DECLARE_CLOSURE_TYPE_END()
-
-IMPLEMENT_CLOSURE_TYPE_BEGIN(ClosureTypeLambert)
-IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambert, int, base_color)
-IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambert, float, normal)
-IMPLEMENT_CLOSURE_TYPE_END()
-
-DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeMicrofacet)
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float, roughness)
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float, specular)
-DECLARE_CLOSURE_TYPE_END()
-
-IMPLEMENT_CLOSURE_TYPE_BEGIN(ClosureTypeMicrofacet)
-IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float, roughness)
-IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float, specular)
-IMPLEMENT_CLOSURE_TYPE_END()
-
-DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeLayeredBxdf)
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, float, roughness)
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, float, specular)
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, void*, closure)
-DECLARE_CLOSURE_TYPE_END()
-
-IMPLEMENT_CLOSURE_TYPE_BEGIN(ClosureTypeLayeredBxdf)
-IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, float, roughness)
-IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, float, specular)
-IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, void*, closure)
-IMPLEMENT_CLOSURE_TYPE_END()
-
-DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeBxdfWithDouble)
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeBxdfWithDouble, double, roughness)
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeBxdfWithDouble, float, specular)
-DECLARE_CLOSURE_TYPE_END()
-
-IMPLEMENT_CLOSURE_TYPE_BEGIN(ClosureTypeBxdfWithDouble)
-IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeBxdfWithDouble, double, roughness)
-IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeBxdfWithDouble, float, specular)
-IMPLEMENT_CLOSURE_TYPE_END()
-
 TEST(Closure, ClosureMake) {
     ShadingSystem shading_system;
     auto shading_context = shading_system.make_shading_context();
 
-    // shading_system.register_closure_type<ClosureTypeLambert>("lambert");
-    auto closure_id = shading_system.register_closure_type("lambert", ClosureTypeLambert::m_offsets, (int)sizeof(ClosureTypeLambert));
+    // register lambert closure
+    const auto closure_id = ClosureTypeLambert::RegisterClosure("lambert", shading_system);
 
     auto shader_source = R"(
         shader closure_make(out closure o0){
@@ -92,7 +50,7 @@ TEST(Closure, ClosureMakeWithDouble) {
     ShadingSystem shading_system;
     auto shading_context = shading_system.make_shading_context();
 
-    auto closure_id = shading_system.register_closure_type("bxdf_with_double", ClosureTypeBxdfWithDouble::m_offsets, (int)sizeof(ClosureTypeBxdfWithDouble));
+    const auto closure_id = ClosureTypeBxdfWithDouble::RegisterClosure("bxdf_with_double", shading_system);
 
     auto shader_source = R"(
         shader closure_make(out closure o0){
@@ -116,8 +74,7 @@ TEST(Closure, ClosureMul) {
     ShadingSystem shading_system;
     auto shading_context = shading_system.make_shading_context();
 
-    // shading_system.register_closure_type<ClosureTypeLambert>("lambert");
-    auto closure_id = shading_system.register_closure_type("lambert", ClosureTypeLambert::m_offsets, (int)sizeof(ClosureTypeLambert));
+    const auto closure_id = ClosureTypeLambert::RegisterClosure("lambert", shading_system);
 
     auto shader_source = R"(
         shader closure_mul(out closure o0){
@@ -144,9 +101,8 @@ TEST(Closure, ClosureAdd) {
 	ShadingSystem shading_system;
 	auto shading_context = shading_system.make_shading_context();
 
-	// shading_system.register_closure_type<ClosureTypeLambert>("lambert");
-	auto closure_id_lambert = shading_system.register_closure_type("lambert", ClosureTypeLambert::m_offsets, (int)sizeof(ClosureTypeLambert));
-    auto closure_id_microfacet = shading_system.register_closure_type("microfacet", ClosureTypeMicrofacet::m_offsets, (int)sizeof(ClosureTypeMicrofacet));
+    const auto closure_id_lambert = ClosureTypeLambert::RegisterClosure("lambert", shading_system);
+    const auto closure_id_microfacet = ClosureTypeMicrofacet::RegisterClosure("microfacet", shading_system);
 
 	auto shader_source = R"(
         shader closure_add(out closure o0){
@@ -177,9 +133,8 @@ TEST(Closure, ClosureComplex) {
     ShadingSystem shading_system;
     auto shading_context = shading_system.make_shading_context();
 
-    // shading_system.register_closure_type<ClosureTypeLambert>("lambert");
-    auto closure_id_lambert = shading_system.register_closure_type("lambert", ClosureTypeLambert::m_offsets, (int)sizeof(ClosureTypeLambert));
-    auto closure_id_microfacet = shading_system.register_closure_type("microfacet", ClosureTypeMicrofacet::m_offsets, (int)sizeof(ClosureTypeMicrofacet));
+    const auto closure_id_lambert = ClosureTypeLambert::RegisterClosure("lambert", shading_system);
+    const auto closure_id_microfacet = ClosureTypeMicrofacet::RegisterClosure("microfacet", shading_system);
 
     auto shader_source = R"(
         shader closure_add(out closure o0){
@@ -221,9 +176,8 @@ TEST(Closure, ClosureAsOtherClosureInput) {
     ShadingSystem shading_system;
     auto shading_context = shading_system.make_shading_context();
 
-    // shading_system.register_closure_type<ClosureTypeLambert>("lambert");
-    auto closure_id_layered = shading_system.register_closure_type("layered_bxdf", ClosureTypeLayeredBxdf::m_offsets, (int)sizeof(ClosureTypeLayeredBxdf));
-    auto closure_id_microfacet = shading_system.register_closure_type("microfacet", ClosureTypeMicrofacet::m_offsets, (int)sizeof(ClosureTypeMicrofacet));
+    const auto closure_id_layered = ClosureTypeLayeredBxdf::RegisterClosure("layered_bxdf", shading_system);
+    const auto closure_id_microfacet = ClosureTypeMicrofacet::RegisterClosure("microfacet", shading_system);
 
     auto shader_source = R"(
         shader closure_add(out closure o0){

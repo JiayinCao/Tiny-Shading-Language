@@ -23,6 +23,27 @@
 
 USE_TSL_NAMESPACE
 
+DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeLambert)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, int, base_color)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, float, normal)
+DECLARE_CLOSURE_TYPE_END(ClosureTypeLambert)
+
+DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeMicrofacet)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float, roughness)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float, specular)
+DECLARE_CLOSURE_TYPE_END(ClosureTypeMicrofacet)
+
+DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeLayeredBxdf)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, float, roughness)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, float, specular)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, void*, closure)
+DECLARE_CLOSURE_TYPE_END(ClosureTypeLayeredBxdf)
+
+DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeBxdfWithDouble)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeBxdfWithDouble, double, roughness)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeBxdfWithDouble, float, specular)
+DECLARE_CLOSURE_TYPE_END(ClosureTypeBxdfWithDouble)
+
 inline void validate_shader(const char* shader_source, bool valid = true, TslCompiler* compiler = nullptr) {
     ShadingSystem shading_system;
     auto shading_context = shading_system.make_shading_context();
