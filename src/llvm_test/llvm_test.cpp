@@ -714,38 +714,51 @@ TEST_F(LLVM, Closure_Tree_Output) {
 TEST_F(LLVM, Cross_Context) {
 	{
 		llvm::LLVMContext context0;
+        auto float_type = Type::getFloatTy(context0);
+        auto float_ptr_type = Type::getFloatPtrTy(context0);
 		std::unique_ptr<llvm::Module> module0 = std::make_unique<llvm::Module>("module 1", context0);
 
 		// define a simple function that returns something random, like 123.
-		Function* one_function = Function::Create(FunctionType::get(Type::getInt32Ty(context0), {}, false), Function::ExternalLinkage, "one_function", module0.get());
+        std::vector<Type*> arg_types(1);
+        arg_types[0] = float_ptr_type;
+		Function* one_function = Function::Create(FunctionType::get(Type::getVoidTy(context0), arg_types, false), Function::ExternalLinkage, "one_function", module0.get());
 
 		BasicBlock* bb = BasicBlock::Create(context0, "EntryBlock", one_function);
 		IRBuilder<> builder(bb);
-		builder.CreateRet(builder.getInt32(123));
+        auto constant = ConstantFP::get(context0, APFloat(123.0f));
+        auto arg = one_function->getArg(0);
+		builder.CreateStore(constant, arg);
+        builder.CreateRetVoid();
 
+        module0->print(llvm::errs(), nullptr);
 
 		{
-			llvm::LLVMContext context1;
-			std::unique_ptr<llvm::Module> module = std::make_unique<llvm::Module>("module 1", context1);
+            llvm::LLVMContext& context1 = context0;
+			std::unique_ptr<llvm::Module> module = std::make_unique<llvm::Module>("module 2", context1);
 
 			// define a simple function that returns something random, like 123.
-			Function* one_function = Function::Create(FunctionType::get(Type::getInt32Ty(context1), {}, false), Function::ExternalLinkage, "one_function", module.get());
+			Function* one_function = Function::Create(FunctionType::get(Type::getVoidTy(context1), arg_types, false), Function::ExternalLinkage, "one_function", module.get());
 
 			// this function does nothing but to call the one defined above.
-			Function* anothere_function = Function::Create(FunctionType::get(Type::getInt32Ty(context1), {}, false), Function::ExternalLinkage, "another_function", module.get());
+			Function* anothere_function = Function::Create(FunctionType::get(float_type, {}, false), Function::ExternalLinkage, "another_function", module.get());
 
 			BasicBlock* bb = BasicBlock::Create(context1, "EntryBlock", anothere_function);
 			IRBuilder<> builder(bb);
-			auto callinst = builder.CreateCall(one_function, {}, "one_function");
-			builder.CreateRet(callinst);
+            auto value = builder.CreateAlloca(float_type);
+            std::vector<llvm::Value*> args(1, value);
+			builder.CreateCall(one_function, args);
+            auto val = builder.CreateLoad(value);
+			builder.CreateRet(val);
 			
+            module->print(llvm::errs(), nullptr);
+
 			// call 'another_function', expect 123 to be returned.
 			std::unique_ptr<llvm::ExecutionEngine> execute_engine = std::unique_ptr<ExecutionEngine>(llvm::EngineBuilder(std::move(module)).create());
 			execute_engine->addModule(CloneModule(*module0));
 
-			const auto shader_func = (int(*)())execute_engine->getFunctionAddress("another_function");
-			const int ret = shader_func();
-			EXPECT_EQ(ret, 123);
+			const auto shader_func = (float(*)())execute_engine->getFunctionAddress("another_function");
+			const auto ret = shader_func();
+			EXPECT_EQ(ret, 123.0f);
 		}
 
 	}

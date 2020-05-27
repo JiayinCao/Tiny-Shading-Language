@@ -79,3 +79,56 @@ TEST(ShaderGroup, BasicShaderGroup) {
     EXPECT_EQ(111, lambert_param->base_color);
     EXPECT_EQ(4.0f, lambert_param->normal);
 }
+
+TEST(ShaderGroup, ShaderGroupWithoutClosure) {
+    // global tsl shading system
+    ShadingSystem shading_system;
+
+    // make a shading context for shader compiling, since there is only one thread involved in this unit test, it is good enough.
+    auto shading_context = shading_system.make_shading_context();
+
+    // shading_system.register_closure_type<ClosureTypeLambert>("lambert");
+    auto closure_id = shading_system.register_closure_type("Lambert", ClosureTypeLambert::m_offsets, (int)sizeof(ClosureTypeLambert));
+
+    // the root shader node, this usually matches to the output node in material system
+    const auto root_shader_unit = shading_context->compile_shader_unit("root_shader", R"(
+        shader output_node( float in_bxdf , out float out_bxdf ){
+            out_bxdf = in_bxdf * 0.5f;
+        }
+    )");
+    EXPECT_NE(nullptr, root_shader_unit);
+
+    // a bxdf node
+    const auto bxdf_shader_unit = shading_context->compile_shader_unit("bxdf_shader", R"(
+        shader lambert_node( out float out_bxdf ){
+            out_bxdf = 1231.0f;
+        }
+    )");
+    EXPECT_NE(nullptr, bxdf_shader_unit);
+
+    // make a shader group
+    auto shader_group = shading_context->make_shader_group("first shader");
+    EXPECT_NE(nullptr, shader_group);
+
+    // add the two shader units in this group
+    auto ret = shader_group->add_shader_unit(root_shader_unit, true);
+    EXPECT_EQ(true, ret);
+    ret = shader_group->add_shader_unit(bxdf_shader_unit);
+    EXPECT_EQ(true, ret);
+
+    // setup connections between shader units
+    shader_group->connect_shader_units("bxdf_shader", "out_bxdf", "root_shader", "in_bxdf");
+
+    // resolve the shader group
+    ret = shading_context->resolve_shader_unit(shader_group);
+    EXPECT_EQ(true, ret);
+
+    // get the function pointer
+    auto raw_function = (void(*)(float*))shader_group->get_function();
+    EXPECT_NE(nullptr, raw_function);
+
+    // execute the shader
+    float closure;
+    raw_function(&closure);
+    EXPECT_EQ(1231.0f * 0.5f, closure);
+}

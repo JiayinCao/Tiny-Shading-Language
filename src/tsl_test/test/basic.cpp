@@ -17,6 +17,21 @@
 
 #include "test_common.h"
 
+TEST(Basic, SingleFloatOutput) {
+    auto shader_source = R"(
+        shader function_name(out float var){
+            var = 5.0f;
+        }
+    )";
+
+    ShadingSystem shading_system;
+    auto func_ptr = compile_shader<void(*)(float*)>(shader_source, shading_system);
+
+    float data = 0.0f;
+    func_ptr(&data);
+    EXPECT_EQ(5.0f, data);
+}
+
 TEST(Basic, MathOps) {
     auto shader_source = R"(
         shader function_name(int a, int b, out int o0, out int o1, out int o2, out int o3, out int o4){

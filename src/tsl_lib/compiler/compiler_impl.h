@@ -148,6 +148,7 @@ private:
     using VarMapping = std::unordered_map<std::string, std::unordered_map<std::string, llvm::Value*>>;
 
     //! @brief  Generate shader group source code
-    bool    generate_shader_source(LLVM_Compile_Context& context, ShaderGroup* sg, ShaderUnit* su, std::unordered_set<const ShaderUnit*>& visited, std::unordered_set<const ShaderUnit*>& being_visited, VarMapping& var_mapping);
+    bool    generate_shader_source( LLVM_Compile_Context& context, ShaderGroup* sg, ShaderUnit* su, std::unordered_set<const ShaderUnit*>& visited, 
+                                    std::unordered_set<const ShaderUnit*>& being_visited, VarMapping& var_mapping, const std::unordered_map<std::string, llvm::Function*>& function_mapping);
 };
 TSL_NAMESPACE_END
