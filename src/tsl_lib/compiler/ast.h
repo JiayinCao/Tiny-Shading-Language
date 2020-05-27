@@ -913,6 +913,8 @@ public:
 
 	llvm::Function* codegen( LLVM_Compile_Context& context ) const override;
 
+    llvm::Function* declare_shader(LLVM_Compile_Context& context, bool push_symbol_table_on_stack = false, bool only_allow_output = false, const std::string& function_name = "");
+
     const std::string& get_function_name() const{
         return m_name;
     }

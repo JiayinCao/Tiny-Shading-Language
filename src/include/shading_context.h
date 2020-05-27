@@ -53,12 +53,26 @@ public:
     //! @brief  Resolve the shader unit.
     //!
     //! @return Whether the shader is resolved successfully.
-    virtual bool    resolve();
+    // virtual bool    resolve();
 
     //! @brief  Get the function pointer to execute the shader.
     //!
     //! @return     A function pointer points to code memory.
-    uint64_t get_function() const;
+    uint64_t        get_function() const;
+
+    //! @brief  Whether to allow optimization of LLVM generated code.
+    //!
+    //! @return     Whether optimization pass is on.
+    const bool      allow_optimization() const {
+        return m_allow_optimization;
+    }
+
+    //! @brief  Whether to allow verification of LLVM generated code.
+    //!
+    //! @return     Whether verification pass is on.
+    const bool      allow_verification() const {
+        return m_allow_verification;
+    }
 
 protected:
     const std::string m_name;
@@ -90,12 +104,7 @@ public:
     //! @param  shader_unit     A shader unit to be added in the group.
     //! @param  is_root         Whether the shader unit is the root of the group, there has to be exactly one root in each shader group.
     //! @return                 Whether the shader unit is added in the group.
-    bool add_shader_unit(const ShaderUnit* shader_unit, const bool is_root = false);
-
-    //! @brief  Resolve the shader unit.
-    //!
-    //! @return Whether the shader is resolved successfully.
-    bool resolve() override;
+    bool add_shader_unit(ShaderUnit* shader_unit, const bool is_root = false);
 
     //! @brief  Connect shader unit in the shader group.
     //!
@@ -110,7 +119,7 @@ private:
     const TslCompiler&   m_compiler;
 
     /**< Shader units belong to this group. */
-    std::unordered_map<std::string, const ShaderUnit*> m_shader_units;
+    std::unordered_map<std::string, ShaderUnit*> m_shader_units;
 
     /**< Name of the root shader unit. */
     std::string  m_root_shader_unit_name;
@@ -119,8 +128,7 @@ private:
     using ShaderUnitConnection = std::unordered_map<std::string, std::unordered_map<std::string, std::pair<std::string, std::string>>>;
     ShaderUnitConnection m_shader_unit_connections;
 
-    //! @brief  Generate shader group source code
-    bool    generate_shader_source(const ShaderUnit* su, std::unordered_set<const ShaderUnit*>& visited);
+    friend class TslCompiler_Impl;
 };
 
 //! @brief  Shading context should be a per-thread resource that is for shader related stuff.
@@ -151,6 +159,12 @@ public:
     //! @param source   Source code of the shader.
     //! @return         A pointer to shader unit.
     ShaderUnit*  compile_shader_unit(const std::string& name, const char* source) const;
+
+    //! @brief  Resolve a shader unit before using it.
+    //!
+    //! @param su       The shader unit to be resolved.
+    //! @return         Whether the shader is resolved successfully.
+    bool         resolve_shader_unit(ShaderUnit* su) const;
 
 private:
     //! @brief  Constructor.

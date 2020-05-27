@@ -94,6 +94,55 @@ void LLVM_Compile_Context::pop_var_symbol_layer() {
     m_var_symbols.pop_back();
 }
 
+llvm::Function* AstNode_FunctionPrototype::declare_shader(LLVM_Compile_Context& context, bool push_symbol_table_on_stack, bool only_allow_output, const std::string& function_name) {
+    int arg_cnt = 0;
+    AstNode_VariableDecl* variable = m_variables;
+    while (variable) {
+        arg_cnt += ( (variable->get_config() & VariableConfig::OUTPUT) || !only_allow_output );
+        variable = castType<AstNode_VariableDecl>(variable->get_sibling());
+    }
+
+    if(push_symbol_table_on_stack)
+        context.push_var_symbol_layer();
+
+    // parse argument types
+    std::vector<llvm::Type*>	args(arg_cnt);
+    variable = m_variables;
+    int i = 0;
+    while (variable) {
+        const auto raw_type = get_type_from_context(variable->data_type(), context);
+        const auto output_param = variable->get_config() & VariableConfig::OUTPUT;
+        if (!only_allow_output || output_param)
+            args[i++] = output_param ? raw_type->getPointerTo() : raw_type;
+        variable = castType<AstNode_VariableDecl>(variable->get_sibling());
+    }
+
+    // parse return types
+    auto return_type = get_type_from_context(m_return_type, context);
+
+    // declare the function prototype
+    llvm::FunctionType* function_type = llvm::FunctionType::get(return_type, args, false);
+
+    if (!function_type)
+        return nullptr;
+
+    // create the function prototype
+    auto func_name = function_name == "" ? m_name : function_name;
+    llvm::Function* function = llvm::Function::Create(function_type, llvm::Function::ExternalLinkage, func_name, context.module);
+
+    // For debugging purposes, set the name of all arguments
+    variable = m_variables;
+    i = 0;
+    while (variable) {
+        const auto output_param = variable->get_config() & VariableConfig::OUTPUT;
+        if (!only_allow_output || output_param)
+            function->getArg(i++)->setName(variable->get_var_name());
+        variable = castType<AstNode_VariableDecl>(variable->get_sibling());
+    }
+
+    return function;
+}
+
 llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& context ) const {
 	int arg_cnt = 0;
 	AstNode_VariableDecl* variable = m_variables;

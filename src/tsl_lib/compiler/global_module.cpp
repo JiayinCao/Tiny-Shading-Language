@@ -40,7 +40,8 @@ TSL_NAMESPACE_BEGIN
 using namespace llvm;
 
 bool GlobalModule::init() {
-    m_module = std::make_unique<llvm::Module>("shader", m_llvm_context);
+    // this global module always exists in the system
+    m_module = std::make_unique<llvm::Module>("tsl_global_module", m_llvm_context);
 
     // declare some global data structure
     declare_closure_tree_types(m_llvm_context);

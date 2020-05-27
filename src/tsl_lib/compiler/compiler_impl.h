@@ -18,9 +18,15 @@
 #pragma once
 
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Module.h"
 #include <string>
 #include <vector>
 #include <unordered_set>
+#include <unordered_map>
 #include "tslversion.h"
 #include "types.h"
 
@@ -29,7 +35,9 @@ TSL_NAMESPACE_BEGIN
 class AstNode_FunctionPrototype;
 class AstNode_StructDeclaration;
 class ShaderUnit;
+class ShaderGroup;
 class GlobalModule;
+struct LLVM_Compile_Context;
 
 //! @brief  Internal compiler implementation.
 /**
@@ -55,6 +63,12 @@ public:
     //! @param  source_code     The source code of the shader module.
     //! @param  su              The shader unit owning this piece of source code.
     bool    compile(const char* source_code, ShaderUnit* su);
+
+    //! @brief  Resolve a shader unit.
+    //!
+    //! @param  su              The shader unit to be resolved.
+    //! @return                 Whether the shader is resolved succesfully.
+    bool    resolve(ShaderUnit* su);
 
     //! @brief  Get scanner of the compiler
     //!
@@ -129,5 +143,11 @@ private:
 	// a string holder, this is purely to workaround bison limitation because DateType can't be non-POD.
 	// an extra perk of doing this is to make DataType much cheaper.
 	std::unordered_set<std::string>	m_string_container;
+
+    // this data structure keeps track of used values to bridge shader units
+    using VarMapping = std::unordered_map<std::string, std::unordered_map<std::string, llvm::Value*>>;
+
+    //! @brief  Generate shader group source code
+    bool    generate_shader_source(LLVM_Compile_Context& context, ShaderGroup* sg, ShaderUnit* su, std::unordered_set<const ShaderUnit*>& visited, std::unordered_set<const ShaderUnit*>& being_visited, VarMapping& var_mapping);
 };
 TSL_NAMESPACE_END

@@ -26,11 +26,14 @@
 TSL_NAMESPACE_BEGIN
 
 class GlobalModule;
+class AstNode_FunctionPrototype;
+
 
 struct ShaderArgMetaData {
     std::string             m_name;
     ShaderArgumentTypeEnum  m_type = ShaderArgumentTypeEnum::TSL_TYPE_INVALID;
     bool                    m_is_output = false;
+    llvm::Value*            m_init_value = nullptr;
 };
 
 // This data structure hides all LLVM related data from ShaderUnit.
@@ -50,6 +53,9 @@ public:
 
     // global module
     GlobalModule*    m_global_module = nullptr;
+
+    // ast node
+    AstNode_FunctionPrototype* m_ast_root = nullptr;
 
     // llvm function pointer
     llvm::Function* m_llvm_function = nullptr;

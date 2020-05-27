@@ -45,6 +45,13 @@ public:
     //! @param  su              The shader unit owning this piece of source code.
     bool compile(const char* source_code, ShaderUnit* su) const;
     
+    //! @brief  Resolve a shader unit
+    //!
+    //! All shader unit needs to be resolved after compiling.
+    //! @param  su              The shader unit to be resolved.
+    //! @return                 Whether the shader unit is resolved succesfully.
+    bool resolve(ShaderUnit* su) const;
+
 private:
     std::unique_ptr<TslCompiler_Impl> m_compiler = nullptr;
 };

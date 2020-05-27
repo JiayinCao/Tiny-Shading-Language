@@ -28,4 +28,8 @@ bool TslCompiler::compile(const char* source_code, ShaderUnit* su) const {
     return m_compiler->compile(source_code, su);
 }
 
+bool TslCompiler::resolve(ShaderUnit* su) const {
+    return m_compiler->resolve(su);
+}
+
 TSL_NAMESPACE_END

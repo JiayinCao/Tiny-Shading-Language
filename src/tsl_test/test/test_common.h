@@ -62,7 +62,7 @@ inline T compile_shader(const char* shader_source, ShadingSystem& shading_system
     const auto ret = shader_unit != nullptr;
 
     // resolve the shader before using it.
-    if(!shader_unit->resolve())
+    if(!shading_context->resolve_shader_unit(shader_unit))
         return nullptr;
 
     if (!shader_unit)

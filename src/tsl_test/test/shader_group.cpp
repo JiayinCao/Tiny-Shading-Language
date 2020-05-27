@@ -39,7 +39,7 @@ TEST(ShaderGroup, BasicShaderGroup) {
     // a bxdf node
     const auto bxdf_shader_unit = shading_context->compile_shader_unit("bxdf_shader", R"(
         shader lambert_node( out closure out_bxdf ){
-            out_bxdf = make_closure<Lambert>( 3.0f, 4.0f );
+            out_bxdf = make_closure<Lambert>( 111, 4.0f );
         }
     )");
     EXPECT_NE(nullptr, bxdf_shader_unit);
@@ -54,6 +54,28 @@ TEST(ShaderGroup, BasicShaderGroup) {
     ret = shader_group->add_shader_unit(bxdf_shader_unit);
     EXPECT_EQ(true, ret);
 
-    ret = shader_group->resolve();
+    // setup connections between shader units
+    shader_group->connect_shader_units("bxdf_shader", "out_bxdf", "root_shader", "in_bxdf");
+
+    // resolve the shader group
+    ret = shading_context->resolve_shader_unit(shader_group);
     EXPECT_EQ(true, ret);
+
+    // get the function pointer
+    auto raw_function = (void(*)(ClosureTreeNodeBase**))shader_group->get_function();
+    EXPECT_NE(nullptr, raw_function);
+
+    // execute the shader
+    ClosureTreeNodeBase* closure = nullptr;
+    raw_function(&closure);
+    EXPECT_EQ(CLOSURE_MUL, closure->m_id);
+
+    ClosureTreeNodeMul* mul_closure = (ClosureTreeNodeMul*)closure;
+    EXPECT_EQ(0.5f, mul_closure->m_weight);
+    EXPECT_EQ(closure_id, mul_closure->m_closure->m_id);
+
+    closure = mul_closure->m_closure;
+    ClosureTypeLambert* lambert_param = (ClosureTypeLambert*)closure->m_params;
+    EXPECT_EQ(111, lambert_param->base_color);
+    EXPECT_EQ(4.0f, lambert_param->normal);
 }
