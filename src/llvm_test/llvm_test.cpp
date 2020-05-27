@@ -730,8 +730,6 @@ TEST_F(LLVM, Cross_Context) {
 		builder.CreateStore(constant, arg);
         builder.CreateRetVoid();
 
-        module0->print(llvm::errs(), nullptr);
-
 		{
             llvm::LLVMContext& context1 = context0;
 			std::unique_ptr<llvm::Module> module = std::make_unique<llvm::Module>("module 2", context1);
@@ -750,8 +748,6 @@ TEST_F(LLVM, Cross_Context) {
             auto val = builder.CreateLoad(value);
 			builder.CreateRet(val);
 			
-            module->print(llvm::errs(), nullptr);
-
 			// call 'another_function', expect 123 to be returned.
 			std::unique_ptr<llvm::ExecutionEngine> execute_engine = std::unique_ptr<ExecutionEngine>(llvm::EngineBuilder(std::move(module)).create());
 			execute_engine->addModule(CloneModule(*module0));
