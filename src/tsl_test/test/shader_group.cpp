@@ -96,8 +96,8 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
 
     // a bxdf node
     const auto bxdf_shader_unit = shading_context->compile_shader_unit("bxdf_shader", R"(
-        shader lambert_node( out float out_bxdf ){
-            out_bxdf = 1231.0f;
+        shader lambert_node( float in_bxdf = 1231.0f, out float out_bxdf ){
+            out_bxdf = in_bxdf;
         }
     )");
     EXPECT_NE(nullptr, bxdf_shader_unit);

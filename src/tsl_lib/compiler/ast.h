@@ -915,6 +915,8 @@ public:
 
     llvm::Function* declare_shader(LLVM_Compile_Context& context, bool push_symbol_table_on_stack = false, bool only_allow_output = false, const std::string& function_name = "");
 
+    void            parse_arg_init(std::unordered_map<std::string, const AstNode_Expression*>& var_init_mapping);
+
     const std::string& get_function_name() const{
         return m_name;
     }
