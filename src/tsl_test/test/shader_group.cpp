@@ -25,8 +25,7 @@ TEST(ShaderGroup, BasicShaderGroup) {
     // make a shading context for shader compiling, since there is only one thread involved in this unit test, it is good enough.
     auto shading_context = shading_system.make_shading_context();
 
-    // shading_system.register_closure_type<ClosureTypeLambert>("lambert");
-    auto closure_id = shading_system.register_closure_type("Lambert", ClosureTypeLambert::m_offsets, (int)sizeof(ClosureTypeLambert));
+    const auto closure_id = ClosureTypeLambert::RegisterClosure("Lambert", shading_system);
 
     // the root shader node, this usually matches to the output node in material system
     const auto root_shader_unit = shading_context->compile_shader_unit("root_shader", R"(
@@ -86,9 +85,6 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
 
     // make a shading context for shader compiling, since there is only one thread involved in this unit test, it is good enough.
     auto shading_context = shading_system.make_shading_context();
-
-    // shading_system.register_closure_type<ClosureTypeLambert>("lambert");
-    auto closure_id = shading_system.register_closure_type("Lambert", ClosureTypeLambert::m_offsets, (int)sizeof(ClosureTypeLambert));
 
     // the root shader node, this usually matches to the output node in material system
     const auto root_shader_unit = shading_context->compile_shader_unit("root_shader", R"(

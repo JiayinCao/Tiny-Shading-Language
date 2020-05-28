@@ -39,7 +39,7 @@ ShadingContext* ShadingSystem::make_shading_context() {
     std::lock_guard<std::mutex> lock(m_context_mutex);
 
     auto shading_context = new ShadingContext(*this);
-    auto iter = m_contexts.insert(std::unique_ptr<ShadingContext>(shading_context));
+    m_contexts.insert(std::unique_ptr<ShadingContext>(shading_context));
     return shading_context;
 }
 

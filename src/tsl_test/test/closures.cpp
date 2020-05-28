@@ -22,8 +22,7 @@
 
 TEST(Closure, ClosureMake) {
     ShadingSystem shading_system;
-    auto shading_context = shading_system.make_shading_context();
-
+    
     // register lambert closure
     const auto closure_id = ClosureTypeLambert::RegisterClosure("lambert", shading_system);
 
@@ -48,8 +47,7 @@ TEST(Closure, ClosureMake) {
 // this needs to wait for TSL to support double literal and type conversion later.
 TEST(Closure, ClosureMakeWithDouble) {
     ShadingSystem shading_system;
-    auto shading_context = shading_system.make_shading_context();
-
+    
     const auto closure_id = ClosureTypeBxdfWithDouble::RegisterClosure("bxdf_with_double", shading_system);
 
     auto shader_source = R"(
@@ -72,8 +70,7 @@ TEST(Closure, ClosureMakeWithDouble) {
 
 TEST(Closure, ClosureMul) {
     ShadingSystem shading_system;
-    auto shading_context = shading_system.make_shading_context();
-
+    
     const auto closure_id = ClosureTypeLambert::RegisterClosure("lambert", shading_system);
 
     auto shader_source = R"(
@@ -99,8 +96,6 @@ TEST(Closure, ClosureMul) {
 
 TEST(Closure, ClosureAdd) {
 	ShadingSystem shading_system;
-	auto shading_context = shading_system.make_shading_context();
-
     const auto closure_id_lambert = ClosureTypeLambert::RegisterClosure("lambert", shading_system);
     const auto closure_id_microfacet = ClosureTypeMicrofacet::RegisterClosure("microfacet", shading_system);
 
@@ -117,12 +112,14 @@ TEST(Closure, ClosureAdd) {
 	EXPECT_NE(root, nullptr);
 	EXPECT_EQ(root->m_id, CLOSURE_ADD);
     EXPECT_NE(root->m_closure0, nullptr);
+    EXPECT_EQ(root->m_closure0->m_id, closure_id_lambert);
     EXPECT_NE(root->m_closure0->m_params, nullptr);
     auto closure0 = (ClosureTypeLambert*)root->m_closure0->m_params;
     EXPECT_EQ(closure0->base_color, 13);
     EXPECT_EQ(closure0->normal, 4.0f);
 
     EXPECT_NE(root->m_closure1, nullptr);
+    EXPECT_EQ(root->m_closure1->m_id, closure_id_microfacet);
     EXPECT_NE(root->m_closure1->m_params, nullptr);
     auto closure1 = (ClosureTypeMicrofacet*)root->m_closure1->m_params;
     EXPECT_EQ(closure1->roughness, 123.0f);
@@ -131,8 +128,7 @@ TEST(Closure, ClosureAdd) {
 
 TEST(Closure, ClosureComplex) {
     ShadingSystem shading_system;
-    auto shading_context = shading_system.make_shading_context();
-
+    
     const auto closure_id_lambert = ClosureTypeLambert::RegisterClosure("lambert", shading_system);
     const auto closure_id_microfacet = ClosureTypeMicrofacet::RegisterClosure("microfacet", shading_system);
 
@@ -174,8 +170,7 @@ TEST(Closure, ClosureComplex) {
 
 TEST(Closure, ClosureAsOtherClosureInput) {
     ShadingSystem shading_system;
-    auto shading_context = shading_system.make_shading_context();
-
+    
     const auto closure_id_layered = ClosureTypeLayeredBxdf::RegisterClosure("layered_bxdf", shading_system);
     const auto closure_id_microfacet = ClosureTypeMicrofacet::RegisterClosure("microfacet", shading_system);
 
@@ -199,6 +194,7 @@ TEST(Closure, ClosureAsOtherClosureInput) {
     EXPECT_EQ(layered_bxdf_params->specular, 4.0);
 
     ClosureTreeNodeBase* bottom_bxdf = (ClosureTreeNodeBase*)layered_bxdf_params->closure;
+    EXPECT_EQ(bottom_bxdf->m_id, closure_id_microfacet);
     ClosureTypeMicrofacet* mf_bxdf = (ClosureTypeMicrofacet*)bottom_bxdf->m_params;
 
     EXPECT_EQ(mf_bxdf->roughness, 123.0f);

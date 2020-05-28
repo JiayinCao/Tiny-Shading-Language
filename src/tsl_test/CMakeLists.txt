@@ -47,7 +47,8 @@ set_target_properties( TSL_Test PROPERTIES RELEASE_OUTPUT_NAME "tsl_test_r" )
 set_target_properties( TSL_Test PROPERTIES DEBUG_OUTPUT_NAME "tsl_test_d" )
 
 if (TSL_PLATFORM_MAC OR TSL_PLATFORM_LINUX)
-   set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -pthread -O3")
+   set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -pthread")
+   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 endif()
 
 if (TSL_PLATFORM_WIN)

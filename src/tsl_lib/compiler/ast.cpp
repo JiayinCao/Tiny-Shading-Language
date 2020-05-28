@@ -203,7 +203,6 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
         while (variable) {
             const auto name = variable->get_var_name();
             const auto raw_type = get_type_from_context(variable->data_type(), context);
-            const auto init = variable->get_init();
 
             // there is duplicated names, emit an warning!!
             // However, there is no log system in the compiler for now, I need to handle this later.
@@ -304,8 +303,6 @@ llvm::Value* AstNode_Binary_Add::codegen(LLVM_Compile_Context& context) const {
         return nullptr;
     }
 
-    // auto& llvm_context = *context.context;
-    auto  module = context.module;
     auto& builder = *context.builder;
 
     auto malloc_function = context.m_func_symbols["malloc"].first;
@@ -370,7 +367,6 @@ llvm::Value* AstNode_Binary_Multi::codegen(LLVM_Compile_Context& context) const 
 	}
 
 	// auto& llvm_context = *context.context;
-	auto  module = context.module;
 	auto& builder = *context.builder;
 
 	auto closure = m_left->is_closure(context) ? left : right;
@@ -967,7 +963,6 @@ llvm::Value* AstNode_Unary_Neg::codegen(LLVM_Compile_Context& context) const{
 }
 
 llvm::Value* AstNode_Unary_Not::codegen(LLVM_Compile_Context& context) const {
-    auto& llvm_context = *context.context;
     auto& builder = *context.builder;
 
     auto operand = m_exp->codegen(context);
@@ -979,9 +974,6 @@ llvm::Value* AstNode_Unary_Not::codegen(LLVM_Compile_Context& context) const {
 }
 
 llvm::Value* AstNode_Unary_Compl::codegen(LLVM_Compile_Context& context) const {
-    auto& llvm_context = *context.context;
-    auto& builder = *context.builder;
-
     auto operand = m_exp->codegen(context);
 
     if (!operand->getType()->isIntegerTy()) {
@@ -990,7 +982,7 @@ llvm::Value* AstNode_Unary_Compl::codegen(LLVM_Compile_Context& context) const {
     }
 
     auto zero = get_llvm_constant_int(0, operand->getType()->getIntegerBitWidth(), context);
-    return builder.CreateXor(zero, operand);
+    return context.builder->CreateXor(zero, operand);
 }
 
 llvm::Value* AstNode_TypeCast::codegen(LLVM_Compile_Context& context) const {
@@ -1317,7 +1309,6 @@ llvm::Value* AstNode_StructDeclaration::codegen(LLVM_Compile_Context& context) c
 
 		auto decl = decls;
 		while (decl) {
-			const auto name = decl->get_var_name();
 			const auto type = decl->data_type();
 			auto llvm_type = get_type_from_context(type, context);
 			member_types.push_back(llvm_type);
@@ -1328,9 +1319,6 @@ llvm::Value* AstNode_StructDeclaration::codegen(LLVM_Compile_Context& context) c
 		member = castType<AstNode_Statement_VariableDecls>(member->get_sibling());
 	}
 	auto structure_type = StructType::create(member_types, m_name);
-	auto data_layout = context.module->getDataLayout();
-	StructType *struct_layout_type = dyn_cast<StructType>(structure_type);
-	auto struct_layout = data_layout.getStructLayout(structure_type);
 
 	auto& item = context.m_structure_type_maps[m_name];
 	item.m_llvm_type = structure_type;

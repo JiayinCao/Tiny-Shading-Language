@@ -720,7 +720,6 @@ EXPRESSION_TERNARY:
 EXPRESSION_ASSIGN:
 	VARIABLE_LVALUE "=" EXPRESSION {
 		AstNode_Lvalue* var = AstNode::castType<AstNode_Lvalue>($1);
-		AstNode* p = $3;
 		AstNode_Expression* exp = AstNode::castType<AstNode_Expression>($3);
 		$$ = new AstNode_ExpAssign_Eq( var , exp );
 	}

@@ -238,7 +238,6 @@ bool TslCompiler_Impl::resolve(ShaderUnit* su) {
         int i = 0;
         for (auto& arg : root_shader->get_shader_unit_data()->m_shader_params) {
             const auto name = arg.m_name;
-            const auto type = arg.m_type;
             const auto is_input = !arg.m_is_output;
 
             if (is_input)
@@ -386,6 +385,9 @@ bool TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, S
                 case ShaderArgumentTypeEnum::TSL_TYPE_BOOL:
                     llvm_type = get_int_1_ty(context);
                     break;
+                default:
+                    // not supported yet
+                    break;
                 }
             }
         } else {
@@ -402,6 +404,9 @@ bool TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, S
                 break;
             case ShaderArgumentTypeEnum::TSL_TYPE_BOOL:
                 llvm_type = get_int_1_ty(context);
+                break;
+            default:
+                // not supported yet
                 break;
             }
 

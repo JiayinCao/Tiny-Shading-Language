@@ -56,6 +56,10 @@ if (TSL_PLATFORM_WIN)
     set_target_properties( LLVM_Test PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} /MD" )
 endif()
 
+if (TSL_PLATFORM_MAC OR TSL_PLATFORM_LINUX)
+   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+endif()
+
 # specify the llvm library to link
 llvm_map_components_to_libnames(llvm_libs Core ExecutionEngine Interpreter MC MCJIT Support nativecodegen)
 

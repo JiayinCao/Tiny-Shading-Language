@@ -37,7 +37,7 @@ uint64_t ShaderUnit::get_function() const{
 }
 
 ShaderGroup::ShaderGroup(const std::string& name, const TslCompiler& compiler)
-    :m_compiler(compiler), ShaderUnit(name){
+    :ShaderUnit(name), m_compiler(compiler){
 }
 
 void ShaderGroup::connect_shader_units(const std::string& ssu, const std::string& sspn, const std::string& tsu, const std::string& tspn) {

@@ -101,9 +101,9 @@ inline Tsl_Namespace::ShaderArgumentTypeEnum type_from_internal_type(const Tsl_N
     case Tsl_Namespace::DataTypeEnum::CLOSURE:
         return Tsl_Namespace::ShaderArgumentTypeEnum::TSL_TYPE_CLOSURE;
     case Tsl_Namespace::DataTypeEnum::STRUCT:
-        if("float3" == type.m_structure_name)
+        if(0 == strcmp("float3", type.m_structure_name))
             return Tsl_Namespace::ShaderArgumentTypeEnum::TSL_TYPE_FLOAT3;
-        else if("float4" == type.m_structure_name)
+        else if(0 == strcmp("float4", type.m_structure_name))
             return Tsl_Namespace::ShaderArgumentTypeEnum::TSL_TYPE_FLOAT4;
     default:
         break;

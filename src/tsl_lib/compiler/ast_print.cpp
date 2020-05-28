@@ -478,9 +478,6 @@ void AstNode_Statement_VariableDecls::print() const {
 
 		variable->printVariableOnly();
 		variable = castType<AstNode_VariableDecl>(variable->get_sibling());
-
-		if(variable)
-			assert(variable->data_type() == type);
 	}
 
 	std::cout<<";"<<std::endl;
