@@ -55,6 +55,11 @@ void ShaderGroup::expose_shader_argument(const std::string & ssu, const std::str
         m_input_args[ssu][sspn] = i;
 }
 
+
+void ShaderGroup::init_shader_input(const std::string& su, const std::string& spn, const ShaderUnitInputDefaultValue& val) {
+    m_shader_input_defaults[su][spn] = val;
+}
+
 bool ShaderGroup::add_shader_unit(ShaderUnit* shader_unit, const bool is_root) {
     if (!shader_unit)
         return false;

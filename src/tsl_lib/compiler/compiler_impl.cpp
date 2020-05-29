@@ -445,6 +445,8 @@ bool TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, S
                     llvm_type = llvm_type->getPointerTo();
 
                     bool has_init_value = false;
+                    /*
+                    // default value defined in shader is not valued for now.
                     auto it = var_init_mapping.find(shader_unit_name);
                     if (it != var_init_mapping.end()) {
                         auto it1 = it->second.find(name);
@@ -452,6 +454,42 @@ bool TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, S
                             auto init_value = it1->second->codegen(context);
                             callee_args.push_back(init_value);
                             has_init_value = true;
+                        }
+                    }
+                    */
+                    const auto& mapping = sg->m_shader_input_defaults;
+                    const auto it = mapping.find(shader_unit_name);
+                    if (it != mapping.end()) {
+                        const auto it1 = it->second.find(name);
+                        if (it1 != it->second.end()) {
+                            const auto& var = it1->second;
+
+                            llvm::Value* llvm_value = nullptr;
+                            switch (var.m_type) {
+                            case ShaderArgumentTypeEnum::TSL_TYPE_INT:
+                                llvm_value = get_llvm_constant_int(var.m_val.m_int, 32, context);
+                                break;
+                            case ShaderArgumentTypeEnum::TSL_TYPE_FLOAT:
+                                llvm_value = get_llvm_constant_fp(var.m_val.m_float, context);
+                                break;
+                            case ShaderArgumentTypeEnum::TSL_TYPE_DOUBLE:
+                                llvm_value = get_llvm_constant_fp(var.m_val.m_double, context);
+                                break;
+                            case ShaderArgumentTypeEnum::TSL_TYPE_BOOL:
+                                llvm_value = get_llvm_constant_int((int)var.m_val.m_bool, 1, context);
+                                break;
+                            case ShaderArgumentTypeEnum::TSL_TYPE_FLOAT3:
+                                llvm_value = get_llvm_constant_float3(var.m_val.m_float3, context);
+                                break;
+                            default:
+                                has_init_value = false;
+                                break;
+                            }
+
+                            if (llvm_value) {
+                                has_init_value = true;
+                                callee_args.push_back(llvm_value);
+                            }
                         }
                     }
 

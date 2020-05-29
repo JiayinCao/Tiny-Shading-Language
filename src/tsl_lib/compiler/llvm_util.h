@@ -146,6 +146,27 @@ inline llvm::Value*     get_llvm_constant_int(const int v, const int bw, Tsl_Nam
     return llvm::ConstantInt::get(llvm_context, llvm::APInt(bw, v));
 }
 
+inline llvm::Value*     get_llvm_constant_float3(const Tsl_Namespace::float3& vec, Tsl_Namespace::LLVM_Compile_Context& context) {
+    auto& builder = get_llvm_builder(context);
+
+    auto float3_type = context.m_structure_type_maps["float3"].m_llvm_type;
+    auto var = builder.CreateAlloca(float3_type, nullptr);
+    
+    const auto x_ptr = builder.CreateConstGEP2_32(nullptr, var, 0, 0);
+    auto x = get_llvm_constant_fp(vec.x, context);
+    builder.CreateStore(x, x_ptr);
+
+    const auto y_ptr = builder.CreateConstGEP2_32(nullptr, var, 0, 1);
+    auto y = get_llvm_constant_fp(vec.y, context);
+    builder.CreateStore(y, y_ptr);
+
+    const auto z_ptr = builder.CreateConstGEP2_32(nullptr, var, 0, 2);
+    auto z = get_llvm_constant_fp(vec.z, context);
+    builder.CreateStore(z, z_ptr);
+
+    return builder.CreateLoad(var);
+}
+
 inline llvm::Value*     convert_to_bool(llvm::Value* value, Tsl_Namespace::LLVM_Compile_Context& context) {
     auto& builder = get_llvm_builder(context);
     if (value->getType() == get_float_ty(context))

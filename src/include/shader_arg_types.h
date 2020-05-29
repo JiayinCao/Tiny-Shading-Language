@@ -53,7 +53,11 @@ struct ArgDescriptor {
     std::string             m_name;
     ShaderArgumentTypeEnum  m_type = ShaderArgumentTypeEnum::TSL_TYPE_INVALID;
     bool                    m_is_output = false;
-    ArgDefaultValue         m_default_value;
+};
+
+struct ShaderUnitInputDefaultValue {
+    ShaderArgumentTypeEnum  m_type = ShaderArgumentTypeEnum::TSL_TYPE_INVALID;
+    ArgDefaultValue         m_val;
 };
 
 TSL_NAMESPACE_END

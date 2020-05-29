@@ -123,7 +123,13 @@ public:
     //!
     //! @param  su      source shader unit
     //! @param  spn     source shader parameter name
-    void expose_shader_argument(const std::string& ssu, const std::string& sspn, const ArgDescriptor& arg_desc );
+    void expose_shader_argument(const std::string& su, const std::string& spn, const ArgDescriptor& arg_desc );
+
+    //! @brief  Setup default shader argument init value
+    //!
+    //! @param  su      source shader unit
+    //! @param  spn     source shader parameter name
+    void init_shader_input(const std::string& su, const std::string& spn, const ShaderUnitInputDefaultValue& val);
 
 private:
     /**< TSL compiler of the owning context. */
@@ -143,6 +149,10 @@ private:
     using ShaderWrapperConnection = std::unordered_map<std::string, std::unordered_map<std::string, int>>;
     ShaderWrapperConnection     m_input_args;
     ShaderWrapperConnection     m_output_args;
+
+    /**< Shader default value. */
+    using ShaderUnitInputDefaultMapping = std::unordered_map<std::string, std::unordered_map<std::string, ShaderUnitInputDefaultValue>>;
+    ShaderUnitInputDefaultMapping   m_shader_input_defaults;
 
     friend class TslCompiler_Impl;
 };
