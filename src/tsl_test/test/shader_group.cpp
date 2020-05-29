@@ -25,6 +25,7 @@ TEST(ShaderGroup, BasicShaderGroup) {
     // make a shading context for shader compiling, since there is only one thread involved in this unit test, it is good enough.
     auto shading_context = shading_system.make_shading_context();
 
+    // registered closure id
     const auto closure_id = ClosureTypeLambert::RegisterClosure("Lambert", shading_system);
 
     // the root shader node, this usually matches to the output node in material system
@@ -55,6 +56,13 @@ TEST(ShaderGroup, BasicShaderGroup) {
 
     // setup connections between shader units
     shader_group->connect_shader_units("bxdf_shader", "out_bxdf", "root_shader", "in_bxdf");
+
+    // expose the shader interface
+    ArgDescriptor arg;
+    arg.m_name = "out_bxdf";
+    arg.m_type = TSL_TYPE_CLOSURE;
+    arg.m_is_output = true;
+    shader_group->expose_shader_argument("root_shader", "out_bxdf", arg);
 
     // resolve the shader group
     ret = shading_context->resolve_shader_unit(shader_group);
@@ -89,15 +97,16 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
     // the root shader node, this usually matches to the output node in material system
     const auto root_shader_unit = shading_context->compile_shader_unit("root_shader", R"(
         shader output_node( float in_bxdf , out float out_bxdf ){
-            out_bxdf = in_bxdf * 0.5f;
+            out_bxdf = in_bxdf * 1231.0f;
         }
     )");
     EXPECT_NE(nullptr, root_shader_unit);
 
     // a bxdf node
     const auto bxdf_shader_unit = shading_context->compile_shader_unit("bxdf_shader", R"(
-        shader lambert_node( float in_bxdf = 1231.0f, out float out_bxdf ){
+        shader lambert_node( float in_bxdf = 1231.0f, out float out_bxdf , out float dummy ){
             out_bxdf = in_bxdf;
+            // dummy = 1.0f;
         }
     )");
     EXPECT_NE(nullptr, bxdf_shader_unit);
@@ -115,16 +124,28 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
     // setup connections between shader units
     shader_group->connect_shader_units("bxdf_shader", "out_bxdf", "root_shader", "in_bxdf");
 
+    // expose the shader interface
+    ArgDescriptor arg;
+    arg.m_name = "out_bxdf";
+    arg.m_type = TSL_TYPE_FLOAT;
+    arg.m_is_output = true;
+    shader_group->expose_shader_argument("root_shader", "out_bxdf", arg);
+
+    arg.m_name = "in_bxdf";
+    arg.m_type = TSL_TYPE_FLOAT;
+    arg.m_is_output = false;
+    shader_group->expose_shader_argument("bxdf_shader", "in_bxdf", arg);
+
     // resolve the shader group
     ret = shading_context->resolve_shader_unit(shader_group);
     EXPECT_EQ(true, ret);
 
     // get the function pointer
-    auto raw_function = (void(*)(float*))shader_group->get_function();
+    auto raw_function = (void(*)(float*, float))shader_group->get_function();
     EXPECT_NE(nullptr, raw_function);
 
     // execute the shader
-    float closure;
-    raw_function(&closure);
+    float closure , in_bxdf = 0.5f;
+    raw_function(&closure, in_bxdf);
     EXPECT_EQ(1231.0f * 0.5f, closure);
 }

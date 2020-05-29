@@ -23,6 +23,7 @@
 #include <string>
 #include "tslversion.h"
 #include "closure.h"
+#include "shader_arg_types.h"
 
 TSL_NAMESPACE_BEGIN
 
@@ -50,11 +51,6 @@ public:
         return m_shader_unit_data;
     }
 
-    //! @brief  Resolve the shader unit.
-    //!
-    //! @return Whether the shader is resolved successfully.
-    // virtual bool    resolve();
-
     //! @brief  Get the function pointer to execute the shader.
     //!
     //! @return     A function pointer points to code memory.
@@ -74,6 +70,13 @@ public:
         return m_allow_verification;
     }
 
+    //! @brief  Get exposed shader arguments
+    //!
+    //! @return     Get exposed shader arguments
+    const std::vector<ArgDescriptor>& get_shader_arguments() const {
+        return m_exposed_args;
+    }
+
 protected:
     const std::string m_name;
 
@@ -83,6 +86,8 @@ protected:
     // This will be allowed once I have most feature completed.
     const bool  m_allow_optimization = false;
     const bool  m_allow_verification = false;
+
+    std::vector<ArgDescriptor>  m_exposed_args;
 };
 
 //! @brief  Shader group is a basic unit of shader execution.
@@ -114,6 +119,12 @@ public:
     //! @param  tspn    target shader parameter name
     void connect_shader_units(const std::string& ssu, const std::string& sspn, const std::string& tsu, const std::string& tspn);
 
+    //! @brief  Setup shader group output
+    //!
+    //! @param  su      source shader unit
+    //! @param  spn     source shader parameter name
+    void expose_shader_argument(const std::string& ssu, const std::string& sspn, const ArgDescriptor& arg_desc );
+
 private:
     /**< TSL compiler of the owning context. */
     const TslCompiler&   m_compiler;
@@ -127,6 +138,11 @@ private:
     /**< Shader unit connection. */
     using ShaderUnitConnection = std::unordered_map<std::string, std::unordered_map<std::string, std::pair<std::string, std::string>>>;
     ShaderUnitConnection m_shader_unit_connections;
+
+    /**< Wrapper parameter connection. */
+    using ShaderWrapperConnection = std::unordered_map<std::string, std::unordered_map<std::string, int>>;
+    ShaderWrapperConnection     m_input_args;
+    ShaderWrapperConnection     m_output_args;
 
     friend class TslCompiler_Impl;
 };

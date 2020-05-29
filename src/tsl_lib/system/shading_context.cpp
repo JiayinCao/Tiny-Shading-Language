@@ -44,6 +44,17 @@ void ShaderGroup::connect_shader_units(const std::string& ssu, const std::string
     m_shader_unit_connections[tsu][tspn] = std::make_pair(ssu, sspn);
 }
 
+void ShaderGroup::expose_shader_argument(const std::string & ssu, const std::string & sspn, const ArgDescriptor & arg_desc){
+    const auto i = m_exposed_args.size();
+    m_exposed_args.push_back(arg_desc);
+
+    // I may need to do some checking here to make sure things don't get setup in an invalid way
+    if (arg_desc.m_is_output)
+        m_output_args[ssu][sspn] = i;
+    else
+        m_input_args[ssu][sspn] = i;
+}
+
 bool ShaderGroup::add_shader_unit(ShaderUnit* shader_unit, const bool is_root) {
     if (!shader_unit)
         return false;

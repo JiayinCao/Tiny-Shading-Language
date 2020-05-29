@@ -46,6 +46,28 @@ void makeVerbose(int verbose);
 
 TSL_NAMESPACE_BEGIN
 
+static llvm::Type* llvm_type_from_arg_type(const ShaderArgumentTypeEnum type, LLVM_Compile_Context& context) {
+    llvm::Type* llvm_type = nullptr;
+    switch (type) {
+    case ShaderArgumentTypeEnum::TSL_TYPE_CLOSURE:
+        llvm_type = get_int_32_ptr_ty(context);
+        break;
+    case ShaderArgumentTypeEnum::TSL_TYPE_INT:
+        llvm_type = get_int_32_ty(context);
+        break;
+    case ShaderArgumentTypeEnum::TSL_TYPE_FLOAT:
+        llvm_type = get_float_ty(context);
+        break;
+    case ShaderArgumentTypeEnum::TSL_TYPE_BOOL:
+        llvm_type = get_int_1_ty(context);
+        break;
+    default:
+        // not supported yet
+        break;
+    }
+    return llvm_type;
+}
+
 TslCompiler_Impl::TslCompiler_Impl( GlobalModule& global_module ):m_global_module(global_module){
     reset();
 }
@@ -222,36 +244,47 @@ bool TslCompiler_Impl::resolve(ShaderUnit* su) {
             m_shader_unit_llvm_function[name] = function;
         }
 
-        // this will generate a duplicated name, but I'll live with it for now.
+        // parse argument types
+        const auto& args = sg->get_shader_arguments();
+        std::vector<llvm::Type*>	llvm_arg_types(args.size());
+        for (auto i = 0; i < args.size(); ++i) {
+            auto raw_type = llvm_type_from_arg_type(args[i].m_type, compile_context);
+            if (args[i].m_is_output)
+                raw_type = raw_type->getPointerTo();
+
+            llvm_arg_types[i] = raw_type;
+        }
+
+        // declare the function prototype
+        llvm::FunctionType* function_type = llvm::FunctionType::get(get_void_ty(compile_context), llvm_arg_types, false);
+
+        // declare the function
         const auto func_name = sg->get_name() + "_shader_wrapper";
-        auto function = root_shader->get_shader_unit_data()->m_ast_root->declare_shader(compile_context, true, true, func_name);
+        llvm::Function* function = llvm::Function::Create(function_type, llvm::Function::ExternalLinkage, func_name, module);
+
+        // function arguments
+        std::vector<llvm::Value*>   llvm_args(args.size());
+        for (auto i = 0; i < args.size(); ++i)
+            llvm_args[i] = function->getArg(i);
 
         // create a separate code block
         llvm::BasicBlock* wrapper_shader_entry = llvm::BasicBlock::Create(m_llvm_context, "entry", function);
         builder.SetInsertPoint(wrapper_shader_entry);
 
+        // push var table
+        compile_context.push_var_symbol_layer();
+
         // variable mapping keeps track of variables to bridge shader units
         VarMapping var_mapping;
 
         // generate wrapper shader source code.
-        const auto ret = generate_shader_source(compile_context, sg, root_shader, visited_shader_units, current_shader_units_being_visited, var_mapping, arg_init_mapping, m_shader_unit_llvm_function);
+        const auto ret = generate_shader_source(compile_context, sg, root_shader, visited_shader_units, current_shader_units_being_visited, var_mapping, arg_init_mapping, m_shader_unit_llvm_function, llvm_args);
         if (!ret)
             return false;
+        
+        // pop var table
+        compile_context.pop_var_symbol_layer();
 
-        // copy out the output
-        int i = 0;
-        for (auto& arg : root_shader->get_shader_unit_data()->m_shader_params) {
-            const auto name = arg.m_name;
-            const auto is_input = !arg.m_is_output;
-
-            if (is_input)
-                continue;
-
-            auto src_ptr = var_mapping[root_shader->get_name()][name];
-            auto dest = function->getArg(i);
-            auto src = builder.CreateLoad(src_ptr);
-            builder.CreateStore(src, dest);
-        }
         builder.CreateRetVoid();
 
 #ifdef DEBUG_OUTPUT
@@ -327,7 +360,7 @@ bool TslCompiler_Impl::resolve(ShaderUnit* su) {
 
 bool TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, ShaderGroup* sg, ShaderUnit* su, std::unordered_set<const ShaderUnit*>& visited, std::unordered_set<const ShaderUnit*>& being_visited, 
                                                 VarMapping& var_mapping, std::unordered_map<std::string, std::unordered_map<std::string, const AstNode_Expression*>>& var_init_mapping, 
-                                                const std::unordered_map<std::string, llvm::Function*>& function_mapping ) {
+                                                const std::unordered_map<std::string, llvm::Function*>& function_mapping , const std::vector<llvm::Value*>& args ) {
     // cycles detected, incorrect shader setup!!!
     if (being_visited.count(su))
         return false;
@@ -352,13 +385,13 @@ bool TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, S
                 return false;
 
             const auto dep_shader_unit = sg->m_shader_units[dep_shader_unit_name];
-            if (!generate_shader_source(context, sg, dep_shader_unit, visited, being_visited, var_mapping, var_init_mapping, function_mapping))
+            if (!generate_shader_source(context, sg, dep_shader_unit, visited, being_visited, var_mapping, var_init_mapping, function_mapping, args))
                 return false;
         }
     }
 
     // generate the shader code for this shader unit
-    std::vector<llvm::Value*> args;
+    std::vector<llvm::Value*> callee_args;
     for (auto& arg : su->get_shader_unit_data()->m_shader_params) {
         const auto name = arg.m_name;
         const auto type = arg.m_type;
@@ -372,75 +405,83 @@ bool TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, S
                     const auto& source = connection[name];
                     auto var = var_mapping[source.first][source.second];
                     auto loaded_var = context.builder->CreateLoad(var);
-                    args.push_back(loaded_var);
+                    callee_args.push_back(loaded_var);
+                } else {
+                    // emit an error here, something is wrong
                 }
             }
             else {
-                llvm::Type* llvm_type = nullptr;
-                switch (type) {
-                case ShaderArgumentTypeEnum::TSL_TYPE_CLOSURE:
-                    llvm_type = get_int_32_ptr_ty(context);
-                    break;
-                case ShaderArgumentTypeEnum::TSL_TYPE_INT:
-                    llvm_type = get_int_32_ty(context);
-                    break;
-                case ShaderArgumentTypeEnum::TSL_TYPE_FLOAT:
-                    llvm_type = get_float_ty(context);
-                    break;
-                case ShaderArgumentTypeEnum::TSL_TYPE_BOOL:
-                    llvm_type = get_int_1_ty(context);
-                    break;
-                default:
-                    // not supported yet
-                    break;
-                }
+                bool need_allocation = true;
 
-                bool has_init_value = false;
-                auto it = var_init_mapping.find(shader_unit_name);
-                if (it != var_init_mapping.end()) {
-                    auto it1 = it->second.find(name);
-                    if (it1 != it->second.end() && it1->second) {
-                        auto init_value = it1->second->codegen(context);
-                        args.push_back(init_value);
-                        has_init_value = true;
+                // check if this input is connected with exposed argument of the shader group first
+                const auto it = sg->m_input_args.find(shader_unit_name);
+                if (it != sg->m_input_args.end()) {
+                    const auto& shader_mapping = it->second;
+                    const auto it1 = shader_mapping.find(name);
+                    if (it1 != shader_mapping.end()) {
+                        // this parameter is exposed, use it directly
+                        auto value = args[it1->second];
+                        callee_args.push_back(value);
+                        need_allocation = false;
                     }
                 }
 
-                if (!has_init_value) {
-                    // emit an error here, uninitialized input parameter and it is not connected with anything
-                    return false;
+                if (need_allocation)
+                {
+                    llvm::Type* llvm_type = llvm_type_from_arg_type(type, context);
+                    if (!llvm_type)
+                        return false;
+                    llvm_type = llvm_type->getPointerTo();
+
+                    bool has_init_value = false;
+                    auto it = var_init_mapping.find(shader_unit_name);
+                    if (it != var_init_mapping.end()) {
+                        auto it1 = it->second.find(name);
+                        if (it1 != it->second.end() && it1->second) {
+                            auto init_value = it1->second->codegen(context);
+                            callee_args.push_back(init_value);
+                            has_init_value = true;
+                        }
+                    }
+
+                    if (!has_init_value) {
+                        // emit an error here, uninitialized input parameter and it is not connected with anything
+                        return false;
+                    }
                 }
             }
-        } else {
-            llvm::Type* llvm_type = nullptr;
-            switch (type) {
-            case ShaderArgumentTypeEnum::TSL_TYPE_CLOSURE:
-                llvm_type = get_int_32_ptr_ty(context);
-                break;
-            case ShaderArgumentTypeEnum::TSL_TYPE_INT:
-                llvm_type = get_int_32_ty(context);
-                break;
-            case ShaderArgumentTypeEnum::TSL_TYPE_FLOAT:
-                llvm_type = get_float_ty(context);
-                break;
-            case ShaderArgumentTypeEnum::TSL_TYPE_BOOL:
-                llvm_type = get_int_1_ty(context);
-                break;
-            default:
-                // not supported yet
-                break;
+        }
+        else {
+            bool need_allocation = true;
+
+            // check if this output is connected with exposed argument of the shader group first
+            const auto it = sg->m_output_args.find(shader_unit_name);
+            if (it != sg->m_output_args.end()) {
+                const auto& shader_mapping = it->second;
+                const auto it1 = shader_mapping.find(name);
+                if (it1 != shader_mapping.end()) {
+                    // this parameter is exposed, use it directly
+                    auto value = args[it1->second];
+                    callee_args.push_back(value);
+                    need_allocation = false;
+                }
             }
 
-            auto output_var = context.builder->CreateAlloca(llvm_type, nullptr, name);
-            var_mapping[su->get_name()][name] = output_var;
-            args.push_back(output_var);
+            // if the parameter is not exposed, allocate one
+            if (need_allocation) {
+                llvm::Type* llvm_type = llvm_type_from_arg_type(type, context);
+
+                auto output_var = context.builder->CreateAlloca(llvm_type, nullptr, name);
+                var_mapping[su->get_name()][name] = output_var;
+                callee_args.push_back(output_var);
+            }
         }
     }
 
     // make the call
     const auto it = function_mapping.find(su->get_name());
     auto function = it == function_mapping.end() ? nullptr : it->second;
-    context.builder->CreateCall(function, args);
+    context.builder->CreateCall(function, callee_args);
 
     // erase the shader unit from being visited
     being_visited.erase(su);
