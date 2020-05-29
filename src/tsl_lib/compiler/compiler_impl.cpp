@@ -61,6 +61,15 @@ static llvm::Type* llvm_type_from_arg_type(const ShaderArgumentTypeEnum type, LL
     case ShaderArgumentTypeEnum::TSL_TYPE_BOOL:
         llvm_type = get_int_1_ty(context);
         break;
+    case ShaderArgumentTypeEnum::TSL_TYPE_DOUBLE:
+        llvm_type = get_double_ty(context);
+        break;
+    case ShaderArgumentTypeEnum::TSL_TYPE_FLOAT3:
+        llvm_type = context.m_structure_type_maps["float3"].m_llvm_type;
+        break;
+    case ShaderArgumentTypeEnum::TSL_TYPE_FLOAT4:
+        llvm_type = context.m_structure_type_maps["float4"].m_llvm_type;
+        break;
     default:
         // not supported yet
         break;
@@ -220,6 +229,8 @@ bool TslCompiler_Impl::resolve(ShaderUnit* su) {
         compile_context.context = &m_llvm_context;
         compile_context.module = sg->m_shader_unit_data->m_module.get();
         compile_context.builder = &builder;
+
+        m_global_module.declare_global_function(compile_context);
 
         // dependency modules
         std::vector<std::unique_ptr<llvm::Module>>  modules;

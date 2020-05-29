@@ -149,3 +149,96 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
     raw_function(&closure, in_bxdf);
     EXPECT_EQ(1231.0f * 0.5f, closure);
 }
+
+TEST(ShaderGroup, ShaderGroupArgTypes) {
+    // global tsl shading system
+    ShadingSystem shading_system;
+
+    // make a shading context for shader compiling, since there is only one thread involved in this unit test, it is good enough.
+    auto shading_context = shading_system.make_shading_context();
+
+    // registered closure id
+    const auto closure_id = ClosureTypeLambert::RegisterClosure("Lambert", shading_system);
+
+    // the root shader node, this usually matches to the output node in material system
+    const auto root_shader_unit = shading_context->compile_shader_unit("root_shader", R"(
+        shader output_node( out int i , out float f , out double d , out bool b , out closure c , out vector vec ){
+            i = 123;
+            f = 123.0f;
+            d = 123.0d;
+            b = true;
+            c = make_closure<Lambert>( 111, 4.0f );
+            vec.x = 1.0f; vec.y = 2.0f; vec.b = 3.0f;
+        }
+    )");
+    EXPECT_NE(nullptr, root_shader_unit);
+
+    // make a shader group
+    auto shader_group = shading_context->make_shader_group("first shader");
+    EXPECT_NE(nullptr, shader_group);
+
+    // add the two shader units in this group
+    auto ret = shader_group->add_shader_unit(root_shader_unit, true);
+    EXPECT_EQ(true, ret);
+
+    // expose the shader interface
+    ArgDescriptor arg;
+    arg.m_name = "i";
+    arg.m_type = TSL_TYPE_INT;
+    arg.m_is_output = true;
+    shader_group->expose_shader_argument("root_shader", "i", arg);
+
+    arg.m_name = "f";
+    arg.m_type = TSL_TYPE_FLOAT;
+    arg.m_is_output = true;
+    shader_group->expose_shader_argument("root_shader", "f", arg);
+
+    arg.m_name = "d";
+    arg.m_type = TSL_TYPE_DOUBLE;
+    arg.m_is_output = true;
+    shader_group->expose_shader_argument("root_shader", "d", arg);
+
+    arg.m_name = "b";
+    arg.m_type = TSL_TYPE_BOOL;
+    arg.m_is_output = true;
+    shader_group->expose_shader_argument("root_shader", "b", arg);
+
+    arg.m_name = "f3";
+    arg.m_type = TSL_TYPE_FLOAT3;
+    arg.m_is_output = true;
+    shader_group->expose_shader_argument("root_shader", "vec", arg);
+
+    arg.m_name = "c";
+    arg.m_type = TSL_TYPE_CLOSURE;
+    arg.m_is_output = true;
+    shader_group->expose_shader_argument("root_shader", "c", arg);
+
+    // resolve the shader group
+    ret = shading_context->resolve_shader_unit(shader_group);
+    EXPECT_EQ(true, ret);
+
+    // get the function pointer
+    auto raw_function = (void(*)(int*, float*, double*, bool*, Tsl_Namespace::float3*, ClosureTreeNodeBase**))shader_group->get_function();
+    EXPECT_NE(nullptr, raw_function);
+
+    // execute the shader
+    float f;
+    int   i;
+    double d;
+    bool b;
+    Tsl_Namespace::float3 f3;
+    ClosureTreeNodeBase* closure = nullptr;
+    raw_function(&i, &f, &d, &b, &f3, &closure);
+    EXPECT_EQ(123, i);
+    EXPECT_EQ(123.0f, f);
+    EXPECT_EQ(123.0, d);
+    EXPECT_EQ(true, b);
+    EXPECT_EQ(1.0f, f3.x);
+    EXPECT_EQ(2.0f, f3.y);
+    EXPECT_EQ(3.0f, f3.z);
+
+    EXPECT_EQ(closure_id, closure->m_id);
+    ClosureTypeLambert* lambert_param = (ClosureTypeLambert*)closure->m_params;
+    EXPECT_EQ(111, lambert_param->base_color);
+    EXPECT_EQ(4.0f, lambert_param->normal);
+}
