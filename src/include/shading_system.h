@@ -27,7 +27,7 @@
 TSL_NAMESPACE_BEGIN
 
 class ShadingContext;
-class ShaderUnit;
+class ShaderUnitTemplate;
 class GlobalModule;
 
 //! @brief  Shading system is the root interface exposed through TSL system.
@@ -64,7 +64,7 @@ private:
     std::mutex                                             m_context_mutex;    /**< Making sure context related operation is thread-safe. */
 
     /**< a container holding all shader unit. */
-    std::unordered_map<std::string, std::unique_ptr<ShaderUnit>> m_shader_units;
+    std::unordered_map<std::string, std::unique_ptr<ShaderUnitTemplate>> m_shader_units;
     /**< a mutex to make sure shader_group access is thread-safe. */
     std::mutex m_shader_unit_mutex;
 

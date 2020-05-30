@@ -114,7 +114,7 @@ void* TslCompiler_Impl::get_scanner() {
     return m_scanner;
 }
 
-bool TslCompiler_Impl::compile(const char* source_code, ShaderUnit* su) {
+bool TslCompiler_Impl::compile(const char* source_code, ShaderUnitTemplate* su) {
 #ifdef DEBUG_OUTPUT
     std::cout << source_code << std::endl;
 #endif
@@ -178,7 +178,9 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnit* su) {
 		// generate code for the shader in this module
 		su_pvt->m_llvm_function = m_ast_root->codegen(compile_context);
         su_pvt->m_root_function_name = m_ast_root->get_function_name();
-        su_pvt->m_global_module = &m_global_module;
+
+        // there is usually just one global module as dependent in all shader unit.
+        su_pvt->m_dependencies.insert(m_global_module.get_closure_module());
 
         // parse shader parameters, this is for groupping shader units
         m_ast_root->parse_shader_parameters(su_pvt->m_shader_params);
@@ -194,12 +196,72 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnit* su) {
 	return true;
 }
 
-bool TslCompiler_Impl::resolve(ShaderUnit* su) {
+bool TslCompiler_Impl::resolve(ShaderInstance* si) {
+    if (!si)
+        return false;
+
+    const auto& shader_template = si->get_shader_template();
+    auto shader_instance_data = si->get_shader_instance_data();
+    auto shader_template_data = shader_template.get_shader_unit_data();
+
+    // invalid shader unit template
+    if (!shader_template_data->m_module || !shader_template_data->m_llvm_function)
+        return false;
+
+    // don't consume the module to avoid limitation of creating more shader instance
+    auto cloned_module = llvm::CloneModule(*shader_template_data->m_module);
+
+    // optimization pass, this is pretty cool because I don't have to implement those sophisticated optimization algorithms.
+    if (shader_template.allow_optimization()) {
+        // Create a new pass manager attached to it.
+        shader_instance_data->m_fpm = std::make_unique<llvm::legacy::FunctionPassManager>(cloned_module.get());
+
+        // Do simple "peephole" optimizations and bit-twiddling optzns.
+        shader_instance_data->m_fpm->add(llvm::createInstructionCombiningPass());
+        // Re-associate expressions.
+        shader_instance_data->m_fpm->add(llvm::createReassociatePass());
+        // Eliminate Common SubExpressions.
+        shader_instance_data->m_fpm->add(llvm::createGVNPass());
+        // Simplify the control flow graph (deleting unreachable blocks, etc).
+        shader_instance_data->m_fpm->add(llvm::createCFGSimplificationPass());
+
+        shader_instance_data->m_fpm->doInitialization();
+
+        shader_instance_data->m_fpm->run(*shader_template_data->m_llvm_function);
+    }
+
+    // make sure the function is valid
+    if (shader_template.allow_verification() && !llvm::verifyFunction(*shader_template_data->m_llvm_function, &llvm::errs()))
+        return false;
+
+#ifdef DEBUG_OUTPUT
+    cloned_module->print(llvm::errs(), nullptr);
+#endif
+
+    // get the function pointer through execution engine
+    shader_instance_data->m_execution_engine = std::unique_ptr<llvm::ExecutionEngine>(llvm::EngineBuilder(std::move(cloned_module)).create());
+
+    // setup data layout
+    // cloned_module->setDataLayout(shader_instance_data->m_execution_engine->getTargetMachine()->createDataLayout());
+
+    // make sure to link the global closure model
+    for (auto& dep_module : shader_template_data->m_dependencies) {
+        auto cloned_module = llvm::CloneModule(*dep_module);
+        shader_instance_data->m_execution_engine->addModule(std::move(cloned_module));
+    }
+
+    // resolve the function pointer
+    shader_instance_data->m_function_pointer = shader_instance_data->m_execution_engine->getFunctionAddress(shader_template_data->m_root_function_name);
+
+    return true;
+}
+
+bool TslCompiler_Impl::resolve(ShaderUnitTemplate* su) {
     auto su_pvt = su->get_shader_unit_data();
     if (!su_pvt)
         return false;
 
-    auto sg = dynamic_cast<ShaderGroup*>(su);
+    auto sg = dynamic_cast<ShaderGroupTemplate*>(su);
     auto module = su_pvt->m_module.get();
 
     // the resolving behavior is different for shader group and shader unit.
@@ -213,8 +275,8 @@ bool TslCompiler_Impl::resolve(ShaderUnit* su) {
             return false;
 
         // essentially, this is a topological sort
-        std::unordered_set<const ShaderUnit*>   visited_shader_units;
-        std::unordered_set<const ShaderUnit*>   current_shader_units_being_visited;
+        std::unordered_set<const ShaderUnitTemplate*>   visited_shader_units;
+        std::unordered_set<const ShaderUnitTemplate*>   current_shader_units_being_visited;
 
         // get the root shader
         auto root_shader = sg->m_shader_units[sg->m_root_shader_unit_name];
@@ -233,24 +295,24 @@ bool TslCompiler_Impl::resolve(ShaderUnit* su) {
         m_global_module.declare_global_function(compile_context);
 
         // dependency modules
-        std::vector<std::unique_ptr<llvm::Module>>  modules;
-        modules.push_back(CloneModule(*(m_global_module.get_closure_module())));
+        su_pvt->m_dependencies.insert(m_global_module.get_closure_module());
 
         std::unordered_map<std::string, std::unordered_map<std::string, const AstNode_Expression*>>  arg_init_mapping;
 
         std::unordered_map<std::string, llvm::Function*>    m_shader_unit_llvm_function;
         // pre-declare all shader interfaces
         for (auto& shader_unit : sg->m_shader_units) {
-            auto su_pvt = shader_unit.second->get_shader_unit_data();
+            auto local_su_pvt = shader_unit.second->get_shader_unit_data();
             
 #ifdef DEBUG_OUTPUT
             su_pvt->m_module->print(llvm::errs(), nullptr);
 #endif
             const auto& name = shader_unit.second->get_name();
 
-            modules.push_back(llvm::CloneModule(*su_pvt->m_module));
-            auto function = su_pvt->m_ast_root->declare_shader(compile_context);
-            su_pvt->m_ast_root->parse_arg_init(arg_init_mapping[name]);
+            auto function = local_su_pvt->m_ast_root->declare_shader(compile_context);
+            local_su_pvt->m_ast_root->parse_arg_init(arg_init_mapping[name]);
+
+            shader_unit.second->parse_dependencies(su_pvt);
 
             m_shader_unit_llvm_function[name] = function;
         }
@@ -296,80 +358,18 @@ bool TslCompiler_Impl::resolve(ShaderUnit* su) {
         // pop var table
         compile_context.pop_var_symbol_layer();
 
+        // make sure there is a terminator
         builder.CreateRetVoid();
-
-#ifdef DEBUG_OUTPUT
-        module->print(llvm::errs(), nullptr);
-#endif
-
-        // get the function pointer through execution engine
-        sg->m_shader_unit_data->m_execution_engine = std::unique_ptr<llvm::ExecutionEngine>(llvm::EngineBuilder(std::move(sg->m_shader_unit_data->m_module)).create());
-
-        auto execution_engine = sg->m_shader_unit_data->m_execution_engine.get();
-
-        // setup data layout
-        module->setDataLayout(execution_engine->getTargetMachine()->createDataLayout());
-
-        // push all dependent modules
-        for (auto& module : modules)
-            execution_engine->addModule(std::move(module));
-
-        // resolve the function pointer
-        sg->m_shader_unit_data->m_function_pointer = execution_engine->getFunctionAddress(func_name);
-
-        return true;
-    } else {
-        if (!su_pvt->m_module || !su_pvt->m_llvm_function)
-            return false;
-
-        // get the function pointer through execution engine
-        su_pvt->m_execution_engine = std::unique_ptr<llvm::ExecutionEngine>(llvm::EngineBuilder(std::move(su_pvt->m_module)).create());
-
-        auto execution_engine = su_pvt->m_execution_engine.get();
-
-        // setup data layout
-        module->setDataLayout(execution_engine->getTargetMachine()->createDataLayout());
-
-#ifdef DEBUG_OUTPUT
-        module->print(llvm::errs(), nullptr);
-#endif
-
-        // make sure to link the global closure model
-        auto cloned_module = CloneModule(*(m_global_module.get_closure_module()));
-        execution_engine->addModule(std::move(cloned_module));
-
-        // resolve the function pointer
-        const auto& function_name = su_pvt->m_root_function_name;
-        su_pvt->m_function_pointer = execution_engine->getFunctionAddress(function_name);
+        
+        // keep record of the llvm function
+        sg->m_shader_unit_data->m_llvm_function = function;
+        sg->m_shader_unit_data->m_root_function_name = func_name;
     }
-
-    // optimization pass, this is pretty cool because I don't have to implement those sophisticated optimization algorithms.
-    if (su->allow_optimization()) {
-        // Create a new pass manager attached to it.
-        su_pvt->m_fpm = std::make_unique<llvm::legacy::FunctionPassManager>(module);
-
-        // Do simple "peephole" optimizations and bit-twiddling optzns.
-        su_pvt->m_fpm->add(llvm::createInstructionCombiningPass());
-        // Re-associate expressions.
-        su_pvt->m_fpm->add(llvm::createReassociatePass());
-        // Eliminate Common SubExpressions.
-        su_pvt->m_fpm->add(llvm::createGVNPass());
-        // Simplify the control flow graph (deleting unreachable blocks, etc).
-        su_pvt->m_fpm->add(llvm::createCFGSimplificationPass());
-
-        su_pvt->m_fpm->doInitialization();
-
-        su_pvt->m_fpm->run(*su_pvt->m_llvm_function);
-    }
-
-    // make sure the function is valid
-    if (su->allow_verification() && !llvm::verifyFunction(*su_pvt->m_llvm_function, &llvm::errs()))
-        return false;
 
     return true;
 }
 
-bool TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, ShaderGroup* sg, ShaderUnit* su, std::unordered_set<const ShaderUnit*>& visited, std::unordered_set<const ShaderUnit*>& being_visited, 
+bool TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, ShaderGroupTemplate* sg, ShaderUnitTemplate* su, std::unordered_set<const ShaderUnitTemplate*>& visited, std::unordered_set<const ShaderUnitTemplate*>& being_visited, 
                                                 VarMapping& var_mapping, std::unordered_map<std::string, std::unordered_map<std::string, const AstNode_Expression*>>& var_init_mapping, 
                                                 const std::unordered_map<std::string, llvm::Function*>& function_mapping , const std::vector<llvm::Value*>& args ) {
     // cycles detected, incorrect shader setup!!!

@@ -35,8 +35,9 @@ TSL_NAMESPACE_BEGIN
 class AstNode_FunctionPrototype;
 class AstNode_StructDeclaration;
 class AstNode_Expression;
-class ShaderUnit;
-class ShaderGroup;
+class ShaderUnitTemplate;
+class ShaderGroupTemplate;
+class ShaderInstance;
 class GlobalModule;
 struct LLVM_Compile_Context;
 
@@ -63,13 +64,19 @@ public:
     //!
     //! @param  source_code     The source code of the shader module.
     //! @param  su              The shader unit owning this piece of source code.
-    bool    compile(const char* source_code, ShaderUnit* su);
+    bool    compile(const char* source_code, ShaderUnitTemplate* su);
 
     //! @brief  Resolve a shader unit.
     //!
     //! @param  su              The shader unit to be resolved.
     //! @return                 Whether the shader is resolved succesfully.
-    bool    resolve(ShaderUnit* su);
+    bool    resolve(ShaderUnitTemplate* su);
+
+    //! @brief  Resolve a shader instance.
+    //!
+    //! @param  si              The shader instance to be resolved.
+    //! @return                 Whether the shader is resolved successfully.
+    bool    resolve(ShaderInstance* si);
 
     //! @brief  Get scanner of the compiler
     //!
@@ -149,8 +156,8 @@ private:
     using VarMapping = std::unordered_map<std::string, std::unordered_map<std::string, llvm::Value*>>;
 
     //! @brief  Generate shader group source code
-    bool    generate_shader_source( LLVM_Compile_Context& context, ShaderGroup* sg, ShaderUnit* su, std::unordered_set<const ShaderUnit*>& visited, 
-                                    std::unordered_set<const ShaderUnit*>& being_visited, VarMapping& var_mapping, 
+    bool    generate_shader_source( LLVM_Compile_Context& context, ShaderGroupTemplate* sg, ShaderUnitTemplate* su, std::unordered_set<const ShaderUnitTemplate*>& visited, 
+                                    std::unordered_set<const ShaderUnitTemplate*>& being_visited, VarMapping& var_mapping, 
                                     std::unordered_map<std::string, std::unordered_map<std::string, const AstNode_Expression*>>& var_init_mapping, 
                                     const std::unordered_map<std::string, llvm::Function*>& function_mapping, const std::vector<llvm::Value*>& args);
 };

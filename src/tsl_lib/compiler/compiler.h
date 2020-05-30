@@ -43,17 +43,23 @@ public:
     //!
     //! @param  source_code     The source code of the shader module.
     //! @param  su              The shader unit owning this piece of source code.
-    bool compile(const char* source_code, ShaderUnit* su) const;
+    bool compile(const char* source_code, ShaderUnitTemplate* su) const;
     
     //! @brief  Resolve a shader unit
     //!
     //! All shader unit needs to be resolved after compiling.
     //! @param  su              The shader unit to be resolved.
     //! @return                 Whether the shader unit is resolved succesfully.
-    bool resolve(ShaderUnit* su) const;
+    bool resolve(ShaderUnitTemplate* su) const;
+
+    //! @brief  Resolve a shader instance.
+    //!
+    //! A shader instance needs to be resolved before being put in use.
+    //! @return                 Whether the shader instance is successfully resolved.
+    bool resolve(ShaderInstance* si) const;
 
 private:
-    std::unique_ptr<TslCompiler_Impl> m_compiler = nullptr;
+    std::unique_ptr<TslCompiler_Impl> m_compiler_impl = nullptr;
 };
 
 TSL_NAMESPACE_END

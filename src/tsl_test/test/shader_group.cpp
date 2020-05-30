@@ -18,7 +18,7 @@
 #include "test_common.h"
 
 // this is a very simple real practical use case that demonstrating how tsl can fit in a ray tracing renderer.
-TEST(ShaderGroup, BasicShaderGroup) {
+TEST(ShaderGroupTemplate, BasicShaderGroup) {
     // global tsl shading system
     ShadingSystem shading_system;
 
@@ -29,7 +29,7 @@ TEST(ShaderGroup, BasicShaderGroup) {
     const auto closure_id = ClosureTypeLambert::RegisterClosure("Lambert", shading_system);
 
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = shading_context->compile_shader_unit("root_shader", R"(
+    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader", R"(
         shader output_node( in closure in_bxdf , out closure out_bxdf ){
             out_bxdf = in_bxdf * 0.5f;
         }
@@ -37,7 +37,7 @@ TEST(ShaderGroup, BasicShaderGroup) {
     EXPECT_NE(nullptr, root_shader_unit);
 
     // a bxdf node
-    const auto bxdf_shader_unit = shading_context->compile_shader_unit("bxdf_shader", R"(
+    const auto bxdf_shader_unit = shading_context->compile_shader_unit_template("bxdf_shader", R"(
         shader lambert_node( out closure out_bxdf ){
             out_bxdf = make_closure<Lambert>( 111, 4.0f );
         }
@@ -45,7 +45,7 @@ TEST(ShaderGroup, BasicShaderGroup) {
     EXPECT_NE(nullptr, bxdf_shader_unit);
 
     // make a shader group
-    auto shader_group = shading_context->make_shader_group("first shader");
+    auto shader_group = shading_context->make_shader_group_template("first shader");
     EXPECT_NE(nullptr, shader_group);
 
     // add the two shader units in this group
@@ -68,8 +68,12 @@ TEST(ShaderGroup, BasicShaderGroup) {
     ret = shading_context->resolve_shader_unit(shader_group);
     EXPECT_EQ(true, ret);
 
+    auto shader_instance = shader_group->make_shader_instance();
+    ret = shading_context->resolve_shader_instance(shader_instance);
+    EXPECT_EQ(true, ret);
+
     // get the function pointer
-    auto raw_function = (void(*)(ClosureTreeNodeBase**))shader_group->get_function();
+    auto raw_function = (void(*)(ClosureTreeNodeBase**))shader_instance->get_function();
     EXPECT_NE(nullptr, raw_function);
 
     // execute the shader
@@ -87,7 +91,7 @@ TEST(ShaderGroup, BasicShaderGroup) {
     EXPECT_EQ(4.0f, lambert_param->normal);
 }
 
-TEST(ShaderGroup, ShaderGroupWithoutClosure) {
+TEST(ShaderGroupTemplate, ShaderGroupWithoutClosure) {
     // global tsl shading system
     ShadingSystem shading_system;
 
@@ -95,7 +99,7 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
     auto shading_context = shading_system.make_shading_context();
 
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = shading_context->compile_shader_unit("root_shader", R"(
+    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader", R"(
         shader output_node( float in_bxdf , out float out_bxdf ){
             out_bxdf = in_bxdf * 1231.0f;
         }
@@ -103,7 +107,7 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
     EXPECT_NE(nullptr, root_shader_unit);
 
     // a bxdf node
-    const auto bxdf_shader_unit = shading_context->compile_shader_unit("bxdf_shader", R"(
+    const auto bxdf_shader_unit = shading_context->compile_shader_unit_template("bxdf_shader", R"(
         shader lambert_node( float in_bxdf = 1231.0f, out float out_bxdf , out float dummy ){
             out_bxdf = in_bxdf;
             // dummy = 1.0f;
@@ -112,7 +116,7 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
     EXPECT_NE(nullptr, bxdf_shader_unit);
 
     // make a shader group
-    auto shader_group = shading_context->make_shader_group("first shader");
+    auto shader_group = shading_context->make_shader_group_template("first shader");
     EXPECT_NE(nullptr, shader_group);
 
     // add the two shader units in this group
@@ -140,8 +144,12 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
     ret = shading_context->resolve_shader_unit(shader_group);
     EXPECT_EQ(true, ret);
 
+    auto shader_instance = shader_group->make_shader_instance();
+    ret = shading_context->resolve_shader_instance(shader_instance);
+    EXPECT_EQ(true, ret);
+
     // get the function pointer
-    auto raw_function = (void(*)(float*, float))shader_group->get_function();
+    auto raw_function = (void(*)(float*, float))shader_instance->get_function();
     EXPECT_NE(nullptr, raw_function);
 
     // execute the shader
@@ -150,7 +158,7 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
     EXPECT_EQ(1231.0f * 0.5f, closure);
 }
 
-TEST(ShaderGroup, ShaderGroupArgTypes) {
+TEST(ShaderGroupTemplate, ShaderGroupArgTypes) {
     // global tsl shading system
     ShadingSystem shading_system;
 
@@ -161,7 +169,7 @@ TEST(ShaderGroup, ShaderGroupArgTypes) {
     const auto closure_id = ClosureTypeLambert::RegisterClosure("Lambert", shading_system);
 
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = shading_context->compile_shader_unit("root_shader", R"(
+    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader", R"(
         shader output_node( out int i , out float f , out double d , out bool b , out closure c , out vector vec ){
             i = 123;
             f = 123.0f;
@@ -174,7 +182,7 @@ TEST(ShaderGroup, ShaderGroupArgTypes) {
     EXPECT_NE(nullptr, root_shader_unit);
 
     // make a shader group
-    auto shader_group = shading_context->make_shader_group("first shader");
+    auto shader_group = shading_context->make_shader_group_template("first shader");
     EXPECT_NE(nullptr, shader_group);
 
     // add the two shader units in this group
@@ -217,8 +225,12 @@ TEST(ShaderGroup, ShaderGroupArgTypes) {
     ret = shading_context->resolve_shader_unit(shader_group);
     EXPECT_EQ(true, ret);
 
+    auto shader_instance = shader_group->make_shader_instance();
+    ret = shading_context->resolve_shader_instance(shader_instance);
+    EXPECT_EQ(true, ret);
+
     // get the function pointer
-    auto raw_function = (void(*)(int*, float*, double*, bool*, Tsl_Namespace::float3*, ClosureTreeNodeBase**))shader_group->get_function();
+    auto raw_function = (void(*)(int*, float*, double*, bool*, Tsl_Namespace::float3*, ClosureTreeNodeBase**))shader_instance->get_function();
     EXPECT_NE(nullptr, raw_function);
 
     // execute the shader
@@ -243,7 +255,7 @@ TEST(ShaderGroup, ShaderGroupArgTypes) {
     EXPECT_EQ(4.0f, lambert_param->normal);
 }
 
-TEST(ShaderGroup, ShaderGroupInputDefaults) {
+TEST(ShaderGroupTemplate, ShaderGroupInputDefaults) {
     // global tsl shading system
     ShadingSystem shading_system;
 
@@ -254,7 +266,7 @@ TEST(ShaderGroup, ShaderGroupInputDefaults) {
     const auto closure_id = ClosureTypeLambert::RegisterClosure("Lambert", shading_system);
 
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = shading_context->compile_shader_unit("root_shader", R"(
+    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader", R"(
         shader output_node( int ii , float iff , double id , bool ib , vector if3, 
                             out int i , out float f , out double d , out bool b , out vector f3 ){
             i = ii;
@@ -267,7 +279,7 @@ TEST(ShaderGroup, ShaderGroupInputDefaults) {
     EXPECT_NE(nullptr, root_shader_unit);
 
     // make a shader group
-    auto shader_group = shading_context->make_shader_group("first shader");
+    auto shader_group = shading_context->make_shader_group_template("first shader");
     EXPECT_NE(nullptr, shader_group);
 
     // add the two shader units in this group
@@ -330,8 +342,12 @@ TEST(ShaderGroup, ShaderGroupInputDefaults) {
     ret = shading_context->resolve_shader_unit(shader_group);
     EXPECT_EQ(true, ret);
 
+    auto shader_instance = shader_group->make_shader_instance();
+    ret = shading_context->resolve_shader_instance(shader_instance);
+    EXPECT_EQ(true, ret);
+
     // get the function pointer
-    auto raw_function = (void(*)(int*, float*, double*, bool*, Tsl_Namespace::float3* ))shader_group->get_function();
+    auto raw_function = (void(*)(int*, float*, double*, bool*, Tsl_Namespace::float3*))shader_instance->get_function();
     EXPECT_NE(nullptr, raw_function);
 
     // execute the shader

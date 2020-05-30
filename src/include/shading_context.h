@@ -29,17 +29,67 @@ TSL_NAMESPACE_BEGIN
 
 class ShadingSystem;
 class TslCompiler;
-struct ShaderUnit_Pvt;
+class ShaderUnitTemplate;
+struct ShaderUnitTemplate_Pvt;
+struct ShaderInstance_Pvt;
 
-class ShaderUnit {
+//! @brief  ShaderInstance is the very basic unit of shader execution.
+/**
+ * A shader instance keeps track of the raw function pointer for shader execution.
+ * Shader instances made from a same thread can't be resolved in multiple threads simultaneously.
+ * But shader instance can be executed by multiple threads simultaneously once constructed and 
+ * resolved.
+ */
+class ShaderInstance {
+public:
+    //! @brief  Get the function pointer to execute the shader.
+    //!
+    //! @return     A function pointer points to code memory.
+    uint64_t        get_function() const;
+
+    //! @brief  Destructor
+    ~ShaderInstance();
+
+    //! @brief  Get private shader instance data.
+    //!
+    //! @return     It returns a pointer to shader instance private data.
+    ShaderInstance_Pvt* get_shader_instance_data() {
+        return m_shader_instance_data;
+    }
+
+    //! @brief  Get shader unit template.
+    //!
+    //! @return     The shader template.
+    const ShaderUnitTemplate& get_shader_template() const {
+        return m_shader_unit_template;
+    }
+
+private:
+    //! @brief  Private constructor to limit the construction of shader instance through ShaderUnitTemplate.
+    //!
+    //! @param  sut     Shader unit template that is used to construct this shader instance.
+    ShaderInstance(const ShaderUnitTemplate& sut);
+
+    /**< Shader unit template that creates this shader instance. */
+    const ShaderUnitTemplate& m_shader_unit_template;
+
+    /**< Private data inside shader instance. */
+    ShaderInstance_Pvt* m_shader_instance_data = nullptr;
+
+    // making sure ShaderUnitTemplate can access private method of this class so that it can create an instance
+    // of it.
+    friend class ShaderUnitTemplate;
+};
+
+class ShaderUnitTemplate {
 public:
     //! @brief  Constructor.
     //!
     //! @param  name    Name of the shader unit.
-    ShaderUnit(const std::string& name);
+    ShaderUnitTemplate(const std::string& name);
 
     //! @brief  Destructor.
-    virtual ~ShaderUnit();
+    virtual ~ShaderUnitTemplate();
 
     //! @brief  Get name of the shader unit.
     const std::string& get_name() const {
@@ -47,14 +97,14 @@ public:
     }
 
     //! @brief  Get the internal representation of this shader unit
-    ShaderUnit_Pvt* get_shader_unit_data(){
+    ShaderUnitTemplate_Pvt* get_shader_unit_data(){
         return m_shader_unit_data;
     }
 
-    //! @brief  Get the function pointer to execute the shader.
-    //!
-    //! @return     A function pointer points to code memory.
-    uint64_t        get_function() const;
+    //! @brief  Get the internal representation of this shader unit
+    const ShaderUnitTemplate_Pvt* get_shader_unit_data() const {
+        return m_shader_unit_data;
+    }
 
     //! @brief  Whether to allow optimization of LLVM generated code.
     //!
@@ -77,17 +127,32 @@ public:
         return m_exposed_args;
     }
 
+    //! @brief  Make a shader instance
+    ShaderInstance*     make_shader_instance();
+
+    //! @brief  Parse shader dependencies.
+    //!
+    //! @param sut      Dependencies of this module.
+    virtual void        parse_dependencies(ShaderUnitTemplate_Pvt* sut) const;
+
 protected:
     const std::string m_name;
 
     /**< A private data structure hiding all LLVM details. */
-    ShaderUnit_Pvt* m_shader_unit_data = nullptr;
+    ShaderUnitTemplate_Pvt* m_shader_unit_data = nullptr;
 
     // This will be allowed once I have most feature completed.
     const bool  m_allow_optimization = false;
     const bool  m_allow_verification = false;
 
+    /**< Description of exposed arguments. */
     std::vector<ArgDescriptor>  m_exposed_args;
+
+    /**< Make sure all shader instances are alive. */
+    std::vector<std::unique_ptr<ShaderInstance>> m_shader_instnaces;
+
+    // make sure shader instance can access private data of shader_unit_template
+    friend class ShaderInstance;
 };
 
 //! @brief  Shader group is a basic unit of shader execution.
@@ -96,20 +161,20 @@ protected:
  * A shader group itself is also a shader unit, which is a quite useful feature to get recursive
  * node supported in certain material editors.
  */
-class ShaderGroup : public ShaderUnit{
+class ShaderGroupTemplate : public ShaderUnitTemplate{
 public:
     //! @brief  Constructor.
     //!
     //! @param  name            The name fo the shader group.
     //! @param  compiler        A compiler belonging to the owning shading context.
-    ShaderGroup(const std::string& name, const TslCompiler& compiler);
+    ShaderGroupTemplate(const std::string& name, const TslCompiler& compiler);
 
     //! @brief  Add a shader unit in the group.
     //!
     //! @param  shader_unit     A shader unit to be added in the group.
     //! @param  is_root         Whether the shader unit is the root of the group, there has to be exactly one root in each shader group.
     //! @return                 Whether the shader unit is added in the group.
-    bool add_shader_unit(ShaderUnit* shader_unit, const bool is_root = false);
+    bool add_shader_unit(ShaderUnitTemplate* shader_unit, const bool is_root = false);
 
     //! @brief  Connect shader unit in the shader group.
     //!
@@ -131,12 +196,17 @@ public:
     //! @param  spn     source shader parameter name
     void init_shader_input(const std::string& su, const std::string& spn, const ShaderUnitInputDefaultValue& val);
 
+    //! @brief  Parse shader group dependencies.
+    //!
+    //! @param sut      Dependencies of this module.
+    void parse_dependencies(ShaderUnitTemplate_Pvt* sut) const override;
+
 private:
     /**< TSL compiler of the owning context. */
     const TslCompiler&   m_compiler;
 
     /**< Shader units belong to this group. */
-    std::unordered_map<std::string, ShaderUnit*> m_shader_units;
+    std::unordered_map<std::string, ShaderUnitTemplate*> m_shader_units;
 
     /**< Name of the root shader unit. */
     std::string  m_root_shader_unit_name;
@@ -158,7 +228,7 @@ private:
 };
 
 //! @brief  Shading context should be a per-thread resource that is for shader related stuff.
-/*
+/**
  * Unlike shading_system, shading_context is not designed to be thread-safe, meaning each thread
  * should have their own copy of a shading_system.
  * shading_context is used for shader related operations, like shader compilation, shader execution.
@@ -174,7 +244,7 @@ public:
     //!
     //! @param  name    Name of the shader group.
     //! @return         A pointer to the newly allocated shader group.
-    ShaderGroup* make_shader_group(const std::string& name);
+    ShaderGroupTemplate* make_shader_group_template(const std::string& name);
 
     //! @brief  Compile shader unit with source code.
     //!
@@ -184,13 +254,19 @@ public:
     //! @param name     Name of the shader unit
     //! @param source   Source code of the shader.
     //! @return         A pointer to shader unit.
-    ShaderUnit*  compile_shader_unit(const std::string& name, const char* source) const;
+    ShaderUnitTemplate*  compile_shader_unit_template(const std::string& name, const char* source) const;
 
     //! @brief  Resolve a shader unit before using it.
     //!
     //! @param su       The shader unit to be resolved.
     //! @return         Whether the shader is resolved successfully.
-    bool         resolve_shader_unit(ShaderUnit* su) const;
+    bool                 resolve_shader_unit(ShaderUnitTemplate* su) const;
+
+    //! @brief  Resolve a shader instance before using it.
+    //!
+    //! @param si       The shader instance to be resolved.
+    //! @return         Whether the shader is resolved successfully.
+    bool                 resolve_shader_instance(ShaderInstance* si) const;
 
 private:
     //! @brief  Constructor.

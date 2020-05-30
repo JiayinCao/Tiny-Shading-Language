@@ -16,35 +16,60 @@
  */
 
 #include <memory>
+#include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/Transforms/InstCombine/InstCombine.h"
+#include "llvm/Transforms/Scalar/GVN.h"
+#include "llvm/Transforms/Scalar.h"
+#include "llvm/ExecutionEngine/MCJIT.h"
 #include "shading_context.h"
 #include "shading_system.h"
 #include "compiler/compiler.h"
 #include "compiler/shader_unit_pvt.h"
-//#include "compiler/global_module.h"
 
 TSL_NAMESPACE_BEGIN
 
-ShaderUnit::ShaderUnit(const std::string& name) :m_name(name) {
-    m_shader_unit_data = new ShaderUnit_Pvt();
+ShaderUnitTemplate::ShaderUnitTemplate(const std::string& name) :m_name(name) {
+    m_shader_unit_data = new ShaderUnitTemplate_Pvt();
 }
 
-ShaderUnit::~ShaderUnit(){
+ShaderUnitTemplate::~ShaderUnitTemplate(){
     delete m_shader_unit_data;
 }
 
-uint64_t ShaderUnit::get_function() const{
-    return m_shader_unit_data->m_function_pointer;
+ShaderInstance* ShaderUnitTemplate::make_shader_instance() {
+    // this is not the optimal way of instancing a shader, but it works, I'll leave it for now.
+    ShaderInstance* instance = new ShaderInstance(*this);
+    m_shader_instnaces.push_back(std::move(std::unique_ptr<ShaderInstance>(instance)));
+    return m_shader_instnaces.back().get();
 }
 
-ShaderGroup::ShaderGroup(const std::string& name, const TslCompiler& compiler)
-    :ShaderUnit(name), m_compiler(compiler){
+void ShaderUnitTemplate::parse_dependencies(ShaderUnitTemplate_Pvt* sut) const {
+    if (!sut)
+        return;
+    sut->m_dependencies.insert(m_shader_unit_data->m_module.get());
 }
 
-void ShaderGroup::connect_shader_units(const std::string& ssu, const std::string& sspn, const std::string& tsu, const std::string& tspn) {
+ShaderInstance::ShaderInstance(const ShaderUnitTemplate& sut) : m_shader_unit_template(sut) {
+    m_shader_instance_data = new ShaderInstance_Pvt();
+}
+
+ShaderInstance::~ShaderInstance() {
+    delete m_shader_instance_data;
+}
+
+uint64_t ShaderInstance::get_function() const {
+    return m_shader_instance_data->m_function_pointer;
+}
+
+ShaderGroupTemplate::ShaderGroupTemplate(const std::string& name, const TslCompiler& compiler)
+    :ShaderUnitTemplate(name), m_compiler(compiler){
+}
+
+void ShaderGroupTemplate::connect_shader_units(const std::string& ssu, const std::string& sspn, const std::string& tsu, const std::string& tspn) {
     m_shader_unit_connections[tsu][tspn] = std::make_pair(ssu, sspn);
 }
 
-void ShaderGroup::expose_shader_argument(const std::string & ssu, const std::string & sspn, const ArgDescriptor & arg_desc){
+void ShaderGroupTemplate::expose_shader_argument(const std::string & ssu, const std::string & sspn, const ArgDescriptor & arg_desc){
     const auto i = m_exposed_args.size();
     m_exposed_args.push_back(arg_desc);
 
@@ -56,11 +81,16 @@ void ShaderGroup::expose_shader_argument(const std::string & ssu, const std::str
 }
 
 
-void ShaderGroup::init_shader_input(const std::string& su, const std::string& spn, const ShaderUnitInputDefaultValue& val) {
+void ShaderGroupTemplate::init_shader_input(const std::string& su, const std::string& spn, const ShaderUnitInputDefaultValue& val) {
     m_shader_input_defaults[su][spn] = val;
 }
 
-bool ShaderGroup::add_shader_unit(ShaderUnit* shader_unit, const bool is_root) {
+void ShaderGroupTemplate::parse_dependencies(ShaderUnitTemplate_Pvt* sut) const {
+    for (const auto& shader_unit : m_shader_units)
+        shader_unit.second->parse_dependencies(sut);
+}
+
+bool ShaderGroupTemplate::add_shader_unit(ShaderUnitTemplate* shader_unit, const bool is_root) {
     if (!shader_unit)
         return false;
 
@@ -92,7 +122,7 @@ ShadingContext::ShadingContext(ShadingSystem& shading_system):m_shading_system(s
 ShadingContext::~ShadingContext() {
 }
 
-ShaderUnit* ShadingContext::compile_shader_unit(const std::string& name, const char* source) const {
+ShaderUnitTemplate* ShadingContext::compile_shader_unit_template(const std::string& name, const char* source) const {
     // make sure the lock doesn't cover compiling
     {
         // making sure only one of the context can access the data at a time
@@ -103,7 +133,7 @@ ShaderUnit* ShadingContext::compile_shader_unit(const std::string& name, const c
             return nullptr;
 
         // allocate the shader unit entry
-        m_shading_system.m_shader_units[name] = std::make_unique<ShaderUnit>(name);
+        m_shading_system.m_shader_units[name] = std::make_unique<ShaderUnitTemplate>(name);
     }
 
     auto shader_unit = m_shading_system.m_shader_units[name].get();
@@ -116,11 +146,15 @@ ShaderUnit* ShadingContext::compile_shader_unit(const std::string& name, const c
     return shader_unit;
 }
 
-bool ShadingContext::resolve_shader_unit(ShaderUnit* su) const {
+bool ShadingContext::resolve_shader_unit(ShaderUnitTemplate* su) const {
     return m_compiler->resolve(su);
 }
 
-ShaderGroup* ShadingContext::make_shader_group(const std::string& name) {
+bool ShadingContext::resolve_shader_instance(ShaderInstance* si) const {
+    return m_compiler->resolve(si);
+}
+
+ShaderGroupTemplate* ShadingContext::make_shader_group_template(const std::string& name) {
     // making sure only one of the context can access the data at a time
     std::lock_guard<std::mutex> lock(m_shading_system.m_shader_unit_mutex);
 
@@ -128,8 +162,8 @@ ShaderGroup* ShadingContext::make_shader_group(const std::string& name) {
     if (m_shading_system.m_shader_units.count(name))
         return nullptr;
 
-    auto shader_group = new ShaderGroup(name, *m_compiler);
-    m_shading_system.m_shader_units[name] = std::unique_ptr<ShaderUnit>(shader_group);
+    auto shader_group = new ShaderGroupTemplate(name, *m_compiler);
+    m_shading_system.m_shader_units[name] = std::unique_ptr<ShaderUnitTemplate>(shader_group);
     return shader_group;
 }
 

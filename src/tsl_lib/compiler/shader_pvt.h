@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include <unordered_set>
 #include "llvm/IR/Module.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/IR/LegacyPassManager.h"
@@ -29,6 +28,7 @@ TSL_NAMESPACE_BEGIN
 class GlobalModule;
 class AstNode_FunctionPrototype;
 
+
 struct ShaderArgMetaData {
     std::string             m_name;
     ShaderArgumentTypeEnum  m_type = ShaderArgumentTypeEnum::TSL_TYPE_INVALID;
@@ -37,13 +37,22 @@ struct ShaderArgMetaData {
 };
 
 // This data structure hides all LLVM related data from ShaderUnitTemplate.
-struct ShaderUnitTemplate_Pvt{
+struct ShaderUnit_Pvt{
 public:
     // the llvm module owned by this shader unit
     std::unique_ptr<llvm::Module> m_module = nullptr;
 
-    // the dependent llvm module
-    std::unordered_set<const llvm::Module*> m_dependencies;
+    // the execute engine for this module
+    std::unique_ptr<llvm::ExecutionEngine> m_execution_engine = nullptr;
+
+    // the legacy manager, this is for optimization
+    std::unique_ptr<llvm::legacy::FunctionPassManager> m_fpm = nullptr;
+
+    // the function address for host code to call
+    uint64_t m_function_pointer = 0;
+
+    // global module
+    GlobalModule*    m_global_module = nullptr;
 
     // ast node
     AstNode_FunctionPrototype* m_ast_root = nullptr;
@@ -54,19 +63,6 @@ public:
     std::string     m_root_function_name;
     // shader parameter
     std::vector<ShaderArgMetaData>  m_shader_params;
-};
-
-// This data structure hides all LLVM related data from ShaderInstance.
-struct ShaderInstance_Pvt {
-public:
-    // the execute engine for this module
-    std::unique_ptr<llvm::ExecutionEngine> m_execution_engine = nullptr;
-
-    // the legacy manager, this is for optimization
-    std::unique_ptr<llvm::legacy::FunctionPassManager> m_fpm = nullptr;
-
-    // the function address for host code to call
-    uint64_t m_function_pointer = 0;
 };
 
 TSL_NAMESPACE_END
