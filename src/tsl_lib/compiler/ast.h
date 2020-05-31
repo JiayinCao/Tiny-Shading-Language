@@ -921,7 +921,7 @@ public:
 
 	void print() const override;
 
-    void parse_shader_parameters(std::vector<ShaderArgMetaData>& params);
+    void parse_shader_parameters(std::vector< ArgDescriptor>& params);
 
 private:
 	const std::string		m_name;

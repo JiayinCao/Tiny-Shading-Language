@@ -136,7 +136,7 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnitTemplate* su) 
     if( parsing_result != 0 )
 		return false;
 
-    auto su_pvt = su->get_shader_unit_data();
+    auto su_pvt = su->m_shader_unit_data;
 
     // shader_unit_pvt holds the life time of this module, whenever it is needed by execution engine
     // another module is cloned from this one.
@@ -182,11 +182,11 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnitTemplate* su) 
         // there is usually just one global module as dependent in all shader unit.
         su_pvt->m_dependencies.insert(m_global_module.get_closure_module());
 
-        // parse shader parameters, this is for groupping shader units
-        m_ast_root->parse_shader_parameters(su_pvt->m_shader_params);
-
         // keep track of the ast root of this shader unit
         su_pvt->m_ast_root = m_ast_root;
+
+        // parse exposed shader arguments
+        m_ast_root->parse_shader_parameters(su->m_exposed_args);
 
         // it should be safe to assume llvm function has to be generated, otherwise, the shader is invalid.
         if (!su_pvt->m_llvm_function)
@@ -202,7 +202,7 @@ bool TslCompiler_Impl::resolve(ShaderInstance* si) {
 
     const auto& shader_template = si->get_shader_template();
     auto shader_instance_data = si->get_shader_instance_data();
-    auto shader_template_data = shader_template.get_shader_unit_data();
+    auto shader_template_data = shader_template.m_shader_unit_data;
 
     // invalid shader unit template
     if (!shader_template_data->m_module || !shader_template_data->m_llvm_function)
@@ -260,7 +260,7 @@ bool TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
     if (!sg)
         return false;
 
-    auto su_pvt = sg->get_shader_unit_data();
+    auto su_pvt = sg->m_shader_unit_data;
     if (!su_pvt)
         return false;
 
@@ -292,6 +292,8 @@ bool TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
     compile_context.module = sg->m_shader_unit_data->m_module.get();
     compile_context.builder = &builder;
 
+    const auto llvm_void_ty = get_void_ty(compile_context);
+
     m_global_module.declare_global_module(compile_context);
 
     // dependency modules
@@ -300,17 +302,37 @@ bool TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
     std::unordered_map<std::string, llvm::Function*>    m_shader_unit_llvm_function;
     // pre-declare all shader interfaces
     for (auto& shader_unit : sg->m_shader_units) {
-        auto local_su_pvt = shader_unit.second->get_shader_unit_data();
-            
+        auto local_su_pvt = shader_unit.second->m_shader_unit_data;
+
 #ifdef DEBUG_OUTPUT
         local_su_pvt->m_module->print(llvm::errs(), nullptr);
 #endif
-            
+
         // parse shader unit dependencies
         shader_unit.second->parse_dependencies(su_pvt);
 
-        // declare the root function of the shader unit
-        auto function = local_su_pvt->m_ast_root->declare_shader(compile_context);
+        // get the shader exposed parameters
+        const auto& params = shader_unit.second->m_exposed_args;
+
+        // parse argument types
+        std::vector<llvm::Type*>	args(params.size());
+        for (int i = 0; i < args.size(); ++i){
+            const auto& variable = params[i];
+            const auto raw_type = llvm_type_from_arg_type(variable.m_type, compile_context);
+            const auto output_param = variable.m_is_output;
+            args[i] = output_param ? raw_type->getPointerTo() : raw_type;
+        }
+
+        // declare the function prototype
+        llvm::FunctionType* function_type = llvm::FunctionType::get(llvm_void_ty, args, false);
+
+        // create the function prototype
+        const auto& func_name = local_su_pvt->m_root_function_name;
+        llvm::Function* function = llvm::Function::Create(function_type, llvm::Function::ExternalLinkage, func_name, compile_context.module);
+
+        // For debugging purposes, set the name of all arguments
+        for (int i = 0; i < args.size(); ++i)
+            function->getArg(i)->setName(params[i].m_name);
 
         // update shader unit root functions
         const auto& name = shader_unit.second->get_name();
@@ -318,7 +340,7 @@ bool TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
     }
 
     // parse argument types
-    const auto& args = sg->get_shader_arguments();
+    const auto& args = sg->m_exposed_args;
     std::vector<llvm::Type*>	llvm_arg_types(args.size());
     for (auto i = 0; i < args.size(); ++i) {
         auto raw_type = llvm_type_from_arg_type(args[i].m_type, compile_context);
@@ -401,7 +423,7 @@ bool TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, S
 
     // generate the shader code for this shader unit
     std::vector<llvm::Value*> callee_args;
-    for (auto& arg : su->get_shader_unit_data()->m_shader_params) {
+    for (auto& arg : su->m_exposed_args) {
         const auto name = arg.m_name;
         const auto type = arg.m_type;
         const auto is_input = !arg.m_is_output;

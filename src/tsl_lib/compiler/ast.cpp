@@ -238,14 +238,14 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 	return function;
 }
 
-void AstNode_FunctionPrototype::parse_shader_parameters(std::vector<ShaderArgMetaData>& params) {
+void AstNode_FunctionPrototype::parse_shader_parameters(std::vector<ArgDescriptor>& params) {
     params.clear();
 
     const AstNode_VariableDecl* variable = m_variables;
     while (variable) {
         const auto raw_type = variable->data_type();
 
-        ShaderArgMetaData arg;
+        ArgDescriptor arg;
         arg.m_name = variable->get_var_name();
         arg.m_type = type_from_internal_type(raw_type);
         arg.m_is_output = variable->get_config() & VariableConfig::OUTPUT;

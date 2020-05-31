@@ -18,7 +18,7 @@
 #include "test_common.h"
 
 // this is a very simple real practical use case that demonstrating how tsl can fit in a ray tracing renderer.
-TEST(ShaderGroupTemplate, BasicShaderGroup) {
+TEST(ShaderGroup, BasicShaderGroup) {
     // global tsl shading system
     ShadingSystem shading_system;
 
@@ -91,7 +91,7 @@ TEST(ShaderGroupTemplate, BasicShaderGroup) {
     EXPECT_EQ(4.0f, lambert_param->normal);
 }
 
-TEST(ShaderGroupTemplate, ShaderGroupWithoutClosure) {
+TEST(ShaderGroup, ShaderGroupWithoutClosure) {
     // global tsl shading system
     ShadingSystem shading_system;
 
@@ -158,7 +158,7 @@ TEST(ShaderGroupTemplate, ShaderGroupWithoutClosure) {
     EXPECT_EQ(1231.0f * 0.5f, closure);
 }
 
-TEST(ShaderGroupTemplate, ShaderGroupArgTypes) {
+TEST(ShaderGroup, ShaderGroupArgTypes) {
     // global tsl shading system
     ShadingSystem shading_system;
 
@@ -255,7 +255,7 @@ TEST(ShaderGroupTemplate, ShaderGroupArgTypes) {
     EXPECT_EQ(4.0f, lambert_param->normal);
 }
 
-TEST(ShaderGroupTemplate, ShaderGroupInputDefaults) {
+TEST(ShaderGroup, ShaderGroupInputDefaults) {
     // global tsl shading system
     ShadingSystem shading_system;
 
@@ -365,13 +365,42 @@ TEST(ShaderGroupTemplate, ShaderGroupInputDefaults) {
     EXPECT_EQ(3.0f, f3.z);
 }
 
-// this is not currently supported for now, I'm working on it.
-
 // This is an advanced usage of shader group.
 // Shader group itself is composed of multiple shader units. However, since shader group itself is also a shader unit,
 // this means that a shader group can be used in another shader group as a single shader unit.
 // This perfectly matches to the groupping node feature in certain material editors like Blender.
-TEST(ShaderGroupTemplate, DISABLED_ShaderGroupRecursive) {
+//
+//                            inner_shader 
+//  -----------------------------------------------------------------
+//  |                                         root_shader           |
+//  |         bxdf_shader                  -----------------        |
+//  |      -----------------               |  output_node  |        |
+//  |      |  lambert_node |               |               |        |
+//  |      |               |               |        out_bxdf---------
+//  |      |        out_bxdf-------------->in_bxdf         |        |
+//  |      |           dummy               -----------------        |
+//  -------in_bxdf         |                                        |
+//  |      -----------------                                        |
+//  -----------------------------------------------------------------
+//
+//
+//            inner_shader   
+//         -----------------
+//         |               |
+//         |               |
+//         |        out_bxdf-------           final_shader  
+//         in_bxdf         |      |        -----------------
+//         -----------------      |        |  resolve_node |
+//                                |        |               |
+//          constant_shader       |        |        out_bxdf
+//         -----------------      -------->bxdf0           |
+//         | constant_node |      -------->bxdf1           |
+//         |               |      |        -----------------
+//         |        out_bxdf-------
+//         |               |
+//         -----------------
+
+TEST(ShaderGroup, ShaderGroupRecursive) {
     // global tsl shading system
     ShadingSystem shading_system;
 
@@ -425,45 +454,66 @@ TEST(ShaderGroupTemplate, DISABLED_ShaderGroupRecursive) {
         // resolve the shader group
         ret = shading_context->end_shader_group_template(shader_group0);
         EXPECT_EQ(true, ret);
-
-        auto shader_instance = shader_group0->make_shader_instance();
-        ret = shading_context->resolve_shader_instance(shader_instance);
-        EXPECT_EQ(true, ret);
-
-        // get the function pointer
-        auto raw_function = (void(*)(float*, float))shader_instance->get_function();
-        EXPECT_NE(nullptr, raw_function);
-
-        // execute the shader
-        float closure, in_bxdf = 0.5f;
-        raw_function(&closure, in_bxdf);
-        EXPECT_EQ(1231.0f * 0.5f, closure);
     }
+
+    // a bxdf node
+    const auto constant_shader_unit = shading_context->compile_shader_unit_template("constant_shader", R"(
+            shader constant_node( out float out_bxdf ){
+                out_bxdf = 3.0f;
+            }
+        )");
+    EXPECT_NE(nullptr, constant_shader_unit);
+
+    // a bxdf node
+    const auto final_shader_unit = shading_context->compile_shader_unit_template("final_shader", R"(
+            shader resolve_node( float bxdf0 , float bxdf1 , out float out_bxdf ){
+                out_bxdf = bxdf0 + bxdf1;
+            }
+        )");
+    EXPECT_NE(nullptr, final_shader_unit);
+
 
     // make another shader group
     auto shader_group1 = shading_context->begin_shader_group_template("outter shader group");
     EXPECT_NE(nullptr, shader_group1);
 
-    // add the two shader units in this group
-    auto ret = shader_group1->add_shader_unit(shader_group0, true);
+    auto ret = shader_group1->add_shader_unit(final_shader_unit, true);
+    EXPECT_EQ(true, ret);
+    ret = shader_group1->add_shader_unit(shader_group0);
+    EXPECT_EQ(true, ret);
+    ret = shader_group1->add_shader_unit(constant_shader_unit);
     EXPECT_EQ(true, ret);
 
     // setup connections between shader units
-    // shader_group0->connect_shader_units("bxdf_shader", "out_bxdf", "root_shader", "in_bxdf");
+    shader_group1->connect_shader_units("inner_shader", "out_bxdf", "final_shader", "bxdf0");
+    shader_group1->connect_shader_units("constant_shader", "out_bxdf", "final_shader", "bxdf1");
 
     // expose the shader interface
     ArgDescriptor arg;
     arg.m_name = "out_bxdf";
     arg.m_type = TSL_TYPE_FLOAT;
     arg.m_is_output = true;
-    shader_group1->expose_shader_argument("inner_shader", "out_bxdf", arg);
+    shader_group1->expose_shader_argument("final_shader", "out_bxdf", arg);
 
-    arg.m_name = "in_bxdf";
-    arg.m_type = TSL_TYPE_FLOAT;
-    arg.m_is_output = false;
-    shader_group1->expose_shader_argument("inner_shader", "in_bxdf", arg);
+    ShaderUnitInputDefaultValue ii;
+    ii.m_type = ShaderArgumentTypeEnum::TSL_TYPE_FLOAT;
+    ii.m_val.m_float = 0.2f;
+    shader_group1->init_shader_input("inner_shader", "in_bxdf", ii);
 
     // resolve the shader group
     ret = shading_context->end_shader_group_template(shader_group1);
     EXPECT_EQ(true, ret);
+
+    auto shader_instance = shader_group1->make_shader_instance();
+    ret = shading_context->resolve_shader_instance(shader_instance);
+    EXPECT_EQ(true, ret);
+
+    // get the function pointer
+    auto raw_function = (void(*)(float*))shader_instance->get_function();
+    EXPECT_NE(nullptr, raw_function);
+
+    // execute the shader
+    float closure, in_bxdf = 0.2f;
+    raw_function(&closure);
+    EXPECT_EQ(1231.0f * 0.2f + 3.0f, closure);
 }

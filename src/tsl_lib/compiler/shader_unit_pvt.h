@@ -52,8 +52,6 @@ public:
     llvm::Function* m_llvm_function = nullptr;
     // root function name
     std::string     m_root_function_name;
-    // shader parameter
-    std::vector<ShaderArgMetaData>  m_shader_params;
 };
 
 // This data structure hides all LLVM related data from ShaderInstance.

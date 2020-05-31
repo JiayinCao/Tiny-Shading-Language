@@ -85,7 +85,7 @@ class ShaderUnitTemplate {
 public:
     //! @brief  Constructor.
     //!
-    //! @param  name    Name of the shader unit.
+    //! @param  name            Name of the shader unit.
     ShaderUnitTemplate(const std::string& name);
 
     //! @brief  Destructor.
@@ -94,16 +94,6 @@ public:
     //! @brief  Get name of the shader unit.
     const std::string& get_name() const {
         return m_name;
-    }
-
-    //! @brief  Get the internal representation of this shader unit
-    ShaderUnitTemplate_Pvt* get_shader_unit_data(){
-        return m_shader_unit_data;
-    }
-
-    //! @brief  Get the internal representation of this shader unit
-    const ShaderUnitTemplate_Pvt* get_shader_unit_data() const {
-        return m_shader_unit_data;
     }
 
     //! @brief  Whether to allow optimization of LLVM generated code.
@@ -120,13 +110,6 @@ public:
         return m_allow_verification;
     }
 
-    //! @brief  Get exposed shader arguments
-    //!
-    //! @return     Get exposed shader arguments
-    const std::vector<ArgDescriptor>& get_shader_arguments() const {
-        return m_exposed_args;
-    }
-
     //! @brief  Make a shader instance
     ShaderInstance*     make_shader_instance();
 
@@ -136,6 +119,7 @@ public:
     virtual void        parse_dependencies(ShaderUnitTemplate_Pvt* sut) const;
 
 protected:
+    /**< Name of the shader unit. */
     const std::string m_name;
 
     /**< A private data structure hiding all LLVM details. */
@@ -153,6 +137,7 @@ protected:
 
     // make sure shader instance can access private data of shader_unit_template
     friend class ShaderInstance;
+    friend class TslCompiler_Impl;
 };
 
 //! @brief  Shader group is a basic unit of shader execution.

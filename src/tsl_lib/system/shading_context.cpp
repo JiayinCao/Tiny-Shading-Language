@@ -28,7 +28,7 @@
 
 TSL_NAMESPACE_BEGIN
 
-ShaderUnitTemplate::ShaderUnitTemplate(const std::string& name) :m_name(name) {
+ShaderUnitTemplate::ShaderUnitTemplate(const std::string& name) :m_name(name){
     m_shader_unit_data = new ShaderUnitTemplate_Pvt();
 }
 
@@ -43,12 +43,6 @@ ShaderInstance* ShaderUnitTemplate::make_shader_instance() {
     return m_shader_instnaces.back().get();
 }
 
-void ShaderUnitTemplate::parse_dependencies(ShaderUnitTemplate_Pvt* sut) const {
-    if (!sut)
-        return;
-    sut->m_dependencies.insert(m_shader_unit_data->m_module.get());
-}
-
 ShaderInstance::ShaderInstance(const ShaderUnitTemplate& sut) : m_shader_unit_template(sut) {
     m_shader_instance_data = new ShaderInstance_Pvt();
 }
@@ -59,6 +53,12 @@ ShaderInstance::~ShaderInstance() {
 
 uint64_t ShaderInstance::get_function() const {
     return m_shader_instance_data->m_function_pointer;
+}
+
+void ShaderUnitTemplate::parse_dependencies(ShaderUnitTemplate_Pvt* sut) const {
+    if (!sut)
+        return;
+    sut->m_dependencies.insert(m_shader_unit_data->m_module.get());
 }
 
 ShaderGroupTemplate::ShaderGroupTemplate(const std::string& name)
