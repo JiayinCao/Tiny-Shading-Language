@@ -147,15 +147,15 @@ ShaderUnitTemplate* ShadingContext::compile_shader_unit_template(const std::stri
     return shader_unit;
 }
 
-bool ShadingContext::resolve_shader_unit(ShaderUnitTemplate* su) const {
-    return m_compiler->resolve(su);
+bool ShadingContext::end_shader_group_template(ShaderGroupTemplate* sg) const {
+    return m_compiler->resolve(sg);
 }
 
 bool ShadingContext::resolve_shader_instance(ShaderInstance* si) const {
     return m_compiler->resolve(si);
 }
 
-ShaderGroupTemplate* ShadingContext::make_shader_group_template(const std::string& name) {
+ShaderGroupTemplate* ShadingContext::begin_shader_group_template(const std::string& name) {
     // making sure only one of the context can access the data at a time
     std::lock_guard<std::mutex> lock(m_shading_system.m_shader_unit_mutex);
 

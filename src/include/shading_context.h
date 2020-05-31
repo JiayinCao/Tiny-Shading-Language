@@ -240,7 +240,13 @@ public:
     //!
     //! @param  name    Name of the shader group.
     //! @return         A pointer to the newly allocated shader group.
-    ShaderGroupTemplate* make_shader_group_template(const std::string& name);
+    ShaderGroupTemplate* begin_shader_group_template(const std::string& name);
+
+    //! @brief  Resolve a shader group template before using it.
+    //!
+    //! @param sg       The shader group to be resolved.
+    //! @return         Whether the shader is resolved successfully.
+    bool                 end_shader_group_template(ShaderGroupTemplate* sg) const;
 
     //! @brief  Compile shader unit with source code.
     //!
@@ -251,12 +257,6 @@ public:
     //! @param source   Source code of the shader.
     //! @return         A pointer to shader unit.
     ShaderUnitTemplate*  compile_shader_unit_template(const std::string& name, const char* source) const;
-
-    //! @brief  Resolve a shader unit before using it.
-    //!
-    //! @param su       The shader unit to be resolved.
-    //! @return         Whether the shader is resolved successfully.
-    bool                 resolve_shader_unit(ShaderUnitTemplate* su) const;
 
     //! @brief  Resolve a shader instance before using it.
     //!

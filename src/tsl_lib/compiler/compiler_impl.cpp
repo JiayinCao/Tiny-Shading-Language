@@ -256,115 +256,114 @@ bool TslCompiler_Impl::resolve(ShaderInstance* si) {
     return true;
 }
 
-bool TslCompiler_Impl::resolve(ShaderUnitTemplate* su) {
-    auto su_pvt = su->get_shader_unit_data();
+bool TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
+    if (!sg)
+        return false;
+
+    auto su_pvt = sg->get_shader_unit_data();
     if (!su_pvt)
         return false;
 
-    auto sg = dynamic_cast<ShaderGroupTemplate*>(su);
     auto module = su_pvt->m_module.get();
 
-    // the resolving behavior is different for shader group and shader unit.
-    if (sg) {
-        // if no root shader setup yet, return false
-        if (sg->m_root_shader_unit_name == "")
-            return false;
+    // if no root shader setup yet, return false
+    if (sg->m_root_shader_unit_name == "")
+        return false;
 
-        // if we can't find the root shader, it should return false
-        if (0 == sg->m_shader_units.count(sg->m_root_shader_unit_name))
-            return false;
+    // if we can't find the root shader, it should return false
+    if (0 == sg->m_shader_units.count(sg->m_root_shader_unit_name))
+        return false;
 
-        // essentially, this is a topological sort
-        std::unordered_set<const ShaderUnitTemplate*>   visited_shader_units;
-        std::unordered_set<const ShaderUnitTemplate*>   current_shader_units_being_visited;
+    // essentially, this is a topological sort
+    std::unordered_set<const ShaderUnitTemplate*>   visited_shader_units;
+    std::unordered_set<const ShaderUnitTemplate*>   current_shader_units_being_visited;
 
-        // get the root shader
-        auto root_shader = sg->m_shader_units[sg->m_root_shader_unit_name];
+    // get the root shader
+    auto root_shader = sg->m_shader_units[sg->m_root_shader_unit_name];
 
-        // allocate the shader module for this shader group
-        sg->m_shader_unit_data->m_module = std::make_unique<llvm::Module>(sg->get_name(), m_llvm_context);
-        module = sg->m_shader_unit_data->m_module.get();
+    // allocate the shader module for this shader group
+    sg->m_shader_unit_data->m_module = std::make_unique<llvm::Module>(sg->get_name(), m_llvm_context);
+    module = sg->m_shader_unit_data->m_module.get();
 
-        llvm::IRBuilder<> builder(m_llvm_context);
+    llvm::IRBuilder<> builder(m_llvm_context);
 
-        LLVM_Compile_Context compile_context;
-        compile_context.context = &m_llvm_context;
-        compile_context.module = sg->m_shader_unit_data->m_module.get();
-        compile_context.builder = &builder;
+    LLVM_Compile_Context compile_context;
+    compile_context.context = &m_llvm_context;
+    compile_context.module = sg->m_shader_unit_data->m_module.get();
+    compile_context.builder = &builder;
 
-        m_global_module.declare_global_module(compile_context);
+    m_global_module.declare_global_module(compile_context);
 
-        // dependency modules
-        su_pvt->m_dependencies.insert(m_global_module.get_closure_module());
+    // dependency modules
+    su_pvt->m_dependencies.insert(m_global_module.get_closure_module());
 
-        std::unordered_map<std::string, llvm::Function*>    m_shader_unit_llvm_function;
-        // pre-declare all shader interfaces
-        for (auto& shader_unit : sg->m_shader_units) {
-            auto local_su_pvt = shader_unit.second->get_shader_unit_data();
+    std::unordered_map<std::string, llvm::Function*>    m_shader_unit_llvm_function;
+    // pre-declare all shader interfaces
+    for (auto& shader_unit : sg->m_shader_units) {
+        auto local_su_pvt = shader_unit.second->get_shader_unit_data();
             
 #ifdef DEBUG_OUTPUT
-            local_su_pvt->m_module->print(llvm::errs(), nullptr);
+        local_su_pvt->m_module->print(llvm::errs(), nullptr);
 #endif
             
-            // parse shader unit dependencies
-            shader_unit.second->parse_dependencies(su_pvt);
+        // parse shader unit dependencies
+        shader_unit.second->parse_dependencies(su_pvt);
 
-            // declare the root function of the shader unit
-            auto function = local_su_pvt->m_ast_root->declare_shader(compile_context);
+        // declare the root function of the shader unit
+        auto function = local_su_pvt->m_ast_root->declare_shader(compile_context);
 
-            // update shader unit root functions
-            const auto& name = shader_unit.second->get_name();
-            m_shader_unit_llvm_function[name] = function;
-        }
-
-        // parse argument types
-        const auto& args = sg->get_shader_arguments();
-        std::vector<llvm::Type*>	llvm_arg_types(args.size());
-        for (auto i = 0; i < args.size(); ++i) {
-            auto raw_type = llvm_type_from_arg_type(args[i].m_type, compile_context);
-            if (args[i].m_is_output)
-                raw_type = raw_type->getPointerTo();
-
-            llvm_arg_types[i] = raw_type;
-        }
-
-        // declare the function prototype
-        llvm::FunctionType* function_type = llvm::FunctionType::get(get_void_ty(compile_context), llvm_arg_types, false);
-
-        // declare the function
-        const auto func_name = sg->get_name() + "_shader_wrapper";
-        llvm::Function* function = llvm::Function::Create(function_type, llvm::Function::ExternalLinkage, func_name, module);
-
-        // function arguments
-        std::vector<llvm::Value*>   llvm_args(args.size());
-        for (auto i = 0; i < args.size(); ++i)
-            llvm_args[i] = function->getArg(i);
-
-        // create a separate code block
-        llvm::BasicBlock* wrapper_shader_entry = llvm::BasicBlock::Create(m_llvm_context, "entry", function);
-        builder.SetInsertPoint(wrapper_shader_entry);
-
-        // push var table
-        compile_context.push_var_symbol_layer();
-
-        // variable mapping keeps track of variables to bridge shader units
-        VarMapping var_mapping;
-
-        // generate wrapper shader source code.
-        const auto ret = generate_shader_source(compile_context, sg, root_shader, visited_shader_units, current_shader_units_being_visited, var_mapping, m_shader_unit_llvm_function, llvm_args);
-        if (!ret)
-            return false;
-        
-        // pop var table
-        compile_context.pop_var_symbol_layer();
-
-        // make sure there is a terminator
-        builder.CreateRetVoid();
-        
-        // keep record of the llvm function
-        sg->m_shader_unit_data->m_llvm_function = function;
-        sg->m_shader_unit_data->m_root_function_name = func_name;
+        // update shader unit root functions
+        const auto& name = shader_unit.second->get_name();
+        m_shader_unit_llvm_function[name] = function;
     }
+
+    // parse argument types
+    const auto& args = sg->get_shader_arguments();
+    std::vector<llvm::Type*>	llvm_arg_types(args.size());
+    for (auto i = 0; i < args.size(); ++i) {
+        auto raw_type = llvm_type_from_arg_type(args[i].m_type, compile_context);
+        if (args[i].m_is_output)
+            raw_type = raw_type->getPointerTo();
+
+        llvm_arg_types[i] = raw_type;
+    }
+
+    // declare the function prototype
+    llvm::FunctionType* function_type = llvm::FunctionType::get(get_void_ty(compile_context), llvm_arg_types, false);
+
+    // declare the function
+    const auto func_name = sg->get_name() + "_shader_wrapper";
+    llvm::Function* function = llvm::Function::Create(function_type, llvm::Function::ExternalLinkage, func_name, module);
+
+    // function arguments
+    std::vector<llvm::Value*>   llvm_args(args.size());
+    for (auto i = 0; i < args.size(); ++i)
+        llvm_args[i] = function->getArg(i);
+
+    // create a separate code block
+    llvm::BasicBlock* wrapper_shader_entry = llvm::BasicBlock::Create(m_llvm_context, "entry", function);
+    builder.SetInsertPoint(wrapper_shader_entry);
+
+    // push var table
+    compile_context.push_var_symbol_layer();
+
+    // variable mapping keeps track of variables to bridge shader units
+    VarMapping var_mapping;
+
+    // generate wrapper shader source code.
+    const auto ret = generate_shader_source(compile_context, sg, root_shader, visited_shader_units, current_shader_units_being_visited, var_mapping, m_shader_unit_llvm_function, llvm_args);
+    if (!ret)
+        return false;
+        
+    // pop var table
+    compile_context.pop_var_symbol_layer();
+
+    // make sure there is a terminator
+    builder.CreateRetVoid();
+        
+    // keep record of the llvm function
+    sg->m_shader_unit_data->m_llvm_function = function;
+    sg->m_shader_unit_data->m_root_function_name = func_name;
 
     return true;
 }

@@ -45,12 +45,12 @@ public:
     //! @param  su              The shader unit owning this piece of source code.
     bool compile(const char* source_code, ShaderUnitTemplate* su) const;
     
-    //! @brief  Resolve a shader unit
+    //! @brief  Resolve a shader group
     //!
     //! All shader unit needs to be resolved after compiling.
-    //! @param  su              The shader unit to be resolved.
+    //! @param  sg              The shader group to be resolved.
     //! @return                 Whether the shader unit is resolved succesfully.
-    bool resolve(ShaderUnitTemplate* su) const;
+    bool resolve(ShaderGroupTemplate* sg) const;
 
     //! @brief  Resolve a shader instance.
     //!

@@ -58,7 +58,6 @@ template<class T>
 inline T compile_shader(const char* shader_source, ShadingSystem& shading_system) {
     auto shading_context = shading_system.make_shading_context();
 
-#if 1
     const auto shader_unit_template = shading_context->compile_shader_unit_template("test", shader_source);
 
     if (!shader_unit_template)
@@ -71,16 +70,4 @@ inline T compile_shader(const char* shader_source, ShadingSystem& shading_system
         return nullptr;
 
     return (T)shader_instance->get_function();
-#else
-    const auto shader_unit_template = shading_context->compile_shader_unit_template("test", shader_source);
-
-    if (!shader_unit_template)
-        return nullptr;
-
-    // resolve the shader before using it.
-    if (!shading_context->resolve_shader_unit(shader_unit_template))
-        return nullptr;
-
-    return (T)shader_unit_template->get_function();
-#endif
 }

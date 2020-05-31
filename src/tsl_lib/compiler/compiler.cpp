@@ -28,8 +28,8 @@ bool TslCompiler::compile(const char* source_code, ShaderUnitTemplate* su) const
     return m_compiler_impl->compile(source_code, su);
 }
 
-bool TslCompiler::resolve(ShaderUnitTemplate* su) const {
-    return m_compiler_impl->resolve(su);
+bool TslCompiler::resolve(ShaderGroupTemplate* sg) const {
+    return m_compiler_impl->resolve(sg);
 }
 
 bool TslCompiler::resolve(ShaderInstance* si) const {
