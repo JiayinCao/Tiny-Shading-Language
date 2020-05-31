@@ -275,8 +275,8 @@ bool TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
         return false;
 
     // essentially, this is a topological sort
-    std::unordered_set<const ShaderUnitTemplate*>   visited_shader_units;
-    std::unordered_set<const ShaderUnitTemplate*>   current_shader_units_being_visited;
+    std::unordered_set<std::string>   visited_shader_units;
+    std::unordered_set<std::string>   current_shader_units_being_visited;
 
     // get the root shader
     auto root_shader = sg->m_shader_units[sg->m_root_shader_unit_name];
@@ -299,44 +299,53 @@ bool TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
     // dependency modules
     su_pvt->m_dependencies.insert(m_global_module.get_closure_module());
 
-    std::unordered_map<std::string, llvm::Function*>    m_shader_unit_llvm_function;
+    std::unordered_map<ShaderUnitTemplate*, llvm::Function*> visited_module;
+    std::unordered_map<std::string, llvm::Function*>         shader_unit_llvm_function;
     // pre-declare all shader interfaces
-    for (auto& shader_unit : sg->m_shader_units) {
-        auto local_su_pvt = shader_unit.second->m_shader_unit_data;
+    for (auto& shader_unit_wrapper : sg->m_shader_units) {
+        const auto& shader_unit_name = shader_unit_wrapper.second.m_name;
+        auto shader_unit = shader_unit_wrapper.second.m_shader_unit_template;
+        auto local_su_pvt = shader_unit->m_shader_unit_data;
 
 #ifdef DEBUG_OUTPUT
         local_su_pvt->m_module->print(llvm::errs(), nullptr);
 #endif
-
         // parse shader unit dependencies
-        shader_unit.second->parse_dependencies(su_pvt);
+        shader_unit->parse_dependencies(su_pvt);
 
-        // get the shader exposed parameters
-        const auto& params = shader_unit.second->m_exposed_args;
+        // no need to declare the function multiple times if it is defined before
+        if (visited_module.count(shader_unit)){
+            shader_unit_llvm_function[shader_unit_name] = visited_module[shader_unit];
+        } else {
+            // get the shader exposed parameters
+            const auto& params = shader_unit->m_exposed_args;
 
-        // parse argument types
-        std::vector<llvm::Type*>	args(params.size());
-        for (int i = 0; i < args.size(); ++i){
-            const auto& variable = params[i];
-            const auto raw_type = llvm_type_from_arg_type(variable.m_type, compile_context);
-            const auto output_param = variable.m_is_output;
-            args[i] = output_param ? raw_type->getPointerTo() : raw_type;
+            // parse argument types
+            std::vector<llvm::Type*>	args(params.size());
+            for (int i = 0; i < args.size(); ++i) {
+                const auto& variable = params[i];
+                const auto raw_type = llvm_type_from_arg_type(variable.m_type, compile_context);
+                const auto output_param = variable.m_is_output;
+                args[i] = output_param ? raw_type->getPointerTo() : raw_type;
+            }
+
+            // declare the function prototype
+            llvm::FunctionType* function_type = llvm::FunctionType::get(llvm_void_ty, args, false);
+
+            // create the function prototype
+            const auto& func_name = local_su_pvt->m_root_function_name;
+            llvm::Function* function = llvm::Function::Create(function_type, llvm::Function::ExternalLinkage, func_name, compile_context.module);
+
+            // For debugging purposes, set the name of all arguments
+            for (int i = 0; i < args.size(); ++i)
+                function->getArg(i)->setName(params[i].m_name);
+
+            // update shader unit root functions
+            const auto& name = shader_unit->get_name();
+            shader_unit_llvm_function[name] = function;
+
+            visited_module[shader_unit] = function;
         }
-
-        // declare the function prototype
-        llvm::FunctionType* function_type = llvm::FunctionType::get(llvm_void_ty, args, false);
-
-        // create the function prototype
-        const auto& func_name = local_su_pvt->m_root_function_name;
-        llvm::Function* function = llvm::Function::Create(function_type, llvm::Function::ExternalLinkage, func_name, compile_context.module);
-
-        // For debugging purposes, set the name of all arguments
-        for (int i = 0; i < args.size(); ++i)
-            function->getArg(i)->setName(params[i].m_name);
-
-        // update shader unit root functions
-        const auto& name = shader_unit.second->get_name();
-        m_shader_unit_llvm_function[name] = function;
     }
 
     // parse argument types
@@ -373,7 +382,7 @@ bool TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
     VarMapping var_mapping;
 
     // generate wrapper shader source code.
-    const auto ret = generate_shader_source(compile_context, sg, root_shader, visited_shader_units, current_shader_units_being_visited, var_mapping, m_shader_unit_llvm_function, llvm_args);
+    const auto ret = generate_shader_source(compile_context, sg, root_shader, visited_shader_units, current_shader_units_being_visited, var_mapping, shader_unit_llvm_function, llvm_args);
     if (!ret)
         return false;
         
@@ -390,29 +399,32 @@ bool TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
     return true;
 }
 
-bool TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, ShaderGroupTemplate* sg, ShaderUnitTemplate* su, std::unordered_set<const ShaderUnitTemplate*>& visited, std::unordered_set<const ShaderUnitTemplate*>& being_visited, 
+bool TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, ShaderGroupTemplate* sg, const ShaderUnitTemplateCopy& suc, std::unordered_set<std::string>& visited, std::unordered_set<std::string>& being_visited,
                                                 VarMapping& var_mapping, const std::unordered_map<std::string, llvm::Function*>& function_mapping , const std::vector<llvm::Value*>& args ) {
+    const auto& shader_unit_copy_name = suc.m_name;
+    auto su = suc.m_shader_unit_template;
+
     // cycles detected, incorrect shader setup!!!
-    if (being_visited.count(su))
+    if (being_visited.count(shader_unit_copy_name))
         return false;
 
     // avoid generating code for this shader unit again
-    if (visited.count(su))
+    if (visited.count(shader_unit_copy_name))
         return true;
 
     // push shader unit in cache so that we can detect cycles
-    being_visited.insert(su);
-    visited.insert(su);
+    being_visited.insert(shader_unit_copy_name);
+    visited.insert(shader_unit_copy_name);
 
     // check shader unit it depends on
-    const std::string shader_unit_name = su->get_name();
-    if (sg->m_shader_unit_connections.count(shader_unit_name)) {
-        const auto& dependencies = sg->m_shader_unit_connections[shader_unit_name];
+    // const std::string shader_unit_name = su->get_name();
+    if (sg->m_shader_unit_connections.count(shader_unit_copy_name)) {
+        const auto& dependencies = sg->m_shader_unit_connections[shader_unit_copy_name];
         for (const auto& dep : dependencies) {
             const auto& dep_shader_unit_name = dep.second.first;
 
             // if an undefined shader unit is assigned, simply quit the process
-            if (sg->m_shader_units.count(shader_unit_name) == 0)
+            if (sg->m_shader_units.count(shader_unit_copy_name) == 0)
                 return false;
 
             const auto dep_shader_unit = sg->m_shader_units[dep_shader_unit_name];
@@ -445,7 +457,7 @@ bool TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, S
                 bool need_allocation = true;
 
                 // check if this input is connected with exposed argument of the shader group first
-                const auto it = sg->m_input_args.find(shader_unit_name);
+                const auto it = sg->m_input_args.find(shader_unit_copy_name);
                 if (it != sg->m_input_args.end()) {
                     const auto& shader_mapping = it->second;
                     const auto it1 = shader_mapping.find(name);
@@ -467,7 +479,7 @@ bool TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, S
                     bool has_init_value = false;
 
                     const auto& mapping = sg->m_shader_input_defaults;
-                    const auto it = mapping.find(shader_unit_name);
+                    const auto it = mapping.find(shader_unit_copy_name);
                     if (it != mapping.end()) {
                         const auto it1 = it->second.find(name);
                         if (it1 != it->second.end()) {
@@ -513,7 +525,7 @@ bool TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, S
             bool need_allocation = true;
 
             // check if this output is connected with exposed argument of the shader group first
-            const auto it = sg->m_output_args.find(shader_unit_name);
+            const auto it = sg->m_output_args.find(shader_unit_copy_name);
             if (it != sg->m_output_args.end()) {
                 const auto& shader_mapping = it->second;
                 const auto it1 = shader_mapping.find(name);
@@ -530,7 +542,7 @@ bool TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, S
                 llvm::Type* llvm_type = llvm_type_from_arg_type(type, context);
 
                 auto output_var = context.builder->CreateAlloca(llvm_type, nullptr, name);
-                var_mapping[su->get_name()][name] = output_var;
+                var_mapping[suc.m_name][name] = output_var;
                 callee_args.push_back(output_var);
             }
         }
@@ -542,7 +554,7 @@ bool TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, S
     context.builder->CreateCall(function, callee_args);
 
     // erase the shader unit from being visited
-    being_visited.erase(su);
+    being_visited.erase(shader_unit_copy_name);
 
     return true;
 }

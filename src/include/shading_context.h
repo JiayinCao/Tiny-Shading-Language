@@ -140,6 +140,16 @@ protected:
     friend class TslCompiler_Impl;
 };
 
+//! @brief  A thin wrapper to allow a shader unit added in a group more than once.
+/**
+    * In order to allow a shader unit to be added in a shader group multiple times, there needs to be a thin wrapper
+    * to differentiate different instances of shader unit.
+    */
+struct ShaderUnitTemplateCopy {
+    std::string         m_name;
+    ShaderUnitTemplate* m_shader_unit_template = nullptr;
+};
+
 //! @brief  Shader group is a basic unit of shader execution.
 /**
  * A shader group is composed of multiple shader units with all of them connected with each other.
@@ -155,10 +165,11 @@ public:
 
     //! @brief  Add a shader unit in the group.
     //!
+    //! @param  name            Name of the shader unit added in the group.
     //! @param  shader_unit     A shader unit to be added in the group.
     //! @param  is_root         Whether the shader unit is the root of the group, there has to be exactly one root in each shader group.
     //! @return                 Whether the shader unit is added in the group.
-    bool add_shader_unit(ShaderUnitTemplate* shader_unit, const bool is_root = false);
+    bool add_shader_unit(const std::string& name, ShaderUnitTemplate* shader_unit, const bool is_root = false);
 
     //! @brief  Connect shader unit in the shader group.
     //!
@@ -187,7 +198,7 @@ public:
 
 private:
     /**< Shader units belong to this group. */
-    std::unordered_map<std::string, ShaderUnitTemplate*> m_shader_units;
+    std::unordered_map<std::string, ShaderUnitTemplateCopy> m_shader_units;
 
     /**< Name of the root shader unit. */
     std::string  m_root_shader_unit_name;

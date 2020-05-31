@@ -49,13 +49,13 @@ TEST(ShaderGroup, BasicShaderGroup) {
     EXPECT_NE(nullptr, shader_group);
 
     // add the two shader units in this group
-    auto ret = shader_group->add_shader_unit(root_shader_unit, true);
+    auto ret = shader_group->add_shader_unit("root_shader", root_shader_unit, true);
     EXPECT_EQ(true, ret);
-    ret = shader_group->add_shader_unit(bxdf_shader_unit);
+    ret = shader_group->add_shader_unit("bxdf_shader_test", bxdf_shader_unit);
     EXPECT_EQ(true, ret);
 
     // setup connections between shader units
-    shader_group->connect_shader_units("bxdf_shader", "out_bxdf", "root_shader", "in_bxdf");
+    shader_group->connect_shader_units("bxdf_shader_test", "out_bxdf", "root_shader", "in_bxdf");
 
     // expose the shader interface
     ArgDescriptor arg;
@@ -91,6 +91,100 @@ TEST(ShaderGroup, BasicShaderGroup) {
     EXPECT_EQ(4.0f, lambert_param->normal);
 }
 
+// This unit test tries to verify that a shader unit can exists in a shader group more than once.
+// It could even have different default values if needed.
+TEST(ShaderGroup, DuplicateShaderUnits) {
+    // global tsl shading system
+    ShadingSystem shading_system;
+
+    // make a shading context for shader compiling, since there is only one thread involved in this unit test, it is good enough.
+    auto shading_context = shading_system.make_shading_context();
+
+    // registered closure id
+    const auto closure_id = ClosureTypeLambert::RegisterClosure("Lambert", shading_system);
+
+    // the root shader node, this usually matches to the output node in material system
+    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader", R"(
+        shader output_node( closure in_bxdf0 , closure in_bxdf1, out closure out_bxdf ){
+            out_bxdf = ( in_bxdf0 + in_bxdf1 ) * 0.5f;
+        }
+    )");
+    EXPECT_NE(nullptr, root_shader_unit);
+
+    // a bxdf node
+    const auto bxdf_shader_unit = shading_context->compile_shader_unit_template("bxdf_shader", R"(
+        shader lambert_node( float test , out closure out_bxdf ){
+            out_bxdf = make_closure<Lambert>( 111, test );
+        }
+    )");
+    EXPECT_NE(nullptr, bxdf_shader_unit);
+
+    // make a shader group
+    auto shader_group = shading_context->begin_shader_group_template("first shader");
+    EXPECT_NE(nullptr, shader_group);
+
+    // add the two shader units in this group
+    auto ret = shader_group->add_shader_unit("root_shader", root_shader_unit, true);
+    EXPECT_EQ(true, ret);
+    ret = shader_group->add_shader_unit("bxdf_shader0", bxdf_shader_unit);
+    EXPECT_EQ(true, ret);
+    ret = shader_group->add_shader_unit("bxdf_shader1", bxdf_shader_unit);
+    EXPECT_EQ(true, ret);
+
+    // setup connections between shader units
+    shader_group->connect_shader_units("bxdf_shader0", "out_bxdf", "root_shader", "in_bxdf0");
+    shader_group->connect_shader_units("bxdf_shader1", "out_bxdf", "root_shader", "in_bxdf1");
+
+    ShaderUnitInputDefaultValue dv;
+    dv.m_type = ShaderArgumentTypeEnum::TSL_TYPE_FLOAT;
+    dv.m_val.m_float = 2.0f;
+    shader_group->init_shader_input("bxdf_shader0", "test", dv);
+
+    dv.m_type = ShaderArgumentTypeEnum::TSL_TYPE_FLOAT;
+    dv.m_val.m_float = 12.0f;
+    shader_group->init_shader_input("bxdf_shader1", "test", dv);
+
+    // expose the shader interface
+    ArgDescriptor arg;
+    arg.m_name = "out_bxdf";
+    arg.m_type = TSL_TYPE_CLOSURE;
+    arg.m_is_output = true;
+    shader_group->expose_shader_argument("root_shader", "out_bxdf", arg);
+
+    // resolve the shader group
+    ret = shading_context->end_shader_group_template(shader_group);
+    EXPECT_EQ(true, ret);
+
+    auto shader_instance = shader_group->make_shader_instance();
+    ret = shading_context->resolve_shader_instance(shader_instance);
+    EXPECT_EQ(true, ret);
+
+    // get the function pointer
+    auto raw_function = (void(*)(ClosureTreeNodeBase**))shader_instance->get_function();
+    EXPECT_NE(nullptr, raw_function);
+
+    // execute the shader
+    ClosureTreeNodeBase* closure = nullptr;
+    raw_function(&closure);
+    EXPECT_EQ(CLOSURE_MUL, closure->m_id);
+
+    auto mul_closure = (ClosureTreeNodeMul*)closure;
+    EXPECT_EQ(0.5f, mul_closure->m_weight);
+    EXPECT_EQ(CLOSURE_ADD, mul_closure->m_closure->m_id);
+
+    auto add_closure = (ClosureTreeNodeAdd*)mul_closure->m_closure;
+    EXPECT_EQ(closure_id, add_closure->m_closure0->m_id);
+    EXPECT_EQ(closure_id, add_closure->m_closure1->m_id);
+
+    auto lambert_param = (ClosureTypeLambert*)add_closure->m_closure0->m_params;
+    EXPECT_EQ(111, lambert_param->base_color);
+    EXPECT_EQ(2.0f, lambert_param->normal);
+
+    lambert_param = (ClosureTypeLambert*)add_closure->m_closure1->m_params;
+    EXPECT_EQ(111, lambert_param->base_color);
+    EXPECT_EQ(12.0f, lambert_param->normal);
+}
+
 TEST(ShaderGroup, ShaderGroupWithoutClosure) {
     // global tsl shading system
     ShadingSystem shading_system;
@@ -120,9 +214,9 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
     EXPECT_NE(nullptr, shader_group);
 
     // add the two shader units in this group
-    auto ret = shader_group->add_shader_unit(root_shader_unit, true);
+    auto ret = shader_group->add_shader_unit("root_shader", root_shader_unit, true);
     EXPECT_EQ(true, ret);
-    ret = shader_group->add_shader_unit(bxdf_shader_unit);
+    ret = shader_group->add_shader_unit("bxdf_shader", bxdf_shader_unit);
     EXPECT_EQ(true, ret);
 
     // setup connections between shader units
@@ -186,7 +280,7 @@ TEST(ShaderGroup, ShaderGroupArgTypes) {
     EXPECT_NE(nullptr, shader_group);
 
     // add the two shader units in this group
-    auto ret = shader_group->add_shader_unit(root_shader_unit, true);
+    auto ret = shader_group->add_shader_unit("root_shader", root_shader_unit, true);
     EXPECT_EQ(true, ret);
 
     // expose the shader interface
@@ -280,7 +374,7 @@ TEST(ShaderGroup, ShaderGroupInputDefaults) {
     EXPECT_NE(nullptr, shader_group);
 
     // add the two shader units in this group
-    auto ret = shader_group->add_shader_unit(root_shader_unit, true);
+    auto ret = shader_group->add_shader_unit("root_shader", root_shader_unit, true);
     EXPECT_EQ(true, ret);
 
     // expose the shader interface
@@ -431,9 +525,9 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
         EXPECT_NE(nullptr, shader_group0);
 
         // add the two shader units in this group
-        auto ret = shader_group0->add_shader_unit(root_shader_unit, true);
+        auto ret = shader_group0->add_shader_unit("root_shader", root_shader_unit, true);
         EXPECT_EQ(true, ret);
-        ret = shader_group0->add_shader_unit(bxdf_shader_unit);
+        ret = shader_group0->add_shader_unit("bxdf_shader", bxdf_shader_unit);
         EXPECT_EQ(true, ret);
 
         // setup connections between shader units
@@ -477,11 +571,11 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
     auto shader_group1 = shading_context->begin_shader_group_template("outter shader group");
     EXPECT_NE(nullptr, shader_group1);
 
-    auto ret = shader_group1->add_shader_unit(final_shader_unit, true);
+    auto ret = shader_group1->add_shader_unit("final_shader", final_shader_unit, true);
     EXPECT_EQ(true, ret);
-    ret = shader_group1->add_shader_unit(shader_group0);
+    ret = shader_group1->add_shader_unit("inner_shader", shader_group0);
     EXPECT_EQ(true, ret);
-    ret = shader_group1->add_shader_unit(constant_shader_unit);
+    ret = shader_group1->add_shader_unit("constant_shader", constant_shader_unit);
     EXPECT_EQ(true, ret);
 
     // setup connections between shader units

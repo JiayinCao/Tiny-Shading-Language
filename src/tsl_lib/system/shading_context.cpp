@@ -87,24 +87,20 @@ void ShaderGroupTemplate::init_shader_input(const std::string& su, const std::st
 
 void ShaderGroupTemplate::parse_dependencies(ShaderUnitTemplate_Pvt* sut) const {
     for (const auto& shader_unit : m_shader_units)
-        shader_unit.second->parse_dependencies(sut);
+        shader_unit.second.m_shader_unit_template->parse_dependencies(sut);
     sut->m_dependencies.insert(m_shader_unit_data->m_module.get());
 }
 
-bool ShaderGroupTemplate::add_shader_unit(ShaderUnitTemplate* shader_unit, const bool is_root) {
+bool ShaderGroupTemplate::add_shader_unit(const std::string& name, ShaderUnitTemplate* shader_unit, const bool is_root) {
     if (!shader_unit)
         return false;
 
-    // get the name of the shader
-    const auto name = shader_unit->get_name();
-
     // if an existed shader is added
-    if (m_shader_units.count(name)) {
-        if (m_shader_units[name] != shader_unit)
-            return false;
-    }
+    if (m_shader_units.count(name))
+        return false;
 
-    m_shader_units[shader_unit->get_name()] = shader_unit;
+    m_shader_units[name].m_name = name;
+    m_shader_units[name].m_shader_unit_template = shader_unit;
 
     if (is_root) {
         // more than one root shader set in the group
