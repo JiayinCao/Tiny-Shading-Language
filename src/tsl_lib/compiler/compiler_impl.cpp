@@ -155,7 +155,7 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnitTemplate* su) 
 		compile_context.builder = &builder;
 
         m_global_module.declare_closure_tree_types(m_llvm_context, &compile_context.m_structure_type_maps);
-		m_global_module.declare_global_function(compile_context);
+		m_global_module.declare_global_module(compile_context);
         for (auto& closure : m_closures_in_shader) {
             // declare the function first.
             auto function = m_global_module.declare_closure_function(closure, compile_context);
@@ -292,12 +292,10 @@ bool TslCompiler_Impl::resolve(ShaderUnitTemplate* su) {
         compile_context.module = sg->m_shader_unit_data->m_module.get();
         compile_context.builder = &builder;
 
-        m_global_module.declare_global_function(compile_context);
+        m_global_module.declare_global_module(compile_context);
 
         // dependency modules
         su_pvt->m_dependencies.insert(m_global_module.get_closure_module());
-
-        std::unordered_map<std::string, std::unordered_map<std::string, const AstNode_Expression*>>  arg_init_mapping;
 
         std::unordered_map<std::string, llvm::Function*>    m_shader_unit_llvm_function;
         // pre-declare all shader interfaces
@@ -305,15 +303,17 @@ bool TslCompiler_Impl::resolve(ShaderUnitTemplate* su) {
             auto local_su_pvt = shader_unit.second->get_shader_unit_data();
             
 #ifdef DEBUG_OUTPUT
-            su_pvt->m_module->print(llvm::errs(), nullptr);
+            local_su_pvt->m_module->print(llvm::errs(), nullptr);
 #endif
-            const auto& name = shader_unit.second->get_name();
-
-            auto function = local_su_pvt->m_ast_root->declare_shader(compile_context);
-            local_su_pvt->m_ast_root->parse_arg_init(arg_init_mapping[name]);
-
+            
+            // parse shader unit dependencies
             shader_unit.second->parse_dependencies(su_pvt);
 
+            // declare the root function of the shader unit
+            auto function = local_su_pvt->m_ast_root->declare_shader(compile_context);
+
+            // update shader unit root functions
+            const auto& name = shader_unit.second->get_name();
             m_shader_unit_llvm_function[name] = function;
         }
 
@@ -351,7 +351,7 @@ bool TslCompiler_Impl::resolve(ShaderUnitTemplate* su) {
         VarMapping var_mapping;
 
         // generate wrapper shader source code.
-        const auto ret = generate_shader_source(compile_context, sg, root_shader, visited_shader_units, current_shader_units_being_visited, var_mapping, arg_init_mapping, m_shader_unit_llvm_function, llvm_args);
+        const auto ret = generate_shader_source(compile_context, sg, root_shader, visited_shader_units, current_shader_units_being_visited, var_mapping, m_shader_unit_llvm_function, llvm_args);
         if (!ret)
             return false;
         
@@ -370,8 +370,7 @@ bool TslCompiler_Impl::resolve(ShaderUnitTemplate* su) {
 }
 
 bool TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, ShaderGroupTemplate* sg, ShaderUnitTemplate* su, std::unordered_set<const ShaderUnitTemplate*>& visited, std::unordered_set<const ShaderUnitTemplate*>& being_visited, 
-                                                VarMapping& var_mapping, std::unordered_map<std::string, std::unordered_map<std::string, const AstNode_Expression*>>& var_init_mapping, 
-                                                const std::unordered_map<std::string, llvm::Function*>& function_mapping , const std::vector<llvm::Value*>& args ) {
+                                                VarMapping& var_mapping, const std::unordered_map<std::string, llvm::Function*>& function_mapping , const std::vector<llvm::Value*>& args ) {
     // cycles detected, incorrect shader setup!!!
     if (being_visited.count(su))
         return false;
@@ -396,7 +395,7 @@ bool TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, S
                 return false;
 
             const auto dep_shader_unit = sg->m_shader_units[dep_shader_unit_name];
-            if (!generate_shader_source(context, sg, dep_shader_unit, visited, being_visited, var_mapping, var_init_mapping, function_mapping, args))
+            if (!generate_shader_source(context, sg, dep_shader_unit, visited, being_visited, var_mapping, function_mapping, args))
                 return false;
         }
     }
@@ -445,18 +444,7 @@ bool TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, S
                     llvm_type = llvm_type->getPointerTo();
 
                     bool has_init_value = false;
-                    /*
-                    // default value defined in shader is not valued for now.
-                    auto it = var_init_mapping.find(shader_unit_name);
-                    if (it != var_init_mapping.end()) {
-                        auto it1 = it->second.find(name);
-                        if (it1 != it->second.end() && it1->second) {
-                            auto init_value = it1->second->codegen(context);
-                            callee_args.push_back(init_value);
-                            has_init_value = true;
-                        }
-                    }
-                    */
+
                     const auto& mapping = sg->m_shader_input_defaults;
                     const auto it = mapping.find(shader_unit_name);
                     if (it != mapping.end()) {

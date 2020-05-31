@@ -61,8 +61,8 @@ uint64_t ShaderInstance::get_function() const {
     return m_shader_instance_data->m_function_pointer;
 }
 
-ShaderGroupTemplate::ShaderGroupTemplate(const std::string& name, const TslCompiler& compiler)
-    :ShaderUnitTemplate(name), m_compiler(compiler){
+ShaderGroupTemplate::ShaderGroupTemplate(const std::string& name)
+    :ShaderUnitTemplate(name){
 }
 
 void ShaderGroupTemplate::connect_shader_units(const std::string& ssu, const std::string& sspn, const std::string& tsu, const std::string& tspn) {
@@ -88,6 +88,7 @@ void ShaderGroupTemplate::init_shader_input(const std::string& su, const std::st
 void ShaderGroupTemplate::parse_dependencies(ShaderUnitTemplate_Pvt* sut) const {
     for (const auto& shader_unit : m_shader_units)
         shader_unit.second->parse_dependencies(sut);
+    sut->m_dependencies.insert(m_shader_unit_data->m_module.get());
 }
 
 bool ShaderGroupTemplate::add_shader_unit(ShaderUnitTemplate* shader_unit, const bool is_root) {
@@ -162,7 +163,7 @@ ShaderGroupTemplate* ShadingContext::make_shader_group_template(const std::strin
     if (m_shading_system.m_shader_units.count(name))
         return nullptr;
 
-    auto shader_group = new ShaderGroupTemplate(name, *m_compiler);
+    auto shader_group = new ShaderGroupTemplate(name);
     m_shading_system.m_shader_units[name] = std::unique_ptr<ShaderUnitTemplate>(shader_group);
     return shader_group;
 }

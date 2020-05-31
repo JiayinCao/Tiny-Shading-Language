@@ -166,8 +166,7 @@ public:
     //! @brief  Constructor.
     //!
     //! @param  name            The name fo the shader group.
-    //! @param  compiler        A compiler belonging to the owning shading context.
-    ShaderGroupTemplate(const std::string& name, const TslCompiler& compiler);
+    ShaderGroupTemplate(const std::string& name);
 
     //! @brief  Add a shader unit in the group.
     //!
@@ -202,9 +201,6 @@ public:
     void parse_dependencies(ShaderUnitTemplate_Pvt* sut) const override;
 
 private:
-    /**< TSL compiler of the owning context. */
-    const TslCompiler&   m_compiler;
-
     /**< Shader units belong to this group. */
     std::unordered_map<std::string, ShaderUnitTemplate*> m_shader_units;
 

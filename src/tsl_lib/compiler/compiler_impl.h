@@ -157,8 +157,7 @@ private:
 
     //! @brief  Generate shader group source code
     bool    generate_shader_source( LLVM_Compile_Context& context, ShaderGroupTemplate* sg, ShaderUnitTemplate* su, std::unordered_set<const ShaderUnitTemplate*>& visited, 
-                                    std::unordered_set<const ShaderUnitTemplate*>& being_visited, VarMapping& var_mapping, 
-                                    std::unordered_map<std::string, std::unordered_map<std::string, const AstNode_Expression*>>& var_init_mapping, 
+                                    std::unordered_set<const ShaderUnitTemplate*>& being_visited, VarMapping& var_mapping,  
                                     const std::unordered_map<std::string, llvm::Function*>& function_mapping, const std::vector<llvm::Value*>& args);
 };
 TSL_NAMESPACE_END

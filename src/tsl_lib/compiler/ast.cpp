@@ -94,20 +94,6 @@ void LLVM_Compile_Context::pop_var_symbol_layer() {
     m_var_symbols.pop_back();
 }
 
-void AstNode_FunctionPrototype::parse_arg_init(std::unordered_map<std::string, const AstNode_Expression*>& var_init_mapping) {
-    AstNode_VariableDecl* variable = m_variables;
-    while (variable) {
-        // only input arguments are allowed with initialization expression
-        if ( !(variable->get_config() & VariableConfig::OUTPUT) ) {
-            const auto& name = variable->get_var_name();
-            const auto  init = variable->get_init();
-            var_init_mapping[name] = init;
-        }
-
-        variable = castType<AstNode_VariableDecl>(variable->get_sibling());
-    }
-}
-
 llvm::Function* AstNode_FunctionPrototype::declare_shader(LLVM_Compile_Context& context) {
     int arg_cnt = 0;
     AstNode_VariableDecl* variable = m_variables;

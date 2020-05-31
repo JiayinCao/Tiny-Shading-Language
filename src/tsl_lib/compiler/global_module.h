@@ -60,7 +60,7 @@ public:
     // get declaration
     llvm::Function* declare_closure_function(const std::string& name, LLVM_Compile_Context& context);
 	// declare global function
-	void			declare_global_function(LLVM_Compile_Context& context);
+	void			declare_global_module(LLVM_Compile_Context& context);
 
 private:
     /**< a container holding all closures ids. */

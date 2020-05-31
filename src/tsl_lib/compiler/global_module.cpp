@@ -198,7 +198,7 @@ llvm::Function* GlobalModule::declare_closure_function(const std::string& name, 
     return Function::Create(FunctionType::get(ret_type, arg_types, false), Function::ExternalLinkage, function_name, *context.module);
 }
 
-void GlobalModule::declare_global_function(LLVM_Compile_Context& context){
+void GlobalModule::declare_global_module(LLVM_Compile_Context& context){
 	// this malloc needs to be replaced once the memory allocator is available
 	Function* malloc_function = Function::Create(FunctionType::get(get_int_32_ptr_ty(context), { get_int_32_ty(context) }, false), Function::ExternalLinkage, "malloc", context.module);
 	context.m_func_symbols["malloc"] = std::make_pair(malloc_function, nullptr);
