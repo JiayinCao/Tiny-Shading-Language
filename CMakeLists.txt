@@ -17,6 +17,9 @@
 
 cmake_minimum_required (VERSION 3.7)
 
+# somehow using the default policy of 3.7 will crash the unit tests, I have no time looking into it for now
+cmake_policy(VERSION 3.1)
+
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
