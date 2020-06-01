@@ -15,7 +15,7 @@
 #   this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
 #
 
-cmake_minimum_required (VERSION 3.1)
+cmake_minimum_required (VERSION 3.7)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -64,7 +64,9 @@ list (APPEND version_head "${TSL_SOURCE_DIR}/src/include/${versionfile}")
 set(LLVM_DIR ${TSL_SOURCE_DIR}/dependencies/llvm/lib/cmake/llvm)
 
 # make sure this new policy is enabled to surpress an unnecessary warning
-cmake_policy(SET CMP0074 NEW)
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.12.0")
+    cmake_policy(SET CMP0074 NEW)
+endif()
 
 # find llvm librar${TSL_SOURCE_DIR}/thirdparty/gtesty
 find_package(LLVM REQUIRED CONFIG)
