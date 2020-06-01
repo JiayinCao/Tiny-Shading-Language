@@ -49,6 +49,9 @@ set_target_properties( TSL_Test PROPERTIES DEBUG_OUTPUT_NAME "tsl_test_d" )
 if (TSL_PLATFORM_MAC OR TSL_PLATFORM_LINUX)
    set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -pthread")
    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+
+   # link to tsl library
+   target_link_libraries( TSL_Test TSL_Lib )
 endif()
 
 if (TSL_PLATFORM_WIN)
@@ -57,6 +60,7 @@ if (TSL_PLATFORM_WIN)
     # enable multi-thread compiling
     SET(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} /MP${N}")
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP${N}")
-endif()
 
-target_link_libraries(TSL_Test TSL_Lib)
+    # ignore "warning LNK4199: /DELAYLOAD:shell32.dll ignored; no imports found from shell32.dll"
+    target_link_libraries( TSL_Test PRIVATE "-ignore:4199" TSL_Lib )
+endif()
