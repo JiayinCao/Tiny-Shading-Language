@@ -33,15 +33,15 @@ enum ShaderArgumentTypeEnum : unsigned int {
     TSL_TYPE_CLOSURE
 };
 
-struct TSL_INTERFACE float3 {
+struct float3 {
     float x, y, z;
 };
 
-struct TSL_INTERFACE float4 {
+struct float4 {
     float x, y, z, w;
 };
 
-union TSL_INTERFACE ArgDefaultValue {
+union ArgDefaultValue {
     float   m_float;
     int     m_int;
     double  m_double;
@@ -50,13 +50,13 @@ union TSL_INTERFACE ArgDefaultValue {
     float4  m_float4;
 };
 
-struct TSL_INTERFACE ArgDescriptor {
+struct ArgDescriptor {
     std::string             m_name;
     ShaderArgumentTypeEnum  m_type = ShaderArgumentTypeEnum::TSL_TYPE_INVALID;
     bool                    m_is_output = false;
 };
 
-struct TSL_INTERFACE ShaderUnitInputDefaultValue {
+struct ShaderUnitInputDefaultValue {
     ShaderArgumentTypeEnum  m_type = ShaderArgumentTypeEnum::TSL_TYPE_INVALID;
     ArgDefaultValue         m_val;
 };

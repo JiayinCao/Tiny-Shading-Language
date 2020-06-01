@@ -17,10 +17,6 @@
 
 #pragma once
 
-#include <unordered_set>
-#include <unordered_map>
-#include <memory>
-#include <mutex>
 #include "tslversion.h"
 #include "closure.h"
 #include "export.h"
@@ -28,8 +24,7 @@
 TSL_NAMESPACE_BEGIN
 
 class ShadingContext;
-class ShaderUnitTemplate;
-class GlobalModule;
+struct ShadingSystem_Impl;
 
 //! @brief  Shading system is the root interface exposed through TSL system.
 /*
@@ -61,18 +56,8 @@ public:
     ClosureID register_closure_type(const std::string& name, ClosureVarList& mapping, int closure_size);
 
 private:
-    std::unordered_set<std::unique_ptr<ShadingContext>>    m_contexts;         /**< Data structure holding all contexts. */
-    std::mutex                                             m_context_mutex;    /**< Making sure context related operation is thread-safe. */
-
-    /**< a container holding all shader unit. */
-    std::unordered_map<std::string, std::unique_ptr<ShaderUnitTemplate>> m_shader_units;
-    /**< a mutex to make sure shader_group access is thread-safe. */
-    std::mutex m_shader_unit_mutex;
-
-    /**< Closure register */
-    GlobalModule* m_global_module = nullptr;
-
-    friend class ShadingContext;
+    /**< Internal data structure of shading system. */
+    ShadingSystem_Impl* m_shading_system_impl = nullptr;
 };
 
 TSL_NAMESPACE_END

@@ -34,6 +34,10 @@ class TslCompiler;
 class ShaderUnitTemplate;
 struct ShaderUnitTemplate_Pvt;
 struct ShaderInstance_Pvt;
+struct ShadingSystem_Impl;
+struct ShaderUnitTemplate_Impl;
+struct ShaderGroupTemplate_Impl;
+struct ShadingContext_Impl;
 
 //! @brief  ShaderInstance is the very basic unit of shader execution.
 /**
@@ -83,6 +87,12 @@ private:
     friend class ShaderUnitTemplate;
 };
 
+//! @brief  ShaderUnitTemplate defines the shader of a single shader unit.
+/**
+ * A shader unit template defines the basic behavior of a shader unit.
+ * Multiple shader units can be groupped into a shader group template.
+ * A shader unit template can't be executed, it needs to instance a shader instance for shader execution.
+ */
 class TSL_INTERFACE ShaderUnitTemplate {
 public:
     //! @brief  Constructor.
@@ -93,26 +103,12 @@ public:
     //! @brief  Destructor.
     virtual ~ShaderUnitTemplate();
 
-    //! @brief  Get name of the shader unit.
-    const std::string& get_name() const {
-        return m_name;
-    }
-
-    //! @brief  Whether to allow optimization of LLVM generated code.
-    //!
-    //! @return     Whether optimization pass is on.
-    const bool      allow_optimization() const {
-        return m_allow_optimization;
-    }
-
-    //! @brief  Whether to allow verification of LLVM generated code.
-    //!
-    //! @return     Whether verification pass is on.
-    const bool      allow_verification() const {
-        return m_allow_verification;
-    }
+    //! @brief          Get name of the shader unit.
+    const std::string& get_name() const;
 
     //! @brief  Make a shader instance
+    //!
+    //! @return         Make a new shader instance.
     std::unique_ptr<ShaderInstance>     make_shader_instance();
 
     //! @brief  Parse shader dependencies.
@@ -121,32 +117,11 @@ public:
     virtual void        parse_dependencies(ShaderUnitTemplate_Pvt* sut) const;
 
 protected:
-    /**< Name of the shader unit. */
-    const std::string m_name;
-
-    /**< A private data structure hiding all LLVM details. */
-    ShaderUnitTemplate_Pvt* m_shader_unit_data = nullptr;
-
-    // This will be allowed once I have most feature completed.
-    const bool  m_allow_optimization = false;
-    const bool  m_allow_verification = false;
-
-    /**< Description of exposed arguments. */
-    std::vector<ArgDescriptor>  m_exposed_args;
+    ShaderUnitTemplate_Impl* m_shader_unit_template_impl = nullptr;
 
     // make sure shader instance can access private data of shader_unit_template
     friend class ShaderInstance;
     friend class TslCompiler_Impl;
-};
-
-//! @brief  A thin wrapper to allow a shader unit added in a group more than once.
-/**
-    * In order to allow a shader unit to be added in a shader group multiple times, there needs to be a thin wrapper
-    * to differentiate different instances of shader unit.
-    */
-struct TSL_INTERFACE ShaderUnitTemplateCopy {
-    std::string         m_name;
-    ShaderUnitTemplate* m_shader_unit_template = nullptr;
 };
 
 //! @brief  Shader group is a basic unit of shader execution.
@@ -161,6 +136,9 @@ public:
     //!
     //! @param  name            The name fo the shader group.
     ShaderGroupTemplate(const std::string& name);
+
+    //! @brief  Destructor.
+    ~ShaderGroupTemplate();
 
     //! @brief  Add a shader unit in the group.
     //!
@@ -196,24 +174,8 @@ public:
     void parse_dependencies(ShaderUnitTemplate_Pvt* sut) const override;
 
 private:
-    /**< Shader units belong to this group. */
-    std::unordered_map<std::string, ShaderUnitTemplateCopy> m_shader_units;
-
-    /**< Name of the root shader unit. */
-    std::string  m_root_shader_unit_name;
-
-    /**< Shader unit connection. */
-    using ShaderUnitConnection = std::unordered_map<std::string, std::unordered_map<std::string, std::pair<std::string, std::string>>>;
-    ShaderUnitConnection m_shader_unit_connections;
-
-    /**< Wrapper parameter connection. */
-    using ShaderWrapperConnection = std::unordered_map<std::string, std::unordered_map<std::string, int>>;
-    ShaderWrapperConnection     m_input_args;
-    ShaderWrapperConnection     m_output_args;
-
-    /**< Shader default value. */
-    using ShaderUnitInputDefaultMapping = std::unordered_map<std::string, std::unordered_map<std::string, ShaderUnitInputDefaultValue>>;
-    ShaderUnitInputDefaultMapping   m_shader_input_defaults;
+    /**< Shader group template implementation. */
+    ShaderGroupTemplate_Impl* m_shader_group_template_impl = nullptr;
 
     friend class TslCompiler_Impl;
 };
@@ -264,13 +226,10 @@ private:
     //!
     //! shading_context can only be allocated through shading_system. Making the constructor private
     //! will make sure users of TSL won't create instance of this class manually.
-    ShadingContext(ShadingSystem& shading_system);
+    ShadingContext(ShadingSystem_Impl* shading_system_impl);
 
-    /**< TSL compiler. */
-    std::unique_ptr<TslCompiler> m_compiler;
-
-    /**< Shading system owning the context. */
-    ShadingSystem& m_shading_system;
+    /**< Shading context implementation. */
+    ShadingContext_Impl* m_shading_context_impl = nullptr;
 
     friend class ShadingSystem;
 };

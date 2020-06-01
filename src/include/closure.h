@@ -32,30 +32,19 @@ constexpr ClosureID INVALID_CLOSURE_ID = 0;
 constexpr ClosureID CLOSURE_ADD = -1;
 constexpr ClosureID CLOSURE_MUL = -2;
 
-struct ClosureTreeNodeAdd;
-struct ClosureTreeNodeMul;
-
 using ClosureParamPtr = void*;
 
-struct TSL_INTERFACE ClosureTreeNodeBase {
+struct ClosureTreeNodeBase {
     ClosureID           m_id = INVALID_CLOSURE_ID;
     ClosureParamPtr     m_params = nullptr;
-
-	ClosureTreeNodeAdd* as_add_node() {
-		return reinterpret_cast<ClosureTreeNodeAdd*>(this);
-	}
-
-    ClosureTreeNodeMul* as_mul_node() {
-        return reinterpret_cast<ClosureTreeNodeMul*>(this);
-    }
 };
 
-struct TSL_INTERFACE ClosureTreeNodeAdd : public ClosureTreeNodeBase {
+struct ClosureTreeNodeAdd : public ClosureTreeNodeBase {
     ClosureTreeNodeBase*	m_closure0 = nullptr;
     ClosureTreeNodeBase*	m_closure1 = nullptr;
 };
 
-struct TSL_INTERFACE ClosureTreeNodeMul : public ClosureTreeNodeBase {
+struct ClosureTreeNodeMul : public ClosureTreeNodeBase {
 	float m_weight = 1.0f;
     ClosureTreeNodeBase*	m_closure = nullptr;
 };
@@ -66,11 +55,11 @@ static_assert( sizeof(ClosureTreeNodeBase) == sizeof(ClosureID) + sizeof(Closure
 static_assert( sizeof(ClosureTreeNodeAdd) == sizeof(ClosureTreeNodeBase) + sizeof(ClosureTreeNodeBase*) * 2 , "Invalid ClosureTreeNodeAdd Node Size" );
 static_assert( sizeof(ClosureTreeNodeMul) == sizeof(ClosureTreeNodeBase) + sizeof(float) + 4 /* memory padding. */ + sizeof(ClosureTreeNodeBase*), "Invalid ClosureTreeNodeMul Node Size");
 
-struct TSL_INTERFACE ClosureTree {
+struct ClosureTree {
     ClosureTreeNodeBase*	m_root = nullptr;
 };
 
-struct TSL_INTERFACE ClosureVar {
+struct ClosureVar {
     const std::string m_name;
     const std::string m_type;
 

@@ -77,7 +77,7 @@ if (TSL_PLATFORM_MAC OR TSL_PLATFORM_LINUX)
 endif()
 
 if (TSL_PLATFORM_WIN)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244 /wd4146 /wd4267 /wd4141 /wd4624 /wd4005 /wd4996 /wd4251" )
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244 /wd4146 /wd4267 /wd4141 /wd4624 /wd4005 /wd4996" )
 
     # enable multi-thread compiling
     SET(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} /MP${N}")
