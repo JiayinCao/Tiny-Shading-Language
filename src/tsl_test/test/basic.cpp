@@ -25,7 +25,8 @@ TEST(Basic, SingleFloatOutput) {
     )";
 
     ShadingSystem shading_system;
-    auto func_ptr = compile_shader<void(*)(float*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(float*)>(shader_source, shading_system);
+    auto func_ptr = ret.first;
 
     float data = 0.0f;
     func_ptr(&data);
@@ -44,7 +45,8 @@ TEST(Basic, MathOps) {
     )";
 
     ShadingSystem shading_system;
-    auto func_ptr = compile_shader<void(*)(int, int, int*, int*, int*, int*, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int, int*, int*, int*, int*, int*)>(shader_source, shading_system);
+    auto func_ptr = ret.first;
 
     auto verify_func = [&](int a, int b) {
         int o0, o1, o2, o3, o4;
@@ -82,7 +84,8 @@ TEST(Basic, Inc_Dec) {
     )";
 
     ShadingSystem shading_system;
-    auto func_ptr = compile_shader<void(*)(int, int*, int*, int*, int*, int*, int*, int*, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*, int*, int*, int*, int*, int*, int*, int*)>(shader_source, shading_system);
+    auto func_ptr = ret.first;
 
     auto verify_func = [&](int a) {
         int o0, o1, o2, o3, o4, o5, o6, o7;
@@ -116,7 +119,8 @@ TEST(Basic, And_Or_Xor) {
     )";
 
     ShadingSystem shading_system;
-    auto func_ptr = compile_shader<void(*)(int, int, int*, int*, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int, int*, int*, int*)>(shader_source, shading_system);
+    auto func_ptr = ret.first;
 
     auto verify_func = [&](int a, int b) {
         int o0, o1, o2;
@@ -145,7 +149,8 @@ TEST(Basic, ArrayAccess) {
     )";
 
     ShadingSystem shading_system;
-    auto func_ptr = compile_shader<void(*)(int, int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int, int*)>(shader_source, shading_system);
+    auto func_ptr = ret.first;
 
     auto verify_func = [&](int a, int b) {
         int o0;
@@ -174,7 +179,8 @@ TEST(Basic, VariableLifeTime) {
     )";
 
     ShadingSystem shading_system;
-    auto func_ptr = compile_shader<void(*)(int, int*, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*, int*)>(shader_source, shading_system);
+    auto func_ptr = ret.first;
 
     auto verify_func = [&](int a, int b) {
         int o0, o1;

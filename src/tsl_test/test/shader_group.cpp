@@ -69,7 +69,7 @@ TEST(ShaderGroup, BasicShaderGroup) {
     EXPECT_EQ(true, ret);
 
     auto shader_instance = shader_group->make_shader_instance();
-    ret = shading_context->resolve_shader_instance(shader_instance);
+    ret = shading_context->resolve_shader_instance(shader_instance.get());
     EXPECT_EQ(true, ret);
 
     // get the function pointer
@@ -91,7 +91,7 @@ TEST(ShaderGroup, BasicShaderGroup) {
     EXPECT_EQ(4.0f, lambert_param->normal);
 }
 
-// This unit test tries to verify that a shader unit can exists in a shader group more than once.
+// This unit test tries to verify that a shader unit can exist in a shader group more than once.
 // It could even have different default values if needed.
 TEST(ShaderGroup, DuplicateShaderUnits) {
     // global tsl shading system
@@ -156,7 +156,7 @@ TEST(ShaderGroup, DuplicateShaderUnits) {
     EXPECT_EQ(true, ret);
 
     auto shader_instance = shader_group->make_shader_instance();
-    ret = shading_context->resolve_shader_instance(shader_instance);
+    ret = shading_context->resolve_shader_instance(shader_instance.get());
     EXPECT_EQ(true, ret);
 
     // get the function pointer
@@ -239,7 +239,7 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
     EXPECT_EQ(true, ret);
 
     auto shader_instance = shader_group->make_shader_instance();
-    ret = shading_context->resolve_shader_instance(shader_instance);
+    ret = shading_context->resolve_shader_instance(shader_instance.get());
     EXPECT_EQ(true, ret);
 
     // get the function pointer
@@ -320,7 +320,7 @@ TEST(ShaderGroup, ShaderGroupArgTypes) {
     EXPECT_EQ(true, ret);
 
     auto shader_instance = shader_group->make_shader_instance();
-    ret = shading_context->resolve_shader_instance(shader_instance);
+    ret = shading_context->resolve_shader_instance(shader_instance.get());
     EXPECT_EQ(true, ret);
 
     // get the function pointer
@@ -434,7 +434,7 @@ TEST(ShaderGroup, ShaderGroupInputDefaults) {
     EXPECT_EQ(true, ret);
 
     auto shader_instance = shader_group->make_shader_instance();
-    ret = shading_context->resolve_shader_instance(shader_instance);
+    ret = shading_context->resolve_shader_instance(shader_instance.get());
     EXPECT_EQ(true, ret);
 
     // get the function pointer
@@ -566,7 +566,6 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
         )");
     EXPECT_NE(nullptr, final_shader_unit);
 
-
     // make another shader group
     auto shader_group1 = shading_context->begin_shader_group_template("outter shader group");
     EXPECT_NE(nullptr, shader_group1);
@@ -599,7 +598,7 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
     EXPECT_EQ(true, ret);
 
     auto shader_instance = shader_group1->make_shader_instance();
-    ret = shading_context->resolve_shader_instance(shader_instance);
+    ret = shading_context->resolve_shader_instance(shader_instance.get());
     EXPECT_EQ(true, ret);
 
     // get the function pointer

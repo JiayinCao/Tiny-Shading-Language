@@ -20,10 +20,12 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <memory>
+#include <vector>
 #include <string>
 #include "tslversion.h"
 #include "closure.h"
 #include "shader_arg_types.h"
+#include "export.h"
 
 TSL_NAMESPACE_BEGIN
 
@@ -40,15 +42,20 @@ struct ShaderInstance_Pvt;
  * But shader instance can be executed by multiple threads simultaneously once constructed and 
  * resolved.
  */
-class ShaderInstance {
+class TSL_INTERFACE ShaderInstance {
 public:
+    //! @brief  Private constructor to limit the construction of shader instance through ShaderUnitTemplate.
+    //!
+    //! @param  sut     Shader unit template that is used to construct this shader instance.
+    ShaderInstance(const ShaderUnitTemplate& sut);
+
+    //! @brief  Destructor
+    ~ShaderInstance();
+
     //! @brief  Get the function pointer to execute the shader.
     //!
     //! @return     A function pointer points to code memory.
     uint64_t        get_function() const;
-
-    //! @brief  Destructor
-    ~ShaderInstance();
 
     //! @brief  Get private shader instance data.
     //!
@@ -65,11 +72,6 @@ public:
     }
 
 private:
-    //! @brief  Private constructor to limit the construction of shader instance through ShaderUnitTemplate.
-    //!
-    //! @param  sut     Shader unit template that is used to construct this shader instance.
-    ShaderInstance(const ShaderUnitTemplate& sut);
-
     /**< Shader unit template that creates this shader instance. */
     const ShaderUnitTemplate& m_shader_unit_template;
 
@@ -81,7 +83,7 @@ private:
     friend class ShaderUnitTemplate;
 };
 
-class ShaderUnitTemplate {
+class TSL_INTERFACE ShaderUnitTemplate {
 public:
     //! @brief  Constructor.
     //!
@@ -111,7 +113,7 @@ public:
     }
 
     //! @brief  Make a shader instance
-    ShaderInstance*     make_shader_instance();
+    std::unique_ptr<ShaderInstance>     make_shader_instance();
 
     //! @brief  Parse shader dependencies.
     //!
@@ -132,9 +134,6 @@ protected:
     /**< Description of exposed arguments. */
     std::vector<ArgDescriptor>  m_exposed_args;
 
-    /**< Make sure all shader instances are alive. */
-    std::vector<std::unique_ptr<ShaderInstance>> m_shader_instnaces;
-
     // make sure shader instance can access private data of shader_unit_template
     friend class ShaderInstance;
     friend class TslCompiler_Impl;
@@ -145,7 +144,7 @@ protected:
     * In order to allow a shader unit to be added in a shader group multiple times, there needs to be a thin wrapper
     * to differentiate different instances of shader unit.
     */
-struct ShaderUnitTemplateCopy {
+struct TSL_INTERFACE ShaderUnitTemplateCopy {
     std::string         m_name;
     ShaderUnitTemplate* m_shader_unit_template = nullptr;
 };
@@ -156,7 +155,7 @@ struct ShaderUnitTemplateCopy {
  * A shader group itself is also a shader unit, which is a quite useful feature to get recursive
  * node supported in certain material editors.
  */
-class ShaderGroupTemplate : public ShaderUnitTemplate{
+class TSL_INTERFACE ShaderGroupTemplate : public ShaderUnitTemplate{
 public:
     //! @brief  Constructor.
     //!
@@ -227,7 +226,7 @@ private:
  * Since shading_context is available in each thread, things like shader compilation and shader 
  * execution could be exectued in multi-threaded too.
  */
-class ShadingContext {
+class TSL_INTERFACE ShadingContext {
 public:
     //! @brief  Destructor.
     ~ShadingContext();

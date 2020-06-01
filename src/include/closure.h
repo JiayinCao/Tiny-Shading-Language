@@ -23,6 +23,7 @@
 #include <vector>
 #include <string>
 #include "tslversion.h"
+#include "export.h"
 
 TSL_NAMESPACE_BEGIN
 
@@ -36,7 +37,7 @@ struct ClosureTreeNodeMul;
 
 using ClosureParamPtr = void*;
 
-struct ClosureTreeNodeBase {
+struct TSL_INTERFACE ClosureTreeNodeBase {
     ClosureID           m_id = INVALID_CLOSURE_ID;
     ClosureParamPtr     m_params = nullptr;
 
@@ -49,12 +50,12 @@ struct ClosureTreeNodeBase {
     }
 };
 
-struct ClosureTreeNodeAdd : public ClosureTreeNodeBase {
+struct TSL_INTERFACE ClosureTreeNodeAdd : public ClosureTreeNodeBase {
     ClosureTreeNodeBase*	m_closure0 = nullptr;
     ClosureTreeNodeBase*	m_closure1 = nullptr;
 };
 
-struct ClosureTreeNodeMul : public ClosureTreeNodeBase {
+struct TSL_INTERFACE ClosureTreeNodeMul : public ClosureTreeNodeBase {
 	float m_weight = 1.0f;
     ClosureTreeNodeBase*	m_closure = nullptr;
 };
@@ -65,11 +66,11 @@ static_assert( sizeof(ClosureTreeNodeBase) == sizeof(ClosureID) + sizeof(Closure
 static_assert( sizeof(ClosureTreeNodeAdd) == sizeof(ClosureTreeNodeBase) + sizeof(ClosureTreeNodeBase*) * 2 , "Invalid ClosureTreeNodeAdd Node Size" );
 static_assert( sizeof(ClosureTreeNodeMul) == sizeof(ClosureTreeNodeBase) + sizeof(float) + 4 /* memory padding. */ + sizeof(ClosureTreeNodeBase*), "Invalid ClosureTreeNodeMul Node Size");
 
-struct ClosureTree {
+struct TSL_INTERFACE ClosureTree {
     ClosureTreeNodeBase*	m_root = nullptr;
 };
 
-struct ClosureVar {
+struct TSL_INTERFACE ClosureVar {
     const std::string m_name;
     const std::string m_type;
 

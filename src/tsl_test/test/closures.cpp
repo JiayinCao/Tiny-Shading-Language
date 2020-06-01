@@ -33,7 +33,8 @@ TEST(Closure, ClosureMake) {
     )";
 
     Tsl_Namespace::ClosureTreeNodeBase* root = nullptr;
-    auto func_ptr = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeBase**)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeBase**)>(shader_source, shading_system);
+    auto func_ptr = ret.first;
     func_ptr(&root);
 
     auto lambert_param = (ClosureTypeLambert*)root->m_params;
@@ -57,7 +58,8 @@ TEST(Closure, ClosureMakeWithDouble) {
     )";
 
     Tsl_Namespace::ClosureTreeNodeBase* root = nullptr;
-    auto func_ptr = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeBase**)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeBase**)>(shader_source, shading_system);
+    auto func_ptr = ret.first;
     func_ptr(&root);
 
     auto bxdf_double_param = (ClosureTypeBxdfWithDouble*)root->m_params;
@@ -80,7 +82,8 @@ TEST(Closure, ClosureMul) {
     )";
 
     Tsl_Namespace::ClosureTreeNodeMul* root = nullptr;
-    auto func_ptr = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeMul**)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeMul**)>(shader_source, shading_system);
+    auto func_ptr = ret.first;
     func_ptr(&root);
 
     // auto lambert_param = (ClosureTypeLambert*)root->m_params;
@@ -106,7 +109,8 @@ TEST(Closure, ClosureAdd) {
     )";
 
 	Tsl_Namespace::ClosureTreeNodeAdd* root = nullptr;
-	auto func_ptr = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeAdd**)>(shader_source, shading_system);
+	auto ret = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeAdd**)>(shader_source, shading_system);
+    auto func_ptr = ret.first;
 	func_ptr(&root);
 
 	EXPECT_NE(root, nullptr);
@@ -139,7 +143,8 @@ TEST(Closure, ClosureComplex) {
     )";
 
     Tsl_Namespace::ClosureTreeNodeMul* root = nullptr;
-    auto func_ptr = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeMul**)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeMul**)>(shader_source, shading_system);
+    auto func_ptr = ret.first;
     func_ptr(&root);
 
     EXPECT_NE(root, nullptr);
@@ -182,7 +187,8 @@ TEST(Closure, ClosureAsOtherClosureInput) {
     )";
 
     Tsl_Namespace::ClosureTreeNodeBase* root = nullptr;
-    auto func_ptr = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeBase**)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeBase**)>(shader_source, shading_system);
+    auto func_ptr = ret.first;
     func_ptr(&root);
 
     EXPECT_NE(root, nullptr);

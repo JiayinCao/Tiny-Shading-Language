@@ -60,16 +60,9 @@ message (STATUS "Create ${versionfile} from ${versionfile}.in")
 configure_file (${TSL_SOURCE_DIR}/src/include/${versionfile}.in "${TSL_SOURCE_DIR}/src/include/${versionfile}" @ONLY)
 list (APPEND version_head "${TSL_SOURCE_DIR}/src/include/${versionfile}")
 
-# loading llvm library, this is mandatory for compiling TSL
-# make sure it looks for a local llvm library
+# loading llvm library, this is mandatory for compiling tsl, make sure it looks for a local llvm library
+set(LLVM_DIR ${TSL_SOURCE_DIR}/dependencies/llvm/lib/cmake/llvm)
 
-if(LLVM_DEBUG)
-	set(LLVM_DIR ${TSL_SOURCE_DIR}/dependencies/llvm/lib/cmake/llvm)
-else()
-	set(LLVM_DIR ${TSL_SOURCE_DIR}/dependencies/llvm/lib/cmake/llvm)
-endif(LLVM_DEBUG)
-
-message(STATUS ${LLVM_DIR})
 # find llvm librar${TSL_SOURCE_DIR}/thirdparty/gtesty
 find_package(LLVM REQUIRED CONFIG)
 # output some information to make sure llvm is correctly located

@@ -28,7 +28,8 @@ TEST(Logic, Basic_Test) {
     )";
 
     ShadingSystem shading_system;
-    auto func_ptr = compile_shader<void(*)(int,float*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int,float*)>(shader_source, shading_system);
+    auto func_ptr = ret.first;
 
     float test_value = 1.0f;
     func_ptr(2, &test_value);
@@ -47,7 +48,8 @@ TEST(Logic, Ternary_Operation) {
     )";
 
     ShadingSystem shading_system;
-    auto func_ptr = compile_shader<void(*)(int, int, int, int*, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int, int, int*, int*)>(shader_source, shading_system);
+    auto func_ptr = ret.first;
 
     int a = 12, b = 32, c = 0, o0 = 0, o1 = 0;
     func_ptr(a, b, c, &o0, &o1);
@@ -70,7 +72,8 @@ TEST(Logic, Logic_And) {
     )";
 
     ShadingSystem shading_system;
-    auto func_ptr = compile_shader<void(*)(int, int, int, int*, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int, int, int*, int*)>(shader_source, shading_system);
+    auto func_ptr = ret.first;
 
     int a = 12, b = 32, c = 0, o0 = 0, o1 = 0;
     func_ptr(a, b, c, &o0, &o1);
@@ -93,7 +96,8 @@ TEST(Logic, While_Loop) {
     )";
 
     ShadingSystem shading_system;
-    auto func_ptr = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto func_ptr = ret.first;
 
     int o1 = 0;
     func_ptr(100, &o1);
@@ -119,7 +123,8 @@ TEST(Logic, Do_While_Loop) {
     )";
 
     ShadingSystem shading_system;
-    auto func_ptr = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto func_ptr = ret.first;
 
     int o1 = 0;
     func_ptr(100, &o1);
@@ -144,7 +149,8 @@ TEST(Logic, For_Loop) {
     )";
 
     ShadingSystem shading_system;
-    auto func_ptr = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto func_ptr = ret.first;
 
     int o1 = 0;
     func_ptr(100, &o1);
@@ -176,7 +182,8 @@ TEST(Logic, While_Break_Continue) {
     )";
 
     ShadingSystem shading_system;
-    auto func_ptr = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto func_ptr = ret.first;
 
     int o1 = 0;
     func_ptr(100, &o1);
@@ -208,7 +215,8 @@ TEST(Logic, DoWhile_Break_Continue) {
     )";
 
     ShadingSystem shading_system;
-    auto func_ptr = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto func_ptr = ret.first;
 
     int o1 = 0;
     func_ptr(100, &o1);
@@ -237,7 +245,8 @@ TEST(Logic, For_Break_Continue) {
     )";
 
     ShadingSystem shading_system;
-    auto func_ptr = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto func_ptr = ret.first;
 
     int o1 = 0;
     func_ptr(100, &o1);

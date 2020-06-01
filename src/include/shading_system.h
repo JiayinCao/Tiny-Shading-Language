@@ -23,6 +23,7 @@
 #include <mutex>
 #include "tslversion.h"
 #include "closure.h"
+#include "export.h"
 
 TSL_NAMESPACE_BEGIN
 
@@ -37,7 +38,7 @@ class GlobalModule;
  * It owns all memory allocated of the system, it will also deallocate all memory allocated so there is no need
  * manually maintain memory allocated through this interface.
  */
-class ShadingSystem {
+class TSL_INTERFACE ShadingSystem {
 public:
     //! @brief  Constructor.
     ShadingSystem();

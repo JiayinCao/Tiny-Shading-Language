@@ -18,6 +18,7 @@
 #pragma once
 
 #include "tslversion.h"
+#include "export.h"
 
 TSL_NAMESPACE_BEGIN
 
@@ -32,15 +33,15 @@ enum ShaderArgumentTypeEnum : unsigned int {
     TSL_TYPE_CLOSURE
 };
 
-struct float3 {
+struct TSL_INTERFACE float3 {
     float x, y, z;
 };
 
-struct float4 {
+struct TSL_INTERFACE float4 {
     float x, y, z, w;
 };
 
-union ArgDefaultValue {
+union TSL_INTERFACE ArgDefaultValue {
     float   m_float;
     int     m_int;
     double  m_double;
@@ -49,13 +50,13 @@ union ArgDefaultValue {
     float4  m_float4;
 };
 
-struct ArgDescriptor {
+struct TSL_INTERFACE ArgDescriptor {
     std::string             m_name;
     ShaderArgumentTypeEnum  m_type = ShaderArgumentTypeEnum::TSL_TYPE_INVALID;
     bool                    m_is_output = false;
 };
 
-struct ShaderUnitInputDefaultValue {
+struct TSL_INTERFACE ShaderUnitInputDefaultValue {
     ShaderArgumentTypeEnum  m_type = ShaderArgumentTypeEnum::TSL_TYPE_INVALID;
     ArgDefaultValue         m_val;
 };

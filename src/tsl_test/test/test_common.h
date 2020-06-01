@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <memory>
 #include "gtest/gtest.h"
 #include "shading_system.h"
 #include "shading_context.h"
@@ -55,19 +56,19 @@ inline void validate_shader(const char* shader_source, bool valid = true, TslCom
 }
 
 template<class T>
-inline T compile_shader(const char* shader_source, ShadingSystem& shading_system) {
+inline std::pair<T, std::unique_ptr<ShaderInstance>> compile_shader(const char* shader_source, ShadingSystem& shading_system) {
     auto shading_context = shading_system.make_shading_context();
 
     const auto shader_unit_template = shading_context->compile_shader_unit_template("test", shader_source);
 
     if (!shader_unit_template)
-        return nullptr;
+        return std::make_pair(nullptr, nullptr);
     
     auto shader_instance = shader_unit_template->make_shader_instance();
 
     // resolve the shader before using it.
-    if(!shading_context->resolve_shader_instance(shader_instance))
-        return nullptr;
+    if(!shading_context->resolve_shader_instance(shader_instance.get()))
+        return std::make_pair(nullptr, nullptr);
 
-    return (T)shader_instance->get_function();
+    return std::make_pair((T)shader_instance->get_function(), std::move(shader_instance));
 }

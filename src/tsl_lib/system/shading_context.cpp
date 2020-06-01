@@ -36,11 +36,8 @@ ShaderUnitTemplate::~ShaderUnitTemplate(){
     delete m_shader_unit_data;
 }
 
-ShaderInstance* ShaderUnitTemplate::make_shader_instance() {
-    // this is not the optimal way of instancing a shader, but it works, I'll leave it for now.
-    ShaderInstance* instance = new ShaderInstance(*this);
-    m_shader_instnaces.push_back(std::move(std::unique_ptr<ShaderInstance>(instance)));
-    return m_shader_instnaces.back().get();
+std::unique_ptr<ShaderInstance> ShaderUnitTemplate::make_shader_instance() {
+    return std::make_unique<ShaderInstance>(*this);
 }
 
 ShaderInstance::ShaderInstance(const ShaderUnitTemplate& sut) : m_shader_unit_template(sut) {
@@ -160,7 +157,7 @@ ShaderGroupTemplate* ShadingContext::begin_shader_group_template(const std::stri
         return nullptr;
 
     auto shader_group = new ShaderGroupTemplate(name);
-    m_shading_system.m_shader_units[name] = std::unique_ptr<ShaderUnitTemplate>(shader_group);
+    m_shading_system.m_shader_units[name] = std::unique_ptr<ShaderGroupTemplate>(shader_group);
     return shader_group;
 }
 
