@@ -63,6 +63,9 @@ list (APPEND version_head "${TSL_SOURCE_DIR}/src/include/${versionfile}")
 # loading llvm library, this is mandatory for compiling tsl, make sure it looks for a local llvm library
 set(LLVM_DIR ${TSL_SOURCE_DIR}/dependencies/llvm/lib/cmake/llvm)
 
+# make sure this new policy is enabled to surpress an unnecessary warning
+cmake_policy(SET CMP0074 NEW)
+
 # find llvm librar${TSL_SOURCE_DIR}/thirdparty/gtesty
 find_package(LLVM REQUIRED CONFIG)
 # output some information to make sure llvm is correctly located
