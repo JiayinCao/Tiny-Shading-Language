@@ -91,3 +91,9 @@ llvm_map_components_to_libnames(llvm_libs Core ExecutionEngine Interpreter MC MC
 
 # link llvm libaries
 target_link_libraries(TSL_Lib ${llvm_libs})
+
+# By default, the libraries (LLVM) used in TSL_Lib will also be exposed to whichever program links to TSL library.
+# This is totally not necessary. It is desirable to hide LLVM from programs using TSL so that it will be way easier
+# to compile renderers using TSL since there is no need to setup LLVM anymore.
+# This line is to prevent llvm libs to be linked in apps using this library.
+set_property(TARGET TSL_Lib PROPERTY INTERFACE_LINK_LIBRARIES ${TSL_Lib})
