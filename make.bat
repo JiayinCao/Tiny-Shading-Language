@@ -107,7 +107,11 @@ if "%FULL%" == "1" (
 
 if "%INSTALL%" == "1" (
 	echo [33mBuild and install TSL[0m
-	make release
+	powershell New-Item -Force -ItemType directory -Path _out
+	cd _out
+	cmake -DBUILD_TSL_LIB_ONLY=ON -A x64 ..
+	msbuild /p:Configuration=Release TSL.sln
+	cd ..
 	cmake -DCMAKE_INSTALL_PREFIX=./tsl/ -P ./_out/cmake_install.cmake
 )
 

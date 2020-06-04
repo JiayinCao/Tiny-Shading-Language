@@ -91,5 +91,5 @@ update_dep:
 
 install:
 	echo ${YELLOW}Build and install TSL${NOCOLOR}
-	make release
+	rm -rf proj_release;mkdir proj_release;cd proj_release;cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TSL_LIB_ONLY=ON ..;make -j 4;cd ..;
 	cmake -DCMAKE_INSTALL_PREFIX=./tsl/ -P ./proj_release/cmake_install.cmake
