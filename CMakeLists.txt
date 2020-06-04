@@ -104,11 +104,11 @@ macro(source_group_by_dir source_files)
     endforeach(sgbd_file)
 endmacro(source_group_by_dir)
 
-add_subdirectory( src/llvm_test )
+add_subdirectory( src/tsl_lib )
 
 # only generate the two projects if this macro is not defined
 if (NOT ${BUILD_TSL_LIB_ONLY})
-	add_subdirectory( src/tsl_lib )
+	add_subdirectory( src/llvm_test )
 	add_subdirectory( src/tsl_test )
 endif()
 
