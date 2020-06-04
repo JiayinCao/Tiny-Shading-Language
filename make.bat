@@ -105,4 +105,10 @@ if "%FULL%" == "1" (
 	make test 
 )
 
+if "%INSTALL%" == "1" (
+	echo [33mBuild and install TSL[0m
+	make release
+	cmake -DCMAKE_INSTALL_PREFIX=./tsl/ -P ./_out/cmake_install.cmake
+)
+
 :EOF

@@ -88,3 +88,8 @@ test:
 update_dep:
 	echo ${YELLOW}Downloading dependencies ${NOCOLOR}
 	$(UPDATE_DEP_COMMAND)
+
+install:
+	echo ${YELLOW}Build and install TSL${NOCOLOR}
+	make release
+	cmake -DCMAKE_INSTALL_PREFIX=./tsl/ -P ./_out/cmake_install.cmake

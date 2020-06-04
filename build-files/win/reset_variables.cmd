@@ -26,3 +26,4 @@ set UPDATE=
 set GENERATE_SRC=
 set UNIT_TEST=
 set FULL=
+set INSTALL=

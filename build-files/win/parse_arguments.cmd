@@ -47,6 +47,9 @@ if NOT "%1" == "" (
     )else if "%1" == "full" (
         set FULL=1
         goto EOF
+	)else if "%1" == "install" (
+		set INSTALL=1
+		goto EOF
     )else (
         echo Unrecognized Command
         goto EOF

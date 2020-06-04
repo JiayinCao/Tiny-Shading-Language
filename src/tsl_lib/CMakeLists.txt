@@ -67,6 +67,7 @@ source_group( "generated src" FILES ${generated_src} )
 # Setup correct output name for different configurations
 set_target_properties( TSL_Lib PROPERTIES RELEASE_OUTPUT_NAME "tsl_r" )
 set_target_properties( TSL_Lib PROPERTIES DEBUG_OUTPUT_NAME "tsl_d" )
+set_target_properties( TSL_Lib PROPERTIES PUBLIC_HEADER "${tsl_include}" )
 
 # make sure this macro is defined to correctly export interface
 add_definitions( -DBUILDING_TSL )
@@ -97,3 +98,12 @@ target_link_libraries(TSL_Lib ${llvm_libs})
 # to compile renderers using TSL since there is no need to setup LLVM anymore.
 # This line is to prevent llvm libs to be linked in apps using this library.
 set_property(TARGET TSL_Lib PROPERTY INTERFACE_LINK_LIBRARIES ${TSL_Lib})
+
+# This allows install command
+install(TARGETS TSL_Lib
+		LIBRARY
+          DESTINATION lib
+          COMPONENT TSL_Lib
+        PUBLIC_HEADER
+          DESTINATION include
+          COMPONENT TSL_Lib)
