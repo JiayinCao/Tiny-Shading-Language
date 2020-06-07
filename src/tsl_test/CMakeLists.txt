@@ -64,3 +64,7 @@ if (TSL_PLATFORM_WIN)
     # ignore "warning LNK4199: /DELAYLOAD:shell32.dll ignored; no imports found from shell32.dll"
     target_link_libraries( TSL_Test PRIVATE "-ignore:4199" TSL_Lib )
 endif()
+
+
+# This allows install command
+install(TARGETS TSL_Test)

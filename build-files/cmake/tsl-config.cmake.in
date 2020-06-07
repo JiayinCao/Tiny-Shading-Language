@@ -32,6 +32,6 @@ set( TSL_LIBS           @TSL_LIB_NAME@ )
 
 # helper function to copy dll to destination folder, this is needed on Windows to copy tsl dll
 function( tsl_runtime_copy dest_dir )
-    file(GLOB tsl_runtime "${TSL_INSTALL_PREFIX}/bin/*")
+    file(GLOB tsl_runtime "${TSL_INSTALL_PREFIX}/bin/tsl_r.*")
     file(COPY ${tsl_runtime} DESTINATION ${dest_dir})
 endfunction()

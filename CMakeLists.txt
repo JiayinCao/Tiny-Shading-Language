@@ -32,7 +32,7 @@ SET( LLVM_DEBUG  "NO"   CACHE BOOL "Compile with debug version llvm." )
 # set(CMAKE_SUPPRESS_REGENERATION true)
 
 # disallow generation of the unit test projects
-OPTION(BUILD_TSL_LIB_ONLY "Only generate TSL library" OFF)
+OPTION(BUILD_TSL_INSTALL "Only generate TSL library" OFF)
 
 # define platform
 if (WIN32)
@@ -105,11 +105,11 @@ macro(source_group_by_dir source_files)
 endmacro(source_group_by_dir)
 
 add_subdirectory( src/tsl_lib )
+add_subdirectory( src/tsl_test )
 
 # only generate the two projects if this macro is not defined
-if (NOT ${BUILD_TSL_LIB_ONLY})
+if (NOT ${BUILD_TSL_INSTALL})
 	add_subdirectory( src/llvm_test )
-	add_subdirectory( src/tsl_test )
 endif()
 
 # hide the llvm generated project
