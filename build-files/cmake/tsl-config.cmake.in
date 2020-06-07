@@ -18,6 +18,12 @@
 # get the current directory
 get_filename_component(TSL_INSTALL_PREFIX "${CMAKE_CURRENT_LIST_FILE}" PATH)
 
+# tsl version
+set( TSL_LIBRARY_VERSION_MAJOR @TSL_LIBRARY_VERSION_MAJOR@ )
+set( TSL_LIBRARY_VERSION_MINOR @TSL_LIBRARY_VERSION_MINOR@ )
+set( TSL_LIBRARY_VERSION_PATCH @TSL_LIBRARY_VERSION_PATCH@ )
+set( TSL_VERSION "@TSL_LIBRARY_VERSION_MAJOR@.@TSL_LIBRARY_VERSION_MINOR@.@TSL_LIBRARY_VERSION_PATCH@" )
+
 # useful macros for tsl library
 set( TSL_INCLUDE_DIR    ${TSL_INSTALL_PREFIX}/include )
 set( TSL_LIBRARY_DIR    ${TSL_INSTALL_PREFIX}/lib )
@@ -25,7 +31,7 @@ set( TSL_RUNTIME_DIR    ${TSL_INSTALL_PREFIX}/bin )
 set( TSL_LIBS           @TSL_LIB_NAME@ )
 
 # helper function to copy dll to destination folder, this is needed on Windows to copy tsl dll
-function( runtime_copy dest_dir )
-    file(GLOB tsl_runtime "${TSL_SOURCE_DIR}/bin/*")
+function( tsl_runtime_copy dest_dir )
+    file(GLOB tsl_runtime "${TSL_INSTALL_PREFIX}/bin/*")
     file(COPY ${tsl_runtime} DESTINATION ${dest_dir})
 endfunction()
