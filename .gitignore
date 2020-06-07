@@ -7,3 +7,4 @@ generated_src/
 *.DS_Store
 src/include/tslversion.h
 tsl/
+build-files/cmake/tsl-config.cmake

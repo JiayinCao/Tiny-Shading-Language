@@ -107,3 +107,11 @@ install(TARGETS TSL_Lib
         PUBLIC_HEADER
           DESTINATION include
           COMPONENT TSL_Lib)
+
+# generate the tsl-config file
+set( TSL_LIB_NAME tsl_r )
+configure_file(${TSL_SOURCE_DIR}/build-files/cmake/tsl-config.cmake.in "${TSL_SOURCE_DIR}/build-files/cmake/tsl-config.cmake" @ONLY)
+
+# this is to topy the tsl-config.cmake file during installation
+install(FILES "${TSL_SOURCE_DIR}/build-files/cmake/tsl-config.cmake"
+        DESTINATION .)
