@@ -112,6 +112,8 @@ if "%INSTALL%" == "1" (
 	cmake -DBUILD_TSL_LIB_ONLY=ON -A x64 ..
 	msbuild /p:Configuration=Release TSL.sln
 	cd ..
+    if exist ./tsl rm -r ./tsl
+    mkdir tsl
 	cmake -DCMAKE_INSTALL_PREFIX=./tsl/ -P ./_out/cmake_install.cmake
 )
 

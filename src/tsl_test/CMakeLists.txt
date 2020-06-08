@@ -39,6 +39,14 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY            "${TSL_SOURCE_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE    "${TSL_SOURCE_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG      "${TSL_SOURCE_DIR}/bin")
 
+# CMake will strip the full rpath that is generated in building process during installation.
+# In order to link the libraries succesfully, it is necessary to specify the relatively path where the share lib is in.
+if(TSL_PLATFORM_LINUX)
+    SET(CMAKE_INSTALL_RPATH "$ORIGIN/../lib:$ORIGIN/")
+elseif(TSL_PLATFORM_MAC)
+    SET(CMAKE_INSTALL_RPATH "@loader_path/../lib;@loader_path")
+endif()
+
 # unit test project to make sure TSL is functional properly
 add_executable(TSL_Test ${all_files})
 
@@ -65,6 +73,6 @@ if (TSL_PLATFORM_WIN)
     target_link_libraries( TSL_Test PRIVATE "-ignore:4199" TSL_Lib )
 endif()
 
-
 # This allows install command
-install(TARGETS TSL_Test)
+install(TARGETS TSL_Test
+        RUNTIME DESTINATION bin)
