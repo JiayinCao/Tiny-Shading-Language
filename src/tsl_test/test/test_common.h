@@ -21,8 +21,13 @@
 #include "gtest/gtest.h"
 #include "shading_system.h"
 #include "shading_context.h"
+#include "global.h"
 
 USE_TSL_NAMESPACE
+
+DECLARE_TSLGLOBAL_BEGIN()
+DECLARE_TSLGLOBAL_VAR(Tsl_Namespace::MemoryAllocator*, m_allocator);
+DECLARE_TSLGLOBAL_END()
 
 DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeLambert)
 DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, int, base_color)
@@ -58,6 +63,9 @@ inline void validate_shader(const char* shader_source, bool valid = true, TslCom
 template<class T>
 inline std::pair<T, std::unique_ptr<ShaderInstance>> compile_shader(const char* shader_source, ShadingSystem& shading_system) {
     auto shading_context = shading_system.make_shading_context();
+
+    // register the tsl global data structure
+    TslGlobal::RegisterGlobal(shading_system);
 
     const auto shader_unit_template = shading_context->compile_shader_unit_template("test", shader_source);
 

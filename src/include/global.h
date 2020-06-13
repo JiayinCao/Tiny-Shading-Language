@@ -17,50 +17,28 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
 #include "tslversion.h"
-#include "export.h"
 
 TSL_NAMESPACE_BEGIN
 
-enum ShaderArgumentTypeEnum : unsigned int {
-    TSL_TYPE_INVALID = 0,
-    TSL_TYPE_INT,
-    TSL_TYPE_FLOAT,
-    TSL_TYPE_DOUBLE,
-    TSL_TYPE_BOOL,
-    TSL_TYPE_FLOAT3,
-    TSL_TYPE_FLOAT4,
-    TSL_TYPE_CLOSURE
+struct GlobalVar {
+    std::string m_name;
+    std::string m_type;
+
+    GlobalVar(const std::string& name, const std::string& type) :
+        m_name(name), m_type(type) {}
 };
 
-struct float3 {
-    float x, y, z;
-};
+typedef std::vector<GlobalVar> GlobalVarList;
 
-struct float4 {
-    float x, y, z, w;
-};
+#define DECLARE_TSLGLOBAL_BEGIN()           struct TslGlobal {
+#define DECLARE_TSLGLOBAL_VAR(VT,V)         VT V;
+#define DECLARE_TSLGLOBAL_END()             static GlobalVarList m_offsets; static void RegisterGlobal( ShadingSystem& ); };
 
-union ArgDefaultValue {
-    float   m_float;
-    int     m_int;
-    double  m_double;
-    bool    m_bool;
-    float3  m_float3;
-    float4  m_float4;
-};
-
-struct ArgDescriptor {
-    std::string             m_name;
-    ShaderArgumentTypeEnum  m_type = ShaderArgumentTypeEnum::TSL_TYPE_INVALID;
-    bool                    m_is_output = false;
-};
-
-struct ShaderUnitInputDefaultValue {
-    ShaderArgumentTypeEnum  m_type = ShaderArgumentTypeEnum::TSL_TYPE_INVALID;
-    ArgDefaultValue         m_val;
-};
-
-using generic_ptr = int*;
+#define IMPLEMENT_TSLGLOBAL_BEGIN()         GlobalVarList TslGlobal::m_offsets({
+#define IMPLEMENT_TSLGLOBAL_VAR(VT,V)       { GlobalVar( #V, #VT ) },
+#define IMPLEMENT_TSLGLOBAL_END()           }); void TslGlobal::RegisterGlobal( ShadingSystem& ss ) { ss.register_tsl_global( m_offsets ); }
 
 TSL_NAMESPACE_END

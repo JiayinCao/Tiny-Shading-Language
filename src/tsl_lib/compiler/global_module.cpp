@@ -98,6 +98,34 @@ llvm::Module* GlobalModule::get_closure_module() {
     return m_module.get();
 }
 
+void GlobalModule::register_tsl_global(GlobalVarList& mapping) {
+    m_tsl_global_mapping = mapping;
+}
+
+void GlobalModule::declare_tsl_global() {
+    // it is allowed that tsl global has nothing.
+    if (m_tsl_global_mapping.empty())
+        return;
+
+    // construct the llvm compile context
+    Tsl_Namespace::LLVM_Compile_Context llvm_compiling_context;
+    llvm_compiling_context.module = m_module.get();
+    llvm_compiling_context.context = &m_llvm_context;
+
+    // assemble the variable types
+    std::vector<Type*> arg_types;
+    for (auto& arg : m_tsl_global_mapping) {
+        auto type = get_type_from_context(arg.m_type, llvm_compiling_context);
+        // this is a VERY DIRTY hack, I'll try to get back to it once most features are done.
+        if (!type)
+            type = get_int_32_ptr_ty(llvm_compiling_context);
+        arg_types.push_back(type);
+    }
+
+    const std::string tsl_global_name = "Tsl_Global";
+    auto ret = StructType::create(arg_types, tsl_global_name);
+}
+
 ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureVarList& arg_list, int structure_size) {
     std::lock_guard<std::mutex> lock(m_closure_mutex);
 

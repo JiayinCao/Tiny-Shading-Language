@@ -19,12 +19,27 @@
 
 #include "tslversion.h"
 #include "closure.h"
+#include "global.h"
 #include "export.h"
 
 TSL_NAMESPACE_BEGIN
 
 class ShadingContext;
 struct ShadingSystem_Impl;
+
+//! @brief  Memory allocator.
+/**
+ * Memory allocator is used to allocate memory for closure types inside shaders.
+ */
+class MemoryAllocator {
+public:
+    //! @brief  Allocate memory inside shaders.
+    //!
+    //! There are things to be noticed in this interface.
+    //!  - Shaders are not responsible to release the memory allocator allocates, it is up to the renderer to do so.
+    //!  - Memory allocated in allocator has to be thread local storage.
+    virtual void* allocate(unsigned int size) const = 0;
+};
 
 //! @brief  Shading system is the root interface exposed through TSL system.
 /*
@@ -51,13 +66,31 @@ public:
 
     //! @brief  Register closure id.
     //!
-    //! @param  name    Name of the closure.
+    //! @param  name            Name of the closure.
+    //! @param  mapping         Mapping of the data inside the closure.
+    //! @param  closure_size    Size of the data structure.
     //! @return         Allocated closure id for the closure.
-    ClosureID register_closure_type(const std::string& name, ClosureVarList& mapping, int closure_size);
+    ClosureID       register_closure_type(const std::string& name, ClosureVarList& mapping, int closure_size);
+
+    //! @brief  Register tsl global data.
+    //!
+    //! @param  mapping     Mapping of the data structure.
+    void            register_tsl_global(GlobalVarList& mapping);
+
+    //! @brief  Register a memory allocator.
+    //!
+    //! @param  alloc   Memory allocator pointer
+    void            register_memory_allocator(MemoryAllocator* alloc);
+
+    //! @brief  Allocate memory inside shader.
+    void*           allocate_memory(unsigned int size);
 
 private:
     /**< Internal data structure of shading system. */
     ShadingSystem_Impl* m_shading_system_impl = nullptr;
+
+    /**< Memory allocator. */
+    MemoryAllocator*    m_memory_allocator = nullptr;
 };
 
 TSL_NAMESPACE_END

@@ -155,6 +155,8 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnitTemplate* su) 
 		compile_context.module = module;
 		compile_context.builder = &builder;
 
+        // declare tsl global
+        m_global_module.declare_tsl_global();
         m_global_module.declare_closure_tree_types(m_llvm_context, &compile_context.m_structure_type_maps);
 		m_global_module.declare_global_module(compile_context);
         for (auto& closure : m_closures_in_shader) {

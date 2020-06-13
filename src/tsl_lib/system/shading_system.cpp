@@ -49,4 +49,16 @@ ClosureID ShadingSystem::register_closure_type(const std::string& name, ClosureV
     return m_shading_system_impl->m_global_module->register_closure_type(name, mapping, structure_size);
 }
 
+void ShadingSystem::register_tsl_global(GlobalVarList& mapping) {
+    return m_shading_system_impl->m_global_module->register_tsl_global(mapping);
+}
+
+void ShadingSystem::register_memory_allocator(MemoryAllocator* alloc) {
+    m_memory_allocator = alloc;
+}
+
+void* ShadingSystem::allocate_memory(unsigned int size) {
+    return m_memory_allocator ? m_memory_allocator->allocate(size) : nullptr;
+}
+
 TSL_NAMESPACE_END
