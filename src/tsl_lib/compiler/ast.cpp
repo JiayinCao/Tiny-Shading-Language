@@ -325,7 +325,7 @@ llvm::Value* AstNode_Binary_Add::codegen(LLVM_Compile_Context& context) const {
 
     auto& builder = *context.builder;
 
-    auto malloc_function = context.m_func_symbols["malloc"].first;
+    auto malloc_function = context.m_func_symbols["TSL_MALLOC"].first;
     if (!malloc_function) {
         // this should not happen at all
         return nullptr;
@@ -392,7 +392,7 @@ llvm::Value* AstNode_Binary_Multi::codegen(LLVM_Compile_Context& context) const 
 	auto closure = m_left->is_closure(context) ? left : right;
 	auto weight = m_left->is_closure(context) ? right : left;
 
-	auto malloc_function = context.m_func_symbols["malloc"].first;
+	auto malloc_function = context.m_func_symbols["TSL_MALLOC"].first;
 	if( !malloc_function ){
 		// this should not happen at all
 		return nullptr;

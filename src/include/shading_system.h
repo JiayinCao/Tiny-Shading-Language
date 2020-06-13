@@ -83,14 +83,14 @@ public:
     void            register_memory_allocator(MemoryAllocator* alloc);
 
     //! @brief  Allocate memory inside shader.
-    void*           allocate_memory(unsigned int size);
+    static void*    allocate_memory(unsigned int size);
 
 private:
     /**< Internal data structure of shading system. */
     ShadingSystem_Impl* m_shading_system_impl = nullptr;
 
     /**< Memory allocator. */
-    MemoryAllocator*    m_memory_allocator = nullptr;
+    static MemoryAllocator*    m_memory_allocator;
 };
 
 TSL_NAMESPACE_END

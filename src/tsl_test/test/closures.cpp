@@ -23,6 +23,9 @@
 TEST(Closure, ClosureMake) {
     ShadingSystem shading_system;
     
+    Tsl_MemoryAllocator ma;
+    shading_system.register_memory_allocator(&ma);
+
     // register lambert closure
     const auto closure_id = ClosureTypeLambert::RegisterClosure("lambert", shading_system);
 
@@ -49,6 +52,9 @@ TEST(Closure, ClosureMake) {
 TEST(Closure, ClosureMakeWithDouble) {
     ShadingSystem shading_system;
     
+    Tsl_MemoryAllocator ma;
+    shading_system.register_memory_allocator(&ma);
+
     const auto closure_id = ClosureTypeBxdfWithDouble::RegisterClosure("bxdf_with_double", shading_system);
 
     auto shader_source = R"(
@@ -73,6 +79,9 @@ TEST(Closure, ClosureMakeWithDouble) {
 TEST(Closure, ClosureMul) {
     ShadingSystem shading_system;
     
+    Tsl_MemoryAllocator ma;
+    shading_system.register_memory_allocator(&ma);
+
     const auto closure_id = ClosureTypeLambert::RegisterClosure("lambert", shading_system);
 
     auto shader_source = R"(
@@ -99,6 +108,10 @@ TEST(Closure, ClosureMul) {
 
 TEST(Closure, ClosureAdd) {
 	ShadingSystem shading_system;
+
+    Tsl_MemoryAllocator ma;
+    shading_system.register_memory_allocator(&ma);
+
     const auto closure_id_lambert = ClosureTypeLambert::RegisterClosure("lambert", shading_system);
     const auto closure_id_microfacet = ClosureTypeMicrofacet::RegisterClosure("microfacet", shading_system);
 
@@ -133,6 +146,9 @@ TEST(Closure, ClosureAdd) {
 TEST(Closure, ClosureComplex) {
     ShadingSystem shading_system;
     
+    Tsl_MemoryAllocator ma;
+    shading_system.register_memory_allocator(&ma);
+
     const auto closure_id_lambert = ClosureTypeLambert::RegisterClosure("lambert", shading_system);
     const auto closure_id_microfacet = ClosureTypeMicrofacet::RegisterClosure("microfacet", shading_system);
 
@@ -176,6 +192,9 @@ TEST(Closure, ClosureComplex) {
 TEST(Closure, ClosureAsOtherClosureInput) {
     ShadingSystem shading_system;
     
+    Tsl_MemoryAllocator ma;
+    shading_system.register_memory_allocator(&ma);
+
     const auto closure_id_layered = ClosureTypeLayeredBxdf::RegisterClosure("layered_bxdf", shading_system);
     const auto closure_id_microfacet = ClosureTypeMicrofacet::RegisterClosure("microfacet", shading_system);
 

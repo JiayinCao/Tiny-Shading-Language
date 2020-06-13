@@ -22,6 +22,9 @@ TEST(ShaderGroup, BasicShaderGroup) {
     // global tsl shading system
     ShadingSystem shading_system;
 
+    Tsl_MemoryAllocator ma;
+    shading_system.register_memory_allocator(&ma);
+
     // make a shading context for shader compiling, since there is only one thread involved in this unit test, it is good enough.
     auto shading_context = shading_system.make_shading_context();
 
@@ -96,6 +99,9 @@ TEST(ShaderGroup, BasicShaderGroup) {
 TEST(ShaderGroup, DuplicateShaderUnits) {
     // global tsl shading system
     ShadingSystem shading_system;
+
+    Tsl_MemoryAllocator ma;
+    shading_system.register_memory_allocator(&ma);
 
     // make a shading context for shader compiling, since there is only one thread involved in this unit test, it is good enough.
     auto shading_context = shading_system.make_shading_context();
@@ -255,6 +261,9 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
 TEST(ShaderGroup, ShaderGroupArgTypes) {
     // global tsl shading system
     ShadingSystem shading_system;
+
+    Tsl_MemoryAllocator ma;
+    shading_system.register_memory_allocator(&ma);
 
     // make a shading context for shader compiling, since there is only one thread involved in this unit test, it is good enough.
     auto shading_context = shading_system.make_shading_context();
@@ -497,6 +506,9 @@ TEST(ShaderGroup, ShaderGroupInputDefaults) {
 TEST(ShaderGroup, ShaderGroupRecursive) {
     // global tsl shading system
     ShadingSystem shading_system;
+
+    Tsl_MemoryAllocator ma;
+    shading_system.register_memory_allocator(&ma);
 
     // make a shading context for shader compiling, since there is only one thread involved in this unit test, it is good enough.
     auto shading_context = shading_system.make_shading_context();

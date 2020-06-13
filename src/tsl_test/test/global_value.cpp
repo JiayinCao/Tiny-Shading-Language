@@ -103,6 +103,9 @@ TEST(GlobalValue, GlobalValueInShaderGroup) {
     // global tsl shading system
     ShadingSystem shading_system;
 
+    Tsl_MemoryAllocator ma;
+    shading_system.register_memory_allocator(&ma);
+
     // register tsl global
     TslGlobal tsl_global;
     tsl_global.intensity = 123.0f;

@@ -23,6 +23,8 @@
 
 TSL_NAMESPACE_BEGIN
 
+MemoryAllocator* ShadingSystem::m_memory_allocator = nullptr;
+
 ShadingSystem::ShadingSystem() {
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();

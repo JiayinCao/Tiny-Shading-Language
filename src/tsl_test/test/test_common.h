@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <vector>
 #include <memory>
 #include "gtest/gtest.h"
 #include "shading_system.h"
@@ -80,3 +81,14 @@ inline std::pair<T, std::unique_ptr<ShaderInstance>> compile_shader(const char* 
 
     return std::make_pair((T)shader_instance->get_function(), std::move(shader_instance));
 }
+
+class Tsl_MemoryAllocator : public MemoryAllocator {
+public:
+    void* allocate(unsigned int size) const override {
+        m_memory_holder.push_back(std::move(std::make_unique<char[]>(size)));
+        return m_memory_holder.back().get();
+    }
+
+private:
+    mutable std::vector<std::unique_ptr<char[]>> m_memory_holder;
+};

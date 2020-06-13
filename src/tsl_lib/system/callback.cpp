@@ -21,11 +21,16 @@
 
 TSL_NAMESPACE_BEGIN
 
+#ifdef _WIN32
+#define DLLEXPORT __declspec(dllexport)
+#else
+#define DLLEXPORT
+#endif
+
 extern "C" {
     // allocate memory inside shaders
-    int* TSL_ALLOC(int size, generic_ptr ptr) {
-        auto allocator = (const MemoryAllocator*)ptr;
-        return (int*)allocator->allocate(size);
+    DLLEXPORT int* TSL_MALLOC(int size) {
+        return (int*)ShadingSystem::allocate_memory(size);
     }
 
     // 2D texture access

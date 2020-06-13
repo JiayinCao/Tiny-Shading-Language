@@ -50,7 +50,7 @@ bool GlobalModule::init() {
     std::vector<Type*> proto_args;
     proto_args.push_back(Type::getInt32Ty(m_llvm_context));
     // proto_args.push_back(Type::getInt32Ty(m_llvm_context)->getPointerTo());
-    m_malloc_function = Function::Create(FunctionType::get(Type::getInt32PtrTy(m_llvm_context), proto_args, false), Function::ExternalLinkage, "malloc", m_module.get());
+    m_malloc_function = Function::Create(FunctionType::get(Type::getInt32PtrTy(m_llvm_context), proto_args, false), Function::ExternalLinkage, "TSL_MALLOC", m_module.get());
 
     return true;
 }
@@ -158,7 +158,7 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureVa
     IRBuilder<> builder(BasicBlock::Create(m_llvm_context, "EntryBlock", function));
 
     // allocate a structure for keeping parameters
-    const auto param_table_ptr = builder.CreateCall(m_malloc_function, { ConstantInt::get(m_llvm_context, APInt(32, structure_size)) }, "malloc");
+    const auto param_table_ptr = builder.CreateCall(m_malloc_function, { ConstantInt::get(m_llvm_context, APInt(32, structure_size)) }, "TSL_MALLOC");
     const auto converted_param_table_ptr = builder.CreatePointerCast(param_table_ptr, closure_param_type->getPointerTo());
 
 	// copy all variables in this parameter table
@@ -227,9 +227,9 @@ llvm::Function* GlobalModule::declare_closure_function(const std::string& name, 
 void GlobalModule::declare_global_module(LLVM_Compile_Context& context){
 	// this malloc needs to be replaced once the memory allocator is available
 	// Function* malloc_function = Function::Create(FunctionType::get(get_int_32_ptr_ty(context), { get_int_32_ty(context) , get_int_32_ptr_ty(context) }, false), Function::ExternalLinkage, "TSL_ALLOC", context.module);
-    Function* malloc_function = Function::Create(FunctionType::get(get_int_32_ptr_ty(context), { get_int_32_ty(context) }, false), Function::ExternalLinkage, "malloc", context.module);
+    Function* malloc_function = Function::Create(FunctionType::get(get_int_32_ptr_ty(context), { get_int_32_ty(context) }, false), Function::ExternalLinkage, "TSL_MALLOC", context.module);
 
-	context.m_func_symbols["malloc"] = std::make_pair(malloc_function, nullptr);
+	context.m_func_symbols["TSL_MALLOC"] = std::make_pair(malloc_function, nullptr);
 
 	// float3 data structure, this can be used as vector, color in TSL
 	const auto float3_struct = "float3";
