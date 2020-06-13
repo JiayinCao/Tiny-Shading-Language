@@ -127,6 +127,7 @@
 %token CONTINUE         "continue"
 %token CLOSURE          "closure"
 %token MAKE_CLOSURE     "make_closure"
+%token GLOBAL_VALUE     "global_value"
 %token STRUCT			"struct"
 
 %type <p> PROGRAM FUNCTION_ARGUMENT_DECL FUNCTION_ARGUMENT_DECLS SHADER_FUNCTION_ARGUMENT_DECLS FUNCTION_BODY VARIABLE_LVALUE ID_OR_FIELD FUNCTION_ARGUMENTS SHADER_FUNCTION_ARGUMENT_DECL FOR_INIT_STATEMENT STRUCT_DEF
@@ -837,6 +838,10 @@ EXPRESSION_CONST:
     |
     "false" {
         $$ = new AstNode_Literal_Bool( false );
+    }
+    |
+    "global_value" "<" ID ">"{
+        $$ = new AstNode_Literal_GlobalValue( $3 );
     };
 
 // Scopped expression

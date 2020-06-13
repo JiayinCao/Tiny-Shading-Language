@@ -156,7 +156,7 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnitTemplate* su) 
 		compile_context.builder = &builder;
 
         // declare tsl global
-        m_global_module.declare_tsl_global();
+        m_global_module.declare_tsl_global(compile_context);
         m_global_module.declare_closure_tree_types(m_llvm_context, &compile_context.m_structure_type_maps);
 		m_global_module.declare_global_module(compile_context);
         for (auto& closure : m_closures_in_shader) {
@@ -297,6 +297,7 @@ bool TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
 
     const auto llvm_void_ty = get_void_ty(compile_context);
 
+    m_global_module.declare_tsl_global(compile_context);
     m_global_module.declare_global_module(compile_context);
 
     // dependency modules
@@ -332,6 +333,9 @@ bool TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
                 args[i] = output_param ? raw_type->getPointerTo() : raw_type;
             }
 
+            if (compile_context.tsl_global_ty)
+                args.push_back(compile_context.tsl_global_ty->getPointerTo());
+
             // declare the function prototype
             llvm::FunctionType* function_type = llvm::FunctionType::get(llvm_void_ty, args, false);
 
@@ -340,8 +344,14 @@ bool TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
             llvm::Function* function = llvm::Function::Create(function_type, llvm::Function::ExternalLinkage, func_name, compile_context.module);
 
             // For debugging purposes, set the name of all arguments
-            for (int i = 0; i < args.size(); ++i)
-                function->getArg(i)->setName(params[i].m_name);
+            if (!compile_context.tsl_global_ty) {
+                for (int i = 0; i < args.size(); ++i)
+                    function->getArg(i)->setName(params[i].m_name);
+            } else {
+                for (int i = 0; i < args.size() - 1; ++i)
+                    function->getArg(i)->setName(params[i].m_name);
+                function->getArg(args.size() - 1)->setName("tsl_global");
+            }
 
             // update shader unit root functions
             const auto& name = shader_unit->get_name();
@@ -362,6 +372,10 @@ bool TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
         llvm_arg_types[i] = raw_type;
     }
 
+    // the last argument is always tsl_global
+    if (compile_context.tsl_global_ty)
+        llvm_arg_types.push_back(compile_context.tsl_global_ty->getPointerTo());
+
     // declare the function prototype
     llvm::FunctionType* function_type = llvm::FunctionType::get(get_void_ty(compile_context), llvm_arg_types, false);
 
@@ -373,6 +387,9 @@ bool TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
     std::vector<llvm::Value*>   llvm_args(args.size());
     for (auto i = 0; i < args.size(); ++i)
         llvm_args[i] = function->getArg(i);
+    
+    if (compile_context.tsl_global_ty)
+        compile_context.tsl_global_value = function->getArg(args.size());
 
     // create a separate code block
     llvm::BasicBlock* wrapper_shader_entry = llvm::BasicBlock::Create(m_llvm_context, "entry", function);
@@ -550,6 +567,9 @@ bool TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, S
             }
         }
     }
+
+    if(context.tsl_global_value)
+        callee_args.push_back(context.tsl_global_value);
 
     // make the call
     const auto it = function_mapping.find(su->get_name());

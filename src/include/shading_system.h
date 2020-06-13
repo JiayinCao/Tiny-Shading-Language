@@ -37,7 +37,7 @@ public:
     //!
     //! There are things to be noticed in this interface.
     //!  - Shaders are not responsible to release the memory allocator allocates, it is up to the renderer to do so.
-    //!  - Memory allocated in allocator has to be thread local storage.
+    //!  - This implementation has to be thread safe.
     virtual void* allocate(unsigned int size) const = 0;
 };
 

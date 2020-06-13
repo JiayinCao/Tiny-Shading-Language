@@ -47,7 +47,9 @@ bool GlobalModule::init() {
     declare_closure_tree_types(m_llvm_context);
 
     // this malloc needs to be replaced once the memory allocator is available
-    std::vector<Type*> proto_args(1, Type::getInt32Ty(m_llvm_context));
+    std::vector<Type*> proto_args;
+    proto_args.push_back(Type::getInt32Ty(m_llvm_context));
+    // proto_args.push_back(Type::getInt32Ty(m_llvm_context)->getPointerTo());
     m_malloc_function = Function::Create(FunctionType::get(Type::getInt32PtrTy(m_llvm_context), proto_args, false), Function::ExternalLinkage, "malloc", m_module.get());
 
     return true;
@@ -102,28 +104,24 @@ void GlobalModule::register_tsl_global(GlobalVarList& mapping) {
     m_tsl_global_mapping = mapping;
 }
 
-void GlobalModule::declare_tsl_global() {
+void GlobalModule::declare_tsl_global(LLVM_Compile_Context& context) {
     // it is allowed that tsl global has nothing.
     if (m_tsl_global_mapping.empty())
         return;
 
-    // construct the llvm compile context
-    Tsl_Namespace::LLVM_Compile_Context llvm_compiling_context;
-    llvm_compiling_context.module = m_module.get();
-    llvm_compiling_context.context = &m_llvm_context;
-
     // assemble the variable types
     std::vector<Type*> arg_types;
     for (auto& arg : m_tsl_global_mapping) {
-        auto type = get_type_from_context(arg.m_type, llvm_compiling_context);
+        auto type = get_type_from_context(arg.m_type, context);
         // this is a VERY DIRTY hack, I'll try to get back to it once most features are done.
         if (!type)
-            type = get_int_32_ptr_ty(llvm_compiling_context);
+            type = get_int_32_ptr_ty(context);
         arg_types.push_back(type);
     }
 
     const std::string tsl_global_name = "Tsl_Global";
-    auto ret = StructType::create(arg_types, tsl_global_name);
+    context.tsl_global_ty = StructType::create(arg_types, tsl_global_name);
+    context.m_tsl_global_mapping = m_tsl_global_mapping;
 }
 
 ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureVarList& arg_list, int structure_size) {
@@ -228,7 +226,9 @@ llvm::Function* GlobalModule::declare_closure_function(const std::string& name, 
 
 void GlobalModule::declare_global_module(LLVM_Compile_Context& context){
 	// this malloc needs to be replaced once the memory allocator is available
-	Function* malloc_function = Function::Create(FunctionType::get(get_int_32_ptr_ty(context), { get_int_32_ty(context) }, false), Function::ExternalLinkage, "malloc", context.module);
+	// Function* malloc_function = Function::Create(FunctionType::get(get_int_32_ptr_ty(context), { get_int_32_ty(context) , get_int_32_ptr_ty(context) }, false), Function::ExternalLinkage, "TSL_ALLOC", context.module);
+    Function* malloc_function = Function::Create(FunctionType::get(get_int_32_ptr_ty(context), { get_int_32_ty(context) }, false), Function::ExternalLinkage, "malloc", context.module);
+
 	context.m_func_symbols["malloc"] = std::make_pair(malloc_function, nullptr);
 
 	// float3 data structure, this can be used as vector, color in TSL

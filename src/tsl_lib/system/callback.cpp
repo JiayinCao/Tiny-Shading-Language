@@ -23,9 +23,9 @@ TSL_NAMESPACE_BEGIN
 
 extern "C" {
     // allocate memory inside shaders
-    void* TSL_ALLOC(generic_ptr ptr, int size) {
+    int* TSL_ALLOC(int size, generic_ptr ptr) {
         auto allocator = (const MemoryAllocator*)ptr;
-        return allocator->allocate(size);
+        return (int*)allocator->allocate(size);
     }
 
     // 2D texture access

@@ -81,6 +81,7 @@ whitespace               [ \t\r\n\f]+
 %%
 "struct"				  { return STRUCT; }
 "make_closure"            { return MAKE_CLOSURE; }
+"global_value"            { return GLOBAL_VALUE; }
 "closure"                 { return CLOSURE; }
 "true"                    { return TRUE; }
 "false"                   { return FALSE; }

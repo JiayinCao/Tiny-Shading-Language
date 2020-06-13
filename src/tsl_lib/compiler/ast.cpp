@@ -23,6 +23,7 @@
 #include "ast.h"
 #include "llvm_util.h"
 #include "global_module.h"
+#include "global.h"
 
 using namespace llvm;
 
@@ -158,6 +159,10 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 		variable = castType<AstNode_VariableDecl>(variable->get_sibling());
 	}
 
+    // the last argument is always tsl_global
+    if(context.tsl_global_ty)
+        args.push_back(context.tsl_global_ty->getPointerTo());
+
 	// parse return types
 	auto return_type = get_type_from_context(m_return_type , context);
 
@@ -173,6 +178,11 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 	// For debugging purposes, set the name of all arguments
 	variable = m_variables;
 	for (auto &arg : function->args()) {
+        if (!variable) {
+            arg.setName("tsl_global");
+            context.tsl_global_value = &arg;
+            break;
+        }
 		arg.setName(variable->get_var_name());
 		variable = castType<AstNode_VariableDecl>(variable->get_sibling());
 	}
@@ -272,6 +282,22 @@ llvm::Value* AstNode_Literal_Double::codegen(LLVM_Compile_Context& context) cons
 
 llvm::Value* AstNode_Literal_Bool::codegen(LLVM_Compile_Context& context) const {
     return get_llvm_constant_int((int)m_val, 1, context);
+}
+
+llvm::Value* AstNode_Literal_GlobalValue::codegen(LLVM_Compile_Context& context) const {
+    for (int i = 0; i < context.m_tsl_global_mapping.size(); ++i){
+        const auto& arg = context.m_tsl_global_mapping[i];
+        if (arg.m_name == m_value_name) {
+            const auto var_type = context.tsl_global_ty;
+
+            auto gep0 = context.builder->CreateConstGEP2_32(nullptr, context.tsl_global_value, 0, i);
+            return context.builder->CreateLoad(gep0);
+        }
+    }
+    
+    // emit an error here, unregistred global value.
+
+    return nullptr;
 }
 
 bool AstNode_Binary_Add::is_closure(LLVM_Compile_Context& context) const {

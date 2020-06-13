@@ -50,18 +50,18 @@ public:
     //template<class T>
     //ClosureID register_closure_type(const std::string& name);
 
-    ClosureID   register_closure_type(const std::string& name, ClosureVarList& mapping, int structure_size);
+    ClosureID       register_closure_type(const std::string& name, ClosureVarList& mapping, int structure_size);
 
-    void        register_tsl_global(GlobalVarList& mapping);
+    void            register_tsl_global(GlobalVarList& mapping);
 
     // get global closure maker module
-    llvm::Module* get_closure_module();
+    llvm::Module*   get_closure_module();
 
     // declare some global data structure type
     void            declare_closure_tree_types(llvm::LLVMContext& context, StructSymbolTable* mapping = nullptr );
 
     // declare tsl global
-    void            declare_tsl_global();
+    void            declare_tsl_global(LLVM_Compile_Context& context);
 
     // get declaration
     llvm::Function* declare_closure_function(const std::string& name, LLVM_Compile_Context& context);

@@ -36,6 +36,10 @@ void AstNode_Literal_Bool::print() const {
     std::cout << m_val;
 }
 
+void AstNode_Literal_GlobalValue::print() const {
+    std::cout << "GlovalValue<" << m_value_name << ">";
+}
+
 void AstNode_ScoppedStatement::print() const {
     std::cout << "{" << std::endl;
     m_statement->print();

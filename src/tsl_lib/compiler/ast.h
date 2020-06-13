@@ -27,6 +27,7 @@
 #include "tslversion.h"
 #include "types.h"
 #include "shader_unit_pvt.h"
+#include "global.h"
 
 TSL_NAMESPACE_BEGIN
 
@@ -45,6 +46,9 @@ struct LLVM_Compile_Context{
 	llvm::LLVMContext*	context = nullptr;
 	llvm::Module*		module = nullptr;
 	llvm::IRBuilder<>*	builder = nullptr;
+    llvm::Type*         tsl_global_ty = nullptr;
+    llvm::Value*        tsl_global_value = nullptr;
+    GlobalVarList       m_tsl_global_mapping;
 
     // closured touched in the shader
     std::unordered_map<std::string, llvm::Function*> m_closures_maps;
@@ -188,6 +192,18 @@ public:
 
 private:
     bool m_val;
+};
+
+class AstNode_Literal_GlobalValue : public AstNode_Expression {
+public:
+    AstNode_Literal_GlobalValue(const char* value_name) : m_value_name(value_name) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
+    void print() const override;
+
+private:
+    std::string m_value_name;
 };
 
 class AstNode_Binary : public AstNode_Expression {

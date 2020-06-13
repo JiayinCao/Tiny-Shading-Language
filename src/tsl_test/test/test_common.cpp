@@ -18,7 +18,7 @@
 #include "test_common.h"
 
 IMPLEMENT_TSLGLOBAL_BEGIN()
-IMPLEMENT_TSLGLOBAL_VAR(Tsl_Namespace::MemoryAllocator*, m_allocator)
+IMPLEMENT_TSLGLOBAL_VAR(float, intensity)
 IMPLEMENT_TSLGLOBAL_END()
 
 IMPLEMENT_CLOSURE_TYPE_BEGIN(ClosureTypeLambert)
