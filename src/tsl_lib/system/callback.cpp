@@ -18,6 +18,7 @@
 #include "shading_system.h"
 #include "shading_context.h"
 #include "shader_arg_types.h"
+#include "system/texture_impl.h"
 
 TSL_NAMESPACE_BEGIN
 
@@ -34,9 +35,12 @@ extern "C" {
     }
 
     // 2D texture access
-    float4 TSL_TEXTURE_SAMPLE_2D(generic_ptr ptr, float u, float v) {
+    DLLEXPORT int* TSL_TEXTURE2D_SAMPLE(generic_ptr ptr, float u, float v) {
+        const TextureHandleWrapper* thw = (const TextureHandleWrapper*)ptr;
+
         // to be implemented
-        return float4();
+        float4 ret = thw->m_texture_handle ? thw->m_texture_handle->sample2d(u, v) : make_float4(0.0f, 0.0f, 0.0f, 0.0f);
+        return 0;
     }
 
     // 3D texture access

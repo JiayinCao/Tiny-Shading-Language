@@ -111,6 +111,10 @@ void TslCompiler_Impl::push_structure_declaration(AstNode_StructDeclaration* str
 #endif
 }
 
+void TslCompiler_Impl::push_global_parameter(const AstNode_Statement* var_declaration) {
+    m_global_var.push_back(var_declaration);
+}
+
 void* TslCompiler_Impl::get_scanner() {
     return m_scanner;
 }
@@ -154,6 +158,7 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnitTemplate* su) 
 		compile_context.context = &m_llvm_context;
 		compile_context.module = module;
 		compile_context.builder = &builder;
+        compile_context.m_shader_texture_table = &su->m_shader_unit_template_impl->m_shader_texture_table;
 
         // declare tsl global
         m_global_module.declare_tsl_global(compile_context);
@@ -169,6 +174,10 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnitTemplate* su) 
             }
             compile_context.m_closures_maps[closure] = function;
         }
+
+        // generate all global variables
+        for (auto& global_var : m_global_var)
+            global_var->codegen(compile_context);
 
 		// generate all data structures first
 		for( auto& structure : m_structures )

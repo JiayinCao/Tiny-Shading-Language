@@ -46,10 +46,9 @@ bool GlobalModule::init() {
     // declare some global data structure
     declare_closure_tree_types(m_llvm_context);
 
-    // this malloc needs to be replaced once the memory allocator is available
+    // memory mallocation
     std::vector<Type*> proto_args;
     proto_args.push_back(Type::getInt32Ty(m_llvm_context));
-    // proto_args.push_back(Type::getInt32Ty(m_llvm_context)->getPointerTo());
     m_malloc_function = Function::Create(FunctionType::get(Type::getInt32PtrTy(m_llvm_context), proto_args, false), Function::ExternalLinkage, "TSL_MALLOC", m_module.get());
 
     return true;
@@ -225,11 +224,13 @@ llvm::Function* GlobalModule::declare_closure_function(const std::string& name, 
 }
 
 void GlobalModule::declare_global_module(LLVM_Compile_Context& context){
-	// this malloc needs to be replaced once the memory allocator is available
-	// Function* malloc_function = Function::Create(FunctionType::get(get_int_32_ptr_ty(context), { get_int_32_ty(context) , get_int_32_ptr_ty(context) }, false), Function::ExternalLinkage, "TSL_ALLOC", context.module);
+    // malloc function
     Function* malloc_function = Function::Create(FunctionType::get(get_int_32_ptr_ty(context), { get_int_32_ty(context) }, false), Function::ExternalLinkage, "TSL_MALLOC", context.module);
-
 	context.m_func_symbols["TSL_MALLOC"] = std::make_pair(malloc_function, nullptr);
+
+    // texture 2d sampling
+    Function* texture2d_sample_function = Function::Create(FunctionType::get(get_int_32_ptr_ty(context), { get_int_32_ptr_ty(context) , get_float_ty(context), get_float_ty(context) }, false), Function::ExternalLinkage, "TSL_TEXTURE2D_SAMPLE", context.module);
+    context.m_func_symbols["TSL_TEXTURE2D_SAMPLE"] = std::make_pair(texture2d_sample_function, nullptr);
 
 	// float3 data structure, this can be used as vector, color in TSL
 	const auto float3_struct = "float3";

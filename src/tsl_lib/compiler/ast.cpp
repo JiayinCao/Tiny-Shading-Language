@@ -1430,4 +1430,50 @@ DataType AstNode_StructMemberRef::get_var_type(LLVM_Compile_Context& context) co
 	return it->second.second;
 }
 
+llvm::Value* AstNode_Statement_TextureDeclaration::codegen(LLVM_Compile_Context& context) const {
+    // find the registered texture
+    auto it = context.m_shader_texture_table->find(m_handle_name);
+    if (it == context.m_shader_texture_table->end()){
+        (*context.m_shader_texture_table)[m_handle_name] = std::make_unique<TextureHandleWrapper>();
+        it = context.m_shader_texture_table->find(m_handle_name);
+    }
+    
+    auto addr = it->second.get();
+    auto input_addr = ConstantInt::get(Type::getInt64Ty(*context.context), uintptr_t(addr));
+    auto ptr_input_addr = ConstantExpr::getIntToPtr(input_addr, get_int_32_ptr_ty(context));
+
+    // create the global variable
+    llvm::Module* module = context.module;
+    GlobalVariable* global_input_value = new GlobalVariable(*module, get_int_32_ptr_ty(context), true, GlobalValue::InternalLinkage, ptr_input_addr, "global_input");
+
+    // for debugging purposes
+    global_input_value->setName(m_handle_name);
+
+    // push the varible, this one is kind of special in a way it doesn't have a valid data type.
+    context.push_var_symbol(m_handle_name, global_input_value, DataType());
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_Expression_Texture2DSample::codegen(LLVM_Compile_Context& context) const {
+    auto texture_handle_addr = context.get_var_symbol(m_texture_handle_name);
+    if (texture_handle_addr) {
+        auto texture_handle = context.builder->CreateLoad(texture_handle_addr);
+
+        auto texture2d_sample_function = context.m_func_symbols["TSL_TEXTURE2D_SAMPLE"].first;
+
+        std::vector<Value*> args(1, texture_handle);
+        AstNode_Expression* node = m_variables;
+        while (node) {
+            args.push_back(node->codegen(context));
+            node = castType<AstNode_Expression>(node->get_sibling());
+        }
+
+        return context.builder->CreateCall(texture2d_sample_function, args);
+    }
+
+    // emit an error here
+    return nullptr;
+}
+
 TSL_NAMESPACE_END

@@ -39,6 +39,19 @@ struct ShaderUnitTemplate_Impl;
 struct ShaderGroupTemplate_Impl;
 struct ShadingContext_Impl;
 
+//! @brief  Interface of texture handle.
+/**
+ * It is renderer's job to provide specific implementation of texture sampling.
+ */
+class TSL_INTERFACE TextureHandle {
+public:
+    //! @brief  Texture 2d sampling.
+    //!
+    //! @param  u       U coordinate.
+    //! @param  v       V coordinate.
+    virtual float4 sample2d(float u, float v) const = 0;
+};
+
 //! @brief  ShaderInstance is the very basic unit of shader execution.
 /**
  * A shader instance keeps track of the raw function pointer for shader execution.
@@ -115,6 +128,13 @@ public:
     //!
     //! @param sut      Dependencies of this module.
     virtual void        parse_dependencies(ShaderUnitTemplate_Pvt* sut) const;
+
+    //! @brief  Register texture handle in this shader unit.
+    //!
+    //! It is renderer's job to keep these memory alive.
+    //!
+    //! @param  th      The texture handle to be registered.
+    bool                register_texture(const std::string name, const TextureHandle* th);
 
 protected:
     ShaderUnitTemplate_Impl* m_shader_unit_template_impl = nullptr;

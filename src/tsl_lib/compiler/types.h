@@ -23,7 +23,8 @@
 TSL_NAMESPACE_BEGIN
 
 enum DataTypeEnum : int{
-	VOID	= 0,
+    INVALID = 0,
+	VOID	,
 	INT		,
 	FLOAT	,
     DOUBLE  ,

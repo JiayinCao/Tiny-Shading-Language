@@ -41,6 +41,12 @@ struct float4 {
     float x, y, z, w;
 };
 
+inline float4 make_float4(float x, float y, float z, float w) {
+    float4 ret;
+    ret.x = x; ret.y = y; ret.z = z; ret.w = w;
+    return ret;
+}
+
 union ArgDefaultValue {
     float   m_float;
     int     m_int;

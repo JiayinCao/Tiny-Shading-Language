@@ -34,6 +34,7 @@ TSL_NAMESPACE_BEGIN
 
 class AstNode_FunctionPrototype;
 class AstNode_StructDeclaration;
+class AstNode_Statement;
 class AstNode_Expression;
 class ShaderUnitTemplate;
 class ShaderGroupTemplate;
@@ -94,6 +95,11 @@ public:
 	//! @param	node			Push a structure declaration.
 	void	push_structure_declaration(AstNode_StructDeclaration* structure);
 
+    //! @brief  Push global parameter
+    //!
+    //! @param  statement       This statement should be purely variable declaration.
+    void    push_global_parameter(const AstNode_Statement* statement);
+
 	//! @brief	Parameter type cache.
 	//!
 	//! @param	type			Type of the parameter to be parsed.
@@ -130,9 +136,11 @@ private:
     AstNode_FunctionPrototype*                  m_ast_root = nullptr;
 
     // global functions defined in this module
-    std::vector<AstNode_FunctionPrototype*>     m_functions;
+    std::vector<AstNode_FunctionPrototype*>         m_functions;
 	// global structure declaration in this module, maybe I should merge it with the above one
-	std::vector<AstNode_StructDeclaration*>		m_structures;
+	std::vector<AstNode_StructDeclaration*>		    m_structures;
+    // global variables defined in this module
+    std::vector<const AstNode_Statement*>           m_global_var;
 
     // registered closure types
     std::unordered_set<std::string>             m_closures;

@@ -22,8 +22,11 @@
 #include <unordered_set>
 #include <unordered_map>
 #include "tslversion.h"
+#include "texture_impl.h"
 
 TSL_NAMESPACE_BEGIN
+
+using ShaderTextureTable = std::unordered_map<std::string, std::unique_ptr<TextureHandleWrapper>>;
 
 struct ShadingSystem_Impl {
     /**< Data structure holding all contexts. */
@@ -46,6 +49,9 @@ struct ShaderUnitTemplate_Impl {
 
     /**< A private data structure hiding all LLVM details. */
     ShaderUnitTemplate_Pvt* m_shader_unit_data = nullptr;
+
+    /**< Shader texture table. */
+    ShaderTextureTable      m_shader_texture_table;
 
     // This will be allowed once I have most feature completed.
     const bool  m_allow_optimization = false;

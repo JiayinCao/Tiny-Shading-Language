@@ -28,11 +28,13 @@
 #include "types.h"
 #include "shader_unit_pvt.h"
 #include "global.h"
+#include "system/texture_impl.h"
 
 TSL_NAMESPACE_BEGIN
 
 class AstNode_FunctionPrototype;
 class GlobalModule;
+class TextureHandle;
 
 struct StructMemberTypeMetaData{
 	llvm::Type* m_llvm_type = nullptr;
@@ -49,6 +51,7 @@ struct LLVM_Compile_Context{
     llvm::Type*         tsl_global_ty = nullptr;
     llvm::Value*        tsl_global_value = nullptr;
     GlobalVarList       m_tsl_global_mapping;
+    ShaderTextureTable* m_shader_texture_table = nullptr;
 
     // closured touched in the shader
     std::unordered_map<std::string, llvm::Function*> m_closures_maps;
@@ -66,6 +69,10 @@ struct LLVM_Compile_Context{
     llvm::Value* push_var_symbol(const std::string& name, llvm::Value* value, DataType type);
     void push_var_symbol_layer();
     void pop_var_symbol_layer();
+
+    LLVM_Compile_Context() {
+        reset();
+    }
 
     void reset();
 
@@ -976,6 +983,31 @@ public:
 private:
 	AstNode_Lvalue*		m_var;
 	const std::string	m_member;
+};
+
+class AstNode_Statement_TextureDeclaration : public AstNode_Statement {
+public:
+    AstNode_Statement_TextureDeclaration(const char* texture_var_name) : m_handle_name(texture_var_name) {}
+
+    llvm::Value*    codegen(LLVM_Compile_Context& context) const override;
+
+    void print() const override;
+
+private:
+    const std::string m_handle_name;
+};
+
+class AstNode_Expression_Texture2DSample : public AstNode_Expression {
+public:
+    AstNode_Expression_Texture2DSample(const char* texture_handle_name, AstNode_Expression* variables) : m_texture_handle_name(texture_handle_name), m_variables(variables) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
+    void print() const override;
+
+private:
+    std::string m_texture_handle_name;
+    AstNode_Expression* m_variables;
 };
 
 TSL_NAMESPACE_END

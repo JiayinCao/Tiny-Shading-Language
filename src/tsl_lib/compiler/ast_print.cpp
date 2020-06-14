@@ -40,6 +40,28 @@ void AstNode_Literal_GlobalValue::print() const {
     std::cout << "GlovalValue<" << m_value_name << ">";
 }
 
+void AstNode_Statement_TextureDeclaration::print() const {
+    std::cout << "texture2d " << m_handle_name << ";" << std::endl;
+}
+
+void AstNode_Expression_Texture2DSample::print() const {
+    std::cout << "texture2d_sample<" << m_texture_handle_name << ">(";
+
+    bool first = true;
+    AstNode* param_node = m_variables;
+    while (param_node) {
+        if (!first)
+            std::cout << " , ";
+
+        param_node->print();
+        param_node = param_node->get_sibling();
+
+        first = false;
+    }
+
+    std::cout << ")";
+}
+
 void AstNode_ScoppedStatement::print() const {
     std::cout << "{" << std::endl;
     m_statement->print();
