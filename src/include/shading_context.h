@@ -49,7 +49,7 @@ public:
     //!
     //! @param  u       U coordinate.
     //! @param  v       V coordinate.
-    virtual float4 sample2d(float u, float v) const = 0;
+    virtual float3 sample2d(float u, float v) const = 0;
 };
 
 //! @brief  ShaderInstance is the very basic unit of shader execution.

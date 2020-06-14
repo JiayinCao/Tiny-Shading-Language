@@ -224,32 +224,24 @@ llvm::Function* GlobalModule::declare_closure_function(const std::string& name, 
 }
 
 void GlobalModule::declare_global_module(LLVM_Compile_Context& context){
-    // malloc function
-    Function* malloc_function = Function::Create(FunctionType::get(get_int_32_ptr_ty(context), { get_int_32_ty(context) }, false), Function::ExternalLinkage, "TSL_MALLOC", context.module);
-	context.m_func_symbols["TSL_MALLOC"] = std::make_pair(malloc_function, nullptr);
+    // float3 data structure, this can be used as vector, color in TSL
+    const auto float3_struct = "float3";
+    const std::vector<Type*> float3_members = {
+        get_float_ty(context),
+        get_float_ty(context),
+        get_float_ty(context)
+    };
+    auto float3_struct_llvm_type = StructType::create(float3_members, float3_struct);
 
-    // texture 2d sampling
-    Function* texture2d_sample_function = Function::Create(FunctionType::get(get_int_32_ptr_ty(context), { get_int_32_ptr_ty(context) , get_float_ty(context), get_float_ty(context) }, false), Function::ExternalLinkage, "TSL_TEXTURE2D_SAMPLE", context.module);
-    context.m_func_symbols["TSL_TEXTURE2D_SAMPLE"] = std::make_pair(texture2d_sample_function, nullptr);
-
-	// float3 data structure, this can be used as vector, color in TSL
-	const auto float3_struct = "float3";
-	const std::vector<Type*> float3_members = {
-		get_float_ty(context),
-		get_float_ty(context),
-		get_float_ty(context)
-	};
-	auto float3_struct_llvm_type = StructType::create(float3_members, float3_struct);
-
-	StructMemberTypeMetaData float3_meta_data;
-	float3_meta_data.m_llvm_type = float3_struct_llvm_type;
-	float3_meta_data.m_member_types["x"] = { 0 , { DataTypeEnum::FLOAT , nullptr } };
-	float3_meta_data.m_member_types["y"] = { 1 , { DataTypeEnum::FLOAT , nullptr } };
-	float3_meta_data.m_member_types["z"] = { 2 , { DataTypeEnum::FLOAT , nullptr } };
-	float3_meta_data.m_member_types["r"] = { 0 , { DataTypeEnum::FLOAT , nullptr } };
-	float3_meta_data.m_member_types["g"] = { 1 , { DataTypeEnum::FLOAT , nullptr } };
-	float3_meta_data.m_member_types["b"] = { 2 , { DataTypeEnum::FLOAT , nullptr } };
-	context.m_structure_type_maps["float3"] = float3_meta_data;
+    StructMemberTypeMetaData float3_meta_data;
+    float3_meta_data.m_llvm_type = float3_struct_llvm_type;
+    float3_meta_data.m_member_types["x"] = { 0 , { DataTypeEnum::FLOAT , nullptr } };
+    float3_meta_data.m_member_types["y"] = { 1 , { DataTypeEnum::FLOAT , nullptr } };
+    float3_meta_data.m_member_types["z"] = { 2 , { DataTypeEnum::FLOAT , nullptr } };
+    float3_meta_data.m_member_types["r"] = { 0 , { DataTypeEnum::FLOAT , nullptr } };
+    float3_meta_data.m_member_types["g"] = { 1 , { DataTypeEnum::FLOAT , nullptr } };
+    float3_meta_data.m_member_types["b"] = { 2 , { DataTypeEnum::FLOAT , nullptr } };
+    context.m_structure_type_maps["float3"] = float3_meta_data;
 
     // add some intrinsic data structure
     const auto float4_struct = "float4";
@@ -259,10 +251,10 @@ void GlobalModule::declare_global_module(LLVM_Compile_Context& context){
         get_float_ty(context),
         get_float_ty(context)
     };
-    auto closure_tree_node_base_ty = StructType::create(float4_members, float4_struct);
+    auto float4_struct_llvm_type = StructType::create(float4_members, float4_struct);
 
     StructMemberTypeMetaData float4_meta_data;
-    float4_meta_data.m_llvm_type = closure_tree_node_base_ty;
+    float4_meta_data.m_llvm_type = float4_struct_llvm_type;
     float4_meta_data.m_member_types["x"] = { 0 , { DataTypeEnum::FLOAT , nullptr } };
     float4_meta_data.m_member_types["y"] = { 1 , { DataTypeEnum::FLOAT , nullptr } };
     float4_meta_data.m_member_types["z"] = { 2 , { DataTypeEnum::FLOAT , nullptr } };
@@ -272,6 +264,15 @@ void GlobalModule::declare_global_module(LLVM_Compile_Context& context){
     float4_meta_data.m_member_types["b"] = { 2 , { DataTypeEnum::FLOAT , nullptr } };
     float4_meta_data.m_member_types["w"] = { 3 , { DataTypeEnum::FLOAT , nullptr } };
     context.m_structure_type_maps["float4"] = float4_meta_data;
+
+    // malloc function
+    Function* malloc_function = Function::Create(FunctionType::get(get_int_32_ptr_ty(context), { get_int_32_ty(context) }, false), Function::ExternalLinkage, "TSL_MALLOC", context.module);
+	context.m_func_symbols["TSL_MALLOC"] = std::make_pair(malloc_function, nullptr);
+
+    // texture 2d sampling
+    Function* texture2d_sample_function = Function::Create(FunctionType::get(get_void_ty(context), { get_int_32_ptr_ty(context) , get_float_ty(context), get_float_ty(context), float3_struct_llvm_type->getPointerTo() }, false), Function::ExternalLinkage, "TSL_TEXTURE2D_SAMPLE", context.module);
+    auto type = texture2d_sample_function->getReturnType();
+    context.m_func_symbols["TSL_TEXTURE2D_SAMPLE"] = std::make_pair(texture2d_sample_function, nullptr);
 }
 
 TSL_NAMESPACE_END

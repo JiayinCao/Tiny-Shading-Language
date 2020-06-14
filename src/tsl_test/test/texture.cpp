@@ -19,19 +19,16 @@
 
 class TextureSimple : public TextureHandle {
 public:
-    float4 sample2d(float u, float v) const override {
-        return { u, v, 0.0f, 1.0f };
+    float3 sample2d(float u, float v) const override {
+        return make_float3( u, v, 1234.0f );
     }
 };
 
-TEST(Texture, DISABLED_SimpleTexture) {
+TEST(Texture, SimpleTexture) {
     auto shader_source = R"(
         texture2d g_diffuse;
-        shader function_name(out float var){
-            texture2d_sample<g_diffuse>( 1.0f , 2.0f );
-            // float t = global_value<intensity>;
-            //float4 ret = texture2d_sample<g_diffuse>( 1.0f , 2.0f );
-            //var = ret.b;
+        shader function_name(out color diffuse){
+            diffuse = texture2d_sample<g_diffuse>( global_value<intensity> , 2.0f );
         }
     )";
 
@@ -67,10 +64,12 @@ TEST(Texture, DISABLED_SimpleTexture) {
     EXPECT_EQ(true, resolve_ret);
 
     // get the raw function pointer for execution
-    auto func_ptr = (void(*)(float*, TslGlobal*))shader_instance->get_function();
+    auto func_ptr = (void(*)(float3*, TslGlobal*))shader_instance->get_function();
     EXPECT_NE(nullptr, func_ptr);
 
-    float data = 0.0f;
+    float3 data;
     func_ptr(&data, &tsl_global);
-    EXPECT_EQ(123.0f, data);
+    EXPECT_EQ(123.0f, data.x);
+    EXPECT_EQ(2.0f, data.y);
+    EXPECT_EQ(1234.0f, data.z);
 }

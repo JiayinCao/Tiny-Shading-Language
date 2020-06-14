@@ -1370,7 +1370,7 @@ llvm::Value* AstNode_StructDeclaration::codegen(LLVM_Compile_Context& context) c
 }
 
 llvm::Value* AstNode_StructMemberRef::codegen(LLVM_Compile_Context& context) const{
-	auto value_ptr = m_var->get_value_address(context);
+	auto value_ptr = get_value_address(context);
 	return context.builder->CreateLoad(value_ptr);
 }
 
@@ -1469,7 +1469,13 @@ llvm::Value* AstNode_Expression_Texture2DSample::codegen(LLVM_Compile_Context& c
             node = castType<AstNode_Expression>(node->get_sibling());
         }
 
-        return context.builder->CreateCall(texture2d_sample_function, args);
+        auto float3_struct_ty = context.m_structure_type_maps["float3"].m_llvm_type;
+        Value* ret = context.builder->CreateAlloca(float3_struct_ty);
+        args.push_back(ret);
+
+        context.builder->CreateCall(texture2d_sample_function, args);
+
+        return context.builder->CreateLoad(ret);
     }
 
     // emit an error here
