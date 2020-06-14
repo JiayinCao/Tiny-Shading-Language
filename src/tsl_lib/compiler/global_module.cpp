@@ -103,26 +103,6 @@ void GlobalModule::register_tsl_global(GlobalVarList& mapping) {
     m_tsl_global_mapping = mapping;
 }
 
-void GlobalModule::declare_tsl_global(LLVM_Compile_Context& context) {
-    // it is allowed that tsl global has nothing.
-    if (m_tsl_global_mapping.empty())
-        return;
-
-    // assemble the variable types
-    std::vector<Type*> arg_types;
-    for (auto& arg : m_tsl_global_mapping) {
-        auto type = get_type_from_context(arg.m_type, context);
-        // this is a VERY DIRTY hack, I'll try to get back to it once most features are done.
-        if (!type)
-            type = get_int_32_ptr_ty(context);
-        arg_types.push_back(type);
-    }
-
-    const std::string tsl_global_name = "Tsl_Global";
-    context.tsl_global_ty = StructType::create(arg_types, tsl_global_name);
-    context.m_tsl_global_mapping = m_tsl_global_mapping;
-}
-
 ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureVarList& arg_list, int structure_size) {
     std::lock_guard<std::mutex> lock(m_closure_mutex);
 
@@ -273,6 +253,22 @@ void GlobalModule::declare_global_module(LLVM_Compile_Context& context){
     Function* texture2d_sample_function = Function::Create(FunctionType::get(get_void_ty(context), { get_int_32_ptr_ty(context) , get_float_ty(context), get_float_ty(context), float3_struct_llvm_type->getPointerTo() }, false), Function::ExternalLinkage, "TSL_TEXTURE2D_SAMPLE", context.module);
     auto type = texture2d_sample_function->getReturnType();
     context.m_func_symbols["TSL_TEXTURE2D_SAMPLE"] = std::make_pair(texture2d_sample_function, nullptr);
+
+    if (m_tsl_global_mapping.size()) {
+        // assemble the variable types
+        std::vector<Type*> arg_types;
+        for (auto& arg : m_tsl_global_mapping) {
+            auto type = get_type_from_context(arg.m_type, context);
+            // this is a VERY DIRTY hack, I'll try to get back to it once most features are done.
+            if (!type)
+                type = get_int_32_ptr_ty(context);
+            arg_types.push_back(type);
+        }
+
+        const std::string tsl_global_name = "Tsl_Global";
+        context.tsl_global_ty = StructType::create(arg_types, tsl_global_name);
+        context.m_tsl_global_mapping = m_tsl_global_mapping;
+    }
 }
 
 TSL_NAMESPACE_END

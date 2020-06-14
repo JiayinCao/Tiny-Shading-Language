@@ -112,14 +112,14 @@ inline Tsl_Namespace::ShaderArgumentTypeEnum type_from_internal_type(const Tsl_N
 }
 
 inline llvm::Type* get_type_from_context(const std::string& type, Tsl_Namespace::LLVM_Compile_Context& context) {
-    if( type == "int" )
+    if (type == "int")
         return get_int_32_ty(context);
-    else if( type == "float" )
+    else if (type == "float")
         return get_float_ty(context);
-    else if( type == "float3" )
-        return get_float_ptr_ty(context);
+    else if (type == "float3")
+        return context.m_structure_type_maps["float3"].m_llvm_type;
     else if( type == "float4" )
-        return get_float_ptr_ty(context);
+        return context.m_structure_type_maps["float4"].m_llvm_type;
     else if( type == "double" )
         return get_double_ty(context);
     else if( type == "matrix" )

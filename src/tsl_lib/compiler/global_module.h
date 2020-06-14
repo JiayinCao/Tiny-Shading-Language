@@ -60,9 +60,6 @@ public:
     // declare some global data structure type
     void            declare_closure_tree_types(llvm::LLVMContext& context, StructSymbolTable* mapping = nullptr );
 
-    // declare tsl global
-    void            declare_tsl_global(LLVM_Compile_Context& context);
-
     // get declaration
     llvm::Function* declare_closure_function(const std::string& name, LLVM_Compile_Context& context);
 	// declare global function

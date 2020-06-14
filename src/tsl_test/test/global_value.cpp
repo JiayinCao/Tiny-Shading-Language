@@ -36,6 +36,27 @@ TEST(GlobalValue, AccessData) {
     EXPECT_EQ(123.0f, data);
 }
 
+TEST(GlobalValue, AccessDataFloat3) {
+    auto shader_source = R"(
+        shader function_name(out float var){
+            color diff = global_value<diffuse>;
+            var = diff.g;
+        }
+    )";
+
+    TslGlobal tsl_global;
+    tsl_global.intensity = 321.0f;
+    tsl_global.diffuse = make_float3(1.0f, 123.0f, 3.0f);
+
+    ShadingSystem shading_system;
+    auto ret = compile_shader<void(*)(float*, TslGlobal*)>(shader_source, shading_system);
+    auto func_ptr = ret.first;
+
+    float data = 0.0f;
+    func_ptr(&data, &tsl_global);
+    EXPECT_EQ(123.0f, data);
+}
+
 class SimpleMemoryAllocator : public MemoryAllocator {
 public:
     void* allocate(unsigned int size) const override {
