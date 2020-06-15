@@ -56,6 +56,11 @@ DECLARE_CLOSURE_TYPE_VAR(ClosureTypeBxdfWithDouble, double, roughness)
 DECLARE_CLOSURE_TYPE_VAR(ClosureTypeBxdfWithDouble, float, specular)
 DECLARE_CLOSURE_TYPE_END(ClosureTypeBxdfWithDouble)
 
+DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeLambertInSORT)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambertInSORT, float3, base_color)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambertInSORT, float3, normal)
+DECLARE_CLOSURE_TYPE_END(ClosureTypeLambertInSORT)
+
 inline void validate_shader(const char* shader_source, bool valid = true, TslCompiler* compiler = nullptr) {
     ShadingSystem shading_system;
     auto shading_context = shading_system.make_shading_context();

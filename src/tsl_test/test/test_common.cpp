@@ -46,3 +46,8 @@ IMPLEMENT_CLOSURE_TYPE_BEGIN(ClosureTypeBxdfWithDouble)
 IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeBxdfWithDouble, double, roughness)
 IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeBxdfWithDouble, float, specular)
 IMPLEMENT_CLOSURE_TYPE_END(ClosureTypeBxdfWithDouble)
+
+IMPLEMENT_CLOSURE_TYPE_BEGIN(ClosureTypeLambertInSORT)
+IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambertInSORT, float3, base_color)
+IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambertInSORT, float3, normal)
+IMPLEMENT_CLOSURE_TYPE_END(ClosureTypeLambertInSORT)

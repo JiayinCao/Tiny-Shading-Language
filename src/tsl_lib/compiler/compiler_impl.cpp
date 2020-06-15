@@ -468,6 +468,7 @@ bool TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, S
         const auto is_input = !arg.m_is_output;
 
         if (is_input) {
+            bool found_connection = false;
             auto& connections = sg->m_shader_group_template_impl->m_shader_unit_connections;
             if (connections.count(su->get_name())) {
                 auto& connection = connections[su->get_name()];
@@ -476,11 +477,14 @@ bool TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, S
                     auto var = var_mapping[source.first][source.second];
                     auto loaded_var = context.builder->CreateLoad(var);
                     callee_args.push_back(loaded_var);
+
+                    found_connection = true;
                 } else {
                     // emit an error here, something is wrong
                 }
             }
-            else {
+            
+            if( !found_connection ){
                 bool need_allocation = true;
 
                 // check if this input is connected with exposed argument of the shader group first

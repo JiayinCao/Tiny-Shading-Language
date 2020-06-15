@@ -622,3 +622,99 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
     raw_function(&closure);
     EXPECT_EQ(1231.0f * 0.2f + 3.0f, closure);
 }
+
+// This is a real problem I met during integration of TSL in SORT.
+TEST(ShaderGroup, RealProblem0) {
+    // global tsl shading system
+    ShadingSystem shading_system;
+
+    Tsl_MemoryAllocator ma;
+    shading_system.register_memory_allocator(&ma);
+
+    // make a shading context for shader compiling, since there is only one thread involved in this unit test, it is good enough.
+    auto shading_context = shading_system.make_shading_context();
+
+    // registered closure id
+    const auto closure_id = ClosureTypeLambertInSORT::RegisterClosure("Lambert", shading_system);
+
+    // the root shader node, this usually matches to the output node in material system
+    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader", R"(
+        shader output_node( in closure Surface, out closure out_bxdf ){
+            out_bxdf = Surface;
+        }
+    )");
+    EXPECT_NE(nullptr, root_shader_unit);
+
+    // a bxdf node
+    const auto bxdf_shader_unit = shading_context->compile_shader_unit_template("bxdf_shader", R"(
+        shader bxdf_lambert(color Diffuse, vector Normal, out closure Result){
+            Result = make_closure<Lambert>( Diffuse , Normal );
+        }
+    )");
+    EXPECT_NE(nullptr, bxdf_shader_unit);
+
+    // a constant color node
+    const auto constant_color_unit = shading_context->compile_shader_unit_template("constant_color", R"(
+        shader constant_color( color Color, out color Result ){
+            Result = Color;
+        }
+    )");
+    EXPECT_NE(nullptr, constant_color_unit);
+
+    // make a shader group
+    auto shader_group = shading_context->begin_shader_group_template("first shader");
+    EXPECT_NE(nullptr, shader_group);
+
+    // add the two shader units in this group
+    auto ret = shader_group->add_shader_unit("root_shader", root_shader_unit, true);
+    EXPECT_EQ(true, ret);
+    ret = shader_group->add_shader_unit("bxdf_shader", bxdf_shader_unit);
+    EXPECT_EQ(true, ret);
+    ret = shader_group->add_shader_unit("constant_color", constant_color_unit);
+    EXPECT_EQ(true, ret);
+
+    // setup connections between shader units
+    shader_group->connect_shader_units("bxdf_shader", "Result", "root_shader", "Surface");
+    shader_group->connect_shader_units("constant_color", "Result", "bxdf_shader", "Diffuse");
+
+    // expose the shader interface
+    ArgDescriptor arg;
+    arg.m_name = "out_bxdf";
+    arg.m_type = TSL_TYPE_CLOSURE;
+    arg.m_is_output = true;
+    shader_group->expose_shader_argument("root_shader", "out_bxdf", arg);
+
+    ShaderUnitInputDefaultValue ii;
+    ii.m_type = ShaderArgumentTypeEnum::TSL_TYPE_FLOAT3;
+    ii.m_val.m_float3 = make_float3( 1.0f, 2.0f, 3.0f );
+    shader_group->init_shader_input("constant_color", "Color", ii);
+
+    ii.m_type = ShaderArgumentTypeEnum::TSL_TYPE_FLOAT3;
+    ii.m_val.m_float3 = make_float3(0.0f, 1.0f, 0.0f);
+    shader_group->init_shader_input("bxdf_shader", "Normal", ii);
+
+    // resolve the shader group
+    ret = shading_context->end_shader_group_template(shader_group);
+    EXPECT_EQ(true, ret);
+
+    auto shader_instance = shader_group->make_shader_instance();
+    ret = shading_context->resolve_shader_instance(shader_instance.get());
+    EXPECT_EQ(true, ret);
+
+    // get the function pointer
+    auto raw_function = (void(*)(ClosureTreeNodeBase**))shader_instance->get_function();
+    EXPECT_NE(nullptr, raw_function);
+
+    // execute the shader
+    ClosureTreeNodeBase* closure = nullptr;
+    raw_function(&closure);
+    EXPECT_EQ(closure_id, closure->m_id);
+
+    ClosureTypeLambertInSORT* param = (ClosureTypeLambertInSORT*)closure->m_params;
+    EXPECT_EQ(1.0f, param->base_color.x);
+    EXPECT_EQ(2.0f, param->base_color.y);
+    EXPECT_EQ(3.0f, param->base_color.z);
+    EXPECT_EQ(0.0f, param->normal.x);
+    EXPECT_EQ(1.0f, param->normal.y);
+    EXPECT_EQ(0.0f, param->normal.z);
+}
