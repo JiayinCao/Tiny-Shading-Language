@@ -80,6 +80,8 @@ private:
 	/**< The type of base closure node. */
 	const llvm::Type*   m_closure_base_type = nullptr;
 
+    Tsl_Namespace::LLVM_Compile_Context m_llvm_compiling_context;
+
     /**< Tsl global metadata. */
     GlobalVarList m_tsl_global_mapping;
     int m_tsl_global_size = 0;

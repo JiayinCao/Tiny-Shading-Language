@@ -46,10 +46,12 @@ bool GlobalModule::init() {
     // declare some global data structure
     declare_closure_tree_types(m_llvm_context);
 
-    // memory mallocation
-    // std::vector<Type*> proto_args;
-    // proto_args.push_back(Type::getInt32Ty(m_llvm_context));
-    // m_malloc_function = Function::Create(FunctionType::get(Type::getInt32PtrTy(m_llvm_context), proto_args, false), Function::ExternalLinkage, "TSL_MALLOC", m_module.get());
+    // construct the llvm compile context
+    m_llvm_compiling_context.module = m_module.get();
+    m_llvm_compiling_context.context = &m_llvm_context;
+
+    // declare tsl global data
+    declare_global_module(m_llvm_compiling_context);
 
     return true;
 }
@@ -112,12 +114,12 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureVa
         return it->second.m_closure_id;
     
 	// construct the llvm compile context
-    Tsl_Namespace::LLVM_Compile_Context llvm_compiling_context;
-    llvm_compiling_context.module = m_module.get();
-    llvm_compiling_context.context = &m_llvm_context;
+    //Tsl_Namespace::LLVM_Compile_Context llvm_compiling_context;
+    //llvm_compiling_context.module = m_module.get();
+    //llvm_compiling_context.context = &m_llvm_context;
 
     // declare tsl global data
-    declare_global_module(llvm_compiling_context);
+    // declare_global_module(llvm_compiling_context);
 
     const auto closure_type_name = "closure_type_" + name;
     const auto function_name = "make_closure_" + name;
@@ -125,10 +127,10 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureVa
 	// assemble the variable types
     std::vector<Type*> arg_types;
     for (auto& arg : arg_list) {
-        auto type = get_type_from_context(arg.m_type, llvm_compiling_context);
+        auto type = get_type_from_context(arg.m_type, m_llvm_compiling_context);
         // this is a VERY DIRTY hack, I'll try to get back to it once most features are done.
         if (!type)
-            type = get_int_32_ptr_ty(llvm_compiling_context);
+            type = get_int_32_ptr_ty(m_llvm_compiling_context);
         arg_types.push_back(type);
     }
 
@@ -140,7 +142,7 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureVa
     IRBuilder<> builder(BasicBlock::Create(m_llvm_context, "EntryBlock", function));
 
     // get the function to allocate memory
-    auto malloc_function = llvm_compiling_context.m_func_symbols["TSL_MALLOC"].first;
+    auto malloc_function = m_llvm_compiling_context.m_func_symbols["TSL_MALLOC"].first;
 
     // allocate a structure for keeping parameters
     const auto param_table_ptr = builder.CreateCall(malloc_function, { ConstantInt::get(m_llvm_context, APInt(32, structure_size)) }, "TSL_MALLOC");
@@ -151,10 +153,10 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureVa
         const auto& arg = arg_list[i];
 
         // this obviously won't work for pointer type data, I will fix it later.
-        auto var_type = get_type_from_context(arg.m_type, llvm_compiling_context);
+        auto var_type = get_type_from_context(arg.m_type, m_llvm_compiling_context);
         // this is a VERY DIRTY hack, I'll try to get back to it once most features are done.
         if (!var_type)
-            var_type = get_int_32_ptr_ty(llvm_compiling_context);
+            var_type = get_int_32_ptr_ty(m_llvm_compiling_context);
 
         const auto var_ptr = builder.CreateConstGEP2_32(nullptr, converted_param_table_ptr, 0, i);
         builder.CreateStore(function->getArg(i), var_ptr);
@@ -185,8 +187,6 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureVa
     }
 
     m_closures.insert(make_pair(name, ClosureItem(m_current_closure_id, arg_list, structure_size)));
-
-    function->print(errs());
 
     return m_current_closure_id++;
 }
