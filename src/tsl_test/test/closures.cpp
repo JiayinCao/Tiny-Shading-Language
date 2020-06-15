@@ -48,6 +48,39 @@ TEST(Closure, ClosureMake) {
     EXPECT_EQ(lambert_param->normal, 2.0f);
 }
 
+TEST(Closure, ClosureMakeWithFloat3) {
+    ShadingSystem shading_system;
+
+    Tsl_MemoryAllocator ma;
+    shading_system.register_memory_allocator(&ma);
+
+    // register lambert closure
+    const auto closure_id = ClosureTypeRandom0::RegisterClosure("random0", shading_system);
+
+    auto shader_source = R"(
+        shader closure_make(out closure o0){
+            color diffuse;
+            diffuse.r = 1.0f;
+            diffuse.g = 2.0f;
+            diffuse.b = 3.0f;
+            o0 = make_closure<random0>( diffuse, diffuse );
+        }
+    )";
+
+    Tsl_Namespace::ClosureTreeNodeBase* root = nullptr;
+    auto ret = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeBase**)>(shader_source, shading_system);
+    auto func_ptr = ret.first;
+    func_ptr(&root);
+
+    auto random_param = (ClosureTypeRandom0*)root->m_params;
+    EXPECT_NE(root, nullptr);
+    EXPECT_EQ(root->m_id, closure_id);
+    EXPECT_NE(root->m_params, nullptr);
+    EXPECT_EQ(random_param->roughness.x, 1.0f);
+    EXPECT_EQ(random_param->roughness.y, 2.0f);
+    EXPECT_EQ(random_param->roughness.z, 3.0f);
+}
+
 // this needs to wait for TSL to support double literal and type conversion later.
 TEST(Closure, ClosureMakeWithDouble) {
     ShadingSystem shading_system;

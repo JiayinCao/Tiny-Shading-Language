@@ -79,7 +79,6 @@ private:
 
 	/**< The type of base closure node. */
 	const llvm::Type*   m_closure_base_type = nullptr;
-    llvm::Function*     m_malloc_function = nullptr;
 
     /**< Tsl global metadata. */
     GlobalVarList m_tsl_global_mapping;

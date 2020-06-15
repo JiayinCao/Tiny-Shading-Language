@@ -38,6 +38,10 @@ IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, float, specular)
 IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, void*, closure)
 IMPLEMENT_CLOSURE_TYPE_END(ClosureTypeLayeredBxdf)
 
+IMPLEMENT_CLOSURE_TYPE_BEGIN(ClosureTypeRandom0)
+IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeRandom0, float3, roughness)
+IMPLEMENT_CLOSURE_TYPE_END(ClosureTypeRandom0)
+
 IMPLEMENT_CLOSURE_TYPE_BEGIN(ClosureTypeBxdfWithDouble)
 IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeBxdfWithDouble, double, roughness)
 IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeBxdfWithDouble, float, specular)

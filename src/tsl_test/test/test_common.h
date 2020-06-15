@@ -41,6 +41,10 @@ DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float, roughness)
 DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float, specular)
 DECLARE_CLOSURE_TYPE_END(ClosureTypeMicrofacet)
 
+DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeRandom0)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeRandom0, float3, roughness)
+DECLARE_CLOSURE_TYPE_END(ClosureTypeRandom0)
+
 DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeLayeredBxdf)
 DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, float, roughness)
 DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, float, specular)
