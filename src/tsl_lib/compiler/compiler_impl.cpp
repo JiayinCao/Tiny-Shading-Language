@@ -127,6 +127,9 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnitTemplate* su) 
     // not verbose for now, this should be properly exported through compiler option later.
     makeVerbose(false);
 
+    // reset the compiler every time it needs to compile new code
+    reset();
+
     // initialize flex scanner
     m_scanner = nullptr;
     yylex_init(&m_scanner);
@@ -268,6 +271,9 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderInstance* si) {
 }
 
 TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
+    // reset the compiler every time it needs to compile new code
+    reset();
+
     if (!sg)
         return TSL_Resolving_InvalidInput;
 
