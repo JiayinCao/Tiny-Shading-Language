@@ -68,12 +68,12 @@ TEST(ShaderGroup, BasicShaderGroup) {
     shader_group->expose_shader_argument("root_shader", "out_bxdf", arg);
 
     // resolve the shader group
-    ret = shading_context->end_shader_group_template(shader_group);
-    EXPECT_EQ(true, ret);
+    auto status = shading_context->end_shader_group_template(shader_group);
+    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, status);
 
     auto shader_instance = shader_group->make_shader_instance();
-    ret = shading_context->resolve_shader_instance(shader_instance.get());
-    EXPECT_EQ(true, ret);
+    status = shading_context->resolve_shader_instance(shader_instance.get());
+    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, status);
 
     // get the function pointer
     auto raw_function = (void(*)(ClosureTreeNodeBase**))shader_instance->get_function();
@@ -158,12 +158,12 @@ TEST(ShaderGroup, DuplicateShaderUnits) {
     shader_group->expose_shader_argument("root_shader", "out_bxdf", arg);
 
     // resolve the shader group
-    ret = shading_context->end_shader_group_template(shader_group);
-    EXPECT_EQ(true, ret);
+    auto status = shading_context->end_shader_group_template(shader_group);
+    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, status);
 
     auto shader_instance = shader_group->make_shader_instance();
-    ret = shading_context->resolve_shader_instance(shader_instance.get());
-    EXPECT_EQ(true, ret);
+    status = shading_context->resolve_shader_instance(shader_instance.get());
+    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, status);
 
     // get the function pointer
     auto raw_function = (void(*)(ClosureTreeNodeBase**))shader_instance->get_function();
@@ -241,12 +241,12 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
     shader_group->expose_shader_argument("bxdf_shader", "in_bxdf", arg);
 
     // resolve the shader group
-    ret = shading_context->end_shader_group_template(shader_group);
-    EXPECT_EQ(true, ret);
+    auto status = shading_context->end_shader_group_template(shader_group);
+    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, status);
 
     auto shader_instance = shader_group->make_shader_instance();
-    ret = shading_context->resolve_shader_instance(shader_instance.get());
-    EXPECT_EQ(true, ret);
+    status = shading_context->resolve_shader_instance(shader_instance.get());
+    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, status);
 
     // get the function pointer
     auto raw_function = (void(*)(float*, float))shader_instance->get_function();
@@ -325,12 +325,12 @@ TEST(ShaderGroup, ShaderGroupArgTypes) {
     shader_group->expose_shader_argument("root_shader", "c", arg);
 
     // resolve the shader group
-    ret = shading_context->end_shader_group_template(shader_group);
-    EXPECT_EQ(true, ret);
+    auto status = shading_context->end_shader_group_template(shader_group);
+    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, status);
 
     auto shader_instance = shader_group->make_shader_instance();
-    ret = shading_context->resolve_shader_instance(shader_instance.get());
-    EXPECT_EQ(true, ret);
+    status = shading_context->resolve_shader_instance(shader_instance.get());
+    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, status);
 
     // get the function pointer
     auto raw_function = (void(*)(int*, float*, double*, bool*, Tsl_Namespace::float3*, ClosureTreeNodeBase**))shader_instance->get_function();
@@ -439,12 +439,12 @@ TEST(ShaderGroup, ShaderGroupInputDefaults) {
     shader_group->init_shader_input("root_shader", "if3", if3);
 
     // resolve the shader group
-    ret = shading_context->end_shader_group_template(shader_group);
-    EXPECT_EQ(true, ret);
+    auto status = shading_context->end_shader_group_template(shader_group);
+    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, status);
 
     auto shader_instance = shader_group->make_shader_instance();
-    ret = shading_context->resolve_shader_instance(shader_instance.get());
-    EXPECT_EQ(true, ret);
+    status = shading_context->resolve_shader_instance(shader_instance.get());
+    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, status);
 
     // get the function pointer
     auto raw_function = (void(*)(int*, float*, double*, bool*, Tsl_Namespace::float3*))shader_instance->get_function();
@@ -558,8 +558,8 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
         shader_group0->expose_shader_argument("bxdf_shader", "in_bxdf", arg);
 
         // resolve the shader group
-        ret = shading_context->end_shader_group_template(shader_group0);
-        EXPECT_EQ(true, ret);
+        auto status = shading_context->end_shader_group_template(shader_group0);
+        EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, status);
     }
 
     // a bxdf node
@@ -606,12 +606,12 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
     shader_group1->init_shader_input("inner_shader", "in_bxdf", ii);
 
     // resolve the shader group
-    ret = shading_context->end_shader_group_template(shader_group1);
-    EXPECT_EQ(true, ret);
+    auto status = shading_context->end_shader_group_template(shader_group1);
+    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, status);
 
     auto shader_instance = shader_group1->make_shader_instance();
-    ret = shading_context->resolve_shader_instance(shader_instance.get());
-    EXPECT_EQ(true, ret);
+    status = shading_context->resolve_shader_instance(shader_instance.get());
+    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, status);
 
     // get the function pointer
     auto raw_function = (void(*)(float*))shader_instance->get_function();
@@ -694,12 +694,12 @@ TEST(ShaderGroup, RealProblem0) {
     shader_group->init_shader_input("bxdf_shader", "Normal", ii);
 
     // resolve the shader group
-    ret = shading_context->end_shader_group_template(shader_group);
-    EXPECT_EQ(true, ret);
+    auto status = shading_context->end_shader_group_template(shader_group);
+    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, status);
 
     auto shader_instance = shader_group->make_shader_instance();
-    ret = shading_context->resolve_shader_instance(shader_instance.get());
-    EXPECT_EQ(true, ret);
+    status = shading_context->resolve_shader_instance(shader_instance.get());
+    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, status);
 
     // get the function pointer
     auto raw_function = (void(*)(ClosureTreeNodeBase**))shader_instance->get_function();

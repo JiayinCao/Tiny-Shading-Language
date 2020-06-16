@@ -86,7 +86,7 @@ inline std::pair<T, std::unique_ptr<ShaderInstance>> compile_shader(const char* 
     auto shader_instance = shader_unit_template->make_shader_instance();
 
     // resolve the shader before using it.
-    if(!shading_context->resolve_shader_instance(shader_instance.get()))
+    if(Tsl_Namespace::TSL_Resolving_Succeed != shading_context->resolve_shader_instance(shader_instance.get()))
         return std::make_pair(nullptr, nullptr);
 
     return std::make_pair((T)shader_instance->get_function(), std::move(shader_instance));

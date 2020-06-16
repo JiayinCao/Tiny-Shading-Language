@@ -23,6 +23,7 @@
 #include <vector>
 #include <string>
 #include "tslversion.h"
+#include "status.h"
 #include "closure.h"
 #include "shader_arg_types.h"
 #include "export.h"
@@ -223,7 +224,7 @@ public:
     //!
     //! @param sg       The shader group to be resolved.
     //! @return         Whether the shader is resolved successfully.
-    bool                 end_shader_group_template(ShaderGroupTemplate* sg) const;
+    TSL_Resolving_Status end_shader_group_template(ShaderGroupTemplate* sg) const;
 
     //! @brief  Compile shader unit with source code.
     //!
@@ -239,7 +240,7 @@ public:
     //!
     //! @param si       The shader instance to be resolved.
     //! @return         Whether the shader is resolved successfully.
-    bool                 resolve_shader_instance(ShaderInstance* si) const;
+    TSL_Resolving_Status      resolve_shader_instance(ShaderInstance* si) const;
 
 private:
     //! @brief  Constructor.

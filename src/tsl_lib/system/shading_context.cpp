@@ -165,11 +165,11 @@ ShaderUnitTemplate* ShadingContext::compile_shader_unit_template(const std::stri
     return shader_unit;
 }
 
-bool ShadingContext::end_shader_group_template(ShaderGroupTemplate* sg) const {
+TSL_Resolving_Status ShadingContext::end_shader_group_template(ShaderGroupTemplate* sg) const {
     return m_shading_context_impl->m_compiler->resolve(sg);
 }
 
-bool ShadingContext::resolve_shader_instance(ShaderInstance* si) const {
+TSL_Resolving_Status ShadingContext::resolve_shader_instance(ShaderInstance* si) const {
     return m_shading_context_impl->m_compiler->resolve(si);
 }
 

@@ -29,6 +29,7 @@
 #include <unordered_map>
 #include "tslversion.h"
 #include "types.h"
+#include "status.h"
 
 TSL_NAMESPACE_BEGIN
 
@@ -72,13 +73,13 @@ public:
     //!
     //! @param  sg              The shader group to be resolved.
     //! @return                 Whether the shader is resolved succesfully.
-    bool    resolve(ShaderGroupTemplate* su);
+    TSL_Resolving_Status    resolve(ShaderGroupTemplate* su);
 
     //! @brief  Resolve a shader instance.
     //!
     //! @param  si              The shader instance to be resolved.
     //! @return                 Whether the shader is resolved successfully.
-    bool    resolve(ShaderInstance* si);
+    TSL_Resolving_Status    resolve(ShaderInstance* si);
 
     //! @brief  Get scanner of the compiler
     //!
@@ -165,7 +166,7 @@ private:
     using VarMapping = std::unordered_map<std::string, std::unordered_map<std::string, llvm::Value*>>;
 
     //! @brief  Generate shader group source code
-    bool    generate_shader_source( LLVM_Compile_Context& context, ShaderGroupTemplate* sg, const ShaderUnitTemplateCopy& su, std::unordered_set<std::string>& visited,
+    TSL_Resolving_Status    generate_shader_source( LLVM_Compile_Context& context, ShaderGroupTemplate* sg, const ShaderUnitTemplateCopy& su, std::unordered_set<std::string>& visited,
                                     std::unordered_set<std::string>& being_visited, VarMapping& var_mapping,
                                     const std::unordered_map<std::string, llvm::Function*>& function_mapping, const std::vector<llvm::Value*>& args);
 };

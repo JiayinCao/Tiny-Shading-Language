@@ -21,6 +21,7 @@
 #include <string>
 #include "tslversion.h"
 #include "compiler_impl.h"
+#include "status.h"
 
 TSL_NAMESPACE_BEGIN
 
@@ -50,13 +51,13 @@ public:
     //! All shader unit needs to be resolved after compiling.
     //! @param  sg              The shader group to be resolved.
     //! @return                 Whether the shader unit is resolved succesfully.
-    bool resolve(ShaderGroupTemplate* sg) const;
+    TSL_Resolving_Status resolve(ShaderGroupTemplate* sg) const;
 
     //! @brief  Resolve a shader instance.
     //!
     //! A shader instance needs to be resolved before being put in use.
     //! @return                 Whether the shader instance is successfully resolved.
-    bool resolve(ShaderInstance* si) const;
+    TSL_Resolving_Status resolve(ShaderInstance* si) const;
 
 private:
     std::unique_ptr<TslCompiler_Impl> m_compiler_impl = nullptr;

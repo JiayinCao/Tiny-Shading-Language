@@ -61,7 +61,7 @@ TEST(Texture, SimpleTexture) {
 
     // resolve the shader instance
     const auto resolve_ret = shading_context->resolve_shader_instance(shader_instance.get());
-    EXPECT_EQ(true, resolve_ret);
+    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, resolve_ret);
 
     // get the raw function pointer for execution
     auto func_ptr = (void(*)(float3*, TslGlobal*))shader_instance->get_function();
