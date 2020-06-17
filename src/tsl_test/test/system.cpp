@@ -21,10 +21,8 @@
 USE_TSL_NAMESPACE
 
 TEST(TSL, Basic) {
-    ShadingSystem ss;
-
     // allocate a shading context
-    auto sc = ss.make_shading_context();
+    auto sc = ShadingSystem::get_instance().make_shading_context();
 
     // make sure the context is allocated.
     EXPECT_NE(sc, nullptr);

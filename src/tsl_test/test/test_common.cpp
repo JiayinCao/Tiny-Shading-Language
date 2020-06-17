@@ -51,3 +51,5 @@ IMPLEMENT_CLOSURE_TYPE_BEGIN(ClosureTypeLambertInSORT)
 IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambertInSORT, float3, base_color)
 IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambertInSORT, float3, normal)
 IMPLEMENT_CLOSURE_TYPE_END(ClosureTypeLambertInSORT)
+
+int g_name_counter = 0;

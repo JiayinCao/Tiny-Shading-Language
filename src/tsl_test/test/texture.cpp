@@ -40,7 +40,7 @@ TEST(Texture, SimpleTexture) {
     TextureSimple texture_simple;
 
     // the tsl shading system
-    ShadingSystem shading_system;
+    auto& shading_system = ShadingSystem::get_instance();
     
     // make a shader context
     auto shading_context = shading_system.make_shading_context();

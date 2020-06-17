@@ -477,8 +477,8 @@ TSL_Resolving_Status TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Con
         if (is_input) {
             bool found_connection = false;
             auto& connections = sg->m_shader_group_template_impl->m_shader_unit_connections;
-            if (connections.count(su->get_name())) {
-                auto& connection = connections[su->get_name()];
+            if (connections.count(shader_unit_copy_name)) {
+                auto& connection = connections[shader_unit_copy_name];
                 if (connection.count(name)) {
                     const auto& source = connection[name];
                     auto var = var_mapping[source.first][source.second];

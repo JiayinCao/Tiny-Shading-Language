@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <stdio.h>
 #include <vector>
 #include <memory>
 #include "gtest/gtest.h"
@@ -61,24 +62,35 @@ DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambertInSORT, float3, base_color)
 DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambertInSORT, float3, normal)
 DECLARE_CLOSURE_TYPE_END(ClosureTypeLambertInSORT)
 
-inline void validate_shader(const char* shader_source, bool valid = true, TslCompiler* compiler = nullptr) {
-    ShadingSystem shading_system;
-    auto shading_context = shading_system.make_shading_context();
+extern int g_name_counter;
 
-    const auto shader_unit = shading_context->compile_shader_unit_template("test", shader_source);
+extern ClosureID g_lambert_closure_id;
+extern ClosureID g_random_closure_id;
+extern ClosureID g_bxdf_with_double_id;
+extern ClosureID g_microfacete_id;
+extern ClosureID g_layered_bxdf_id;
+extern ClosureID g_lambert_in_sort_id;
+
+inline void validate_shader(const char* shader_source, bool valid = true, TslCompiler* compiler = nullptr) {
+    auto shading_context = ShadingSystem::get_instance().make_shading_context();
+
+    const auto name = std::to_string(g_name_counter++);
+    const auto shader_unit = shading_context->compile_shader_unit_template(name, shader_source);
     const auto ret = shader_unit != nullptr;
 
     EXPECT_EQ(ret, valid);
 }
 
 template<class T>
-inline std::pair<T, std::unique_ptr<ShaderInstance>> compile_shader(const char* shader_source, ShadingSystem& shading_system) {
-    auto shading_context = shading_system.make_shading_context();
+inline std::pair<T, std::unique_ptr<ShaderInstance>> compile_shader(const char* shader_source) {
+    auto shading_context = ShadingSystem::get_instance().make_shading_context();
 
     // register the tsl global data structure
-    TslGlobal::RegisterGlobal(shading_system);
+    TslGlobal::RegisterGlobal(ShadingSystem::get_instance());
 
-    const auto shader_unit_template = shading_context->compile_shader_unit_template("test", shader_source);
+    // this name is meanless, but I just want something unique
+    const auto name = std::to_string(g_name_counter++);
+    const auto shader_unit_template = shading_context->compile_shader_unit_template(name, shader_source);
 
     if (!shader_unit_template)
         return std::make_pair(nullptr, nullptr);
@@ -91,14 +103,3 @@ inline std::pair<T, std::unique_ptr<ShaderInstance>> compile_shader(const char* 
 
     return std::make_pair((T)shader_instance->get_function(), std::move(shader_instance));
 }
-
-class Tsl_MemoryAllocator : public MemoryAllocator {
-public:
-    void* allocate(unsigned int size) const override {
-        m_memory_holder.push_back(std::move(std::make_unique<char[]>(size)));
-        return m_memory_holder.back().get();
-    }
-
-private:
-    mutable std::vector<std::unique_ptr<char[]>> m_memory_holder;
-};

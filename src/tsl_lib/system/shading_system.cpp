@@ -23,36 +23,44 @@
 
 TSL_NAMESPACE_BEGIN
 
+/** This data structure is only accessable from shading system */
+static std::unique_ptr<ShadingSystem_Impl> g_shading_system_impl = nullptr;
+
 MemoryAllocator* ShadingSystem::m_memory_allocator = nullptr;
+
+ShadingSystem& ShadingSystem::get_instance() {
+    static ShadingSystem ss;
+    return ss;
+}
 
 ShadingSystem::ShadingSystem() {
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
 
-    m_shading_system_impl = new ShadingSystem_Impl();
+    g_shading_system_impl = std::make_unique<ShadingSystem_Impl>();
 
-    m_shading_system_impl->m_global_module = new GlobalModule();
-    m_shading_system_impl->m_global_module->init();
+    g_shading_system_impl->m_global_module = new GlobalModule();
+    g_shading_system_impl->m_global_module->init();
 }
 
 ShadingSystem::~ShadingSystem() {
-    delete m_shading_system_impl;
+    g_shading_system_impl = nullptr;
 }
 
 ShadingContext* ShadingSystem::make_shading_context() {
-    std::lock_guard<std::mutex> lock(m_shading_system_impl->m_context_mutex);
+    std::lock_guard<std::mutex> lock(g_shading_system_impl->m_context_mutex);
 
-    auto shading_context = new ShadingContext(m_shading_system_impl);
-    m_shading_system_impl->m_contexts.insert(std::unique_ptr<ShadingContext>(shading_context));
+    auto shading_context = new ShadingContext(g_shading_system_impl.get());
+    g_shading_system_impl->m_contexts.insert(std::unique_ptr<ShadingContext>(shading_context));
     return shading_context;
 }
 
 ClosureID ShadingSystem::register_closure_type(const std::string& name, ClosureVarList& mapping, int structure_size) {
-    return m_shading_system_impl->m_global_module->register_closure_type(name, mapping, structure_size);
+    return g_shading_system_impl->m_global_module->register_closure_type(name, mapping, structure_size);
 }
 
 void ShadingSystem::register_tsl_global(GlobalVarList& mapping) {
-    return m_shading_system_impl->m_global_module->register_tsl_global(mapping);
+    return g_shading_system_impl->m_global_module->register_tsl_global(mapping);
 }
 
 void ShadingSystem::register_memory_allocator(MemoryAllocator* alloc) {

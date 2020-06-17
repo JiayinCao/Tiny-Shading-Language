@@ -24,7 +24,7 @@ TEST(Thread, Full_Test) {
     // thread number, this should be large enough to make sure it fails if the compiler is not thread safe.
     constexpr int TN = 16;
 
-    ShadingSystem shading_system;
+    auto& shading_system = ShadingSystem::get_instance();
 
     try {
         // Unlike other unit test, this one can cause crash if it is not thread safe.

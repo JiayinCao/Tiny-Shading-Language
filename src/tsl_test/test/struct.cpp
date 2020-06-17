@@ -68,8 +68,7 @@ TEST(Struct, StructureDefineRecusive) {
 		vec2 xy;
 		float z;
 	};
-	ShadingSystem shading_system;
-	auto ret = compile_shader<void(*)(vec3*)>(shader_source, shading_system);
+	auto ret = compile_shader<void(*)(vec3*)>(shader_source);
     auto func_ptr = ret.first;
 
 	vec3 v;
@@ -104,8 +103,7 @@ TEST(Struct, StructureAsArgument) {
 	struct vec2{
 		float x, y;
 	};
-	ShadingSystem shading_system;
-	auto ret = compile_shader<void(*)(vec2*)>(shader_source, shading_system);
+	auto ret = compile_shader<void(*)(vec2*)>(shader_source);
     auto func_ptr = ret.first;
 
 	vec2 v;
@@ -126,8 +124,7 @@ TEST(Struct, IntrinsicDataStructure) {
 	struct float3 {
 		float x, y, z;
 	};
-	ShadingSystem shading_system;
-	auto ret = compile_shader<void(*)(float3*)>(shader_source, shading_system);
+	auto ret = compile_shader<void(*)(float3*)>(shader_source);
     auto func_ptr = ret.first;
 
 	float3 v;

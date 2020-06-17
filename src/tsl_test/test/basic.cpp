@@ -24,8 +24,7 @@ TEST(Basic, SingleFloatOutput) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(float*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(float*)>(shader_source);
     auto func_ptr = ret.first;
 
     float data = 0.0f;
@@ -44,8 +43,7 @@ TEST(Basic, MathOps) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int, int*, int*, int*, int*, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int, int*, int*, int*, int*, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int a, int b) {
@@ -83,8 +81,7 @@ TEST(Basic, Inc_Dec) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int*, int*, int*, int*, int*, int*, int*, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*, int*, int*, int*, int*, int*, int*, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int a) {
@@ -118,8 +115,7 @@ TEST(Basic, And_Or_Xor) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int, int*, int*, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int, int*, int*, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int a, int b) {
@@ -148,8 +144,7 @@ TEST(Basic, ArrayAccess) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int a, int b) {
@@ -178,8 +173,7 @@ TEST(Basic, VariableLifeTime) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int*, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int a, int b) {

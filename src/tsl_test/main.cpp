@@ -18,9 +18,45 @@
 #include <iostream>
 #include "tslversion.h"
 #include "gtest/gtest.h"
+#include "shading_system.h"
+#include "test/test_common.h"
+
+class Tsl_MemoryAllocator : public Tsl_Namespace::MemoryAllocator {
+public:
+    void* allocate(unsigned int size) const override {
+        m_memory_holder.push_back(std::move(std::make_unique<char[]>(size)));
+        return m_memory_holder.back().get();
+    }
+
+private:
+    mutable std::vector<std::unique_ptr<char[]>> m_memory_holder;
+};
+
+ClosureID g_lambert_closure_id = INVALID_CLOSURE_ID;
+ClosureID g_random_closure_id = INVALID_CLOSURE_ID;
+ClosureID g_bxdf_with_double_id = INVALID_CLOSURE_ID;
+ClosureID g_microfacete_id = INVALID_CLOSURE_ID;
+ClosureID g_layered_bxdf_id = INVALID_CLOSURE_ID;
+ClosureID g_lambert_in_sort_id = INVALID_CLOSURE_ID;
 
 int main(int argc, char** argv) {
     std::cout << "--------------------------  " TSL_INTRO_STRING "  --------------------------" << std::endl;
+
+    auto& shading_system = Tsl_Namespace::ShadingSystem::get_instance();
+
+    // register tsl global
+    TslGlobal::RegisterGlobal(shading_system);
+
+    Tsl_MemoryAllocator ma;
+    shading_system.register_memory_allocator(&ma);
+
+    // register all closure types
+    g_lambert_closure_id = ClosureTypeLambert::RegisterClosure("lambert", shading_system);
+    g_random_closure_id  = ClosureTypeRandom0::RegisterClosure("random0", shading_system);
+    g_bxdf_with_double_id = ClosureTypeBxdfWithDouble::RegisterClosure("bxdf_with_double", shading_system);
+    g_microfacete_id = ClosureTypeMicrofacet::RegisterClosure("microfacet", shading_system);
+    g_layered_bxdf_id = ClosureTypeLayeredBxdf::RegisterClosure("layered_bxdf", shading_system);
+    g_lambert_in_sort_id = ClosureTypeLambertInSORT::RegisterClosure("lambert_in_sort", shading_system);
 
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

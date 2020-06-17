@@ -25,7 +25,6 @@
 TSL_NAMESPACE_BEGIN
 
 class ShadingContext;
-struct ShadingSystem_Impl;
 
 //! @brief  Memory allocator.
 /**
@@ -50,9 +49,6 @@ public:
  */
 class TSL_INTERFACE ShadingSystem {
 public:
-    //! @brief  Constructor.
-    ShadingSystem();
-
     //! @brief  Destructor.
     ~ShadingSystem();
 
@@ -62,7 +58,7 @@ public:
     //! of this class comes to end.
     //!
     //! @return     Allocated memory points to an instance of a newly created shading_context.
-    ShadingContext* make_shading_context();
+    ShadingContext*         make_shading_context();
 
     //! @brief  Register closure id.
     //!
@@ -70,27 +66,39 @@ public:
     //! @param  mapping         Mapping of the data inside the closure.
     //! @param  closure_size    Size of the data structure.
     //! @return         Allocated closure id for the closure.
-    ClosureID       register_closure_type(const std::string& name, ClosureVarList& mapping, int closure_size);
+    ClosureID               register_closure_type(const std::string& name, ClosureVarList& mapping, int closure_size);
 
     //! @brief  Register tsl global data.
     //!
     //! @param  mapping     Mapping of the data structure.
-    void            register_tsl_global(GlobalVarList& mapping);
+    void                    register_tsl_global(GlobalVarList& mapping);
 
     //! @brief  Register a memory allocator.
     //!
     //! @param  alloc   Memory allocator pointer
-    void            register_memory_allocator(MemoryAllocator* alloc);
+    void                    register_memory_allocator(MemoryAllocator* alloc);
+
+    //! @brief  Get shading system instance
+    //!
+    //! Shading system is a singleton.
+    static ShadingSystem&   get_instance();
 
     //! @brief  Allocate memory inside shader.
-    static void*    allocate_memory(unsigned int size);
+    static void*            allocate_memory(unsigned int size);
 
 private:
-    /**< Internal data structure of shading system. */
-    ShadingSystem_Impl* m_shading_system_impl = nullptr;
+    //! @brief  Constructor.
+    //!
+    //! Making sure the shading system only has one single instance.
+    ShadingSystem();
+
+    //! @brief  Copy Constructor.
+    //!
+    //! Making sure the shading system only has one single instance.
+    ShadingSystem(const ShadingSystem&) { /* simply don't allow it. */ }
 
     /**< Memory allocator. */
-    static MemoryAllocator*    m_memory_allocator;
+    static MemoryAllocator* m_memory_allocator;
 };
 
 TSL_NAMESPACE_END

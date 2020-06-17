@@ -24,8 +24,7 @@ TEST(VerifyOutput, Basic_Output) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(float*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(float*)>(shader_source);
     auto func_ptr = ret.first;
 
     float test_value = 1.0f;
@@ -41,8 +40,7 @@ TEST(VerifyOutput, Complex_Output) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(float, float, float, float*, float*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(float, float, float, float*, float*)>(shader_source);
     auto func_ptr = ret.first;
 
     float arg0 = 2.0f, arg1 = 3.0f, arg2 = 0.5f;

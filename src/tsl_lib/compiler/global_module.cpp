@@ -113,14 +113,6 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureVa
     if (it != m_closures.end())
         return it->second.m_closure_id;
     
-	// construct the llvm compile context
-    //Tsl_Namespace::LLVM_Compile_Context llvm_compiling_context;
-    //llvm_compiling_context.module = m_module.get();
-    //llvm_compiling_context.context = &m_llvm_context;
-
-    // declare tsl global data
-    // declare_global_module(llvm_compiling_context);
-
     const auto closure_type_name = "closure_type_" + name;
     const auto function_name = "make_closure_" + name;
 

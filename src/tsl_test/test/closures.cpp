@@ -21,13 +21,7 @@
 #include "closure.h"
 
 TEST(Closure, ClosureMake) {
-    ShadingSystem shading_system;
-    
-    Tsl_MemoryAllocator ma;
-    shading_system.register_memory_allocator(&ma);
-
-    // register lambert closure
-    const auto closure_id = ClosureTypeLambert::RegisterClosure("lambert", shading_system);
+    auto& shading_system = ShadingSystem::get_instance();
 
     auto shader_source = R"(
         shader closure_make(out closure o0){
@@ -36,26 +30,20 @@ TEST(Closure, ClosureMake) {
     )";
 
     Tsl_Namespace::ClosureTreeNodeBase* root = nullptr;
-    auto ret = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeBase**)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeBase**)>(shader_source);
     auto func_ptr = ret.first;
     func_ptr(&root);
 
     auto lambert_param = (ClosureTypeLambert*)root->m_params;
 	EXPECT_NE(root, nullptr);
-	EXPECT_EQ(root->m_id, closure_id);
+	EXPECT_EQ(root->m_id, g_lambert_closure_id);
 	EXPECT_NE(root->m_params, nullptr);
     EXPECT_EQ(lambert_param->base_color, 11);
     EXPECT_EQ(lambert_param->normal, 2.0f);
 }
 
 TEST(Closure, ClosureMakeWithFloat3) {
-    ShadingSystem shading_system;
-
-    Tsl_MemoryAllocator ma;
-    shading_system.register_memory_allocator(&ma);
-
-    // register lambert closure
-    const auto closure_id = ClosureTypeRandom0::RegisterClosure("random0", shading_system);
+    auto& shading_system = ShadingSystem::get_instance();
 
     auto shader_source = R"(
         shader closure_make(out closure o0){
@@ -68,13 +56,13 @@ TEST(Closure, ClosureMakeWithFloat3) {
     )";
 
     Tsl_Namespace::ClosureTreeNodeBase* root = nullptr;
-    auto ret = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeBase**)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeBase**)>(shader_source);
     auto func_ptr = ret.first;
     func_ptr(&root);
 
     auto random_param = (ClosureTypeRandom0*)root->m_params;
     EXPECT_NE(root, nullptr);
-    EXPECT_EQ(root->m_id, closure_id);
+    EXPECT_EQ(g_random_closure_id, root->m_id);
     EXPECT_NE(root->m_params, nullptr);
     EXPECT_EQ(random_param->roughness.x, 1.0f);
     EXPECT_EQ(random_param->roughness.y, 2.0f);
@@ -83,13 +71,6 @@ TEST(Closure, ClosureMakeWithFloat3) {
 
 // this needs to wait for TSL to support double literal and type conversion later.
 TEST(Closure, ClosureMakeWithDouble) {
-    ShadingSystem shading_system;
-    
-    Tsl_MemoryAllocator ma;
-    shading_system.register_memory_allocator(&ma);
-
-    const auto closure_id = ClosureTypeBxdfWithDouble::RegisterClosure("bxdf_with_double", shading_system);
-
     auto shader_source = R"(
         shader closure_make(out closure o0){
             o0 = make_closure<bxdf_with_double>( 11.0d , 2.0f );
@@ -97,26 +78,19 @@ TEST(Closure, ClosureMakeWithDouble) {
     )";
 
     Tsl_Namespace::ClosureTreeNodeBase* root = nullptr;
-    auto ret = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeBase**)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeBase**)>(shader_source);
     auto func_ptr = ret.first;
     func_ptr(&root);
 
     auto bxdf_double_param = (ClosureTypeBxdfWithDouble*)root->m_params;
     EXPECT_NE(root, nullptr);
-    EXPECT_EQ(root->m_id, closure_id);
+    EXPECT_EQ(g_bxdf_with_double_id, root->m_id);
     EXPECT_NE(root->m_params, nullptr);
     EXPECT_EQ(bxdf_double_param->roughness, 11.0);
     EXPECT_EQ(bxdf_double_param->specular, 2.0f);
 }
 
 TEST(Closure, ClosureMul) {
-    ShadingSystem shading_system;
-    
-    Tsl_MemoryAllocator ma;
-    shading_system.register_memory_allocator(&ma);
-
-    const auto closure_id = ClosureTypeLambert::RegisterClosure("lambert", shading_system);
-
     auto shader_source = R"(
         shader closure_mul(out closure o0){
             o0 = 3.0 * make_closure<lambert>( 11 , 2.0 );
@@ -124,7 +98,7 @@ TEST(Closure, ClosureMul) {
     )";
 
     Tsl_Namespace::ClosureTreeNodeMul* root = nullptr;
-    auto ret = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeMul**)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeMul**)>(shader_source);
     auto func_ptr = ret.first;
     func_ptr(&root);
 
@@ -133,21 +107,13 @@ TEST(Closure, ClosureMul) {
     EXPECT_EQ(root->m_id, CLOSURE_MUL);
     EXPECT_NE(root->m_closure, nullptr);
     EXPECT_NE(root->m_closure->m_params, nullptr);
-    EXPECT_EQ(root->m_closure->m_id, closure_id);
+    EXPECT_EQ(root->m_closure->m_id, g_lambert_closure_id);
     auto lambert_param = (ClosureTypeLambert*)root->m_closure->m_params;
     EXPECT_EQ(lambert_param->base_color, 11);
     EXPECT_EQ(lambert_param->normal, 2.0f);
 }
 
 TEST(Closure, ClosureAdd) {
-	ShadingSystem shading_system;
-
-    Tsl_MemoryAllocator ma;
-    shading_system.register_memory_allocator(&ma);
-
-    const auto closure_id_lambert = ClosureTypeLambert::RegisterClosure("lambert", shading_system);
-    const auto closure_id_microfacet = ClosureTypeMicrofacet::RegisterClosure("microfacet", shading_system);
-
 	auto shader_source = R"(
         shader closure_add(out closure o0){
             o0 = make_closure<lambert>( 13 , 4.0 ) + make_closure<microfacet>( 123.0 , 5.0 );
@@ -155,21 +121,21 @@ TEST(Closure, ClosureAdd) {
     )";
 
 	Tsl_Namespace::ClosureTreeNodeAdd* root = nullptr;
-	auto ret = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeAdd**)>(shader_source, shading_system);
+	auto ret = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeAdd**)>(shader_source);
     auto func_ptr = ret.first;
 	func_ptr(&root);
 
 	EXPECT_NE(root, nullptr);
 	EXPECT_EQ(root->m_id, CLOSURE_ADD);
     EXPECT_NE(root->m_closure0, nullptr);
-    EXPECT_EQ(root->m_closure0->m_id, closure_id_lambert);
+    EXPECT_EQ(root->m_closure0->m_id, g_lambert_closure_id);
     EXPECT_NE(root->m_closure0->m_params, nullptr);
     auto closure0 = (ClosureTypeLambert*)root->m_closure0->m_params;
     EXPECT_EQ(closure0->base_color, 13);
     EXPECT_EQ(closure0->normal, 4.0f);
 
     EXPECT_NE(root->m_closure1, nullptr);
-    EXPECT_EQ(root->m_closure1->m_id, closure_id_microfacet);
+    EXPECT_EQ(root->m_closure1->m_id, g_microfacete_id);
     EXPECT_NE(root->m_closure1->m_params, nullptr);
     auto closure1 = (ClosureTypeMicrofacet*)root->m_closure1->m_params;
     EXPECT_EQ(closure1->roughness, 123.0f);
@@ -177,14 +143,8 @@ TEST(Closure, ClosureAdd) {
 }
 
 TEST(Closure, ClosureComplex) {
-    ShadingSystem shading_system;
+    auto& shading_system = ShadingSystem::get_instance();
     
-    Tsl_MemoryAllocator ma;
-    shading_system.register_memory_allocator(&ma);
-
-    const auto closure_id_lambert = ClosureTypeLambert::RegisterClosure("lambert", shading_system);
-    const auto closure_id_microfacet = ClosureTypeMicrofacet::RegisterClosure("microfacet", shading_system);
-
     auto shader_source = R"(
         shader closure_add(out closure o0){
             o0 = ( 0.3 * make_closure<lambert>( 13 , 4.0 ) + make_closure<microfacet>( 123.0 , 5.0 ) ) * 0.5;
@@ -192,7 +152,7 @@ TEST(Closure, ClosureComplex) {
     )";
 
     Tsl_Namespace::ClosureTreeNodeMul* root = nullptr;
-    auto ret = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeMul**)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeMul**)>(shader_source);
     auto func_ptr = ret.first;
     func_ptr(&root);
 
@@ -210,26 +170,20 @@ TEST(Closure, ClosureComplex) {
     EXPECT_EQ(closure_lambert_mul->m_weight, 0.3f);
     EXPECT_NE(closure_lambert_mul->m_closure, nullptr);
     EXPECT_NE(closure_lambert_mul->m_closure, nullptr);
-    EXPECT_EQ(closure_lambert_mul->m_closure->m_id, closure_id_lambert);
+    EXPECT_EQ(closure_lambert_mul->m_closure->m_id, g_lambert_closure_id);
     EXPECT_NE(closure_lambert_mul->m_closure->m_params, nullptr);
     auto lambert_param = (ClosureTypeLambert*)closure_lambert_mul->m_closure->m_params;
     EXPECT_EQ(lambert_param->base_color, 13);
     EXPECT_EQ(lambert_param->normal, 4.0f);
 
-    EXPECT_EQ(closure_add->m_closure1->m_id, closure_id_microfacet);
+    EXPECT_EQ(closure_add->m_closure1->m_id, g_microfacete_id);
     auto microfacet_param = (ClosureTypeMicrofacet*)closure_add->m_closure1->m_params;
     EXPECT_EQ(microfacet_param->roughness, 123.0f);
     EXPECT_EQ(microfacet_param->specular, 5.0f);
 }
 
 TEST(Closure, ClosureAsOtherClosureInput) {
-    ShadingSystem shading_system;
-    
-    Tsl_MemoryAllocator ma;
-    shading_system.register_memory_allocator(&ma);
-
-    const auto closure_id_layered = ClosureTypeLayeredBxdf::RegisterClosure("layered_bxdf", shading_system);
-    const auto closure_id_microfacet = ClosureTypeMicrofacet::RegisterClosure("microfacet", shading_system);
+    auto& shading_system = ShadingSystem::get_instance();
 
     auto shader_source = R"(
         shader closure_add(out closure o0){
@@ -239,12 +193,12 @@ TEST(Closure, ClosureAsOtherClosureInput) {
     )";
 
     Tsl_Namespace::ClosureTreeNodeBase* root = nullptr;
-    auto ret = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeBase**)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeBase**)>(shader_source);
     auto func_ptr = ret.first;
     func_ptr(&root);
 
     EXPECT_NE(root, nullptr);
-    EXPECT_EQ(root->m_id, closure_id_layered);
+    EXPECT_EQ(root->m_id, g_layered_bxdf_id);
     EXPECT_NE(root->m_params, nullptr);
 
     ClosureTypeLayeredBxdf* layered_bxdf_params = (ClosureTypeLayeredBxdf*)root->m_params;
@@ -252,7 +206,7 @@ TEST(Closure, ClosureAsOtherClosureInput) {
     EXPECT_EQ(layered_bxdf_params->specular, 4.0);
 
     ClosureTreeNodeBase* bottom_bxdf = (ClosureTreeNodeBase*)layered_bxdf_params->closure;
-    EXPECT_EQ(bottom_bxdf->m_id, closure_id_microfacet);
+    EXPECT_EQ(bottom_bxdf->m_id, g_microfacete_id);
     ClosureTypeMicrofacet* mf_bxdf = (ClosureTypeMicrofacet*)bottom_bxdf->m_params;
 
     EXPECT_EQ(mf_bxdf->roughness, 123.0f);

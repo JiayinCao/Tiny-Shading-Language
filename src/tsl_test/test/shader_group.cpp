@@ -20,19 +20,13 @@
 // this is a very simple real practical use case that demonstrating how tsl can fit in a ray tracing renderer.
 TEST(ShaderGroup, BasicShaderGroup) {
     // global tsl shading system
-    ShadingSystem shading_system;
-
-    Tsl_MemoryAllocator ma;
-    shading_system.register_memory_allocator(&ma);
+    auto& shading_system = ShadingSystem::get_instance();
 
     // make a shading context for shader compiling, since there is only one thread involved in this unit test, it is good enough.
     auto shading_context = shading_system.make_shading_context();
 
-    // registered closure id
-    const auto closure_id = ClosureTypeLambert::RegisterClosure("Lambert", shading_system);
-
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader", R"(
+    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader_BasicShaderGroup", R"(
         shader output_node( in closure in_bxdf , out closure out_bxdf ){
             out_bxdf = in_bxdf * 0.5f;
         }
@@ -40,32 +34,32 @@ TEST(ShaderGroup, BasicShaderGroup) {
     EXPECT_NE(nullptr, root_shader_unit);
 
     // a bxdf node
-    const auto bxdf_shader_unit = shading_context->compile_shader_unit_template("bxdf_shader", R"(
+    const auto bxdf_shader_unit = shading_context->compile_shader_unit_template("bxdf_shader_BasicShaderGroup", R"(
         shader lambert_node( out closure out_bxdf ){
-            out_bxdf = make_closure<Lambert>( 111, 4.0f );
+            out_bxdf = make_closure<lambert>( 111, 4.0f );
         }
     )");
     EXPECT_NE(nullptr, bxdf_shader_unit);
 
     // make a shader group
-    auto shader_group = shading_context->begin_shader_group_template("first shader");
+    auto shader_group = shading_context->begin_shader_group_template("BasicShaderGroup");
     EXPECT_NE(nullptr, shader_group);
 
     // add the two shader units in this group
-    auto ret = shader_group->add_shader_unit("root_shader", root_shader_unit, true);
+    auto ret = shader_group->add_shader_unit("root_shader_BasicShaderGroup", root_shader_unit, true);
     EXPECT_EQ(true, ret);
-    ret = shader_group->add_shader_unit("bxdf_shader_test", bxdf_shader_unit);
+    ret = shader_group->add_shader_unit("bxdf_shader_test_BasicShaderGroup", bxdf_shader_unit);
     EXPECT_EQ(true, ret);
 
     // setup connections between shader units
-    shader_group->connect_shader_units("bxdf_shader_test", "out_bxdf", "root_shader", "in_bxdf");
+    shader_group->connect_shader_units("bxdf_shader_test_BasicShaderGroup", "out_bxdf", "root_shader_BasicShaderGroup", "in_bxdf");
 
     // expose the shader interface
     ArgDescriptor arg;
     arg.m_name = "out_bxdf";
     arg.m_type = TSL_TYPE_CLOSURE;
     arg.m_is_output = true;
-    shader_group->expose_shader_argument("root_shader", "out_bxdf", arg);
+    shader_group->expose_shader_argument("root_shader_BasicShaderGroup", "out_bxdf", arg);
 
     // resolve the shader group
     auto status = shading_context->end_shader_group_template(shader_group);
@@ -86,7 +80,7 @@ TEST(ShaderGroup, BasicShaderGroup) {
 
     ClosureTreeNodeMul* mul_closure = (ClosureTreeNodeMul*)closure;
     EXPECT_EQ(0.5f, mul_closure->m_weight);
-    EXPECT_EQ(closure_id, mul_closure->m_closure->m_id);
+    EXPECT_EQ(g_lambert_closure_id, mul_closure->m_closure->m_id);
 
     closure = mul_closure->m_closure;
     ClosureTypeLambert* lambert_param = (ClosureTypeLambert*)closure->m_params;
@@ -98,19 +92,13 @@ TEST(ShaderGroup, BasicShaderGroup) {
 // It could even have different default values if needed.
 TEST(ShaderGroup, DuplicateShaderUnits) {
     // global tsl shading system
-    ShadingSystem shading_system;
-
-    Tsl_MemoryAllocator ma;
-    shading_system.register_memory_allocator(&ma);
+    auto& shading_system = ShadingSystem::get_instance();
 
     // make a shading context for shader compiling, since there is only one thread involved in this unit test, it is good enough.
     auto shading_context = shading_system.make_shading_context();
 
-    // registered closure id
-    const auto closure_id = ClosureTypeLambert::RegisterClosure("Lambert", shading_system);
-
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader", R"(
+    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader_DuplicateShaderUnits", R"(
         shader output_node( closure in_bxdf0 , closure in_bxdf1, out closure out_bxdf ){
             out_bxdf = ( in_bxdf0 + in_bxdf1 ) * 0.5f;
         }
@@ -118,9 +106,9 @@ TEST(ShaderGroup, DuplicateShaderUnits) {
     EXPECT_NE(nullptr, root_shader_unit);
 
     // a bxdf node
-    const auto bxdf_shader_unit = shading_context->compile_shader_unit_template("bxdf_shader", R"(
+    const auto bxdf_shader_unit = shading_context->compile_shader_unit_template("bxdf_shader_DuplicateShaderUnits", R"(
         shader lambert_node( float test , out closure out_bxdf ){
-            out_bxdf = make_closure<Lambert>( 111, test );
+            out_bxdf = make_closure<lambert>( 111, test );
         }
     )");
     EXPECT_NE(nullptr, bxdf_shader_unit);
@@ -130,7 +118,7 @@ TEST(ShaderGroup, DuplicateShaderUnits) {
     EXPECT_NE(nullptr, shader_group);
 
     // add the two shader units in this group
-    auto ret = shader_group->add_shader_unit("root_shader", root_shader_unit, true);
+    auto ret = shader_group->add_shader_unit("root_shader_DuplicateShaderUnits", root_shader_unit, true);
     EXPECT_EQ(true, ret);
     ret = shader_group->add_shader_unit("bxdf_shader0", bxdf_shader_unit);
     EXPECT_EQ(true, ret);
@@ -138,8 +126,8 @@ TEST(ShaderGroup, DuplicateShaderUnits) {
     EXPECT_EQ(true, ret);
 
     // setup connections between shader units
-    shader_group->connect_shader_units("bxdf_shader0", "out_bxdf", "root_shader", "in_bxdf0");
-    shader_group->connect_shader_units("bxdf_shader1", "out_bxdf", "root_shader", "in_bxdf1");
+    shader_group->connect_shader_units("bxdf_shader0", "out_bxdf", "root_shader_DuplicateShaderUnits", "in_bxdf0");
+    shader_group->connect_shader_units("bxdf_shader1", "out_bxdf", "root_shader_DuplicateShaderUnits", "in_bxdf1");
 
     ShaderUnitInputDefaultValue dv;
     dv.m_type = ShaderArgumentTypeEnum::TSL_TYPE_FLOAT;
@@ -155,7 +143,7 @@ TEST(ShaderGroup, DuplicateShaderUnits) {
     arg.m_name = "out_bxdf";
     arg.m_type = TSL_TYPE_CLOSURE;
     arg.m_is_output = true;
-    shader_group->expose_shader_argument("root_shader", "out_bxdf", arg);
+    shader_group->expose_shader_argument("root_shader_DuplicateShaderUnits", "out_bxdf", arg);
 
     // resolve the shader group
     auto status = shading_context->end_shader_group_template(shader_group);
@@ -179,8 +167,8 @@ TEST(ShaderGroup, DuplicateShaderUnits) {
     EXPECT_EQ(CLOSURE_ADD, mul_closure->m_closure->m_id);
 
     auto add_closure = (ClosureTreeNodeAdd*)mul_closure->m_closure;
-    EXPECT_EQ(closure_id, add_closure->m_closure0->m_id);
-    EXPECT_EQ(closure_id, add_closure->m_closure1->m_id);
+    EXPECT_EQ(g_lambert_closure_id, add_closure->m_closure0->m_id);
+    EXPECT_EQ(g_lambert_closure_id, add_closure->m_closure1->m_id);
 
     auto lambert_param = (ClosureTypeLambert*)add_closure->m_closure0->m_params;
     EXPECT_EQ(111, lambert_param->base_color);
@@ -193,13 +181,13 @@ TEST(ShaderGroup, DuplicateShaderUnits) {
 
 TEST(ShaderGroup, ShaderGroupWithoutClosure) {
     // global tsl shading system
-    ShadingSystem shading_system;
+    auto& shading_system = ShadingSystem::get_instance();
 
     // make a shading context for shader compiling, since there is only one thread involved in this unit test, it is good enough.
     auto shading_context = shading_system.make_shading_context();
 
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader", R"(
+    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader_ShaderGroupWithoutClosure", R"(
         shader output_node( float in_bxdf , out float out_bxdf ){
             out_bxdf = in_bxdf * 1231.0f;
         }
@@ -207,7 +195,7 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
     EXPECT_NE(nullptr, root_shader_unit);
 
     // a bxdf node
-    const auto bxdf_shader_unit = shading_context->compile_shader_unit_template("bxdf_shader", R"(
+    const auto bxdf_shader_unit = shading_context->compile_shader_unit_template("bxdf_shader_ShaderGroupWithoutClosure", R"(
         shader lambert_node( float in_bxdf , out float out_bxdf , out float dummy ){
             out_bxdf = in_bxdf;
             // dummy = 1.0f;
@@ -216,7 +204,7 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
     EXPECT_NE(nullptr, bxdf_shader_unit);
 
     // make a shader group
-    auto shader_group = shading_context->begin_shader_group_template("first shader");
+    auto shader_group = shading_context->begin_shader_group_template("ShaderGroupWithoutClosure");
     EXPECT_NE(nullptr, shader_group);
 
     // add the two shader units in this group
@@ -260,32 +248,26 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
 
 TEST(ShaderGroup, ShaderGroupArgTypes) {
     // global tsl shading system
-    ShadingSystem shading_system;
-
-    Tsl_MemoryAllocator ma;
-    shading_system.register_memory_allocator(&ma);
+    auto& shading_system = ShadingSystem::get_instance();
 
     // make a shading context for shader compiling, since there is only one thread involved in this unit test, it is good enough.
     auto shading_context = shading_system.make_shading_context();
 
-    // registered closure id
-    const auto closure_id = ClosureTypeLambert::RegisterClosure("Lambert", shading_system);
-
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader", R"(
+    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader_ShaderGroupArgTypes", R"(
         shader output_node( out int i , out float f , out double d , out bool b , out closure c , out vector vec ){
             i = 123;
             f = 123.0f;
             d = 123.0d;
             b = true;
-            c = make_closure<Lambert>( 111, 4.0f );
+            c = make_closure<lambert>( 111, 4.0f );
             vec.x = 1.0f; vec.y = 2.0f; vec.b = 3.0f;
         }
     )");
     EXPECT_NE(nullptr, root_shader_unit);
 
     // make a shader group
-    auto shader_group = shading_context->begin_shader_group_template("first shader");
+    auto shader_group = shading_context->begin_shader_group_template("ShaderGroupArgTypes");
     EXPECT_NE(nullptr, shader_group);
 
     // add the two shader units in this group
@@ -352,7 +334,7 @@ TEST(ShaderGroup, ShaderGroupArgTypes) {
     EXPECT_EQ(2.0f, f3.y);
     EXPECT_EQ(3.0f, f3.z);
 
-    EXPECT_EQ(closure_id, closure->m_id);
+    EXPECT_EQ(g_lambert_closure_id, closure->m_id);
     ClosureTypeLambert* lambert_param = (ClosureTypeLambert*)closure->m_params;
     EXPECT_EQ(111, lambert_param->base_color);
     EXPECT_EQ(4.0f, lambert_param->normal);
@@ -360,13 +342,13 @@ TEST(ShaderGroup, ShaderGroupArgTypes) {
 
 TEST(ShaderGroup, ShaderGroupInputDefaults) {
     // global tsl shading system
-    ShadingSystem shading_system;
+    auto& shading_system = ShadingSystem::get_instance();
 
     // make a shading context for shader compiling, since there is only one thread involved in this unit test, it is good enough.
     auto shading_context = shading_system.make_shading_context();
 
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader", R"(
+    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader_ShaderGroupInputDefaults", R"(
         shader output_node( int ii , float iff , double id , bool ib , vector if3, 
                             out int i , out float f , out double d , out bool b , out vector f3 ){
             i = ii;
@@ -379,7 +361,7 @@ TEST(ShaderGroup, ShaderGroupInputDefaults) {
     EXPECT_NE(nullptr, root_shader_unit);
 
     // make a shader group
-    auto shader_group = shading_context->begin_shader_group_template("first shader");
+    auto shader_group = shading_context->begin_shader_group_template("ShaderGroupInputDefaults");
     EXPECT_NE(nullptr, shader_group);
 
     // add the two shader units in this group
@@ -505,10 +487,7 @@ TEST(ShaderGroup, ShaderGroupInputDefaults) {
 
 TEST(ShaderGroup, ShaderGroupRecursive) {
     // global tsl shading system
-    ShadingSystem shading_system;
-
-    Tsl_MemoryAllocator ma;
-    shading_system.register_memory_allocator(&ma);
+    auto& shading_system = ShadingSystem::get_instance();
 
     // make a shading context for shader compiling, since there is only one thread involved in this unit test, it is good enough.
     auto shading_context = shading_system.make_shading_context();
@@ -516,7 +495,7 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
     ShaderGroupTemplate* shader_group0 = nullptr;
     {
         // the root shader node, this usually matches to the output node in material system
-        const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader", R"(
+        const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader_ShaderGroupRecursive", R"(
             shader output_node( float in_bxdf , out float out_bxdf ){
                 out_bxdf = in_bxdf * 1231.0f;
             }
@@ -524,7 +503,7 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
         EXPECT_NE(nullptr, root_shader_unit);
 
         // a bxdf node
-        const auto bxdf_shader_unit = shading_context->compile_shader_unit_template("bxdf_shader", R"(
+        const auto bxdf_shader_unit = shading_context->compile_shader_unit_template("bxdf_shader_ShaderGroupRecursive", R"(
             shader lambert_node( float in_bxdf , out float out_bxdf , out float dummy ){
                 out_bxdf = in_bxdf;
                 // dummy = 1.0f;
@@ -563,7 +542,7 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
     }
 
     // a bxdf node
-    const auto constant_shader_unit = shading_context->compile_shader_unit_template("constant_shader", R"(
+    const auto constant_shader_unit = shading_context->compile_shader_unit_template("constant_shader_ShaderGroupRecursive", R"(
             shader constant_node( out float out_bxdf ){
                 out_bxdf = 3.0f;
             }
@@ -571,7 +550,7 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
     EXPECT_NE(nullptr, constant_shader_unit);
 
     // a bxdf node
-    const auto final_shader_unit = shading_context->compile_shader_unit_template("final_shader", R"(
+    const auto final_shader_unit = shading_context->compile_shader_unit_template("final_shader_ShaderGroupRecursive", R"(
             shader resolve_node( float bxdf0 , float bxdf1 , out float out_bxdf ){
                 out_bxdf = bxdf0 + bxdf1;
             }
@@ -626,19 +605,13 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
 // This is a real problem I met during integration of TSL in SORT.
 TEST(ShaderGroup, RealProblem0) {
     // global tsl shading system
-    ShadingSystem shading_system;
-
-    Tsl_MemoryAllocator ma;
-    shading_system.register_memory_allocator(&ma);
+    auto& shading_system = ShadingSystem::get_instance();
 
     // make a shading context for shader compiling, since there is only one thread involved in this unit test, it is good enough.
     auto shading_context = shading_system.make_shading_context();
 
-    // registered closure id
-    const auto closure_id = ClosureTypeLambertInSORT::RegisterClosure("Lambert", shading_system);
-
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader", R"(
+    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader_RealProblem0", R"(
         shader output_node( in closure Surface, out closure out_bxdf ){
             out_bxdf = Surface;
         }
@@ -646,15 +619,15 @@ TEST(ShaderGroup, RealProblem0) {
     EXPECT_NE(nullptr, root_shader_unit);
 
     // a bxdf node
-    const auto bxdf_shader_unit = shading_context->compile_shader_unit_template("bxdf_shader", R"(
+    const auto bxdf_shader_unit = shading_context->compile_shader_unit_template("bxdf_shader_RealProblem0", R"(
         shader bxdf_lambert(color Diffuse, vector Normal, out closure Result){
-            Result = make_closure<Lambert>( Diffuse , Normal );
+            Result = make_closure<lambert_in_sort>( Diffuse , Normal );
         }
     )");
     EXPECT_NE(nullptr, bxdf_shader_unit);
 
     // a constant color node
-    const auto constant_color_unit = shading_context->compile_shader_unit_template("constant_color", R"(
+    const auto constant_color_unit = shading_context->compile_shader_unit_template("constant_color_RealProblem0", R"(
         shader constant_color( color Color, out color Result ){
             Result = Color;
         }
@@ -662,7 +635,7 @@ TEST(ShaderGroup, RealProblem0) {
     EXPECT_NE(nullptr, constant_color_unit);
 
     // make a shader group
-    auto shader_group = shading_context->begin_shader_group_template("first shader");
+    auto shader_group = shading_context->begin_shader_group_template("RealProblem0");
     EXPECT_NE(nullptr, shader_group);
 
     // add the two shader units in this group
@@ -708,7 +681,7 @@ TEST(ShaderGroup, RealProblem0) {
     // execute the shader
     ClosureTreeNodeBase* closure = nullptr;
     raw_function(&closure);
-    EXPECT_EQ(closure_id, closure->m_id);
+    EXPECT_EQ(g_lambert_in_sort_id, closure->m_id);
 
     ClosureTypeLambertInSORT* param = (ClosureTypeLambertInSORT*)closure->m_params;
     EXPECT_EQ(1.0f, param->base_color.x);

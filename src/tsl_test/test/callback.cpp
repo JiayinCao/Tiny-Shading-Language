@@ -37,8 +37,7 @@ TEST(CallbackFunction, Basic_Callback) {
         }
     )";
     
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(float, float*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(float, float*)>(shader_source);
     auto func_ptr = ret.first;
 
     float arg0 = 2.0f , test_value = 1.0f;
@@ -55,8 +54,7 @@ TEST(CallbackFunction, System_Callback) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(double, double*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(double, double*)>(shader_source);
     auto func_ptr = ret.first;
 
     double arg0 = 2.0, test_value = 1.0;
@@ -85,8 +83,7 @@ TEST(CallbackFunction, Complex_Callback) {
         return data * 2.0f;
     };
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(float, float*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(float, float*)>(shader_source);
     auto func_ptr = ret.first;
 
     float arg0 = 2.0, test_value = 1.0;

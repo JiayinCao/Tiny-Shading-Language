@@ -49,8 +49,7 @@ TEST(Practical, Factorial) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     int test_value = 1;
@@ -76,8 +75,7 @@ TEST(Practical, Fibonacci) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     int test_value = 1;
@@ -104,8 +102,7 @@ TEST(Practical, Sum_of_Two_Integers) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int a, int b) {
@@ -161,8 +158,7 @@ TEST(Practical, Reverse_Integer) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int a) {
@@ -230,8 +226,7 @@ TEST(Practical, Is_Palindrome) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, bool*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, bool*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int a) {
@@ -282,8 +277,7 @@ TEST(Practical, myPow) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(float, int, float*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(float, int, float*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](float x, int a) {
@@ -338,8 +332,7 @@ TEST(Practical, ClimbingStairs) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int x) {
@@ -381,8 +374,7 @@ TEST(Practical, RangeBitwiseAnd) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int m, int n) {
@@ -465,8 +457,7 @@ TEST(Practical, HappyNumber) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, bool*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, bool*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int m) {
@@ -540,8 +531,7 @@ TEST(Practical, CountDigitOne) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int m) {
@@ -580,8 +570,7 @@ TEST(Practical, PowerOfTwo) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, bool*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, bool*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int m) {
@@ -629,8 +618,7 @@ TEST(Practical, AddDigits) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int m) {
@@ -679,8 +667,7 @@ TEST(Practical, IsUglyNumber) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, bool*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, bool*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int m) {
@@ -722,8 +709,7 @@ TEST(Practical, WinNim) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int m) {
@@ -769,8 +755,7 @@ TEST(Practical, PowerOfThree) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, bool*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, bool*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int m) {
@@ -844,8 +829,7 @@ TEST(Practical, CanMeasureWater) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int, int, bool*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int, int, bool*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int x, int y, int z) {
@@ -905,8 +889,7 @@ TEST(Practical, ValidPerfectSquare) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, bool*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, bool*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int x) {
@@ -951,8 +934,7 @@ TEST(Practical, LastRemaining) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int x) {
@@ -1011,8 +993,7 @@ TEST(Practical, Integer_Replacement) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int x) {
@@ -1094,8 +1075,7 @@ TEST(Practical, FindNthDigit) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int x) {
@@ -1174,8 +1154,7 @@ TEST(Practical, FindKthNumber) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int n, int k) {
@@ -1239,8 +1218,7 @@ TEST(Practical, PoorPigs) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int, int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int, int, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int a, int b, int c) {
@@ -1346,8 +1324,7 @@ TEST(Practical, FindIntegers) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int x) {
@@ -1408,8 +1385,7 @@ TEST(Practical, CountPrimes) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int x) {
@@ -1480,8 +1456,7 @@ TEST(Practical, NthUglyNumber) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int x) {
@@ -1536,8 +1511,7 @@ TEST(Practical, NumSquares) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int x) {
@@ -1594,8 +1568,7 @@ TEST(Practical, FindComplement) {
         }
     )";
 
-    ShadingSystem shading_system;
-    auto ret = compile_shader<void(*)(int, int*)>(shader_source, shading_system);
+    auto ret = compile_shader<void(*)(int, int*)>(shader_source);
     auto func_ptr = ret.first;
 
     auto verify_func = [&](int x) {
