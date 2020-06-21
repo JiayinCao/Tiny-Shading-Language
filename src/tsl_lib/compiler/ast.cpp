@@ -24,6 +24,7 @@
 #include "llvm_util.h"
 #include "global_module.h"
 #include "global.h"
+#include "system/impl.h"
 
 using namespace llvm;
 
@@ -49,7 +50,8 @@ llvm::Value* LLVM_Compile_Context::get_var_symbol(const std::string& name, bool 
         }
     }
 
-    // emit error here, undefined symbol
+    emit_error("Undefined variable '%s'.", name);
+
     return nullptr;
 }
 
@@ -69,7 +71,8 @@ DataType LLVM_Compile_Context::get_var_type(const std::string& name, bool only_t
 		}
 	}
 
-	// emit error here, undefined symbol
+    emit_error("Undefined variable '%s'.", name);
+
 	return DataType();
 }
 
@@ -77,13 +80,12 @@ llvm::Value* LLVM_Compile_Context::push_var_symbol(const std::string& name, llvm
     auto top_layer = m_var_symbols.back();
 
     if (top_layer.count(name)) {
-        // emit error here, variable already defined.
+        emit_error("Redefined variable '%s'.", name);
         return nullptr;
     }
 
     m_var_symbols.back()[name] = std::make_pair(value, type);
 
-    // emit error here, undefined symbol
     return nullptr;
 }
 
@@ -208,10 +210,8 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
             const auto name = variable->get_var_name();
             const auto raw_type = get_type_from_context(variable->data_type(), context);
 
-            // there is duplicated names, emit an warning!!
-            // However, there is no log system in the compiler for now, I need to handle this later.
             if( nullptr != context.get_var_symbol(name, true) ){
-                std::cout << "Duplicated argument named : " << name << std::endl;
+                emit_error("Redefined argument '%s' in function '%s'.", name, m_name);
                 return nullptr;
             }
 
@@ -295,14 +295,14 @@ llvm::Value* AstNode_Literal_GlobalValue::codegen(LLVM_Compile_Context& context)
         }
     }
     
-    // emit an error here, unregistred global value.
+    emit_error("Unregistered global value '%s'.", m_value_name);
 
     return nullptr;
 }
 
 bool AstNode_Binary_Add::is_closure(LLVM_Compile_Context& context) const {
     if (m_left->is_closure(context) != m_right->is_closure(context)) {
-        // emit an error
+        emit_error("Closure color can't be added with non closure color.");
         return false;
     }
 
@@ -318,8 +318,7 @@ llvm::Value* AstNode_Binary_Add::codegen(LLVM_Compile_Context& context) const {
 
     // this must be a closure multiplied by a regular expression
     if (!(m_left->is_closure(context) && m_right->is_closure(context))) {
-        // emit an error, it is illegal to add a non-closure with a closure
-
+        emit_error("Closure color can't be added with non closure color.");
         return nullptr;
     }
 
@@ -366,7 +365,7 @@ llvm::Value* AstNode_Binary_Minus::codegen(LLVM_Compile_Context& context) const 
 
 bool AstNode_Binary_Multi::is_closure(LLVM_Compile_Context& context) const {
     if (m_left->is_closure(context) && m_right->is_closure(context)) {
-        // emit an error
+        emit_error("Closure color can't muliply with each other.");
         return false;
     }
 
@@ -382,7 +381,7 @@ llvm::Value* AstNode_Binary_Multi::codegen(LLVM_Compile_Context& context) const 
 
 	// this must be a closure multiplied by a regular expression
 	if(m_left->is_closure(context) && m_right->is_closure(context)){
-		// emit an error, it is illegal to multiply two closures together.
+        emit_error("Closure color can't muliply with each other.");
 		return nullptr;
 	}
 
@@ -624,7 +623,7 @@ llvm::Value* AstNode_ArrayAccess::codegen(LLVM_Compile_Context& context) const {
     auto index = m_index->codegen(context);
     
     if (!is_llvm_integer(index)) {
-        // emit an error
+        emit_error("Array index has to be an integer.");
         return nullptr;
     }
 
@@ -637,7 +636,7 @@ llvm::Value* AstNode_ArrayAccess::get_value_address(LLVM_Compile_Context& contex
     auto index = m_index->codegen(context);
 
     if (!is_llvm_integer(index)) {
-        // emit an error
+        emit_error("Array index has to be an integer.");
         return nullptr;
     }
 
@@ -653,10 +652,8 @@ llvm::Value* AstNode_SingleVariableDecl::codegen(LLVM_Compile_Context& context) 
     auto type = get_type_from_context(m_type, context);
     auto init = m_init_exp;
 
-    // there is duplicated names, emit an warning!!
-    // However, there is no log system in the compiler for now, I need to handle this later.
     if (nullptr != context.get_var_symbol(name, true)) {
-        std::cout << "Duplicated argument named : " << name << std::endl;
+        emit_error("Redefined variabled named '%s'.", name);
         return nullptr;
     }
 
@@ -679,10 +676,8 @@ llvm::Value* AstNode_SingleVariableDecl::codegen(LLVM_Compile_Context& context) 
 llvm::Value* AstNode_ArrayDecl::codegen(LLVM_Compile_Context& context) const {
     auto name = m_name;
 
-    // there is duplicated names, emit an warning!!
-    // However, there is no log system in the compiler for now, I need to handle this later.
     if (nullptr != context.get_var_symbol(name, true)) {
-        std::cout << "Duplicated argument named : " << name << std::endl;
+        emit_error("Redefined variabled named '%s'.", name);
         return nullptr;
     }
     
@@ -690,7 +685,7 @@ llvm::Value* AstNode_ArrayDecl::codegen(LLVM_Compile_Context& context) const {
     auto cnt = m_cnt->codegen(context);
 
     if (!is_llvm_integer(cnt)) {
-        // emit error here, invalid array size
+        emit_error("Invalid type of array size, it has to be an integer.", name);
         return nullptr;
     }
 
@@ -779,14 +774,14 @@ llvm::Value* AstNode_ExpAssign_AndEq::codegen(LLVM_Compile_Context& context) con
     auto value = context.builder->CreateLoad(value_ptr);
 
     if (!value->getType()->isIntegerTy()) {
-        // emit an error here, this is not allowed
+        emit_error("'&=' is only value for integers.");
         return nullptr;
     }
 
     auto to_assign = m_expression->codegen(context);
 
     if (!value->getType()->isIntegerTy()) {
-        // emit an error here, incorrect data type
+        emit_error("'&=' is only value for integers.");
         return nullptr;
     }
 
@@ -806,21 +801,19 @@ llvm::Value* AstNode_ExpAssign_OrEq::codegen(LLVM_Compile_Context& context) cons
     auto value = context.builder->CreateLoad(value_ptr);
 
     if (!value->getType()->isIntegerTy()) {
-        // emit an error here, this is not allowed
+        emit_error("'|=' is only value for integers.");
         return nullptr;
     }
 
     auto to_assign = m_expression->codegen(context);
 
     if (!value->getType()->isIntegerTy()) {
-        // emit an error here, incorrect data type
+        emit_error("'|=' is only value for integers.");
         return nullptr;
     }
 
-    if (to_assign->getType()->getIntegerBitWidth() != value->getType()->getIntegerBitWidth()) {
-        // copy = ConstantInt::get(value->getType(), APInt(value->getType()->getIntegerBitWidth(), ))
+    if (to_assign->getType()->getIntegerBitWidth() != value->getType()->getIntegerBitWidth())
         to_assign = context.builder->CreateCast(Instruction::Trunc, to_assign, value->getType());
-    }
 
     auto updated_value = context.builder->CreateOr(value, to_assign);
     context.builder->CreateStore(updated_value, value_ptr);
@@ -833,21 +826,19 @@ llvm::Value* AstNode_ExpAssign_XorEq::codegen(LLVM_Compile_Context& context) con
     auto value = context.builder->CreateLoad(value_ptr);
 
     if (!value->getType()->isIntegerTy()) {
-        // emit an error here, this is not allowed
+        emit_error("'^=' is only value for integers.");
         return nullptr;
     }
 
     auto to_assign = m_expression->codegen(context);
 
     if (!value->getType()->isIntegerTy()) {
-        // emit an error here, incorrect data type
+        emit_error("'^=' is only value for integers.");
         return nullptr;
     }
 
-    if (to_assign->getType()->getIntegerBitWidth() != value->getType()->getIntegerBitWidth()) {
-        // copy = ConstantInt::get(value->getType(), APInt(value->getType()->getIntegerBitWidth(), ))
+    if (to_assign->getType()->getIntegerBitWidth() != value->getType()->getIntegerBitWidth())
         to_assign = context.builder->CreateCast(Instruction::Trunc, to_assign, value->getType());
-    }
 
     auto updated_value = context.builder->CreateXor(value, to_assign);
     context.builder->CreateStore(updated_value, value_ptr);
@@ -860,14 +851,14 @@ llvm::Value* AstNode_ExpAssign_ShlEq::codegen(LLVM_Compile_Context& context) con
     auto value = context.builder->CreateLoad(value_ptr);
 
     if (!value->getType()->isIntegerTy()) {
-        // emit an error here, this is not allowed
+        emit_error("'<<=' is only value for integers.");
         return nullptr;
     }
 
     auto to_shift = m_expression->codegen(context);
 
     if (!value->getType()->isIntegerTy()) {
-        // emit an error here, incorrect data type
+        emit_error("'<<=' is only value for integers.");
         return nullptr;
     }
 
@@ -882,14 +873,14 @@ llvm::Value* AstNode_ExpAssign_ShrEq::codegen(LLVM_Compile_Context& context) con
     auto value = context.builder->CreateLoad(value_ptr);
 
     if (!value->getType()->isIntegerTy()) {
-        // emit an error here, this is not allowed
+        emit_error("'>>=' is only value for integers.");
         return nullptr;
     }
 
     auto to_shift = m_expression->codegen(context);
 
     if (!value->getType()->isIntegerTy()) {
-        // emit an error here, incorrect data type
+        emit_error("'>>=' is only value for integers.");
         return nullptr;
     }
 
@@ -997,7 +988,7 @@ llvm::Value* AstNode_Unary_Compl::codegen(LLVM_Compile_Context& context) const {
     auto operand = m_exp->codegen(context);
 
     if (!operand->getType()->isIntegerTy()) {
-        // emit an error here
+        emit_error("'~' is only value for integers.");
         return nullptr;
     }
 
@@ -1015,7 +1006,7 @@ llvm::Value* AstNode_Expression_MakeClosure::codegen(LLVM_Compile_Context& conte
     const auto function_name = "make_closure_" + m_name;
 
     if (context.m_closures_maps.count(m_name) == 0) {
-        // emit an error here, closure not registered
+        emit_error("Unregistered closure '%s'.");
         return nullptr;
     }
         
@@ -1048,10 +1039,8 @@ llvm::Value* AstNode_FunctionCall::codegen(LLVM_Compile_Context& context) const 
         if (var_decl->get_config() & VariableConfig::OUTPUT) {
             // this node must be a LValue
             AstNode_Lvalue* lvalue = dynamic_cast<AstNode_Lvalue*>(node);
-            if (!lvalue) {
-                // emit an error here, using a r-value for output
+            if (!lvalue)
                 return nullptr;
-            }
             args.push_back(lvalue->get_value_address(context));
         } else {
             args.push_back(node->codegen(context));
@@ -1378,15 +1367,13 @@ llvm::Value* AstNode_StructMemberRef::get_value_address(LLVM_Compile_Context& co
 	const auto var_type = m_var->get_var_type(context);
 
 	if( !context.m_structure_type_maps.count(var_type.m_structure_name) ){
-		// emit an error here, missing member variable referenced
+        emit_error("Undefined struct '%s'.", var_type.m_structure_name);
 		return nullptr;
 	}
 
 	const auto var_value_ptr = m_var->get_value_address(context);
-	if( !var_value_ptr ){
-		// emit an error here, undefined var name
+	if( !var_value_ptr )
 		return nullptr;
-	}
 
 	// access the member meta data
 	auto& data_type = context.m_structure_type_maps[var_type.m_structure_name];
@@ -1394,7 +1381,7 @@ llvm::Value* AstNode_StructMemberRef::get_value_address(LLVM_Compile_Context& co
 	// get the member offset
 	auto it = data_type.m_member_types.find(m_member);
 	if( it == data_type.m_member_types.end() ){
-		// emit an error here, undefined member access here
+        emit_error("Undefined member variable '%s' in struct '%s'.", m_member, var_type.m_structure_name);
 		return nullptr;
 	}
 
@@ -1407,15 +1394,13 @@ DataType AstNode_StructMemberRef::get_var_type(LLVM_Compile_Context& context) co
 	const auto var_type = m_var->get_var_type(context);
 
 	if (!context.m_structure_type_maps.count(var_type.m_structure_name)) {
-		// emit an error here, missing member variable referenced
+        emit_error("Undefined struct '%s'.", var_type.m_structure_name);
 		return DataType();
 	}
 
 	const auto var_value_ptr = m_var->get_value_address(context);
-	if (!var_value_ptr) {
-		// emit an error here, undefined var name
+	if (!var_value_ptr) 
 		return DataType();
-	}
 
 	// access the member meta data
 	auto& data_type = context.m_structure_type_maps[var_type.m_structure_name];
@@ -1423,7 +1408,7 @@ DataType AstNode_StructMemberRef::get_var_type(LLVM_Compile_Context& context) co
 	// get the member offset
 	auto it = data_type.m_member_types.find(m_member);
 	if (it == data_type.m_member_types.end()) {
-		// emit an error here, undefined member access here
+        emit_error("Undefined member variable '%s' in struct '%s'.", m_member, var_type.m_structure_name);
 		return DataType();
 	}
 
@@ -1478,7 +1463,7 @@ llvm::Value* AstNode_Expression_Texture2DSample::codegen(LLVM_Compile_Context& c
         return context.builder->CreateLoad(ret);
     }
 
-    // emit an error here
+    emit_error("Texture handle not registered.", m_texture_handle_name);
     return nullptr;
 }
 

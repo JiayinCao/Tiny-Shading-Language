@@ -21,12 +21,17 @@
 #include "shading_system.h"
 #include "test/test_common.h"
 
-class Tsl_MemoryAllocator : public Tsl_Namespace::MemoryAllocator {
+class ShadingSystemInterfaceSimple : public Tsl_Namespace::ShadingSystemInterface {
 public:
+    // This is by no mean a good example of allocating memory of bxdf in real renderer.
+    // The purpose of this code is simply for testing, not for performance.
     void* allocate(unsigned int size) const override {
         m_memory_holder.push_back(std::move(std::make_unique<char[]>(size)));
         return m_memory_holder.back().get();
     }
+
+    // No error will be output since there are invalid unit tests.
+    void catch_debug(const DEBUG_LEVEL level, const char* error) const override {}
 
 private:
     mutable std::vector<std::unique_ptr<char[]>> m_memory_holder;
@@ -47,8 +52,8 @@ int main(int argc, char** argv) {
     // register tsl global
     TslGlobal::RegisterGlobal(shading_system);
 
-    Tsl_MemoryAllocator ma;
-    shading_system.register_memory_allocator(&ma);
+    std::unique_ptr<ShadingSystemInterfaceSimple> ssis = std::make_unique< ShadingSystemInterfaceSimple>();
+    shading_system.register_shadingsystem_interface(std::move(ssis));
 
     // register all closure types
     g_lambert_closure_id = ClosureTypeLambert::RegisterClosure("lambert", shading_system);

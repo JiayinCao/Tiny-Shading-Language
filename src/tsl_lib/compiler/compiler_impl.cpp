@@ -169,11 +169,9 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnitTemplate* su) 
         for (auto& closure : m_closures_in_shader) {
             // declare the function first.
             auto function = m_global_module.declare_closure_function(closure, compile_context);
-
-            if (!function) {
-                // emit error here, unregistered closure touched
+            if (!function)
                 return false;
-            }
+
             compile_context.m_closures_maps[closure] = function;
         }
 
@@ -551,7 +549,8 @@ TSL_Resolving_Status TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Con
                     }
 
                     if (!has_init_value) {
-                        // emit an error here, uninitialized input parameter and it is not connected with anything
+                        emit_error("Shader group '%s' has a shader unit instance '%s' with a argument '%s' without any initialization and connection.", sg->get_name(), shader_unit_copy_name, name );
+
                         return TSL_Resolving_ArgumentWithoutInitialization;
                     }
                 }

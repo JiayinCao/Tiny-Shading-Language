@@ -29,6 +29,7 @@
 #include "llvm/Transforms/Scalar/GVN.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ExecutionEngine/MCJIT.h"
+#include "system/impl.h"
 #include "global_module.h"
 #include "compiler/ast.h"
 #include "compiler/llvm_util.h"
@@ -185,8 +186,10 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureVa
 
 llvm::Function* GlobalModule::declare_closure_function(const std::string& name, LLVM_Compile_Context& context) {
     const auto it = m_closures.find(name);
-    if (it == m_closures.end())
+    if (it == m_closures.end()) {
+        emit_error("Closure '%s' not registered.", name);
         return nullptr;
+    }
 
     std::vector<Type*> arg_types;
     for (auto& arg : it->second.m_var_list) {

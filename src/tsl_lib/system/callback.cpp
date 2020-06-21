@@ -19,6 +19,7 @@
 #include "shading_context.h"
 #include "shader_arg_types.h"
 #include "system/texture_impl.h"
+#include "system/impl.h"
 
 TSL_NAMESPACE_BEGIN
 
@@ -31,7 +32,7 @@ TSL_NAMESPACE_BEGIN
 extern "C" {
     // allocate memory inside shaders
     DLLEXPORT int* TSL_MALLOC(int size) {
-        return (int*)ShadingSystem::allocate_memory(size);
+        return (int*)allocate_memory(size);
     }
 
     // 2D texture access

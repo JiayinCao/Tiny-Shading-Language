@@ -21,10 +21,15 @@
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
+#include <mutex>
 #include "tslversion.h"
 #include "texture_impl.h"
+#include "shading_system.h"
+#include "shading_context.h"
 
 TSL_NAMESPACE_BEGIN
+
+class GlobalModule;
 
 using ShaderTextureTable = std::unordered_map<std::string, std::unique_ptr<TextureHandleWrapper>>;
 
@@ -41,6 +46,9 @@ struct ShadingSystem_Impl {
 
     /**< Closure register */
     GlobalModule* m_global_module = nullptr;
+
+    /**< This is needs to be bound before shader compilation. */
+    std::unique_ptr<ShadingSystemInterface> m_callback;
 };
 
 struct ShaderUnitTemplate_Impl {
@@ -99,5 +107,11 @@ struct ShadingContext_Impl {
     /**< Shading system owning the context. */
     ShadingSystem_Impl* m_shading_system_impl = nullptr;
 };
+
+//! @brief  Allocate memory in shader.
+void* allocate_memory(const unsigned size);
+
+//! @brief  Output error during shader compilation.
+void  emit_error(const char* error, ...);
 
 TSL_NAMESPACE_END

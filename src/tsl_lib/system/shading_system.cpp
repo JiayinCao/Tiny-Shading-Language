@@ -15,6 +15,8 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
+#include <stdio.h>
+#include <stdarg.h>
 #include "shading_system.h"
 #include "shading_context.h"
 #include "compiler/global_module.h"
@@ -25,8 +27,6 @@ TSL_NAMESPACE_BEGIN
 
 /** This data structure is only accessable from shading system */
 static std::unique_ptr<ShadingSystem_Impl> g_shading_system_impl = nullptr;
-
-MemoryAllocator* ShadingSystem::m_memory_allocator = nullptr;
 
 ShadingSystem& ShadingSystem::get_instance() {
     static ShadingSystem ss;
@@ -63,12 +63,30 @@ void ShadingSystem::register_tsl_global(GlobalVarList& mapping) {
     return g_shading_system_impl->m_global_module->register_tsl_global(mapping);
 }
 
-void ShadingSystem::register_memory_allocator(MemoryAllocator* alloc) {
-    m_memory_allocator = alloc;
+void ShadingSystem::register_shadingsystem_interface(std::unique_ptr<ShadingSystemInterface> ssi){
+    g_shading_system_impl->m_callback = std::move(ssi);
 }
 
-void* ShadingSystem::allocate_memory(unsigned int size) {
-    return m_memory_allocator ? m_memory_allocator->allocate(size) : nullptr;
+void* allocate_memory(const unsigned size) {
+    const auto callback = g_shading_system_impl->m_callback.get();
+    return callback ? callback->allocate(size) : nullptr;
+}
+
+void  emit_error(const char* format, ...) {
+    va_list argList;
+    
+    va_start(argList, format);
+    const auto size = snprintf(0, 0, format, argList);
+    va_end(argList);
+    
+    std::unique_ptr<char[]> buf = std::make_unique<char[]>(size);
+    va_start(argList, format);
+    vsprintf(buf.get(), format, argList);
+    va_end(argList);
+
+    const auto callback = g_shading_system_impl->m_callback.get();
+    if (callback)
+        callback->catch_debug(ShadingSystemInterface::DEBUG_ERROR, buf.get());
 }
 
 TSL_NAMESPACE_END

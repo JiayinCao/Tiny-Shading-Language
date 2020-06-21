@@ -26,18 +26,32 @@ TSL_NAMESPACE_BEGIN
 
 class ShadingContext;
 
-//! @brief  Memory allocator.
+//! @brief  ShadingSystem callback interface.
 /**
- * Memory allocator is used to allocate memory for closure types inside shaders.
+ * ShadingSystemInterface offers a chance for renderers to do things like, output error or log, allocate memory for bxdf.
+ * All methods in this interface need to be implemented in a thread-safe manner, it is renderer's job to make sure of it.
+ * TSL won't synchronize upon calling these calls.
  */
-class MemoryAllocator {
+class TSL_INTERFACE ShadingSystemInterface {
 public:
     //! @brief  Allocate memory inside shaders.
     //!
     //! There are things to be noticed in this interface.
     //!  - Shaders are not responsible to release the memory allocator allocates, it is up to the renderer to do so.
     //!  - This implementation has to be thread safe.
-    virtual void* allocate(unsigned int size) const = 0;
+    virtual void*   allocate(unsigned int size) const = 0;
+
+    enum DEBUG_LEVEL {
+        DEBUG_INFO,
+        DEBUG_WARNING,
+        DEBUG_ERROR,
+    };
+
+    //! @brief  This will be called when there is error during shader compilation.
+    //!
+    //! @param  level       Debug level.
+    //! @param  error       String describing the error.
+    virtual void    catch_debug(const DEBUG_LEVEL level, const char* error) const = 0;
 };
 
 //! @brief  Shading system is the root interface exposed through TSL system.
@@ -52,12 +66,17 @@ public:
     //! @brief  Destructor.
     ~ShadingSystem();
 
+    //! @brief  Get shading system instance
+    //!
+    //! Shading system is a singleton.
+    static ShadingSystem& get_instance();
+
     //! @brief  Create a new shading context.
     //!
     //! Caller code doesn't need to release the memory allocated, it will be released automatically as the lifetime
     //! of this class comes to end.
     //!
-    //! @return     Allocated memory points to an instance of a newly created shading_context.
+    //! @return             Allocated memory points to an instance of a newly created shading_context.
     ShadingContext*         make_shading_context();
 
     //! @brief  Register closure id.
@@ -65,7 +84,7 @@ public:
     //! @param  name            Name of the closure.
     //! @param  mapping         Mapping of the data inside the closure.
     //! @param  closure_size    Size of the data structure.
-    //! @return         Allocated closure id for the closure.
+    //! @return                 Allocated closure id for the closure.
     ClosureID               register_closure_type(const std::string& name, ClosureVarList& mapping, int closure_size);
 
     //! @brief  Register tsl global data.
@@ -73,18 +92,13 @@ public:
     //! @param  mapping     Mapping of the data structure.
     void                    register_tsl_global(GlobalVarList& mapping);
 
-    //! @brief  Register a memory allocator.
+    //! @brief  Register ShadingSystemInterface.
     //!
-    //! @param  alloc   Memory allocator pointer
-    void                    register_memory_allocator(MemoryAllocator* alloc);
-
-    //! @brief  Get shading system instance
+    //! ShadingSystem will take over the ownership of the pointer passed in. Renderers don't need to deallocate the memory
+    //! of the passed in parameter, it will also need to avoid access of this parameter in renderer later.
     //!
-    //! Shading system is a singleton.
-    static ShadingSystem&   get_instance();
-
-    //! @brief  Allocate memory inside shader.
-    static void*            allocate_memory(unsigned int size);
+    //! @param  ssi     The interface to be registered.
+    void                    register_shadingsystem_interface(std::unique_ptr<ShadingSystemInterface> ssi);
 
 private:
     //! @brief  Constructor.
@@ -96,9 +110,6 @@ private:
     //!
     //! Making sure the shading system only has one single instance.
     ShadingSystem(const ShadingSystem&) { /* simply don't allow it. */ }
-
-    /**< Memory allocator. */
-    static MemoryAllocator* m_memory_allocator;
 };
 
 TSL_NAMESPACE_END

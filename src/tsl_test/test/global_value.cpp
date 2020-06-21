@@ -55,13 +55,6 @@ TEST(GlobalValue, AccessDataFloat3) {
     EXPECT_EQ(123.0f, data);
 }
 
-class SimpleMemoryAllocator : public MemoryAllocator {
-public:
-    void* allocate(unsigned int size) const override {
-        return (void*)new char[size];
-    }
-};
-
 TEST(GlobalValue, GlobalValueInShaderGroup_Simple) {
     // register tsl global
     TslGlobal tsl_global;
