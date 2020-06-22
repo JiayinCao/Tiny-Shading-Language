@@ -50,7 +50,7 @@ llvm::Value* LLVM_Compile_Context::get_var_symbol(const std::string& name, bool 
         }
     }
 
-    emit_error("Undefined variable '%s'.", name);
+    emit_error("Undefined variable '%s'.", name.c_str());
 
     return nullptr;
 }
@@ -71,7 +71,7 @@ DataType LLVM_Compile_Context::get_var_type(const std::string& name, bool only_t
 		}
 	}
 
-    emit_error("Undefined variable '%s'.", name);
+    emit_error("Undefined variable '%s'.", name.c_str());
 
 	return DataType();
 }
@@ -80,7 +80,7 @@ llvm::Value* LLVM_Compile_Context::push_var_symbol(const std::string& name, llvm
     auto top_layer = m_var_symbols.back();
 
     if (top_layer.count(name)) {
-        emit_error("Redefined variable '%s'.", name);
+        emit_error("Redefined variable '%s'.", name.c_str());
         return nullptr;
     }
 
@@ -211,7 +211,7 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
             const auto raw_type = get_type_from_context(variable->data_type(), context);
 
             if( nullptr != context.get_var_symbol(name, true) ){
-                emit_error("Redefined argument '%s' in function '%s'.", name, m_name);
+                emit_error("Redefined argument '%s' in function '%s'.", name, m_name.c_str());
                 return nullptr;
             }
 
@@ -295,7 +295,7 @@ llvm::Value* AstNode_Literal_GlobalValue::codegen(LLVM_Compile_Context& context)
         }
     }
     
-    emit_error("Unregistered global value '%s'.", m_value_name);
+    emit_error("Unregistered global value '%s'.", m_value_name.c_str());
 
     return nullptr;
 }
@@ -653,7 +653,7 @@ llvm::Value* AstNode_SingleVariableDecl::codegen(LLVM_Compile_Context& context) 
     auto init = m_init_exp;
 
     if (nullptr != context.get_var_symbol(name, true)) {
-        emit_error("Redefined variabled named '%s'.", name);
+        emit_error("Redefined variabled named '%s'.", name.c_str());
         return nullptr;
     }
 
@@ -677,7 +677,7 @@ llvm::Value* AstNode_ArrayDecl::codegen(LLVM_Compile_Context& context) const {
     auto name = m_name;
 
     if (nullptr != context.get_var_symbol(name, true)) {
-        emit_error("Redefined variabled named '%s'.", name);
+        emit_error("Redefined variabled named '%s'.", name.c_str());
         return nullptr;
     }
     
@@ -685,7 +685,7 @@ llvm::Value* AstNode_ArrayDecl::codegen(LLVM_Compile_Context& context) const {
     auto cnt = m_cnt->codegen(context);
 
     if (!is_llvm_integer(cnt)) {
-        emit_error("Invalid type of array size, it has to be an integer.", name);
+        emit_error("Invalid type of array size, it has to be an integer.", name.c_str());
         return nullptr;
     }
 
@@ -1006,7 +1006,7 @@ llvm::Value* AstNode_Expression_MakeClosure::codegen(LLVM_Compile_Context& conte
     const auto function_name = "make_closure_" + m_name;
 
     if (context.m_closures_maps.count(m_name) == 0) {
-        emit_error("Unregistered closure '%s'.");
+        emit_error("Unregistered closure '%s'.", m_name.c_str());
         return nullptr;
     }
         
@@ -1381,7 +1381,7 @@ llvm::Value* AstNode_StructMemberRef::get_value_address(LLVM_Compile_Context& co
 	// get the member offset
 	auto it = data_type.m_member_types.find(m_member);
 	if( it == data_type.m_member_types.end() ){
-        emit_error("Undefined member variable '%s' in struct '%s'.", m_member, var_type.m_structure_name);
+        emit_error("Undefined member variable '%s' in struct '%s'.", m_member.c_str(), var_type.m_structure_name);
 		return nullptr;
 	}
 
@@ -1408,7 +1408,7 @@ DataType AstNode_StructMemberRef::get_var_type(LLVM_Compile_Context& context) co
 	// get the member offset
 	auto it = data_type.m_member_types.find(m_member);
 	if (it == data_type.m_member_types.end()) {
-        emit_error("Undefined member variable '%s' in struct '%s'.", m_member, var_type.m_structure_name);
+        emit_error("Undefined member variable '%s' in struct '%s'.", m_member.c_str(), var_type.m_structure_name);
 		return DataType();
 	}
 
@@ -1463,7 +1463,7 @@ llvm::Value* AstNode_Expression_Texture2DSample::codegen(LLVM_Compile_Context& c
         return context.builder->CreateLoad(ret);
     }
 
-    emit_error("Texture handle not registered.", m_texture_handle_name);
+    emit_error("Texture handle %s not registered.", m_texture_handle_name.c_str());
     return nullptr;
 }
 

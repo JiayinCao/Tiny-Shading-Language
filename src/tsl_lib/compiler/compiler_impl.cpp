@@ -549,7 +549,7 @@ TSL_Resolving_Status TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Con
                     }
 
                     if (!has_init_value) {
-                        emit_error("Shader group '%s' has a shader unit instance '%s' with a argument '%s' without any initialization and connection.", sg->get_name(), shader_unit_copy_name, name );
+                        emit_error("Shader group '%s' has a shader unit instance '%s' with a argument '%s' without any initialization and connection.", sg->get_name().c_str(), shader_unit_copy_name.c_str(), name.c_str() );
 
                         return TSL_Resolving_ArgumentWithoutInitialization;
                     }

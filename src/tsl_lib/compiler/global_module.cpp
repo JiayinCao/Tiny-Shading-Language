@@ -187,7 +187,7 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureVa
 llvm::Function* GlobalModule::declare_closure_function(const std::string& name, LLVM_Compile_Context& context) {
     const auto it = m_closures.find(name);
     if (it == m_closures.end()) {
-        emit_error("Closure '%s' not registered.", name);
+        emit_error("Closure '%s' not registered.", name.c_str());
         return nullptr;
     }
 
