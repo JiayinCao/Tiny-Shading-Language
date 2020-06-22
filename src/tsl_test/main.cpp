@@ -56,12 +56,12 @@ int main(int argc, char** argv) {
     shading_system.register_shadingsystem_interface(std::move(ssis));
 
     // register all closure types
-    g_lambert_closure_id = ClosureTypeLambert::RegisterClosure("lambert", shading_system);
-    g_random_closure_id  = ClosureTypeRandom0::RegisterClosure("random0", shading_system);
-    g_bxdf_with_double_id = ClosureTypeBxdfWithDouble::RegisterClosure("bxdf_with_double", shading_system);
-    g_microfacete_id = ClosureTypeMicrofacet::RegisterClosure("microfacet", shading_system);
-    g_layered_bxdf_id = ClosureTypeLayeredBxdf::RegisterClosure("layered_bxdf", shading_system);
-    g_lambert_in_sort_id = ClosureTypeLambertInSORT::RegisterClosure("lambert_in_sort", shading_system);
+    g_lambert_closure_id = ClosureTypeLambert::RegisterClosure(shading_system);
+    g_random_closure_id  = ClosureTypeRandom0::RegisterClosure(shading_system);
+    g_bxdf_with_double_id = ClosureTypeBxdfWithDouble::RegisterClosure(shading_system);
+    g_microfacete_id = ClosureTypeMicrofacet::RegisterClosure(shading_system);
+    g_layered_bxdf_id = ClosureTypeLayeredBxdf::RegisterClosure(shading_system);
+    g_lambert_in_sort_id = ClosureTypeLambertInSORT::RegisterClosure(shading_system);
 
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

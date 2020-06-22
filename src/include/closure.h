@@ -69,12 +69,12 @@ struct ClosureVar {
 
 typedef std::vector<ClosureVar> ClosureVarList;
 
-#define DECLARE_CLOSURE_TYPE_BEGIN(T)           struct T {
+#define DECLARE_CLOSURE_TYPE_BEGIN(T, name)     struct T { static const char* get_name() { return name; }
 #define DECLARE_CLOSURE_TYPE_VAR(T,VT,V)        VT V;
-#define DECLARE_CLOSURE_TYPE_END(T)             static ClosureVarList m_offsets; static ClosureID RegisterClosure( const std::string& , Tsl_Namespace::ShadingSystem& ); };
+#define DECLARE_CLOSURE_TYPE_END(T)             static ClosureVarList m_offsets; static ClosureID RegisterClosure( Tsl_Namespace::ShadingSystem& ); };
 
 #define IMPLEMENT_CLOSURE_TYPE_BEGIN(T)         ClosureVarList T::m_offsets({
 #define IMPLEMENT_CLOSURE_TYPE_VAR(T,VT,V)      { ClosureVar( #V, #VT ) },
-#define IMPLEMENT_CLOSURE_TYPE_END(T)            }); ClosureID T::RegisterClosure( const std::string& name , Tsl_Namespace::ShadingSystem& ss ) { return ss.register_closure_type( name , m_offsets , sizeof(T) ); }
+#define IMPLEMENT_CLOSURE_TYPE_END(T)           }); ClosureID T::RegisterClosure( Tsl_Namespace::ShadingSystem& ss ) { return ss.register_closure_type( T::get_name() , m_offsets , sizeof(T) ); }
 
 TSL_NAMESPACE_END
