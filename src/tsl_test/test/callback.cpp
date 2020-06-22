@@ -45,7 +45,7 @@ TEST(CallbackFunction, Basic_Callback) {
     EXPECT_EQ(test_value, 4.0f);
 }
 
-TEST(CallbackFunction, System_Callback) {
+TEST(CallbackFunction, System_Callback0) {
     auto shader_source = R"(
         double cos(double x);
 
@@ -60,6 +60,24 @@ TEST(CallbackFunction, System_Callback) {
     double arg0 = 2.0, test_value = 1.0;
     func_ptr(arg0, &test_value);
     EXPECT_EQ(test_value, cos(arg0));
+}
+
+TEST(CallbackFunction, System_Callback1) {
+    auto shader_source = R"(
+        float cosf( float base );
+        float powf( float base , float exp );
+
+        shader function_name( float arg0 , out float data ){
+            data = powf( cosf(arg0) , 2.0f );
+        }
+    )";
+
+    auto ret = compile_shader<void(*)(float, float*)>(shader_source);
+    auto func_ptr = ret.first;
+
+    float arg0 = 2.0, test_value = 1.0;
+    func_ptr(arg0, &test_value);
+    EXPECT_EQ(test_value, powf( cosf(arg0) , 2.0f ));
 }
 
 TEST(CallbackFunction, Complex_Callback) {
