@@ -75,11 +75,10 @@ void* allocate_memory(const unsigned size) {
 void  emit_error(const char* format, ...) {
     va_list argList;
     
-    va_start(argList, format);
-    const auto size = snprintf(0, 0, format, argList);
-    va_end(argList);
-    
-    std::unique_ptr<char[]> buf = std::make_unique<char[]>(size);
+    // 1MB should be good enough for most errors.
+    constexpr int max_buf_size = 1024 * 1024;
+
+    std::unique_ptr<char[]> buf = std::make_unique<char[]>(max_buf_size);
     va_start(argList, format);
     vsprintf(buf.get(), format, argList);
     va_end(argList);
