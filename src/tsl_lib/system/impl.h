@@ -26,13 +26,11 @@
 #include "shader_resource_impl.h"
 #include "shading_system.h"
 #include "shading_context.h"
+#include "system/shader_resource_impl.h"
 
 TSL_NAMESPACE_BEGIN
 
 class GlobalModule;
-
-using ShaderTextureTable = std::unordered_map<std::string, std::unique_ptr<TextureHandleWrapper>>;
-using ShaderResourceTable = std::unordered_map<std::string, std::unique_ptr<ShaderResourceHandleWrapper>>;
 
 struct ShadingSystem_Impl {
     /**< Data structure holding all contexts. */

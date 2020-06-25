@@ -77,11 +77,18 @@ extern ClosureID g_layered_bxdf_id;
 extern ClosureID g_lambert_in_sort_id;
 extern ClosureID g_measured_brdf_id;
 
+inline ShaderUnitTemplate* compile_shader_unit_template(ShadingContext* shading_context, const char* name, const char* shader_source) {
+    const auto shader_unit_template = shading_context->begin_shader_unit_template(name);
+    const auto ret = shading_context->compile_shader_unit_template(shader_unit_template, shader_source);
+    shading_context->end_shader_unit_template(shader_unit_template);
+    return ret && shader_unit_template ? shader_unit_template : nullptr;
+}
+
 inline void validate_shader(const char* shader_source, bool valid = true, TslCompiler* compiler = nullptr) {
     auto shading_context = ShadingSystem::get_instance().make_shading_context();
 
     const auto name = std::to_string(g_name_counter++);
-    const auto shader_unit = shading_context->compile_shader_unit_template(name, shader_source);
+    const auto shader_unit = compile_shader_unit_template(shading_context, name.c_str(), shader_source);
     const auto ret = shader_unit != nullptr;
 
     EXPECT_EQ(ret, valid);
@@ -96,7 +103,7 @@ inline std::pair<T, std::unique_ptr<ShaderInstance>> compile_shader(const char* 
 
     // this name is meanless, but I just want something unique
     const auto name = std::to_string(g_name_counter++);
-    const auto shader_unit_template = shading_context->compile_shader_unit_template(name, shader_source);
+    const auto shader_unit_template = compile_shader_unit_template(shading_context, name.c_str(), shader_source);
 
     if (!shader_unit_template)
         return std::make_pair(nullptr, nullptr);

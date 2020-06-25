@@ -37,8 +37,8 @@ extern "C" {
 
     // 2D texture access
     DLLEXPORT void TSL_TEXTURE2D_SAMPLE(generic_ptr ptr, float u, float v, float3* color) {
-        const TextureHandleWrapper* thw = (const TextureHandleWrapper*)ptr;
-        *color = thw->m_resource_handle ? thw->m_resource_handle->sample2d(u, v) : make_float3(0.0f, 0.0f, 0.0f);
+        const TextureHandle* texture_handle = (const TextureHandle*)ptr;
+        *color = texture_handle ? texture_handle->sample2d(u, v) : make_float3(0.0f, 0.0f, 0.0f);
     }
 
     // 3D texture access

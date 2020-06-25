@@ -125,7 +125,7 @@ public:
     virtual ~ShaderUnitTemplate();
 
     //! @brief          Get name of the shader unit.
-    const std::string& get_name() const;
+    const std::string&  get_name() const;
 
     //! @brief  Make a shader instance
     //!
@@ -240,15 +240,26 @@ public:
     //! @return         Whether the shader is resolved successfully.
     TSL_Resolving_Status end_shader_group_template(ShaderGroupTemplate* sg) const;
 
+    //! @brief  Make a new shader unit template.
+    //!
+    //! @param  name    Name of the shader unit template.
+    //! @return         Shader unit template to be returned.
+    ShaderUnitTemplate*  begin_shader_unit_template(const std::string& name);
+
+    //! @breif  Ending of making a shader unit template.
+    //!
+    //! @param  sut     The shader unit template to close.
+    TSL_Resolving_Status end_shader_unit_template(ShaderUnitTemplate* su) const;
+
     //! @brief  Compile shader unit with source code.
     //!
     //! The function will return nullptr if for any reason the shader unit is failed to created,
     //! like invalid shader code or the name is already existed.
     //!
-    //! @param name     Name of the shader unit
+    //! @param sut      Shader unit template.
     //! @param source   Source code of the shader.
     //! @return         A pointer to shader unit.
-    ShaderUnitTemplate*  compile_shader_unit_template(const std::string& name, const char* source) const;
+    bool  compile_shader_unit_template(ShaderUnitTemplate* sut, const char* source) const;
 
     //! @brief  Resolve a shader instance before using it.
     //!

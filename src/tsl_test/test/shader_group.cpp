@@ -26,7 +26,7 @@ TEST(ShaderGroup, BasicShaderGroup) {
     auto shading_context = shading_system.make_shading_context();
 
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader_BasicShaderGroup", R"(
+    const auto root_shader_unit = compile_shader_unit_template(shading_context, "root_shader_BasicShaderGroup", R"(
         shader output_node( in closure in_bxdf , out closure out_bxdf ){
             out_bxdf = in_bxdf * 0.5f;
         }
@@ -34,7 +34,7 @@ TEST(ShaderGroup, BasicShaderGroup) {
     EXPECT_NE(nullptr, root_shader_unit);
 
     // a bxdf node
-    const auto bxdf_shader_unit = shading_context->compile_shader_unit_template("bxdf_shader_BasicShaderGroup", R"(
+    const auto bxdf_shader_unit = compile_shader_unit_template(shading_context, "bxdf_shader_BasicShaderGroup", R"(
         shader lambert_node( out closure out_bxdf ){
             out_bxdf = make_closure<lambert>( 111, 4.0f );
         }
@@ -98,7 +98,7 @@ TEST(ShaderGroup, DuplicateShaderUnits) {
     auto shading_context = shading_system.make_shading_context();
 
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader_DuplicateShaderUnits", R"(
+    const auto root_shader_unit = compile_shader_unit_template(shading_context, "root_shader_DuplicateShaderUnits", R"(
         shader output_node( closure in_bxdf0 , closure in_bxdf1, out closure out_bxdf ){
             out_bxdf = ( in_bxdf0 + in_bxdf1 ) * 0.5f;
         }
@@ -106,7 +106,7 @@ TEST(ShaderGroup, DuplicateShaderUnits) {
     EXPECT_NE(nullptr, root_shader_unit);
 
     // a bxdf node
-    const auto bxdf_shader_unit = shading_context->compile_shader_unit_template("bxdf_shader_DuplicateShaderUnits", R"(
+    const auto bxdf_shader_unit = compile_shader_unit_template(shading_context, "bxdf_shader_DuplicateShaderUnits", R"(
         shader lambert_node( float test , out closure out_bxdf ){
             out_bxdf = make_closure<lambert>( 111, test );
         }
@@ -187,7 +187,7 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
     auto shading_context = shading_system.make_shading_context();
 
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader_ShaderGroupWithoutClosure", R"(
+    const auto root_shader_unit = compile_shader_unit_template(shading_context, "root_shader_ShaderGroupWithoutClosure", R"(
         shader output_node( float in_bxdf , out float out_bxdf ){
             out_bxdf = in_bxdf * 1231.0f;
         }
@@ -195,7 +195,7 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
     EXPECT_NE(nullptr, root_shader_unit);
 
     // a bxdf node
-    const auto bxdf_shader_unit = shading_context->compile_shader_unit_template("bxdf_shader_ShaderGroupWithoutClosure", R"(
+    const auto bxdf_shader_unit = compile_shader_unit_template(shading_context, "bxdf_shader_ShaderGroupWithoutClosure", R"(
         shader lambert_node( float in_bxdf , out float out_bxdf , out float dummy ){
             out_bxdf = in_bxdf;
             // dummy = 1.0f;
@@ -254,7 +254,7 @@ TEST(ShaderGroup, ShaderGroupArgTypes) {
     auto shading_context = shading_system.make_shading_context();
 
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader_ShaderGroupArgTypes", R"(
+    const auto root_shader_unit = compile_shader_unit_template(shading_context, "root_shader_ShaderGroupArgTypes", R"(
         shader output_node( out int i , out float f , out double d , out bool b , out closure c , out vector vec ){
             i = 123;
             f = 123.0f;
@@ -348,7 +348,7 @@ TEST(ShaderGroup, ShaderGroupInputDefaults) {
     auto shading_context = shading_system.make_shading_context();
 
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader_ShaderGroupInputDefaults", R"(
+    const auto root_shader_unit = compile_shader_unit_template(shading_context, "root_shader_ShaderGroupInputDefaults", R"(
         shader output_node( int ii , float iff , double id , bool ib , vector if3, 
                             out int i , out float f , out double d , out bool b , out vector f3 ){
             i = ii;
@@ -495,7 +495,7 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
     ShaderGroupTemplate* shader_group0 = nullptr;
     {
         // the root shader node, this usually matches to the output node in material system
-        const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader_ShaderGroupRecursive", R"(
+        const auto root_shader_unit = compile_shader_unit_template(shading_context, "root_shader_ShaderGroupRecursive", R"(
             shader output_node( float in_bxdf , out float out_bxdf ){
                 out_bxdf = in_bxdf * 1231.0f;
             }
@@ -503,7 +503,7 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
         EXPECT_NE(nullptr, root_shader_unit);
 
         // a bxdf node
-        const auto bxdf_shader_unit = shading_context->compile_shader_unit_template("bxdf_shader_ShaderGroupRecursive", R"(
+        const auto bxdf_shader_unit = compile_shader_unit_template(shading_context, "bxdf_shader_ShaderGroupRecursive", R"(
             shader lambert_node( float in_bxdf , out float out_bxdf , out float dummy ){
                 out_bxdf = in_bxdf;
                 // dummy = 1.0f;
@@ -542,7 +542,7 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
     }
 
     // a bxdf node
-    const auto constant_shader_unit = shading_context->compile_shader_unit_template("constant_shader_ShaderGroupRecursive", R"(
+    const auto constant_shader_unit = compile_shader_unit_template(shading_context, "constant_shader_ShaderGroupRecursive", R"(
             shader constant_node( out float out_bxdf ){
                 out_bxdf = 3.0f;
             }
@@ -550,7 +550,7 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
     EXPECT_NE(nullptr, constant_shader_unit);
 
     // a bxdf node
-    const auto final_shader_unit = shading_context->compile_shader_unit_template("final_shader_ShaderGroupRecursive", R"(
+    const auto final_shader_unit = compile_shader_unit_template(shading_context, "final_shader_ShaderGroupRecursive", R"(
             shader resolve_node( float bxdf0 , float bxdf1 , out float out_bxdf ){
                 out_bxdf = bxdf0 + bxdf1;
             }
@@ -611,7 +611,7 @@ TEST(ShaderGroup, RealProblem0) {
     auto shading_context = shading_system.make_shading_context();
 
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader_RealProblem0", R"(
+    const auto root_shader_unit = compile_shader_unit_template(shading_context, "root_shader_RealProblem0", R"(
         shader output_node( in closure Surface, out closure out_bxdf ){
             out_bxdf = Surface;
         }
@@ -619,7 +619,7 @@ TEST(ShaderGroup, RealProblem0) {
     EXPECT_NE(nullptr, root_shader_unit);
 
     // a bxdf node
-    const auto bxdf_shader_unit = shading_context->compile_shader_unit_template("bxdf_shader_RealProblem0", R"(
+    const auto bxdf_shader_unit = compile_shader_unit_template(shading_context, "bxdf_shader_RealProblem0", R"(
         shader bxdf_lambert(color Diffuse, vector Normal, out closure Result){
             Result = make_closure<lambert_in_sort>( Diffuse , Normal );
         }
@@ -627,7 +627,7 @@ TEST(ShaderGroup, RealProblem0) {
     EXPECT_NE(nullptr, bxdf_shader_unit);
 
     // a constant color node
-    const auto constant_color_unit = shading_context->compile_shader_unit_template("constant_color_RealProblem0", R"(
+    const auto constant_color_unit = compile_shader_unit_template(shading_context, "constant_color_RealProblem0", R"(
         shader constant_color( color Color, out color Result ){
             Result = Color;
         }

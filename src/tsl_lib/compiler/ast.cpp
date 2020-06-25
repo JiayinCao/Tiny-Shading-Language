@@ -1419,11 +1419,11 @@ llvm::Value* AstNode_Statement_TextureDeclaration::codegen(LLVM_Compile_Context&
     // find the registered texture
     auto it = context.m_shader_texture_table->find(m_handle_name);
     if (it == context.m_shader_texture_table->end()){
-        (*context.m_shader_texture_table)[m_handle_name] = std::make_unique<TextureHandleWrapper>();
-        it = context.m_shader_texture_table->find(m_handle_name);
+        emit_error("Texture handle (%s) not registered.", m_handle_name.c_str());
+        return nullptr;
     }
     
-    auto addr = it->second.get();
+    auto addr = it->second;
     auto input_addr = ConstantInt::get(Type::getInt64Ty(*context.context), uintptr_t(addr));
     auto ptr_input_addr = ConstantExpr::getIntToPtr(input_addr, get_int_32_ptr_ty(context));
 
@@ -1444,11 +1444,11 @@ llvm::Value* AstNode_Statement_ShaderResourceHandleDeclaration::codegen(LLVM_Com
     // find the registered texture
     auto it = context.m_shader_resource_table->find(m_handle_name);
     if (it == context.m_shader_resource_table->end()) {
-        (*context.m_shader_resource_table)[m_handle_name] = std::make_unique<ShaderResourceHandleWrapper>();
-        it = context.m_shader_resource_table->find(m_handle_name);
+        emit_error("Resource handle (%s) not registered %s.", m_handle_name.c_str());
+        return nullptr;
     }
 
-    auto addr = it->second.get();
+    auto addr = it->second;
     auto input_addr = ConstantInt::get(Type::getInt64Ty(*context.context), uintptr_t(addr));
     auto ptr_input_addr = ConstantExpr::getIntToPtr(input_addr, get_int_32_ptr_ty(context));
 

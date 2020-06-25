@@ -65,7 +65,7 @@ TEST(GlobalValue, GlobalValueInShaderGroup_Simple) {
     auto shading_context = ShadingSystem::get_instance().make_shading_context();
 
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader", R"(
+    const auto root_shader_unit = compile_shader_unit_template(shading_context, "root_shader", R"(
         shader output_node( out float out_bxdf ){
             out_bxdf = global_value<intensity>;
         }
@@ -117,7 +117,7 @@ TEST(GlobalValue, GlobalValueInShaderGroup) {
     auto shading_context = shading_system.make_shading_context();
 
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = shading_context->compile_shader_unit_template("root_shader_GlobalValueInShaderGroup", R"(
+    const auto root_shader_unit = compile_shader_unit_template(shading_context, "root_shader_GlobalValueInShaderGroup", R"(
         shader output_node( in closure in_bxdf , out closure out_bxdf ){
             out_bxdf = in_bxdf * global_value<intensity>;
         }
@@ -125,7 +125,7 @@ TEST(GlobalValue, GlobalValueInShaderGroup) {
     EXPECT_NE(nullptr, root_shader_unit);
 
     // a bxdf node
-    const auto bxdf_shader_unit = shading_context->compile_shader_unit_template("bxdf_shader_GlobalValueInShaderGroup", R"(
+    const auto bxdf_shader_unit = compile_shader_unit_template(shading_context, "bxdf_shader_GlobalValueInShaderGroup", R"(
         shader lambert_node( out closure out_bxdf ){
             out_bxdf = make_closure<lambert>( 111, 4.0f );
         }

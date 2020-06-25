@@ -49,11 +49,16 @@ TEST(ShaderResource, SimpleTexture) {
     TslGlobal::RegisterGlobal(shading_system);
 
     // compile the shader
-    const auto shader_unit_template = shading_context->compile_shader_unit_template("test", shader_source);
-    EXPECT_NE(nullptr, shader_unit_template);
+    const auto shader_unit_template = shading_context->begin_shader_unit_template("texture_handle_shader");
 
     // register the texture handle
     shader_unit_template->register_texture("g_diffuse", &texture_simple);
+
+    // compile the shader unit
+    shading_context->compile_shader_unit_template(shader_unit_template, shader_source);
+
+    // shader unit done.
+    shading_context->end_shader_unit_template(shader_unit_template);
 
     // make a shader instance after the template is ready
     auto shader_instance = shader_unit_template->make_shader_instance();
@@ -105,11 +110,17 @@ TEST(ShaderResource, CustomShaderResource) {
     TslGlobal::RegisterGlobal(shading_system);
 
     // compile the shader
-    const auto shader_unit_template = shading_context->compile_shader_unit_template("custom_resource_shader", shader_source);
+    const auto shader_unit_template = shading_context->begin_shader_unit_template("custom_reousrce_shader");
     EXPECT_NE(nullptr, shader_unit_template);
 
     // register the texture handle
     shader_unit_template->register_shader_resource("custom_data", &custom_data);
+
+    // compile the shader unit
+    shading_context->compile_shader_unit_template(shader_unit_template, shader_source);
+
+    // shader unit done.
+    shading_context->end_shader_unit_template(shader_unit_template);
 
     // make a shader instance after the template is ready
     auto shader_instance = shader_unit_template->make_shader_instance();
@@ -130,11 +141,7 @@ TEST(ShaderResource, CustomShaderResource) {
     const ClosureTypeMeasuredBrdf* param = (const ClosureTypeMeasuredBrdf*)closure->m_params;
     EXPECT_EQ(123, param->signature);
 
-    // this is just a hack before I figure out a proper way to expose the handle
-    struct HandleWrapper {
-        CustomShaderResource* handle = nullptr;
-    };
-    auto handle_wrapper = (const HandleWrapper*)param->custom_data;
-    EXPECT_EQ(&custom_data, handle_wrapper->handle);
-    EXPECT_EQ(0x12345678, handle_wrapper->handle->m_signature);
+    auto handle = (const CustomShaderResource*)param->custom_data;
+    EXPECT_EQ(&custom_data, handle);
+    EXPECT_EQ(0x12345678, handle->m_signature);
 }

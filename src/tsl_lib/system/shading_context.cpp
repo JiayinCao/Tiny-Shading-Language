@@ -67,20 +67,20 @@ void ShaderUnitTemplate::parse_dependencies(ShaderUnitTemplate_Pvt* sut) const {
 }
 
 bool ShaderUnitTemplate::register_texture(const std::string name, const TextureHandle* th) {
-    if (!m_shader_unit_template_impl->m_shader_texture_table.count(name))
+    if (m_shader_unit_template_impl->m_shader_texture_table.count(name))
         return false;
     if (!th)
         return false;
-    m_shader_unit_template_impl->m_shader_texture_table[name]->m_resource_handle = th;
+    m_shader_unit_template_impl->m_shader_texture_table[name] = th;
     return true;
 }
 
 bool ShaderUnitTemplate::register_shader_resource(const std::string& name, const ShaderResourceHandle* srh) {
-    if (!m_shader_unit_template_impl->m_shader_resource_table.count(name))
-            return false;
+    if (m_shader_unit_template_impl->m_shader_resource_table.count(name))
+        return false;
     if (!srh)
         return false;
-    m_shader_unit_template_impl->m_shader_resource_table[name]->m_resource_handle = srh;
+    m_shader_unit_template_impl->m_shader_resource_table[name] = srh;
     return true;
 }
 
@@ -150,28 +150,27 @@ ShadingContext::~ShadingContext() {
     delete m_shading_context_impl;
 }
 
-ShaderUnitTemplate* ShadingContext::compile_shader_unit_template(const std::string& name, const char* source) const {
-    // make sure the lock doesn't cover compiling
-    {
-        // making sure only one of the context can access the data at a time
-        std::lock_guard<std::mutex> lock(m_shading_context_impl->m_shading_system_impl->m_shader_unit_mutex);
+ShaderUnitTemplate* ShadingContext::begin_shader_unit_template(const std::string& name) {
+    // making sure only one of the context can access the data at a time
+    std::lock_guard<std::mutex> lock(m_shading_context_impl->m_shading_system_impl->m_shader_unit_mutex);
 
-        // if the shader group is created before, return nullptr.
-        if (m_shading_context_impl->m_shading_system_impl->m_shader_units.count(name))
-            return nullptr;
-
-        // allocate the shader unit entry
-        m_shading_context_impl->m_shading_system_impl->m_shader_units[name] = std::make_unique<ShaderUnitTemplate>(name);
-    }
-
-    auto shader_unit = m_shading_context_impl->m_shading_system_impl->m_shader_units[name].get();
-
-    // compile the shader unit
-    const bool ret = m_shading_context_impl->m_compiler->compile(source, shader_unit);
-    if (!ret)
+    // if the shader group is created before, return nullptr.
+    if (m_shading_context_impl->m_shading_system_impl->m_shader_units.count(name))
         return nullptr;
 
-    return shader_unit;
+    // allocate the shader unit entry
+    m_shading_context_impl->m_shading_system_impl->m_shader_units[name] = std::make_unique<ShaderUnitTemplate>(name);
+
+    return m_shading_context_impl->m_shading_system_impl->m_shader_units[name].get();
+}
+
+TSL_Resolving_Status ShadingContext::end_shader_unit_template(ShaderUnitTemplate* su) const {
+    // nothing needs to be done here
+    return TSL_Resolving_Status::TSL_Resolving_Succeed;
+}
+
+bool  ShadingContext::compile_shader_unit_template(ShaderUnitTemplate * sut, const char* source) const {
+    return m_shading_context_impl->m_compiler->compile(source, sut);
 }
 
 TSL_Resolving_Status ShadingContext::end_shader_group_template(ShaderGroupTemplate* sg) const {

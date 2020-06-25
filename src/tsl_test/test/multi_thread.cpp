@@ -34,7 +34,7 @@ TEST(Thread, Full_Test) {
                 char name_buffer[256] = { 0 };
                 name_buffer[0] = 'a' + tid;
                 auto shading_context = shading_system.make_shading_context();
-                auto shader_unit = shading_context->compile_shader_unit_template(name_buffer,
+                auto shader_unit = compile_shader_unit_template(shading_context, name_buffer,
                     R"(
                     shader func(){
                         int flag = 1;
