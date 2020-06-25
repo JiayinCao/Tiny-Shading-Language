@@ -46,6 +46,9 @@ struct ShadingContext_Impl;
  */
 class TSL_INTERFACE TextureHandle {
 public:
+    //! @brief  Virtual destructor.
+    virtual ~TextureHandle() = default;
+    
     //! @brief  Texture 2d sampling.
     //!
     //! @param  u       U coordinate.

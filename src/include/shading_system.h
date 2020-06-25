@@ -34,6 +34,9 @@ class ShadingContext;
  */
 class TSL_INTERFACE ShadingSystemInterface {
 public:
+    //! @brief  Virtual destructor.
+    virtual ~ShadingSystemInterface() = default;
+
     //! @brief  Allocate memory inside shaders.
     //!
     //! There are things to be noticed in this interface.
@@ -41,6 +44,7 @@ public:
     //!  - This implementation has to be thread safe.
     virtual void*   allocate(unsigned int size) const = 0;
 
+    //! @brief  Debug information levels.
     enum DEBUG_LEVEL {
         DEBUG_INFO,
         DEBUG_WARNING,
