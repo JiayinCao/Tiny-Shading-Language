@@ -40,15 +40,19 @@ struct ShaderUnitTemplate_Impl;
 struct ShaderGroupTemplate_Impl;
 struct ShadingContext_Impl;
 
+//! @brief  Shader resource handle interface.
+class TSL_INTERFACE ShaderResourceHandle {
+public:
+    //! @brief  Virtual destructor.
+    ~ShaderResourceHandle() = default;
+};
+
 //! @brief  Interface of texture handle.
 /**
  * It is renderer's job to provide specific implementation of texture sampling.
  */
-class TSL_INTERFACE TextureHandle {
+class TSL_INTERFACE TextureHandle : public ShaderResourceHandle{
 public:
-    //! @brief  Virtual destructor.
-    virtual ~TextureHandle() = default;
-    
     //! @brief  Texture 2d sampling.
     //!
     //! @param  u       U coordinate.
@@ -137,8 +141,15 @@ public:
     //!
     //! It is renderer's job to keep these memory alive.
     //!
+    //! @param  name    Name of the texture handle defined in shader.
     //! @param  th      The texture handle to be registered.
     bool                register_texture(const std::string name, const TextureHandle* th);
+
+    //! @brief  Register resource handle in this shader unit.
+    //!
+    //! @param  name    Name of the shader resource handle defined in shader.
+    //! @param  srh     The shader resource handle to be registered.
+    bool                register_shader_resource(const std::string& name, const ShaderResourceHandle* srh);
 
 protected:
     ShaderUnitTemplate_Impl* m_shader_unit_template_impl = nullptr;

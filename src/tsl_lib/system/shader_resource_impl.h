@@ -25,16 +25,22 @@
 TSL_NAMESPACE_BEGIN
 
 class TextureHandle;
+class ShaderResourceHandle;
 
-//! A razor thin wrapper of texture handle.
+//! A razor thin wrapper of texture/resource handle.
 /**
  * With the catch of one-level memory indirection, the gain of introducing this is to decouple texture loading process and shader compilation.
  */
-struct TextureHandleWrapper {
+template<class T>
+struct TextureResourceWrapper {
 public:
-    const TextureHandle* m_texture_handle = nullptr;
+    const T* m_resource_handle = nullptr;
 };
 
+using TextureHandleWrapper = TextureResourceWrapper<TextureHandle>;
+using ShaderResourceHandleWrapper = TextureResourceWrapper<ShaderResourceHandle>;
+
 using ShaderTextureTable = std::unordered_map<std::string, std::unique_ptr<TextureHandleWrapper>>;
+using ShaderResourceTable = std::unordered_map<std::string, std::unique_ptr<ShaderResourceHandleWrapper>>;
 
 TSL_NAMESPACE_END

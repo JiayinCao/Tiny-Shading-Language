@@ -44,6 +44,10 @@ void AstNode_Statement_TextureDeclaration::print() const {
     std::cout << "texture2d " << m_handle_name << ";" << std::endl;
 }
 
+void AstNode_Statement_ShaderResourceHandleDeclaration::print() const {
+    std::cout << "shader_resouce_handle " << m_handle_name << ";" << std::endl;
+}
+
 void AstNode_Expression_Texture2DSample::print() const {
     std::cout << "texture2d_sample<" << m_texture_handle_name << ">(";
 

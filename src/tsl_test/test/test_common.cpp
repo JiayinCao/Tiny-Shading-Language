@@ -52,4 +52,9 @@ IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambertInSORT, float3, base_color)
 IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambertInSORT, float3, normal)
 IMPLEMENT_CLOSURE_TYPE_END(ClosureTypeLambertInSORT)
 
+IMPLEMENT_CLOSURE_TYPE_BEGIN(ClosureTypeMeasuredBrdf)
+IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeMeasuredBrdf, int, signature)
+IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeMeasuredBrdf, void*, custom_data)
+IMPLEMENT_CLOSURE_TYPE_END(ClosureTypeMeasuredBrdf)
+
 int g_name_counter = 0;

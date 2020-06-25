@@ -18,7 +18,7 @@
 #include "shading_system.h"
 #include "shading_context.h"
 #include "shader_arg_types.h"
-#include "system/texture_impl.h"
+#include "system/shader_resource_impl.h"
 #include "system/impl.h"
 
 TSL_NAMESPACE_BEGIN
@@ -38,7 +38,7 @@ extern "C" {
     // 2D texture access
     DLLEXPORT void TSL_TEXTURE2D_SAMPLE(generic_ptr ptr, float u, float v, float3* color) {
         const TextureHandleWrapper* thw = (const TextureHandleWrapper*)ptr;
-        *color = thw->m_texture_handle ? thw->m_texture_handle->sample2d(u, v) : make_float3(0.0f, 0.0f, 0.0f);
+        *color = thw->m_resource_handle ? thw->m_resource_handle->sample2d(u, v) : make_float3(0.0f, 0.0f, 0.0f);
     }
 
     // 3D texture access

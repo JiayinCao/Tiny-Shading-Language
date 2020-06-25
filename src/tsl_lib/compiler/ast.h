@@ -28,7 +28,7 @@
 #include "types.h"
 #include "shader_unit_pvt.h"
 #include "global.h"
-#include "system/texture_impl.h"
+#include "system/shader_resource_impl.h"
 
 TSL_NAMESPACE_BEGIN
 
@@ -51,7 +51,8 @@ struct LLVM_Compile_Context{
     llvm::Type*         tsl_global_ty = nullptr;
     llvm::Value*        tsl_global_value = nullptr;
     GlobalVarList       m_tsl_global_mapping;
-    ShaderTextureTable* m_shader_texture_table = nullptr;
+    ShaderTextureTable*     m_shader_texture_table = nullptr;
+    ShaderResourceTable*    m_shader_resource_table = nullptr;
 
     // closured touched in the shader
     std::unordered_map<std::string, llvm::Function*> m_closures_maps;
@@ -990,6 +991,18 @@ public:
     AstNode_Statement_TextureDeclaration(const char* texture_var_name) : m_handle_name(texture_var_name) {}
 
     llvm::Value*    codegen(LLVM_Compile_Context& context) const override;
+
+    void print() const override;
+
+private:
+    const std::string m_handle_name;
+};
+
+class AstNode_Statement_ShaderResourceHandleDeclaration : public AstNode_Statement {
+public:
+    AstNode_Statement_ShaderResourceHandleDeclaration(const char* texture_var_name) : m_handle_name(texture_var_name) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 

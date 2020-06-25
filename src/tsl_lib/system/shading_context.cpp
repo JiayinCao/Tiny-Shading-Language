@@ -71,7 +71,16 @@ bool ShaderUnitTemplate::register_texture(const std::string name, const TextureH
         return false;
     if (!th)
         return false;
-    m_shader_unit_template_impl->m_shader_texture_table[name]->m_texture_handle = th;
+    m_shader_unit_template_impl->m_shader_texture_table[name]->m_resource_handle = th;
+    return true;
+}
+
+bool ShaderUnitTemplate::register_shader_resource(const std::string& name, const ShaderResourceHandle* srh) {
+    if (!m_shader_unit_template_impl->m_shader_resource_table.count(name))
+            return false;
+    if (!srh)
+        return false;
+    m_shader_unit_template_impl->m_shader_resource_table[name]->m_resource_handle = srh;
     return true;
 }
 

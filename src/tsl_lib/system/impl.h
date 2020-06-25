@@ -23,7 +23,7 @@
 #include <unordered_map>
 #include <mutex>
 #include "tslversion.h"
-#include "texture_impl.h"
+#include "shader_resource_impl.h"
 #include "shading_system.h"
 #include "shading_context.h"
 
@@ -32,6 +32,7 @@ TSL_NAMESPACE_BEGIN
 class GlobalModule;
 
 using ShaderTextureTable = std::unordered_map<std::string, std::unique_ptr<TextureHandleWrapper>>;
+using ShaderResourceTable = std::unordered_map<std::string, std::unique_ptr<ShaderResourceHandleWrapper>>;
 
 struct ShadingSystem_Impl {
     /**< Data structure holding all contexts. */
@@ -60,6 +61,8 @@ struct ShaderUnitTemplate_Impl {
 
     /**< Shader texture table. */
     ShaderTextureTable      m_shader_texture_table;
+    /**< Shader resource table. */
+    ShaderResourceTable     m_shader_resource_table;
 
     // This will be allowed once I have most feature completed.
     const bool  m_allow_optimization = false;

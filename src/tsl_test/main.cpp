@@ -43,6 +43,7 @@ ClosureID g_bxdf_with_double_id = INVALID_CLOSURE_ID;
 ClosureID g_microfacete_id = INVALID_CLOSURE_ID;
 ClosureID g_layered_bxdf_id = INVALID_CLOSURE_ID;
 ClosureID g_lambert_in_sort_id = INVALID_CLOSURE_ID;
+ClosureID g_measured_brdf_id = INVALID_CLOSURE_ID;
 
 int main(int argc, char** argv) {
     std::cout << "--------------------------  " TSL_INTRO_STRING "  --------------------------" << std::endl;
@@ -62,6 +63,7 @@ int main(int argc, char** argv) {
     g_microfacete_id = ClosureTypeMicrofacet::RegisterClosure(shading_system);
     g_layered_bxdf_id = ClosureTypeLayeredBxdf::RegisterClosure(shading_system);
     g_lambert_in_sort_id = ClosureTypeLambertInSORT::RegisterClosure(shading_system);
+    g_measured_brdf_id = ClosureTypeMeasuredBrdf::RegisterClosure(shading_system);
 
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

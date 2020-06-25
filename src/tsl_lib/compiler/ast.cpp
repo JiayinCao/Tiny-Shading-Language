@@ -1440,6 +1440,31 @@ llvm::Value* AstNode_Statement_TextureDeclaration::codegen(LLVM_Compile_Context&
     return nullptr;
 }
 
+llvm::Value* AstNode_Statement_ShaderResourceHandleDeclaration::codegen(LLVM_Compile_Context& context) const {
+    // find the registered texture
+    auto it = context.m_shader_resource_table->find(m_handle_name);
+    if (it == context.m_shader_resource_table->end()) {
+        (*context.m_shader_resource_table)[m_handle_name] = std::make_unique<ShaderResourceHandleWrapper>();
+        it = context.m_shader_resource_table->find(m_handle_name);
+    }
+
+    auto addr = it->second.get();
+    auto input_addr = ConstantInt::get(Type::getInt64Ty(*context.context), uintptr_t(addr));
+    auto ptr_input_addr = ConstantExpr::getIntToPtr(input_addr, get_int_32_ptr_ty(context));
+
+    // create the global variable
+    llvm::Module* module = context.module;
+    GlobalVariable* global_input_value = new GlobalVariable(*module, get_int_32_ptr_ty(context), true, GlobalValue::InternalLinkage, ptr_input_addr, "global_input");
+
+    // for debugging purposes
+    global_input_value->setName(m_handle_name);
+
+    // push the varible, this one is kind of special in a way it doesn't have a valid data type.
+    context.push_var_symbol(m_handle_name, global_input_value, DataType());
+
+    return nullptr;
+}
+
 llvm::Value* AstNode_Expression_Texture2DSample::codegen(LLVM_Compile_Context& context) const {
     auto texture_handle_addr = context.get_var_symbol(m_texture_handle_name);
     if (texture_handle_addr) {

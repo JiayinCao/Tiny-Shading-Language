@@ -82,6 +82,7 @@ whitespace               [ \t\r\n\f]+
 "struct"				  { return STRUCT; }
 "make_closure"            { return MAKE_CLOSURE; }
 "global_value"            { return GLOBAL_VALUE; }
+"shader_resource"         { return SHADER_RESOURCE_HANDLE; }
 "texture2d"               { return TEXTURE2D_HANDLE; }
 "texture2d_sample"        { return TEXTURE2D_SAMPLE; }
 "closure"                 { return CLOSURE; }

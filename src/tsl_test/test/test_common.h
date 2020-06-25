@@ -62,6 +62,11 @@ DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambertInSORT, float3, base_color)
 DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambertInSORT, float3, normal)
 DECLARE_CLOSURE_TYPE_END(ClosureTypeLambertInSORT)
 
+DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeMeasuredBrdf, "measured_brdf")
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMeasuredBrdf, int, signature)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMeasuredBrdf, void*, custom_data)
+DECLARE_CLOSURE_TYPE_END(ClosureTypeMeasuredBrdf)
+
 extern int g_name_counter;
 
 extern ClosureID g_lambert_closure_id;
@@ -70,6 +75,7 @@ extern ClosureID g_bxdf_with_double_id;
 extern ClosureID g_microfacete_id;
 extern ClosureID g_layered_bxdf_id;
 extern ClosureID g_lambert_in_sort_id;
+extern ClosureID g_measured_brdf_id;
 
 inline void validate_shader(const char* shader_source, bool valid = true, TslCompiler* compiler = nullptr) {
     auto shading_context = ShadingSystem::get_instance().make_shading_context();
