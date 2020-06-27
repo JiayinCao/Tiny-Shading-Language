@@ -34,7 +34,6 @@ TSL_NAMESPACE_BEGIN
 
 class AstNode_FunctionPrototype;
 class GlobalModule;
-class TextureHandle;
 
 struct StructMemberTypeMetaData{
 	llvm::Type* m_llvm_type = nullptr;

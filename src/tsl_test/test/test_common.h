@@ -77,6 +77,13 @@ extern ClosureID g_layered_bxdf_id;
 extern ClosureID g_lambert_in_sort_id;
 extern ClosureID g_measured_brdf_id;
 
+class TextureSimple {
+public:
+    float3 sample2d(float u, float v) const {
+        return make_float3(u, v, 1234.0f);
+    }
+};
+
 inline ShaderUnitTemplate* compile_shader_unit_template(ShadingContext* shading_context, const char* name, const char* shader_source) {
     const auto shader_unit_template = shading_context->begin_shader_unit_template(name);
     const auto ret = shading_context->compile_shader_unit_template(shader_unit_template, shader_source);

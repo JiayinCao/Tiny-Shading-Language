@@ -24,10 +24,9 @@
 
 TSL_NAMESPACE_BEGIN
 
-class TextureHandle;
 class ShaderResourceHandle;
 
-using ShaderTextureTable = std::unordered_map<std::string, const TextureHandle*>;
+using ShaderTextureTable = std::unordered_map<std::string, const void*>;
 using ShaderResourceTable = std::unordered_map<std::string, const ShaderResourceHandle*>;
 
 TSL_NAMESPACE_END

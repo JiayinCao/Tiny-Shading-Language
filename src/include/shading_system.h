@@ -21,6 +21,7 @@
 #include "closure.h"
 #include "global.h"
 #include "export.h"
+#include "shader_arg_types.h"
 
 TSL_NAMESPACE_BEGIN
 
@@ -56,6 +57,15 @@ public:
     //! @param  level       Debug level.
     //! @param  error       String describing the error.
     virtual void    catch_debug(const DEBUG_LEVEL level, const char* error) const = 0;
+
+    //! @brief  Sample 2d texture.
+    //!
+    //! @param  texture     Texture handle.
+    //! @param  u           UV coordinate.
+    //! @param  v           UV coordinate.
+    //! @param  color       RGB of the texture pixel.
+    //! @param  alpha       Alpha channel of the texture.
+    virtual void    sample_2d(const void* texture, float u, float v, float3& color, float& alpha) const = 0;
 };
 
 //! @brief  Shading system is the root interface exposed through TSL system.

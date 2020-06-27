@@ -115,4 +115,7 @@ void* allocate_memory(const unsigned size);
 //! @brief  Output error during shader compilation.
 void  emit_error(const char* error, ...);
 
+//! @brief  Texture sampling
+void  sample_2d(const void* texture, float u, float v, float3& color, float& alpha);
+
 TSL_NAMESPACE_END

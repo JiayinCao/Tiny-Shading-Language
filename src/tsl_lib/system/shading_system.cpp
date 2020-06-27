@@ -88,4 +88,11 @@ void  emit_error(const char* format, ...) {
         callback->catch_debug(ShadingSystemInterface::DEBUG_ERROR, buf.get());
 }
 
+void  sample_2d(const void* texture, float u, float v, float3& color, float& alpha) {
+    const auto callback = g_shading_system_impl->m_callback.get();
+    if (nullptr == callback)
+        return;
+    callback->sample_2d(texture, u, v, color, alpha);
+}
+
 TSL_NAMESPACE_END

@@ -17,13 +17,6 @@
 
 #include "test_common.h"
 
-class TextureSimple : public TextureHandle {
-public:
-    float3 sample2d(float u, float v) const override {
-        return make_float3(u, v, 1234.0f);
-    }
-};
-
 TEST(ShaderResource, SimpleTexture) {
     auto shader_source = R"(
         texture2d g_diffuse;

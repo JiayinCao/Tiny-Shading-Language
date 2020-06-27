@@ -47,19 +47,6 @@ public:
     ~ShaderResourceHandle() = default;
 };
 
-//! @brief  Interface of texture handle.
-/**
- * It is renderer's job to provide specific implementation of texture sampling.
- */
-class TSL_INTERFACE TextureHandle : public ShaderResourceHandle{
-public:
-    //! @brief  Texture 2d sampling.
-    //!
-    //! @param  u       U coordinate.
-    //! @param  v       V coordinate.
-    virtual float3 sample2d(float u, float v) const = 0;
-};
-
 //! @brief  ShaderInstance is the very basic unit of shader execution.
 /**
  * A shader instance keeps track of the raw function pointer for shader execution.
@@ -143,7 +130,7 @@ public:
     //!
     //! @param  name    Name of the texture handle defined in shader.
     //! @param  th      The texture handle to be registered.
-    bool                register_texture(const std::string name, const TextureHandle* th);
+    bool                register_texture(const std::string name, const void* th);
 
     //! @brief  Register resource handle in this shader unit.
     //!
