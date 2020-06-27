@@ -175,7 +175,7 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 		return nullptr;
 
 	// create the function prototype
-	llvm::Function* function = llvm::Function::Create(function_type, llvm::Function::ExternalLinkage, m_name, context.module);
+	llvm::Function* function = llvm::Function::Create(function_type, llvm::Function::InternalLinkage, m_name, context.module);
 
 	// For debugging purposes, set the name of all arguments
 	variable = m_variables;
