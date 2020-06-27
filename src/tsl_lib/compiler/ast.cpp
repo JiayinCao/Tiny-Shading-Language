@@ -1467,19 +1467,25 @@ llvm::Value* AstNode_Expression_Texture2DSample::codegen(LLVM_Compile_Context& c
     auto texture_handle_addr = context.get_var_symbol(m_texture_handle_name);
     if (texture_handle_addr) {
         auto texture_handle = context.builder->CreateLoad(texture_handle_addr);
+        auto th = context.builder->CreatePointerCast(texture_handle, get_int_32_ptr_ty(context));
 
         auto texture2d_sample_function = context.m_func_symbols["TSL_TEXTURE2D_SAMPLE"].first;
 
-        std::vector<Value*> args(1, texture_handle);
+        std::vector<Value*> args(1, th);
+
+        auto float3_struct_ty = context.m_structure_type_maps["float3"].m_llvm_type;
+        Value* ret = context.builder->CreateAlloca(float3_struct_ty);
+        args.push_back(ret);
+
+        auto float_ty = get_float_ty(context);
+        Value* float_ret = context.builder->CreateAlloca(float_ty);
+        args.push_back(float_ret);
+
         AstNode_Expression* node = m_variables;
         while (node) {
             args.push_back(node->codegen(context));
             node = castType<AstNode_Expression>(node->get_sibling());
         }
-
-        auto float3_struct_ty = context.m_structure_type_maps["float3"].m_llvm_type;
-        Value* ret = context.builder->CreateAlloca(float3_struct_ty);
-        args.push_back(ret);
 
         context.builder->CreateCall(texture2d_sample_function, args);
 

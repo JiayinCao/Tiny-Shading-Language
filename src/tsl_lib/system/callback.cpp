@@ -36,9 +36,8 @@ extern "C" {
     }
 
     // 2D texture access
-    DLLEXPORT void TSL_TEXTURE2D_SAMPLE(generic_ptr ptr, float u, float v, float3* color) {
-        float dummy_alpha = 0.0f;
-        sample_2d((const void*)ptr, u, v, *color, dummy_alpha);
+    DLLEXPORT void TSL_TEXTURE2D_SAMPLE(generic_ptr ptr, float3* color, float* alpha, float u, float v) {
+        sample_2d((const void*)ptr, u, v, *color, *alpha);
     }
 
     // 3D texture access
