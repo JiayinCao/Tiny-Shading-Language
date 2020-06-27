@@ -537,6 +537,18 @@ TSL_Resolving_Status TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Con
                             case ShaderArgumentTypeEnum::TSL_TYPE_FLOAT3:
                                 llvm_value = get_llvm_constant_float3(var.m_val.m_float3, context);
                                 break;
+                            case ShaderArgumentTypeEnum::TSL_TYPE_GLOBAL:
+                                has_init_value = false;
+                                for (int i = 0; i < context.m_tsl_global_mapping.size(); ++i) {
+                                    const auto& arg = context.m_tsl_global_mapping[i];
+                                    if (arg.m_name == std::string(var.m_val.m_global_var_name)) {
+                                        auto gep0 = context.builder->CreateConstGEP2_32(nullptr, context.tsl_global_value, 0, i);
+                                        llvm_value = context.builder->CreateLoad(gep0);
+                                        has_init_value = true;
+                                        break;
+                                    }
+                                }
+                                break;
                             default:
                                 has_init_value = false;
                                 break;

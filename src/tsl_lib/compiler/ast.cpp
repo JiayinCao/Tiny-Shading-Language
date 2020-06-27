@@ -288,8 +288,6 @@ llvm::Value* AstNode_Literal_GlobalValue::codegen(LLVM_Compile_Context& context)
     for (int i = 0; i < context.m_tsl_global_mapping.size(); ++i){
         const auto& arg = context.m_tsl_global_mapping[i];
         if (arg.m_name == m_value_name) {
-            const auto var_type = context.tsl_global_ty;
-
             auto gep0 = context.builder->CreateConstGEP2_32(nullptr, context.tsl_global_value, 0, i);
             return context.builder->CreateLoad(gep0);
         }

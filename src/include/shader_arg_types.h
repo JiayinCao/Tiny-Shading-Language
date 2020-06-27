@@ -30,6 +30,7 @@ enum ShaderArgumentTypeEnum : unsigned int {
     TSL_TYPE_BOOL,
     TSL_TYPE_FLOAT3,
     TSL_TYPE_FLOAT4,
+    TSL_TYPE_GLOBAL,
     TSL_TYPE_CLOSURE
 };
 
@@ -54,12 +55,13 @@ inline float4 make_float4(float x, float y, float z, float w) {
 }
 
 union ArgDefaultValue {
-    float   m_float;
-    int     m_int;
-    double  m_double;
-    bool    m_bool;
-    float3  m_float3;
-    float4  m_float4;
+    float       m_float;
+    int         m_int;
+    double      m_double;
+    bool        m_bool;
+    float3      m_float3;
+    float4      m_float4;
+    const char* m_global_var_name;  // to keep it as simple as possible, it is up to renderer to keep track of the memory
 };
 
 struct ArgDescriptor {

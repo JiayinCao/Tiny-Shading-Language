@@ -35,6 +35,60 @@ TEST(GlobalValue, AccessData) {
     EXPECT_EQ(123.0f, data);
 }
 
+TEST(GlobalValue, GlobalValueAsDefaultValueForArgument) {
+    // register tsl global
+    TslGlobal tsl_global;
+    tsl_global.intensity = 123.0f;
+
+    // make a shading context for shader compiling, since there is only one thread involved in this unit test, it is good enough.
+    auto shading_context = ShadingSystem::get_instance().make_shading_context();
+
+    // the root shader node, this usually matches to the output node in material system
+    const auto root_shader_unit = compile_shader_unit_template(shading_context, "random_root_shader", R"(
+        shader output_node( float in_var, out float out_bxdf ){
+            out_bxdf = in_var;
+        }
+    )");
+    EXPECT_NE(nullptr, root_shader_unit);
+
+    // make a shader group
+    auto shader_group = shading_context->begin_shader_group_template("GlobalValueAsDefaultValueForArgument");
+    EXPECT_NE(nullptr, shader_group);
+
+    // add the two shader units in this group
+    auto ret = shader_group->add_shader_unit("root_shader", root_shader_unit, true);
+    EXPECT_EQ(true, ret);
+
+    // expose the shader interface
+    ArgDescriptor arg;
+    arg.m_name = "out_bxdf";
+    arg.m_type = TSL_TYPE_FLOAT;
+    arg.m_is_output = true;
+    shader_group->expose_shader_argument("root_shader", "out_bxdf", arg);
+
+    ShaderUnitInputDefaultValue dv;
+    dv.m_type = ShaderArgumentTypeEnum::TSL_TYPE_GLOBAL;
+    dv.m_val.m_global_var_name = "intensity";
+    shader_group->init_shader_input("root_shader", "in_var", dv);
+
+    // resolve the shader group
+    auto status = shading_context->end_shader_group_template(shader_group);
+    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, status);
+
+    auto shader_instance = shader_group->make_shader_instance();
+    status = shading_context->resolve_shader_instance(shader_instance.get());
+    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, status);
+
+    // get the function pointer
+    auto raw_function = (void(*)(float*, TslGlobal*))shader_instance->get_function();
+    EXPECT_NE(nullptr, raw_function);
+
+    // execute the shader
+    float ret_value = 0.0f;
+    raw_function(&ret_value, &tsl_global);
+    EXPECT_EQ(ret_value, 123.0f);
+}
+
 TEST(GlobalValue, AccessDataFloat3) {
     auto shader_source = R"(
         shader function_name(out float var){
