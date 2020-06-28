@@ -266,19 +266,81 @@ bool AstNode_Binary_Add::is_closure(LLVM_Compile_Context& context) const {
 }
 
 llvm::Value* AstNode_Binary_Add::codegen(LLVM_Compile_Context& context) const {
+    auto& builder = *context.builder;
+
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
-    if (!m_left->is_closure(context) && !m_right->is_closure(context))
+    if (!m_left->is_closure(context) && !m_right->is_closure(context)) {
+        // something is not right
+        if (!left || !right)
+            return nullptr;
+
+        const auto float3_struct_ty = context.m_structure_type_maps["float3"].m_llvm_type;
+        const auto float_ty = get_float_ty(context);
+
+        if (left->getType() == float3_struct_ty && right->getType() == float3_struct_ty) {
+            auto ret = builder.CreateAlloca(float3_struct_ty);
+
+            // I have no idea how to access per-channel data from a struct.
+            // Until I figure out a better solution, I'll live with the current one.
+            auto tmp_left = builder.CreateAlloca(float3_struct_ty);
+            builder.CreateStore(left, tmp_left);
+            builder.CreateStore(right, ret);
+
+            auto ret_x = builder.CreateConstGEP2_32(nullptr, ret, 0, 0);
+            auto left_x = builder.CreateConstGEP2_32(nullptr, tmp_left, 0, 0);
+            auto mul_x = get_llvm_add(builder.CreateLoad(left_x), builder.CreateLoad(ret_x), context);
+            builder.CreateStore(mul_x, ret_x);
+
+            auto ret_y = context.builder->CreateConstGEP2_32(nullptr, ret, 0, 1);
+            auto left_y = context.builder->CreateConstGEP2_32(nullptr, tmp_left, 0, 1);
+            auto mul_y = get_llvm_add(builder.CreateLoad(left_y), builder.CreateLoad(ret_y), context);
+            builder.CreateStore(mul_y, ret_y);
+
+            auto ret_z = context.builder->CreateConstGEP2_32(nullptr, ret, 0, 2);
+            auto left_z = context.builder->CreateConstGEP2_32(nullptr, tmp_left, 0, 2);
+            auto mul_z = get_llvm_add(builder.CreateLoad(left_z), builder.CreateLoad(ret_z), context);
+            builder.CreateStore(mul_z, ret_z);
+
+            return builder.CreateLoad(ret);
+        }
+        else if (left->getType() == float3_struct_ty && right->getType() == float_ty ||
+            left->getType() == float_ty && right->getType() == float3_struct_ty) {
+            // always make sure left is the float3
+            if (left->getType() == float_ty) {
+                auto tmp = left;
+                left = right;
+                right = tmp;
+            }
+
+            auto ret = builder.CreateAlloca(float3_struct_ty);
+
+            builder.CreateStore(left, ret);
+
+            auto ret_x = builder.CreateConstGEP2_32(nullptr, ret, 0, 0);
+            auto mul_x = get_llvm_add(builder.CreateLoad(ret_x), right, context);
+            builder.CreateStore(mul_x, ret_x);
+
+            auto ret_y = context.builder->CreateConstGEP2_32(nullptr, ret, 0, 1);
+            auto mul_y = get_llvm_add(builder.CreateLoad(ret_y), right, context);
+            builder.CreateStore(mul_y, ret_y);
+
+            auto ret_z = context.builder->CreateConstGEP2_32(nullptr, ret, 0, 2);
+            auto mul_z = get_llvm_add(builder.CreateLoad(ret_z), right, context);
+            builder.CreateStore(mul_z, ret_z);
+
+            return builder.CreateLoad(ret);
+        }
+
         return get_llvm_add(left, right, context);
+    }
 
     // this must be a closure multiplied by a regular expression
     if (!(m_left->is_closure(context) && m_right->is_closure(context))) {
         emit_error("Closure color can't be added with non closure color.");
         return nullptr;
     }
-
-    auto& builder = *context.builder;
 
     auto malloc_function = context.m_func_symbols["TSL_MALLOC"].first;
     if (!malloc_function) {
