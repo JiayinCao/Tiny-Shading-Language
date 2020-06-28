@@ -58,7 +58,7 @@ public:
     ~TslCompiler_Impl();
 
     //! @brief  Nuke the state of the compiler so that it can be used for another pass of compiling.
-    void    reset();
+    void    reset( const std::string& name = "" );
 
     //! @brief  Compile a shader.
     //!
@@ -129,12 +129,20 @@ public:
 		return m_string_container.find(str)->c_str();
 	}
 
+    //! @brief  Name replacement of shader unit root function.
+    const std::string& get_shader_root_function_name() const {
+        return m_shader_root_function_name;
+    }
+
 private:
     // flex scanner
     void* m_scanner = nullptr;
 
     // root ast node of the parsed program
-    AstNode_FunctionPrototype*                  m_ast_root = nullptr;
+    AstNode_FunctionPrototype*                      m_ast_root = nullptr;
+
+    // the shader unit/group template name being compiled.
+    std::string                                     m_shader_root_function_name;
 
     // global functions defined in this module
     std::vector<AstNode_FunctionPrototype*>         m_functions;

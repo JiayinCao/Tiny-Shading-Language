@@ -85,7 +85,7 @@ TslCompiler_Impl::TslCompiler_Impl( GlobalModule& global_module ):m_global_modul
 TslCompiler_Impl::~TslCompiler_Impl() {
 }
 
-void TslCompiler_Impl::reset() {
+void TslCompiler_Impl::reset(const std::string& name) {
     m_scanner = nullptr;
     m_ast_root = nullptr;
 
@@ -93,6 +93,10 @@ void TslCompiler_Impl::reset() {
     m_global_var.clear();
     m_structures.clear();
     m_functions.clear();
+
+    m_shader_root_function_name = name;
+    m_shader_root_function_name.erase(remove_if(m_shader_root_function_name.begin(), m_shader_root_function_name.end(), isspace), m_shader_root_function_name.end());
+    m_shader_root_function_name += "_shader_entry";
 }
 
 void TslCompiler_Impl::push_function(AstNode_FunctionPrototype* node, const bool is_shader) {
@@ -128,10 +132,10 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnitTemplate* su) 
 #endif
 
     // not verbose for now, this should be properly exported through compiler option later.
-    makeVerbose(false);
+    makeVerbose(true);
 
     // reset the compiler every time it needs to compile new code
-    reset();
+    reset(su->get_name());
 
     // initialize flex scanner
     m_scanner = nullptr;

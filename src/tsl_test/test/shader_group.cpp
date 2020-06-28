@@ -35,7 +35,8 @@ TEST(ShaderGroup, BasicShaderGroup) {
 
     // a bxdf node
     const auto bxdf_shader_unit = compile_shader_unit_template(shading_context, "bxdf_shader_BasicShaderGroup", R"(
-        shader lambert_node( out closure out_bxdf ){
+        shader output_node( out closure out_bxdf )  // the name of this root function is the same with the above one on purpose
+        {
             out_bxdf = make_closure<lambert>( 111, 4.0f );
         }
     )");

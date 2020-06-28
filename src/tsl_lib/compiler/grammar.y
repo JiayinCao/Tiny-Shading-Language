@@ -27,6 +27,7 @@
 	#include "compiler/ast.h"
 	#include "compiler/types.h"
 	#include "compiler/compiler_impl.h"
+    #include "system/impl.h"
 
 	USE_TSL_NAMESPACE
 
@@ -249,7 +250,8 @@ SHADER_DEF:
 	SHADER_FUNC_ID ID "(" SHADER_FUNCTION_ARGUMENT_DECLS ")" FUNCTION_BODY {
 		AstNode_FunctionBody*		body = AstNode::castType<AstNode_FunctionBody>($6);
 		AstNode_VariableDecl*		variables = AstNode::castType<AstNode_VariableDecl>($4);
-		AstNode_FunctionPrototype*	function = new AstNode_FunctionPrototype($2, variables, body, true);
+        const char*                 name = tsl_compiler->get_shader_root_function_name().c_str();
+		AstNode_FunctionPrototype*	function = new AstNode_FunctionPrototype(name, variables, body, true);
 		tsl_compiler->push_function(function, true);
 	};
 
@@ -1027,7 +1029,7 @@ void yyerror(struct YYLTYPE* loc, void* x, char const * str){
 		return;
 
 	// line number is incorrect for now
-	printf( "line(%d, %d), error: %s\n", loc->first_line, loc->first_column, str);
+	emit_error( "line(%d, %d), error: %s", loc->first_line, loc->first_column, str);
 }
 
 void makeVerbose(int verbose){
