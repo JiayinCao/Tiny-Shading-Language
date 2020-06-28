@@ -90,6 +90,9 @@ void TslCompiler_Impl::reset() {
     m_ast_root = nullptr;
 
     m_closures_in_shader.clear();
+    m_global_var.clear();
+    m_structures.clear();
+    m_functions.clear();
 }
 
 void TslCompiler_Impl::push_function(AstNode_FunctionPrototype* node, const bool is_shader) {

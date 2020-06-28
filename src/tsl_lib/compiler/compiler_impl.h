@@ -143,9 +143,6 @@ private:
     // global variables defined in this module
     std::vector<const AstNode_Statement*>           m_global_var;
 
-    // registered closure types
-    std::unordered_set<std::string>             m_closures;
-
 	// data type cache
 	DataType	m_type_cache = { DataTypeEnum::VOID , nullptr };
 
