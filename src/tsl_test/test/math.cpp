@@ -93,3 +93,51 @@ TEST(Math, Unary_Operation) {
         }
     )");
 }
+
+TEST(Math, VecMulVec) {
+    auto shader_source = R"(
+        vector make_float3( float x , float y , float z ){
+            vector ret;
+            ret.x = x; ret.y = y; ret.z = z;
+            return ret;
+        }
+
+        shader piecewise_mul( out vector data ){
+            vector arg0, arg1;
+            arg0 = make_float3( 1.0f, 2.0f, 3.0f );
+            arg1 = make_float3( 2.0f, 4.0f, 4.0f );
+            data = arg0 * arg1;
+        }
+    )";
+
+    TslGlobal tsl;
+    auto ret = compile_shader<void(*)(float3*, TslGlobal*)>(shader_source);
+    auto func_ptr = ret.first;
+
+    float3 v;
+
+    func_ptr(&v, &tsl);
+    EXPECT_EQ(v.x, 2.0f);
+    EXPECT_EQ(v.y, 8.0f);
+    EXPECT_EQ(v.z, 12.0f);
+}
+
+TEST(Math, VecMulFloat) {
+    auto shader_source = R"(
+        shader piecewise_mul( out vector data ){
+            vector arg0 = vector( 1.0f, 2.0f, 3.0f );
+            data = arg0 * 2.0f;
+        }
+    )";
+
+    TslGlobal tsl;
+    auto ret = compile_shader<void(*)(float3*, TslGlobal*)>(shader_source);
+    auto func_ptr = ret.first;
+
+    float3 v;
+
+    func_ptr(&v, &tsl);
+    EXPECT_EQ(v.x, 2.0f);
+    EXPECT_EQ(v.y, 4.0f);
+    EXPECT_EQ(v.z, 6.0f);
+}

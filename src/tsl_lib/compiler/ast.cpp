@@ -97,49 +97,6 @@ void LLVM_Compile_Context::pop_var_symbol_layer() {
     m_var_symbols.pop_back();
 }
 
-llvm::Function* AstNode_FunctionPrototype::declare_shader(LLVM_Compile_Context& context) {
-    int arg_cnt = 0;
-    AstNode_VariableDecl* variable = m_variables;
-    while (variable) {
-        ++arg_cnt;
-        variable = castType<AstNode_VariableDecl>(variable->get_sibling());
-    }
-
-    // parse argument types
-    std::vector<llvm::Type*>	args(arg_cnt);
-    variable = m_variables;
-    int i = 0;
-    while (variable) {
-        const auto raw_type = get_type_from_context(variable->data_type(), context);
-        const auto output_param = variable->get_config() & VariableConfig::OUTPUT;
-        args[i++] = output_param ? raw_type->getPointerTo() : raw_type;
-        variable = castType<AstNode_VariableDecl>(variable->get_sibling());
-    }
-
-    // parse return types
-    auto return_type = get_type_from_context(m_return_type, context);
-
-    // declare the function prototype
-    llvm::FunctionType* function_type = llvm::FunctionType::get(return_type, args, false);
-
-    if (!function_type)
-        return nullptr;
-
-    // create the function prototype
-    llvm::Function* function = llvm::Function::Create(function_type, llvm::Function::ExternalLinkage, m_name, context.module);
-
-    // For debugging purposes, set the name of all arguments
-    variable = m_variables;
-    i = 0;
-    while (variable) {
-        const auto output_param = variable->get_config() & VariableConfig::OUTPUT;
-        function->getArg(i++)->setName(variable->get_var_name());
-        variable = castType<AstNode_VariableDecl>(variable->get_sibling());
-    }
-
-    return function;
-}
-
 llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& context ) const {
 	int arg_cnt = 0;
 	AstNode_VariableDecl* variable = m_variables;
@@ -175,7 +132,8 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 		return nullptr;
 
 	// create the function prototype
-	llvm::Function* function = llvm::Function::Create(function_type, llvm::Function::InternalLinkage, m_name, context.module);
+    const auto link_type = m_is_shader ? llvm::Function::ExternalLinkage : llvm::Function::InternalLinkage;
+	llvm::Function* function = llvm::Function::Create(function_type, link_type, m_name, context.module);
 
 	// For debugging purposes, set the name of all arguments
 	variable = m_variables;
@@ -371,20 +329,78 @@ bool AstNode_Binary_Multi::is_closure(LLVM_Compile_Context& context) const {
 }
 
 llvm::Value* AstNode_Binary_Multi::codegen(LLVM_Compile_Context& context) const {
+    auto& builder = *context.builder;
+
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
-	if(!m_left->is_closure(context) && !m_right->is_closure(context))
-		return get_llvm_mul(left, right, context);
+    if (!m_left->is_closure(context) && !m_right->is_closure(context)) {
+        const auto float3_struct_ty = context.m_structure_type_maps["float3"].m_llvm_type;
+        const auto float_ty = get_float_ty(context);
+
+        // piece wise multiplication
+        if (left->getType() == float3_struct_ty && right->getType() == float3_struct_ty) {
+            auto ret = builder.CreateAlloca(float3_struct_ty);
+
+            // I have no idea how to access per-channel data from a struct.
+            // Until I figure out a better solution, I'll live with the current one.
+            auto tmp_left = builder.CreateAlloca(float3_struct_ty);
+            builder.CreateStore(left, tmp_left);
+            builder.CreateStore(right, ret);
+
+            auto ret_x = builder.CreateConstGEP2_32(nullptr, ret, 0, 0);
+            auto left_x = builder.CreateConstGEP2_32(nullptr, tmp_left, 0, 0);
+            auto mul_x = get_llvm_mul(builder.CreateLoad(left_x), builder.CreateLoad(ret_x), context);
+            builder.CreateStore(mul_x, ret_x);
+
+            auto ret_y = context.builder->CreateConstGEP2_32(nullptr, ret, 0, 1);
+            auto left_y = context.builder->CreateConstGEP2_32(nullptr, tmp_left, 0, 1);
+            auto mul_y = get_llvm_mul(builder.CreateLoad(left_y), builder.CreateLoad(ret_y), context);
+            builder.CreateStore(mul_y, ret_y);
+
+            auto ret_z = context.builder->CreateConstGEP2_32(nullptr, ret, 0, 2);
+            auto left_z = context.builder->CreateConstGEP2_32(nullptr, tmp_left, 0, 2);
+            auto mul_z = get_llvm_mul(builder.CreateLoad(left_z), builder.CreateLoad(ret_z), context);
+            builder.CreateStore(mul_z, ret_z);
+
+            return builder.CreateLoad(ret);
+        }
+        else if (left->getType() == float3_struct_ty && right->getType() == float_ty ||
+                 left->getType() == float_ty && right->getType() == float3_struct_ty) {
+            // always make sure left is the float3
+            if (left->getType() == float_ty) {
+                auto tmp = left;
+                left = right;
+                right = tmp;
+            }
+
+            auto ret = builder.CreateAlloca(float3_struct_ty);
+
+            builder.CreateStore(left, ret);
+
+            auto ret_x = builder.CreateConstGEP2_32(nullptr, ret, 0, 0);
+            auto mul_x = get_llvm_mul(builder.CreateLoad(ret_x), right, context);
+            builder.CreateStore(mul_x, ret_x);
+
+            auto ret_y = context.builder->CreateConstGEP2_32(nullptr, ret, 0, 1);
+            auto mul_y = get_llvm_mul(builder.CreateLoad(ret_y), right, context);
+            builder.CreateStore(mul_y, ret_y);
+
+            auto ret_z = context.builder->CreateConstGEP2_32(nullptr, ret, 0, 2);
+            auto mul_z = get_llvm_mul(builder.CreateLoad(ret_z), right, context);
+            builder.CreateStore(mul_z, ret_z);
+
+            return builder.CreateLoad(ret);
+        }
+
+        return get_llvm_mul(left, right, context);
+    }
 
 	// this must be a closure multiplied by a regular expression
 	if(m_left->is_closure(context) && m_right->is_closure(context)){
         emit_error("Closure color can't muliply with each other.");
 		return nullptr;
 	}
-
-	// auto& llvm_context = *context.context;
-	auto& builder = *context.builder;
 
 	auto closure = m_left->is_closure(context) ? left : right;
 	auto weight = m_left->is_closure(context) ? right : left;
@@ -1024,12 +1040,11 @@ llvm::Value* AstNode_Expression_MakeClosure::codegen(LLVM_Compile_Context& conte
 llvm::Value* AstNode_FunctionCall::codegen(LLVM_Compile_Context& context) const {
     auto it = context.m_func_symbols.find(m_name);
     if (it == context.m_func_symbols.end()) {
-        std::cout << "Undefined function " << m_name << "." << std::endl;
+        emit_error( "Undefined function %s." , m_name.c_str() );
         return nullptr;
     }
 
     auto ast_func = it->second.second;
-
     std::vector<Value*> args;
     AstNode_Expression* node = m_variables;
     AstNode_VariableDecl* var_decl = ast_func->m_variables;
@@ -1040,7 +1055,8 @@ llvm::Value* AstNode_FunctionCall::codegen(LLVM_Compile_Context& context) const 
             if (!lvalue)
                 return nullptr;
             args.push_back(lvalue->get_value_address(context));
-        } else {
+        }
+        else {
             args.push_back(node->codegen(context));
         }
         node = castType<AstNode_Expression>(node->get_sibling());
@@ -1048,6 +1064,39 @@ llvm::Value* AstNode_FunctionCall::codegen(LLVM_Compile_Context& context) const 
     }
 
     return context.builder->CreateCall(it->second.first, args);
+}
+
+llvm::Value* AstNode_Float3Constructor::codegen(LLVM_Compile_Context& context) const {
+    // if it is not a function, it could be a constructor of a structure.
+    auto struct_ty = context.m_structure_type_maps.find("float3");
+    if (struct_ty == context.m_structure_type_maps.end()) {
+        emit_error("Fatal internal error, vector is not defined.");
+        return nullptr;
+    }
+
+    const auto type = struct_ty->second.m_llvm_type;
+    auto ret = context.builder->CreateAlloca(type);
+
+    int i = 0;
+    AstNode_Expression* node = m_variables;
+    while (node) {
+        if (i > 3) {
+            emit_warning("Too many arguments in vector constructor, the dummy ones will be ignored.");
+            break;
+        }
+
+        auto value = node->codegen(context);
+        auto gep = context.builder->CreateConstGEP2_32(nullptr, ret, 0, i++);
+        context.builder->CreateStore(value, gep);
+        node = castType<AstNode_Expression>(node->get_sibling());
+    }
+
+    if (i < 3) {
+        emit_error("Insufficient argument in vector constructor.");
+        return nullptr;
+    }
+
+    return context.builder->CreateLoad(ret);
 }
 
 llvm::Value* AstNode_Ternary::codegen(LLVM_Compile_Context& context) const {

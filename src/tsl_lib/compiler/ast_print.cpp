@@ -48,6 +48,23 @@ void AstNode_Statement_ShaderResourceHandleDeclaration::print() const {
     std::cout << "shader_resouce_handle " << m_handle_name << ";" << std::endl;
 }
 
+void AstNode_Float3Constructor::print() const {
+    std::cout << "vector( ";
+
+    bool first = true;
+    AstNode* param_node = m_variables;
+    while (param_node) {
+        if (!first)
+            std::cout << " , ";
+
+        param_node->print();
+        param_node = param_node->get_sibling();
+
+        first = false;
+    }
+
+    std::cout << ")";
+}
 void AstNode_Expression_Texture2DSample::print() const {
     std::cout << "texture2d_sample<" << m_texture_handle_name << ">(";
 

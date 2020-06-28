@@ -401,6 +401,18 @@ private:
     AstNode_Expression* m_variables;
 };
 
+class AstNode_Float3Constructor: public AstNode_Expression {
+public:
+    AstNode_Float3Constructor(AstNode_Expression* variables) : m_variables(variables) {}
+
+    llvm::Value* codegen(LLVM_Compile_Context& context) const override;
+
+    void print() const override;
+
+private:
+    AstNode_Expression* m_variables;
+};
+
 class AstNode_Expression_MakeClosure : public AstNode_Expression {
 public:
     AstNode_Expression_MakeClosure(const char* closure_name, AstNode_Expression* args) : m_name(closure_name), m_args(args) {}
@@ -935,8 +947,6 @@ public:
 		                     :m_name(func_name), m_variables(variables), m_body(body), m_is_shader(is_shader), m_return_type(type){}
 
 	llvm::Function* codegen( LLVM_Compile_Context& context ) const override;
-
-    llvm::Function* declare_shader(LLVM_Compile_Context& context);
 
     const std::string& get_function_name() const{
         return m_name;

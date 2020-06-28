@@ -115,6 +115,9 @@ void* allocate_memory(const unsigned size);
 //! @brief  Output error during shader compilation.
 void  emit_error(const char* error, ...);
 
+//! @brief  Output warning during shader compilation.
+void  emit_warning(const char* format, ...);
+
 //! @brief  Texture sampling
 void  sample_2d(const void* texture, float u, float v, float3& color, float& alpha);
 
