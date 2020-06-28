@@ -334,3 +334,22 @@ TEST(Math, VectorAddVector) {
     EXPECT_EQ(v.y, 4.0f);
     EXPECT_EQ(v.z, 4.0f);
 }
+
+TEST(Math, VectorNegate) {
+    auto shader_source = R"(
+        shader piecewise_mul( out vector data ){
+            data = -vector( 3.0f, 2.0f, 1.0f );
+        }
+    )";
+
+    TslGlobal tsl;
+    auto ret = compile_shader<void(*)(float3*, TslGlobal*)>(shader_source);
+    auto func_ptr = ret.first;
+
+    float3 v;
+
+    func_ptr(&v, &tsl);
+    EXPECT_EQ(v.x, -3.0f);
+    EXPECT_EQ(v.y, -2.0f);
+    EXPECT_EQ(v.z, -1.0f);
+}

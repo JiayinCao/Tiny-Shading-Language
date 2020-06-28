@@ -1203,12 +1203,39 @@ llvm::Value* AstNode_Unary_Pos::codegen(LLVM_Compile_Context& context) const {
 }
 
 llvm::Value* AstNode_Unary_Neg::codegen(LLVM_Compile_Context& context) const{
-	auto operand = m_exp->codegen(context);
+    auto& builder = *context.builder;
 
-	if (operand->getType() == get_float_ty(context))
-		return context.builder->CreateFNeg(operand);
-	if (operand->getType() == get_int_32_ty(context))
-		return context.builder->CreateNeg(operand);
+	auto operand = m_exp->codegen(context);
+    if (!operand)
+        return nullptr;
+
+    auto operand_type = operand->getType();
+	if (operand_type == get_float_ty(context))
+		return builder.CreateFNeg(operand);
+	else if (operand_type == get_int_32_ty(context))
+		return builder.CreateNeg(operand);
+    else {
+        auto it = context.m_structure_type_maps.find("float3");
+        auto float3_struct_ty = it->second.m_llvm_type;
+        if (operand_type == float3_struct_ty) {
+            auto ret = builder.CreateAlloca(float3_struct_ty);
+            builder.CreateStore(operand, ret);
+
+            auto ret_x = builder.CreateConstGEP2_32(nullptr, ret, 0, 0);
+            auto negated_x = context.builder->CreateFNeg(builder.CreateLoad(ret_x));
+            builder.CreateStore(negated_x, ret_x);
+
+            auto ret_y = builder.CreateConstGEP2_32(nullptr, ret, 0, 1);
+            auto negated_y = context.builder->CreateFNeg(builder.CreateLoad(ret_y));
+            builder.CreateStore(negated_y, ret_y);
+
+            auto ret_z = builder.CreateConstGEP2_32(nullptr, ret, 0, 2);
+            auto negated_z = context.builder->CreateFNeg(builder.CreateLoad(ret_z));
+            builder.CreateStore(negated_z, ret_z);
+
+            return builder.CreateLoad(ret);
+        }
+    }
 
 	return nullptr;
 }
