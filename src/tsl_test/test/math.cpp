@@ -259,6 +259,63 @@ TEST(Math, FloatAddVector) {
     EXPECT_EQ(v.z, 5.0f);
 }
 
+TEST(Math, VectorDivVector) {
+    auto shader_source = R"(
+        shader piecewise_mul( out vector data ){
+            data = vector( 3.0f, 2.0f, 1.0f ) / vector( 1.0f, 2.0f, 3.0f );
+        }
+    )";
+
+    TslGlobal tsl;
+    auto ret = compile_shader<void(*)(float3*, TslGlobal*)>(shader_source);
+    auto func_ptr = ret.first;
+
+    float3 v;
+
+    func_ptr(&v, &tsl);
+    EXPECT_EQ(v.x, 3.0f);
+    EXPECT_EQ(v.y, 1.0f);
+    EXPECT_EQ(v.z, 1.0f / 3.0f);
+}
+
+TEST(Math, VectorDivFloat) {
+    auto shader_source = R"(
+        shader piecewise_mul( out vector data ){
+            data = vector( 1.0f, 2.0f, 3.0f ) / 2.0f;
+        }
+    )";
+
+    TslGlobal tsl;
+    auto ret = compile_shader<void(*)(float3*, TslGlobal*)>(shader_source);
+    auto func_ptr = ret.first;
+
+    float3 v;
+
+    func_ptr(&v, &tsl);
+    EXPECT_EQ(v.x, 0.5f);
+    EXPECT_EQ(v.y, 1.0f);
+    EXPECT_EQ(v.z, 1.5f);
+}
+
+TEST(Math, FloatDivVector) {
+    auto shader_source = R"(
+        shader piecewise_mul( out vector data ){
+            data = 2.0f / vector( 1.0f, 2.0f, 3.0f );
+        }
+    )";
+
+    TslGlobal tsl;
+    auto ret = compile_shader<void(*)(float3*, TslGlobal*)>(shader_source);
+    auto func_ptr = ret.first;
+
+    float3 v;
+
+    func_ptr(&v, &tsl);
+    EXPECT_EQ(v.x, 2.0f);
+    EXPECT_EQ(v.y, 1.0f);
+    EXPECT_EQ(v.z, 2.0f/3.0f);
+}
+
 TEST(Math, VectorAddVector) {
     auto shader_source = R"(
         shader piecewise_mul( out vector data ){

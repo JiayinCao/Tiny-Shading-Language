@@ -585,8 +585,88 @@ llvm::Value* AstNode_Binary_Multi::codegen(LLVM_Compile_Context& context) const 
 }
 
 llvm::Value* AstNode_Binary_Div::codegen(LLVM_Compile_Context& context) const {
+    auto& builder = *context.builder;
+
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
+
+    // something is not right
+    if (!left || !right)
+        return nullptr;
+
+    const auto float3_struct_ty = context.m_structure_type_maps["float3"].m_llvm_type;
+    const auto float_ty = get_float_ty(context);
+
+    // piece wise multiplication
+    if (left->getType() == float3_struct_ty && right->getType() == float3_struct_ty) {
+        auto ret = builder.CreateAlloca(float3_struct_ty);
+
+        // I have no idea how to access per-channel data from a struct.
+        // Until I figure out a better solution, I'll live with the current one.
+        auto tmp_left = builder.CreateAlloca(float3_struct_ty);
+        builder.CreateStore(left, tmp_left);
+        builder.CreateStore(right, ret);
+
+        auto ret_x = builder.CreateConstGEP2_32(nullptr, ret, 0, 0);
+        auto left_x = builder.CreateConstGEP2_32(nullptr, tmp_left, 0, 0);
+        auto sub_x = get_llvm_div(builder.CreateLoad(left_x), builder.CreateLoad(ret_x), context);
+        builder.CreateStore(sub_x, ret_x);
+
+        auto ret_y = context.builder->CreateConstGEP2_32(nullptr, ret, 0, 1);
+        auto left_y = context.builder->CreateConstGEP2_32(nullptr, tmp_left, 0, 1);
+        auto sub_y = get_llvm_div(builder.CreateLoad(left_y), builder.CreateLoad(ret_y), context);
+        builder.CreateStore(sub_y, ret_y);
+
+        auto ret_z = context.builder->CreateConstGEP2_32(nullptr, ret, 0, 2);
+        auto left_z = context.builder->CreateConstGEP2_32(nullptr, tmp_left, 0, 2);
+        auto sub_z = get_llvm_div(builder.CreateLoad(left_z), builder.CreateLoad(ret_z), context);
+        builder.CreateStore(sub_z, ret_z);
+
+        return builder.CreateLoad(ret);
+    }
+    else if (left->getType() == float3_struct_ty && right->getType() == float_ty) {
+        auto ret = builder.CreateAlloca(float3_struct_ty);
+
+        builder.CreateStore(left, ret);
+
+        auto ret_x = builder.CreateConstGEP2_32(nullptr, ret, 0, 0);
+        auto sub_x = get_llvm_div(builder.CreateLoad(ret_x), right, context);
+        builder.CreateStore(sub_x, ret_x);
+
+        auto ret_y = context.builder->CreateConstGEP2_32(nullptr, ret, 0, 1);
+        auto sub_y = get_llvm_div(builder.CreateLoad(ret_y), right, context);
+        builder.CreateStore(sub_y, ret_y);
+
+        auto ret_z = context.builder->CreateConstGEP2_32(nullptr, ret, 0, 2);
+        auto sub_z = get_llvm_div(builder.CreateLoad(ret_z), right, context);
+        builder.CreateStore(sub_z, ret_z);
+
+        return builder.CreateLoad(ret);
+    }
+    else if (left->getType() == float_ty && right->getType() == float3_struct_ty) {
+        auto ret = builder.CreateAlloca(float3_struct_ty);
+
+        auto tmp_right = builder.CreateAlloca(float3_struct_ty);
+        builder.CreateStore(right, tmp_right);
+
+        auto ret_x = builder.CreateConstGEP2_32(nullptr, ret, 0, 0);
+        auto right_x = builder.CreateConstGEP2_32(nullptr, tmp_right, 0, 0);
+        auto sub_x = get_llvm_div(left, builder.CreateLoad(right_x), context);
+        builder.CreateStore(sub_x, ret_x);
+
+        auto ret_y = builder.CreateConstGEP2_32(nullptr, ret, 0, 1);
+        auto right_y = context.builder->CreateConstGEP2_32(nullptr, tmp_right, 0, 1);
+        auto sub_y = get_llvm_div(left, builder.CreateLoad(right_y), context);
+        builder.CreateStore(sub_y, ret_y);
+
+        auto ret_z = builder.CreateConstGEP2_32(nullptr, ret, 0, 2);
+        auto right_z = context.builder->CreateConstGEP2_32(nullptr, tmp_right, 0, 2);
+        auto sub_z = get_llvm_div(left, builder.CreateLoad(right_z), context);
+        builder.CreateStore(sub_z, ret_z);
+
+        return builder.CreateLoad(ret);
+    }
+
     return get_llvm_div(left, right, context);
 }
 
