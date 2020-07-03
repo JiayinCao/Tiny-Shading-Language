@@ -30,13 +30,10 @@
 #include "tslversion.h"
 #include "types.h"
 #include "status.h"
+#include "ast.h"
 
 TSL_NAMESPACE_BEGIN
 
-class AstNode_FunctionPrototype;
-class AstNode_StructDeclaration;
-class AstNode_Statement;
-class AstNode_Expression;
 class ShaderUnitTemplate;
 class ShaderGroupTemplate;
 class ShaderInstance;
@@ -139,17 +136,17 @@ private:
     void* m_scanner = nullptr;
 
     // root ast node of the parsed program
-    AstNode_FunctionPrototype*                      m_ast_root = nullptr;
+    std::unique_ptr<const AstNode_FunctionPrototype>                m_ast_root;
 
     // the shader unit/group template name being compiled.
-    std::string                                     m_shader_root_function_name;
+    std::string                                                     m_shader_root_function_name;
 
     // global functions defined in this module
-    std::vector<AstNode_FunctionPrototype*>         m_functions;
+    std::vector<std::unique_ptr<const AstNode_FunctionPrototype>>   m_functions;
 	// global structure declaration in this module, maybe I should merge it with the above one
-	std::vector<AstNode_StructDeclaration*>		    m_structures;
+	std::vector<std::unique_ptr<const AstNode_StructDeclaration>>	m_structures;
     // global variables defined in this module
-    std::vector<const AstNode_Statement*>           m_global_var;
+    std::vector<std::unique_ptr<const AstNode_Statement>>           m_global_var;
 
 	// data type cache
 	DataType	m_type_cache = { DataTypeEnum::VOID , nullptr };
@@ -174,5 +171,14 @@ private:
     TSL_Resolving_Status    generate_shader_source( LLVM_Compile_Context& context, ShaderGroupTemplate* sg, const ShaderUnitTemplateCopy& su, std::unordered_set<std::string>& visited,
                                     std::unordered_set<std::string>& being_visited, VarMapping& var_mapping,
                                     const std::unordered_map<std::string, llvm::Function*>& function_mapping, const std::vector<llvm::Value*>& args);
+
+    //! @brief  A helper wrapper to make sure all contexts are gone after shader compilation
+    class ContextWrapper {
+    public:
+        ContextWrapper(TslCompiler_Impl& impl, const std::string& name):impl(impl){ impl.reset(name); }
+        ~ContextWrapper() { impl.reset(); }
+    private:
+        TslCompiler_Impl& impl;
+    };
 };
 TSL_NAMESPACE_END

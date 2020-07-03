@@ -52,13 +52,13 @@ void AstNode_Float3Constructor::print() const {
     std::cout << "vector( ";
 
     bool first = true;
-    AstNode* param_node = m_variables;
+    auto param_node = m_variables.get();
     while (param_node) {
         if (!first)
             std::cout << " , ";
 
         param_node->print();
-        param_node = param_node->get_sibling();
+        param_node = ( const AstNode_Expression* )param_node->get_sibling();
 
         first = false;
     }
@@ -72,7 +72,7 @@ void AstNode_Expression_Texture2DSample::print() const {
         std::cout << "texture2d_sample<" << m_texture_handle_name << ">(";
 
     bool first = true;
-    AstNode* param_node = m_variables;
+    const AstNode* param_node = m_variables.get();
     while (param_node) {
         if (!first)
             std::cout << " , ";
@@ -93,7 +93,7 @@ void AstNode_ScoppedStatement::print() const {
 }
 
 void AstNode_CompoundStatements::print() const {
-    for (auto statement : m_statements)
+    for (auto& statement : m_statements)
         statement->print();
 }
 
@@ -117,7 +117,7 @@ void AstNode_FunctionPrototype::print() const{
 	std::cout << str_from_data_type(m_return_type) << " " << m_name << "(";
 
 	bool first = true;
-	AstNode* param_node = m_variables;
+	const AstNode* param_node = m_variables.get();
 	while (param_node) {
 		if (!first)
 			std::cout << ", ";
@@ -138,7 +138,7 @@ void AstNode_FunctionBody::print() const{
 	std::cout<<"{"<<std::endl;
 	
 	// print the statements here
-	AstNode* statement = m_statements;
+	const AstNode* statement = m_statements.get();
 	while(statement){
 		statement->print();
 		statement = statement->get_sibling();
@@ -156,7 +156,7 @@ void AstNode_FunctionCall::print() const {
     std::cout << "(";
 
     bool first = true;
-    AstNode* param_node = m_variables;
+    const AstNode* param_node = m_variables.get();
     while (param_node) {
         if (!first)
             std::cout << " , ";
@@ -444,13 +444,13 @@ void AstNode_Statement_Return::print() const {
 }
 
 void AstNode_Statement_CompoundExpression::print() const {
-	AstNode* expression = m_expression;
+	auto expression = m_expression.get();
 	bool is_first = true;
 	while(expression){
 		if( !is_first )
 			std::cout<<", ";
 		expression->print();
-		expression = expression->get_sibling();
+        expression = castType<AstNode_Expression>(expression->get_sibling());
 
 		is_first = false;
 	}
@@ -517,7 +517,7 @@ void AstNode_Statement_VariableDecls::print() const {
 	bool is_first = true;
 	DataType type = { DataTypeEnum::VOID , nullptr };
 
-	AstNode_VariableDecl* variable = m_var_decls;
+	auto variable = m_var_decls.get();
 	while( variable ){
 		if( is_first ){
 			type = variable->data_type();
@@ -535,7 +535,7 @@ void AstNode_Statement_VariableDecls::print() const {
 
 void AstNode_StructDeclaration::print() const{
 	std::cout << "struct " << m_name << "{" << std::endl;
-	auto member = m_members;
+	auto member = m_members.get();
 	while(member){
 		member->print();
 		member = castType<AstNode_Statement_VariableDecls>(member->get_sibling());

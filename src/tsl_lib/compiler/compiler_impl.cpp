@@ -32,6 +32,9 @@
 // a temporary ugly solution for debugging for now
 // #define DEBUG_OUTPUT
 
+// a helper macro to hide the details of context resetting
+#define     PROTECT_CONTEXT(name)   ContextWrapper context_wrapper(*this, name);
+
 #ifdef DEBUG_OUTPUT
 #include <iostream>
 #endif
@@ -100,18 +103,16 @@ void TslCompiler_Impl::reset(const std::string& name) {
 }
 
 void TslCompiler_Impl::push_function(AstNode_FunctionPrototype* node, const bool is_shader) {
+    auto ptr = std::unique_ptr<const AstNode_FunctionPrototype>(node);
     if (is_shader)
-        m_ast_root = node;
+        m_ast_root = std::move(ptr);
     else
-        m_functions.push_back(node);
-
-#ifdef DEBUG_OUTPUT    
-    // node->print();
-#endif
+        m_functions.push_back(std::move(ptr));
 }
 
 void TslCompiler_Impl::push_structure_declaration(AstNode_StructDeclaration* structure) {
-	m_structures.push_back(structure);
+    auto ptr = std::unique_ptr<const AstNode_StructDeclaration>(structure);
+	m_structures.push_back(std::move(ptr));
 
 #ifdef DEBUG_OUTPUT
 	// structure->print();
@@ -119,7 +120,8 @@ void TslCompiler_Impl::push_structure_declaration(AstNode_StructDeclaration* str
 }
 
 void TslCompiler_Impl::push_global_parameter(const AstNode_Statement* var_declaration) {
-    m_global_var.push_back(var_declaration);
+    auto ptr = std::unique_ptr<const AstNode_Statement>(var_declaration);
+    m_global_var.push_back(std::move(ptr));
 }
 
 void* TslCompiler_Impl::get_scanner() {
@@ -127,15 +129,14 @@ void* TslCompiler_Impl::get_scanner() {
 }
 
 bool TslCompiler_Impl::compile(const char* source_code, ShaderUnitTemplate* su) {
+    PROTECT_CONTEXT(su->get_name());
+
 #ifdef DEBUG_OUTPUT
     std::cout << source_code << std::endl;
 #endif
 
     // not verbose for now, this should be properly exported through compiler option later.
     makeVerbose(true);
-
-    // reset the compiler every time it needs to compile new code
-    reset(su->get_name());
 
     // initialize flex scanner
     m_scanner = nullptr;
@@ -202,11 +203,11 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnitTemplate* su) 
         // there is usually just one global module as dependent in all shader unit.
         su_pvt->m_dependencies.insert(m_global_module.get_closure_module());
 
-        // keep track of the ast root of this shader unit
-        su_pvt->m_ast_root = m_ast_root;
-
         // parse exposed shader arguments
         m_ast_root->parse_shader_parameters(su->m_shader_unit_template_impl->m_exposed_args);
+
+        // keep track of the ast root of this shader unit
+        su_pvt->m_ast_root = std::move(m_ast_root);
 
         // it should be safe to assume llvm function has to be generated, otherwise, the shader is invalid.
         if (!su_pvt->m_llvm_function)
@@ -277,8 +278,7 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderInstance* si) {
 }
 
 TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
-    // reset the compiler every time it needs to compile new code
-    reset();
+    PROTECT_CONTEXT("");
 
     if (!sg)
         return TSL_Resolving_InvalidInput;

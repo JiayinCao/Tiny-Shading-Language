@@ -46,7 +46,7 @@ public:
     std::unordered_set<const llvm::Module*> m_dependencies;
 
     // ast node
-    AstNode_FunctionPrototype* m_ast_root = nullptr;
+    std::unique_ptr<const AstNode_FunctionPrototype> m_ast_root = nullptr;
 
     // llvm function pointer
     llvm::Function* m_llvm_function = nullptr;

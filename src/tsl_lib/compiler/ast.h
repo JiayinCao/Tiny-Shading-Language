@@ -32,8 +32,10 @@
 
 TSL_NAMESPACE_BEGIN
 
+template<class T>
+using ast_ptr = const std::unique_ptr<const T>;
+
 class AstNode_FunctionPrototype;
-class GlobalModule;
 
 struct StructMemberTypeMetaData{
 	llvm::Type* m_llvm_type = nullptr;
@@ -92,8 +94,7 @@ public:
 
 class AstNode {
 public:
-	AstNode() {}
-
+    AstNode() = default;
     virtual ~AstNode() = default;
 
     // Append a sibling to the ast node.
@@ -162,7 +163,7 @@ public:
     void print() const override;
 
 private:
-    int m_val;
+    const int m_val;
 };
 
 class AstNode_Literal_Flt : public AstNode_Expression {
@@ -174,7 +175,7 @@ public:
     void print() const override;
 
 private:
-    float m_val;
+    const float m_val;
 };
 
 class AstNode_Literal_Double : public AstNode_Expression {
@@ -186,7 +187,7 @@ public:
     void print() const override;
 
 private:
-    double m_val;
+    const double m_val;
 };
 
 class AstNode_Literal_Bool: public AstNode_Expression{
@@ -198,7 +199,7 @@ public:
     void print() const override;
 
 private:
-    bool m_val;
+    const bool m_val;
 };
 
 class AstNode_Literal_GlobalValue : public AstNode_Expression {
@@ -210,7 +211,7 @@ public:
     void print() const override;
 
 private:
-    std::string m_value_name;
+    const std::string m_value_name;
 };
 
 class AstNode_Binary : public AstNode_Expression {
@@ -218,8 +219,8 @@ public:
     AstNode_Binary(AstNode_Expression* left, AstNode_Expression* right) :m_left(left), m_right(right) {}
 
 protected:
-    AstNode_Expression* m_left;
-    AstNode_Expression* m_right;
+    ast_ptr<AstNode_Expression> m_left;
+    ast_ptr<AstNode_Expression> m_right;
 };
 
 class AstNode_Binary_Add : public AstNode_Binary {
@@ -398,7 +399,7 @@ public:
 
 private:
     std::string m_name;
-    AstNode_Expression* m_variables;
+    ast_ptr<AstNode_Expression> m_variables;
 };
 
 class AstNode_Float3Constructor: public AstNode_Expression {
@@ -410,7 +411,7 @@ public:
     void print() const override;
 
 private:
-    AstNode_Expression* m_variables;
+    ast_ptr<AstNode_Expression> m_variables;
 };
 
 class AstNode_Expression_MakeClosure : public AstNode_Expression {
@@ -427,7 +428,7 @@ public:
 
 private:
     const std::string m_name;
-    AstNode_Expression* m_args;
+    ast_ptr<AstNode_Expression> m_args;
 };
 
 class AstNode_Ternary : public AstNode_Expression {
@@ -439,9 +440,9 @@ public:
     void print() const override;
 
 private:
-    AstNode_Expression* m_condition;
-    AstNode_Expression* m_true_expr;
-    AstNode_Expression* m_false_expr;
+    ast_ptr<AstNode_Expression> m_condition;
+    ast_ptr<AstNode_Expression> m_true_expr;
+    ast_ptr<AstNode_Expression> m_false_expr;
 };
 
 class AstNode_Lvalue : public AstNode_Expression {
@@ -482,7 +483,7 @@ public:
 	}
 
     const AstNode_Expression* get_init() const override{
-        return m_init_exp;
+        return m_init_exp.get();
     }
 
     VariableConfig get_config() const override {
@@ -493,7 +494,7 @@ private:
 	const std::string		m_name;
 	const DataType			m_type;
 	const VariableConfig	m_config;
-	AstNode_Expression*		m_init_exp;
+    ast_ptr<AstNode_Expression>		m_init_exp;
 };
 
 class AstNode_ArrayDecl : public AstNode_VariableDecl {
@@ -515,7 +516,7 @@ public:
     }
 
     const AstNode_Expression* get_cnt() const {
-        return m_cnt;
+        return m_cnt.get();
     }
 
     VariableConfig get_config() const override {
@@ -531,7 +532,7 @@ private:
     const std::string		m_name;
     const DataType			m_type;
     const VariableConfig	m_config;
-    AstNode_Expression*     m_cnt;
+    ast_ptr<AstNode_Expression>     m_cnt;
 };
 
 class AstNode_VariableRef : public AstNode_Lvalue {
@@ -565,8 +566,8 @@ public:
 	DataType get_var_type(LLVM_Compile_Context& context) const override;
 
 private:
-    AstNode_Lvalue*     m_var;
-    AstNode_Expression* m_index;
+    ast_ptr<AstNode_Lvalue>     m_var;
+    ast_ptr<AstNode_Expression> m_index;
 };
 
 class AstNode_ExpAssign : public AstNode_Expression {
@@ -574,8 +575,8 @@ public:
     AstNode_ExpAssign(AstNode_Lvalue* var, AstNode_Expression* exp) :m_var(var), m_expression(exp) {}
 
 protected:
-    AstNode_Lvalue* m_var;
-    AstNode_Expression* m_expression;
+    ast_ptr<AstNode_Lvalue> m_var;
+    ast_ptr<AstNode_Expression> m_expression;
 };
 
 class AstNode_ExpAssign_Eq : public AstNode_ExpAssign {
@@ -689,7 +690,7 @@ public:
     void print() const override;
 
 private:
-    AstNode_Expression* m_exp;
+    ast_ptr<AstNode_Expression> m_exp;
 };
 
 class AstNode_Unary_Neg : public AstNode_Expression {
@@ -701,7 +702,7 @@ public:
     void print() const override;
 
 private:
-    AstNode_Expression* m_exp;
+    ast_ptr<AstNode_Expression> m_exp;
 };
 
 class AstNode_Unary_Not : public AstNode_Expression {
@@ -713,7 +714,7 @@ public:
     void print() const override;
 
 private:
-    AstNode_Expression* m_exp;
+    ast_ptr<AstNode_Expression> m_exp;
 };
 
 class AstNode_Unary_Compl : public AstNode_Expression {
@@ -725,7 +726,7 @@ public:
     void print() const override;
 
 private:
-    AstNode_Expression* m_exp;
+    ast_ptr<AstNode_Expression> m_exp;
 };
 
 class AstNode_TypeCast : public AstNode_Expression {
@@ -737,8 +738,8 @@ public:
 	void print() const override;
 
 private:
-	AstNode_Expression* m_exp;
-	DataType			m_target_type;
+    ast_ptr<AstNode_Expression> m_exp;
+	const DataType			    m_target_type;
 };
 
 class AstNode_Expression_PostInc : public AstNode_Expression {
@@ -750,7 +751,7 @@ public:
 	void print() const override;
 
 private:
-    AstNode_Lvalue* m_var;
+    ast_ptr<AstNode_Lvalue> m_var;
 };
 
 class AstNode_Expression_PostDec : public AstNode_Expression {
@@ -762,7 +763,7 @@ public:
 	void print() const override;
 
 private:
-    AstNode_Lvalue* m_var;
+    ast_ptr<AstNode_Lvalue> m_var;
 };
 
 class AstNode_Expression_PreInc : public AstNode_Expression {
@@ -774,7 +775,7 @@ public:
 	void print() const override;
 
 private:
-    AstNode_Lvalue* m_var;
+    ast_ptr<AstNode_Lvalue> m_var;
 };
 
 class AstNode_Expression_PreDec : public AstNode_Expression {
@@ -786,7 +787,7 @@ public:
 	void print() const override;
 
 private:
-    AstNode_Lvalue* m_var;
+    ast_ptr<AstNode_Lvalue> m_var;
 };
 
 class AstNode_Statement : public AstNode, public LLVM_Value {
@@ -801,7 +802,7 @@ public:
     void print() const override;
 
 private:
-    AstNode_Statement* m_statement;
+    ast_ptr<AstNode_Statement> m_statement;
 };
 
 class AstNode_CompoundStatements : public AstNode_Statement {
@@ -814,7 +815,7 @@ public:
     void append_statement(AstNode_Statement* statement);
 
 private:
-    std::vector<AstNode_Statement*> m_statements;
+    std::vector<std::unique_ptr<const AstNode_Statement>> m_statements;
 };
 
 class AstNode_Statement_Break : public AstNode_Statement {
@@ -840,7 +841,7 @@ public:
 	void print() const override;
 
 private:
-	AstNode_Expression* m_expression;
+    ast_ptr<AstNode_Expression> m_expression;
 };
 
 class AstNode_Statement_CompoundExpression : public AstNode_Statement {
@@ -852,7 +853,7 @@ public:
 	void print() const override;
 
 private:
-	AstNode_Expression* m_expression;
+    ast_ptr<AstNode_Expression> m_expression;
 };
 
 class AstNode_Statement_Condition : public AstNode_Statement {
@@ -865,9 +866,9 @@ public:
 	void print() const override;
 
 private:
-	AstNode_Expression*	m_condition;
-	AstNode_Statement*	m_true_statements;
-	AstNode_Statement*	m_false_statements;
+    ast_ptr<AstNode_Expression>	m_condition;
+    ast_ptr<AstNode_Statement>	m_true_statements;
+    ast_ptr<AstNode_Statement>	m_false_statements;
 };
 
 class AstNode_Statement_VariableDecls: public AstNode_Statement {
@@ -878,11 +879,11 @@ public:
 
 	void print() const override;
 
-	AstNode_VariableDecl* get_variable_decl(){
-		return m_var_decls;
+	const AstNode_VariableDecl* get_variable_decl() const {
+		return m_var_decls.get();
 	}
 private:
-	AstNode_VariableDecl* m_var_decls;
+	ast_ptr<AstNode_VariableDecl> m_var_decls;
 };
 
 class AstNode_Statement_Loop : public AstNode_Statement {
@@ -890,8 +891,8 @@ public:
 	AstNode_Statement_Loop(AstNode_Expression* cond, AstNode_Statement* statements): m_condition(cond), m_statements(statements) {}
 
 protected:
-	AstNode_Expression*	m_condition;
-	AstNode_Statement*	m_statements;
+    ast_ptr<AstNode_Expression>	    m_condition;
+    ast_ptr<AstNode_Statement>	m_statements;
 };
 
 class AstNode_Statement_Loop_For : public AstNode_Statement_Loop {
@@ -904,8 +905,8 @@ public:
 	void print() const override;
 
 private:
-    AstNode_Statement* m_init_exp;
-	AstNode_Expression* m_iter_exp;
+    ast_ptr<AstNode_Statement>  m_init_exp;
+    ast_ptr<AstNode_Expression> m_iter_exp;
 };
 
 class AstNode_Statement_Loop_While : public AstNode_Statement_Loop {
@@ -935,15 +936,14 @@ public:
 	void print() const override;
 
 private:
-	AstNode_Statement*	m_statements;
+    ast_ptr<AstNode_Statement>	m_statements;
 
     friend class AstNode_FunctionPrototype;
 };
 
 class AstNode_FunctionPrototype : public AstNode, LLVM_Function {
 public:
-	AstNode_FunctionPrototype(const char* func_name, AstNode_VariableDecl* variables, 
-							  AstNode_FunctionBody* body, bool is_shader = false, DataType type = { DataTypeEnum::VOID , nullptr } )
+	AstNode_FunctionPrototype(const char* func_name, AstNode_VariableDecl* variables, AstNode_FunctionBody* body, bool is_shader = false, DataType type = { DataTypeEnum::VOID , nullptr } )
 		                     :m_name(func_name), m_variables(variables), m_body(body), m_is_shader(is_shader), m_return_type(type){}
 
 	llvm::Function* codegen( LLVM_Compile_Context& context ) const override;
@@ -954,14 +954,15 @@ public:
 
 	void print() const override;
 
-    void parse_shader_parameters(std::vector< ArgDescriptor>& params);
+    void parse_shader_parameters(std::vector< ArgDescriptor>& params) const;
 
 private:
-	const std::string		m_name;
-	AstNode_VariableDecl*	m_variables;
-    AstNode_FunctionBody*   m_body;
-    const bool              m_is_shader;
-	DataType				m_return_type;
+	const std::string	m_name;
+    const bool          m_is_shader;
+    const DataType		m_return_type;
+
+    ast_ptr<AstNode_VariableDecl>	  m_variables;
+    ast_ptr<AstNode_FunctionBody>     m_body;
 
     friend class AstNode_FunctionCall;
 };
@@ -976,7 +977,7 @@ public:
 
 private:
 	const std::string					m_name;
-	AstNode_Statement_VariableDecls*	m_members;
+    ast_ptr<AstNode_Statement_VariableDecls>	m_members;
 };
 
 class AstNode_StructMemberRef : public AstNode_Lvalue {
@@ -991,8 +992,8 @@ public:
 	DataType get_var_type(LLVM_Compile_Context& context) const override;
 
 private:
-	AstNode_Lvalue*		m_var;
-	const std::string	m_member;
+    const std::string	m_member;
+    ast_ptr<AstNode_Lvalue>		m_var;
 };
 
 class AstNode_Statement_TextureDeclaration : public AstNode_Statement {
@@ -1021,16 +1022,17 @@ private:
 
 class AstNode_Expression_Texture2DSample : public AstNode_Expression {
 public:
-    AstNode_Expression_Texture2DSample(const char* texture_handle_name, AstNode_Expression* variables, const bool sample_alpha = false) : m_texture_handle_name(texture_handle_name), m_variables(variables), m_sample_alpha(sample_alpha){}
+    AstNode_Expression_Texture2DSample(const char* texture_handle_name, AstNode_Expression* variables, const bool sample_alpha = false) 
+        : m_texture_handle_name(texture_handle_name), m_variables(variables), m_sample_alpha(sample_alpha){}
 
     llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 
 private:
-    std::string m_texture_handle_name;
-    AstNode_Expression* m_variables;
+    const std::string m_texture_handle_name;
     const bool  m_sample_alpha;
+    ast_ptr<AstNode_Expression> m_variables;
 };
 
 TSL_NAMESPACE_END

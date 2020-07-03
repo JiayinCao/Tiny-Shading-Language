@@ -99,10 +99,10 @@ void LLVM_Compile_Context::pop_var_symbol_layer() {
 
 llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& context ) const {
 	int arg_cnt = 0;
-	AstNode_VariableDecl* variable = m_variables;
+	const AstNode_VariableDecl* variable = m_variables.get();
 	while( variable ){
 		++arg_cnt;
-		variable = castType<AstNode_VariableDecl>(variable->get_sibling());
+		variable = castType<const AstNode_VariableDecl>(variable->get_sibling());
 	}
 
     // clear the symbol maps, no global var for now
@@ -110,12 +110,12 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 
 	// parse argument types
 	std::vector<llvm::Type*>	args(arg_cnt);
-	variable = m_variables;
+	variable = m_variables.get();
 	int i = 0;
 	while( variable ){
         auto raw_type = get_type_from_context(variable->data_type(), context);
         args[i++] = (variable->get_config() & VariableConfig::OUTPUT) ? raw_type->getPointerTo() : raw_type;
-		variable = castType<AstNode_VariableDecl>(variable->get_sibling());
+		variable = castType<const AstNode_VariableDecl>(variable->get_sibling());
 	}
 
     // the last argument is always tsl_global
@@ -136,7 +136,7 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 	llvm::Function* function = llvm::Function::Create(function_type, link_type, m_name, context.module);
 
 	// For debugging purposes, set the name of all arguments
-	variable = m_variables;
+	variable = m_variables.get();
 	for (auto &arg : function->args()) {
         if (!variable) {
             arg.setName("tsl_global");
@@ -163,7 +163,7 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 
         // push the argument into the symbol table first
         int i = 0;
-        variable = m_variables;
+        variable = m_variables.get();
         while (variable) {
             const auto name = variable->get_var_name();
             const auto raw_type = get_type_from_context(variable->data_type(), context);
@@ -190,10 +190,10 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
             ++i;
         }
 
-        auto statement = m_body->m_statements;
+        auto statement = m_body->m_statements.get();
         while (statement) {
             statement->codegen(context);
-            statement = (AstNode_Statement*)statement->get_sibling();
+            statement = (const AstNode_Statement*)statement->get_sibling();
         }
 
         auto& last_block = function->getBasicBlockList().back();
@@ -206,10 +206,10 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 	return function;
 }
 
-void AstNode_FunctionPrototype::parse_shader_parameters(std::vector<ArgDescriptor>& params) {
+void AstNode_FunctionPrototype::parse_shader_parameters(std::vector<ArgDescriptor>& params) const {
     params.clear();
 
-    const AstNode_VariableDecl* variable = m_variables;
+    const AstNode_VariableDecl* variable = m_variables.get();
     while (variable) {
         const auto raw_type = variable->data_type();
 
@@ -890,7 +890,7 @@ DataType AstNode_ArrayAccess::get_var_type(LLVM_Compile_Context& context) const 
 llvm::Value* AstNode_SingleVariableDecl::codegen(LLVM_Compile_Context& context) const {
     auto name = m_name;
     auto type = get_type_from_context(m_type, context);
-    auto init = m_init_exp;
+    auto init = m_init_exp.get();
 
     if (nullptr != context.get_var_symbol(name, true)) {
         emit_error("Redefined variabled named '%s'.", name.c_str());
@@ -938,7 +938,7 @@ llvm::Value* AstNode_ArrayDecl::codegen(LLVM_Compile_Context& context) const {
 }
 
 llvm::Value* AstNode_Statement_VariableDecls::codegen(LLVM_Compile_Context& context) const {
-    AstNode_VariableDecl* decl = m_var_decls;
+    auto decl = m_var_decls.get();
     while (decl) {
         decl->codegen(context);
         decl = castType<AstNode_VariableDecl>(decl->get_sibling());
@@ -1281,10 +1281,10 @@ llvm::Value* AstNode_Expression_MakeClosure::codegen(LLVM_Compile_Context& conte
     auto function = context.m_closures_maps[m_name];
 
     std::vector<Value*> args;
-    AstNode_Expression* node = m_args;
+    auto node = m_args.get();
     while (node) {
         args.push_back(node->codegen(context));
-        node = castType<AstNode_Expression>(node->get_sibling());
+        node = castType<const AstNode_Expression>(node->get_sibling());
     }
 
     return context.builder->CreateCall(function, args);
@@ -1299,12 +1299,12 @@ llvm::Value* AstNode_FunctionCall::codegen(LLVM_Compile_Context& context) const 
 
     auto ast_func = it->second.second;
     std::vector<Value*> args;
-    AstNode_Expression* node = m_variables;
-    AstNode_VariableDecl* var_decl = ast_func->m_variables;
+    const AstNode_Expression* node = m_variables.get();
+    const AstNode_VariableDecl* var_decl = ast_func->m_variables.get();
     while (node) {
         if (var_decl->get_config() & VariableConfig::OUTPUT) {
             // this node must be a LValue
-            AstNode_Lvalue* lvalue = dynamic_cast<AstNode_Lvalue*>(node);
+            const AstNode_Lvalue* lvalue = dynamic_cast<const AstNode_Lvalue*>(node);
             if (!lvalue)
                 return nullptr;
             args.push_back(lvalue->get_value_address(context));
@@ -1312,7 +1312,7 @@ llvm::Value* AstNode_FunctionCall::codegen(LLVM_Compile_Context& context) const 
         else {
             args.push_back(node->codegen(context));
         }
-        node = castType<AstNode_Expression>(node->get_sibling());
+        node = castType<const AstNode_Expression>(node->get_sibling());
         var_decl = castType< AstNode_VariableDecl>(var_decl->get_sibling());
     }
 
@@ -1331,7 +1331,7 @@ llvm::Value* AstNode_Float3Constructor::codegen(LLVM_Compile_Context& context) c
     auto ret = context.builder->CreateAlloca(type);
 
     int i = 0;
-    AstNode_Expression* node = m_variables;
+    auto node = m_variables.get();
     while (node) {
         if (i > 3) {
             emit_warning("Too many arguments in vector constructor, the dummy ones will be ignored.");
@@ -1341,7 +1341,7 @@ llvm::Value* AstNode_Float3Constructor::codegen(LLVM_Compile_Context& context) c
         auto value = node->codegen(context);
         auto gep = context.builder->CreateConstGEP2_32(nullptr, ret, 0, i++);
         context.builder->CreateStore(value, gep);
-        node = castType<AstNode_Expression>(node->get_sibling());
+        node = castType<const AstNode_Expression>(node->get_sibling());
     }
 
     if (i < 3) {
@@ -1390,7 +1390,7 @@ llvm::Value* AstNode_Statement_Condition::codegen(LLVM_Compile_Context& context)
     context.push_var_symbol_layer();
 
     builder.SetInsertPoint(then_bb);
-    auto statement = m_true_statements;
+    auto statement = m_true_statements.get();
     while (statement) {
         statement->codegen(context);
         statement = castType<AstNode_Statement>(statement->get_sibling());
@@ -1403,7 +1403,7 @@ llvm::Value* AstNode_Statement_Condition::codegen(LLVM_Compile_Context& context)
         function->getBasicBlockList().push_back(else_bb);
         builder.SetInsertPoint(else_bb);
 
-        auto statement = m_false_statements;
+        auto statement = m_false_statements.get();
         while (statement) {
             statement->codegen(context);
             statement = castType<AstNode_Statement>(statement->get_sibling());
@@ -1445,7 +1445,7 @@ llvm::Value* AstNode_Statement_Loop_While::codegen(LLVM_Compile_Context& context
     function->getBasicBlockList().push_back(loop_body_bb);
     builder.SetInsertPoint(loop_body_bb);
 
-    auto statement = m_statements;
+    auto statement = m_statements.get();
     while (statement) {
         statement->codegen(context);
         statement = castType<AstNode_Statement>(statement->get_sibling());
@@ -1478,7 +1478,7 @@ llvm::Value* AstNode_Statement_Loop_DoWhile::codegen(LLVM_Compile_Context& conte
     builder.CreateBr(loop_bb);
 
     builder.SetInsertPoint(loop_bb);
-    auto statement = m_statements;
+    auto statement = m_statements.get();
     while (statement) {
         statement->codegen(context);
         statement = castType<AstNode_Statement>(statement->get_sibling());
@@ -1536,7 +1536,7 @@ llvm::Value* AstNode_Statement_Loop_For::codegen(LLVM_Compile_Context& context) 
     // here is the body of the loop
     function->getBasicBlockList().push_back(loop_body_bb);
     builder.SetInsertPoint(loop_body_bb);
-    auto statement = m_statements;
+    auto statement = m_statements.get();
     while (statement) {
         statement->codegen(context);
         statement = castType<AstNode_Statement>(statement->get_sibling());
@@ -1572,11 +1572,12 @@ llvm::Value* AstNode_ScoppedStatement::codegen(LLVM_Compile_Context& context) co
 }
 
 void AstNode_CompoundStatements::append_statement(AstNode_Statement* statement) {
-    m_statements.push_back(statement);
+    auto ptr = std::unique_ptr<const AstNode_Statement>(statement);
+    m_statements.push_back(std::move(ptr));
 }
 
 llvm::Value* AstNode_CompoundStatements::codegen(LLVM_Compile_Context& context) const {
-    for (auto statement : m_statements)
+    for (const auto& statement : m_statements)
         statement->codegen(context);
     return nullptr;
 }
@@ -1612,7 +1613,7 @@ llvm::Value* AstNode_StructDeclaration::codegen(LLVM_Compile_Context& context) c
 		return nullptr;
 
 	std::vector<llvm::Type*> member_types;
-	AstNode_Statement_VariableDecls* member = m_members;
+	auto member = m_members.get();
 	while( member ){
 		const auto decls = member->get_variable_decl();
 
@@ -1632,10 +1633,8 @@ llvm::Value* AstNode_StructDeclaration::codegen(LLVM_Compile_Context& context) c
 	auto& item = context.m_structure_type_maps[m_name];
 	item.m_llvm_type = structure_type;
 
-	member = m_members;
-
 	int i = 0;
-	member = m_members;
+	member = m_members.get();
 	while (member) {
 		const auto decls = member->get_variable_decl();
 
@@ -1780,7 +1779,7 @@ llvm::Value* AstNode_Expression_Texture2DSample::codegen(LLVM_Compile_Context& c
             Value* ret = context.builder->CreateAlloca(float3_struct_ty);
             args.push_back(ret);
 
-            AstNode_Expression* node = m_variables;
+            const AstNode_Expression* node = m_variables.get();
             while (node) {
                 args.push_back(node->codegen(context));
                 node = castType<AstNode_Expression>(node->get_sibling());
@@ -1798,7 +1797,7 @@ llvm::Value* AstNode_Expression_Texture2DSample::codegen(LLVM_Compile_Context& c
             Value* ret = context.builder->CreateAlloca(get_float_ty(context));
             args.push_back(ret);
 
-            AstNode_Expression* node = m_variables;
+            const AstNode_Expression* node = m_variables.get();
             while (node) {
                 args.push_back(node->codegen(context));
                 node = castType<AstNode_Expression>(node->get_sibling());
