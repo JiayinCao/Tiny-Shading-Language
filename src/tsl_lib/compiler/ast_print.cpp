@@ -176,7 +176,9 @@ void AstNode_VariableRef::print() const {
 
 void AstNode_ArrayAccess::print() const {
     m_var->print();
-    std::cout << "[" << m_index << "]";
+    std::cout << "[";
+    m_index->print();
+    std::cout << "]";
 }
 
 void AstNode_SingleVariableDecl::print() const {
