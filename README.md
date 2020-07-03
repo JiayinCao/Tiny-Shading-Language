@@ -10,4 +10,6 @@ This programming language can totally be used in any other CPU based ray tracing
 
 # Note
 
-This is just the very beginning of my TSL project. I have absolutely no idea how far I can go for now.
+TSL is functional enough to replace all of the OSL features used in SORT at this point.
+However, due to crunching features in TSL, lots of code is terribly designed.
+I'm refactoring this library now to make it a bit more robust and friendly.
