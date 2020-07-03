@@ -104,11 +104,18 @@ void  emit_warning(const char* format, ...) {
         callback->catch_debug(ShadingSystemInterface::DEBUG_WARNING, buf.get());
 }
 
-void  sample_2d(const void* texture, float u, float v, float3& color, float& alpha) {
+void  sample_2d(const void* texture, float u, float v, float3& color) {
     const auto callback = g_shading_system_impl->m_callback.get();
     if (nullptr == callback)
         return;
-    callback->sample_2d(texture, u, v, color, alpha);
+    callback->sample_2d(texture, u, v, color);
+}
+
+void  sample_alpha_2d(const void* texture, float u, float v, float& alpha) {
+    const auto callback = g_shading_system_impl->m_callback.get();
+    if (nullptr == callback)
+        return;
+    callback->sample_alpha_2d(texture, u, v, alpha);
 }
 
 TSL_NAMESPACE_END

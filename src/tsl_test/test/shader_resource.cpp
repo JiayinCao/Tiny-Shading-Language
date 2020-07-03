@@ -72,6 +72,59 @@ TEST(ShaderResource, SimpleTexture) {
     EXPECT_EQ(1234.0f, data.z);
 }
 
+TEST(ShaderResource, SimpleTextureAlpha) {
+    auto shader_source = R"(
+        texture2d g_diffuse;
+        shader function_name(out float diffuse){
+            diffuse = texture2d_sample_alpha<g_diffuse>( global_value<intensity> , 2.0f );
+        }
+    )";
+
+    // tsl global data
+    TslGlobal tsl_global;
+    tsl_global.intensity = 123.0f;
+
+    // the texture handle
+    TextureSimple texture_simple;
+
+    // the tsl shading system
+    auto& shading_system = ShadingSystem::get_instance();
+
+    // make a shader context
+    auto shading_context = shading_system.make_shading_context();
+
+    // register the tsl global data structure
+    TslGlobal::RegisterGlobal(shading_system);
+
+    // compile the shader
+    const auto shader_unit_template = shading_context->begin_shader_unit_template("texture_handle_alpha");
+
+    // register the texture handle
+    shader_unit_template->register_texture("g_diffuse", &texture_simple);
+
+    // compile the shader unit
+    shading_context->compile_shader_unit_template(shader_unit_template, shader_source);
+
+    // shader unit done.
+    shading_context->end_shader_unit_template(shader_unit_template);
+
+    // make a shader instance after the template is ready
+    auto shader_instance = shader_unit_template->make_shader_instance();
+    EXPECT_NE(nullptr, shader_instance);
+
+    // resolve the shader instance
+    const auto resolve_ret = shading_context->resolve_shader_instance(shader_instance.get());
+    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, resolve_ret);
+
+    // get the raw function pointer for execution
+    auto func_ptr = (void(*)(float*, TslGlobal*))shader_instance->get_function();
+    EXPECT_NE(nullptr, func_ptr);
+
+    float data;
+    func_ptr(&data, &tsl_global);
+    EXPECT_EQ(123.0f, data);
+}
+
 class CustomShaderResource : public ShaderResourceHandle {
 public:
     // just for verification purpose

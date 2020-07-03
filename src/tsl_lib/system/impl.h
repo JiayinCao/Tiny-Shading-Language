@@ -119,6 +119,9 @@ void  emit_error(const char* error, ...);
 void  emit_warning(const char* format, ...);
 
 //! @brief  Texture sampling
-void  sample_2d(const void* texture, float u, float v, float3& color, float& alpha);
+void  sample_2d(const void* texture, float u, float v, float3& color);
+
+//! @brief  Texture sampling alpha channel only.
+void  sample_alpha_2d(const void* texture, float u, float v, float& alpha);
 
 TSL_NAMESPACE_END

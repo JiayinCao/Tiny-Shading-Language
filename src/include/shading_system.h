@@ -64,8 +64,19 @@ public:
     //! @param  u           UV coordinate.
     //! @param  v           UV coordinate.
     //! @param  color       RGB of the texture pixel.
+    virtual void    sample_2d(const void* texture, float u, float v, float3& color) const = 0;
+
+    //! @brief  Sample alpha channel in a 2d texture.
+    //!
+    //! Having two separate interfaces for 2d sampling for RGB and alpha may not sound wise from a performance perspective.
+    //! However, in order to get the ball rolling as soon as possible, I'll live with it now.
+    //! To support float4 is also an alternative to be considered in the future.
+    //!
+    //! @param  texture     Texture handle.
+    //! @param  u           UV coordinate.
+    //! @param  v           UV coordinate.
     //! @param  alpha       Alpha channel of the texture.
-    virtual void    sample_2d(const void* texture, float u, float v, float3& color, float& alpha) const = 0;
+    virtual void    sample_alpha_2d(const void* texture, float u, float v, float& alpha) const = 0;
 };
 
 //! @brief  Shading system is the root interface exposed through TSL system.

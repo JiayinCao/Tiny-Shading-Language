@@ -132,6 +132,7 @@
 %token STRUCT			"struct"
 %token TEXTURE2D_HANDLE "texture"
 %token TEXTURE2D_SAMPLE "texture2d_sample"
+%token TEXTURE2D_SAMPLE_ALPHA "texture2d_sample_alpha"
 %token SHADER_RESOURCE_HANDLE
 
 %type <p> PROGRAM FUNCTION_ARGUMENT_DECL FUNCTION_ARGUMENT_DECLS SHADER_FUNCTION_ARGUMENT_DECLS FUNCTION_BODY VARIABLE_LVALUE ID_OR_FIELD FUNCTION_ARGUMENTS SHADER_FUNCTION_ARGUMENT_DECL FOR_INIT_STATEMENT STRUCT_DEF
@@ -602,11 +603,15 @@ EXPRESSION_FLOAT3_CONSTRUCTOR:
     };
     
 EXPRESSION_TEXTURE_SAMPLE:
-    "texture2d_sample" "<" ID ">" "(" FUNCTION_ARGUMENTS ")"
-    {
+    "texture2d_sample" "<" ID ">" "(" FUNCTION_ARGUMENTS ")"{
         AstNode_Expression* args = AstNode::castType<AstNode_Expression>($6);
 		$$ = new AstNode_Expression_Texture2DSample( $3 , args );
-    };
+    }
+    |
+    "texture2d_sample_alpha" "<" ID ">" "(" FUNCTION_ARGUMENTS ")"{
+        AstNode_Expression* args = AstNode::castType<AstNode_Expression>($6);
+		$$ = new AstNode_Expression_Texture2DSample( $3 , args , true );
+    }
 
 EXPRESSION_UNARY:
 	OP_UNARY EXPRESSION %prec UMINUS_PREC {

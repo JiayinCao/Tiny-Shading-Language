@@ -66,7 +66,10 @@ void AstNode_Float3Constructor::print() const {
     std::cout << ")";
 }
 void AstNode_Expression_Texture2DSample::print() const {
-    std::cout << "texture2d_sample<" << m_texture_handle_name << ">(";
+    if( m_sample_alpha )
+        std::cout << "texture2d_sample_alpha" << m_texture_handle_name << ">(";
+    else
+        std::cout << "texture2d_sample<" << m_texture_handle_name << ">(";
 
     bool first = true;
     AstNode* param_node = m_variables;

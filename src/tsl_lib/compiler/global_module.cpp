@@ -253,9 +253,11 @@ void GlobalModule::declare_global_module(LLVM_Compile_Context& context){
 	context.m_func_symbols["TSL_MALLOC"] = std::make_pair(malloc_function, nullptr);
 
     // texture 2d sampling
-    Function* texture2d_sample_function = Function::Create(FunctionType::get(get_void_ty(context), { get_int_32_ptr_ty(context) , float3_struct_llvm_type->getPointerTo(), get_float_ptr_ty(context), get_float_ty(context), get_float_ty(context) }, false), Function::ExternalLinkage, "TSL_TEXTURE2D_SAMPLE", context.module);
-    auto type = texture2d_sample_function->getReturnType();
+    Function* texture2d_sample_function = Function::Create(FunctionType::get(get_void_ty(context), { get_int_32_ptr_ty(context) , float3_struct_llvm_type->getPointerTo(), get_float_ty(context), get_float_ty(context) }, false), Function::ExternalLinkage, "TSL_TEXTURE2D_SAMPLE", context.module);
     context.m_func_symbols["TSL_TEXTURE2D_SAMPLE"] = std::make_pair(texture2d_sample_function, nullptr);
+
+    Function* texture2d_sample_alpha_function = Function::Create(FunctionType::get(get_void_ty(context), { get_int_32_ptr_ty(context) , get_float_ptr_ty(context), get_float_ty(context), get_float_ty(context) }, false), Function::ExternalLinkage, "TSL_TEXTURE2D_SAMPLE_ALPHA", context.module);
+    context.m_func_symbols["TSL_TEXTURE2D_SAMPLE_ALPHA"] = std::make_pair(texture2d_sample_alpha_function, nullptr);
 
     if (m_tsl_global_mapping.size()) {
         // assemble the variable types

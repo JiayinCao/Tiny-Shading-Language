@@ -31,12 +31,18 @@ public:
     }
 
     // No error will be output since there are invalid unit tests.
-    void catch_debug(const DEBUG_LEVEL level, const char* error) const override {}
+    void catch_debug(const DEBUG_LEVEL level, const char* error) const override {
+
+    }
 
     // Sample texture 2d
-    void    sample_2d(const void* texture, float u, float v, float3& color, float& alpha) const override {
+    void    sample_2d(const void* texture, float u, float v, float3& color) const override {
         auto ts = (const TextureSimple*)texture;
         color = ts->sample2d(u, v);
+    }
+    void    sample_alpha_2d(const void* texture, float u, float v, float& alpha) const override {
+        auto ts = (const TextureSimple*)texture;
+        alpha = ts->sample_alpha_2d(u, v);
     }
 
 private:

@@ -424,11 +424,11 @@ llvm::Value* AstNode_Binary_Minus::codegen(LLVM_Compile_Context& context) const 
         auto sub_x = get_llvm_sub(builder.CreateLoad(ret_x), right, context);
         builder.CreateStore(sub_x, ret_x);
 
-        auto ret_y = context.builder->CreateConstGEP2_32(nullptr, ret, 0, 1);
+        auto ret_y = builder.CreateConstGEP2_32(nullptr, ret, 0, 1);
         auto sub_y = get_llvm_sub(builder.CreateLoad(ret_y), right, context);
         builder.CreateStore(sub_y, ret_y);
 
-        auto ret_z = context.builder->CreateConstGEP2_32(nullptr, ret, 0, 2);
+        auto ret_z = builder.CreateConstGEP2_32(nullptr, ret, 0, 2);
         auto sub_z = get_llvm_sub(builder.CreateLoad(ret_z), right, context);
         builder.CreateStore(sub_z, ret_z);
 
@@ -1771,27 +1771,43 @@ llvm::Value* AstNode_Expression_Texture2DSample::codegen(LLVM_Compile_Context& c
         auto texture_handle = context.builder->CreateLoad(texture_handle_addr);
         auto th = context.builder->CreatePointerCast(texture_handle, get_int_32_ptr_ty(context));
 
-        auto texture2d_sample_function = context.m_func_symbols["TSL_TEXTURE2D_SAMPLE"].first;
+        if (!m_sample_alpha) {
+            auto texture2d_sample_function = context.m_func_symbols["TSL_TEXTURE2D_SAMPLE"].first;
 
-        std::vector<Value*> args(1, th);
+            std::vector<Value*> args(1, th);
 
-        auto float3_struct_ty = context.m_structure_type_maps["float3"].m_llvm_type;
-        Value* ret = context.builder->CreateAlloca(float3_struct_ty);
-        args.push_back(ret);
+            auto float3_struct_ty = context.m_structure_type_maps["float3"].m_llvm_type;
+            Value* ret = context.builder->CreateAlloca(float3_struct_ty);
+            args.push_back(ret);
 
-        auto float_ty = get_float_ty(context);
-        Value* float_ret = context.builder->CreateAlloca(float_ty);
-        args.push_back(float_ret);
+            AstNode_Expression* node = m_variables;
+            while (node) {
+                args.push_back(node->codegen(context));
+                node = castType<AstNode_Expression>(node->get_sibling());
+            }
 
-        AstNode_Expression* node = m_variables;
-        while (node) {
-            args.push_back(node->codegen(context));
-            node = castType<AstNode_Expression>(node->get_sibling());
+            context.builder->CreateCall(texture2d_sample_function, args);
+
+            return context.builder->CreateLoad(ret);
         }
+        else {
+            auto texture2d_sample_function = context.m_func_symbols["TSL_TEXTURE2D_SAMPLE_ALPHA"].first;
 
-        context.builder->CreateCall(texture2d_sample_function, args);
+            std::vector<Value*> args(1, th);
 
-        return context.builder->CreateLoad(ret);
+            Value* ret = context.builder->CreateAlloca(get_float_ty(context));
+            args.push_back(ret);
+
+            AstNode_Expression* node = m_variables;
+            while (node) {
+                args.push_back(node->codegen(context));
+                node = castType<AstNode_Expression>(node->get_sibling());
+            }
+
+            context.builder->CreateCall(texture2d_sample_function, args);
+
+            return context.builder->CreateLoad(ret);
+        }
     }
 
     emit_error("Texture handle %s not registered.", m_texture_handle_name.c_str());

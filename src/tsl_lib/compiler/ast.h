@@ -1021,7 +1021,7 @@ private:
 
 class AstNode_Expression_Texture2DSample : public AstNode_Expression {
 public:
-    AstNode_Expression_Texture2DSample(const char* texture_handle_name, AstNode_Expression* variables) : m_texture_handle_name(texture_handle_name), m_variables(variables) {}
+    AstNode_Expression_Texture2DSample(const char* texture_handle_name, AstNode_Expression* variables, const bool sample_alpha = false) : m_texture_handle_name(texture_handle_name), m_variables(variables), m_sample_alpha(sample_alpha){}
 
     llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
@@ -1030,6 +1030,7 @@ public:
 private:
     std::string m_texture_handle_name;
     AstNode_Expression* m_variables;
+    const bool  m_sample_alpha;
 };
 
 TSL_NAMESPACE_END

@@ -35,9 +35,14 @@ extern "C" {
         return (int*)allocate_memory(size);
     }
 
-    // 2D texture access
-    DLLEXPORT void TSL_TEXTURE2D_SAMPLE(generic_ptr ptr, float3* color, float* alpha, float u, float v) {
-        sample_2d((const void*)ptr, u, v, *color, *alpha);
+    // 2D texture sample
+    DLLEXPORT void TSL_TEXTURE2D_SAMPLE(generic_ptr ptr, float3* color, float u, float v) {
+        sample_2d((const void*)ptr, u, v, *color);
+    }
+
+    // 2D texture sample alpha
+    DLLEXPORT void TSL_TEXTURE2D_SAMPLE_ALPHA(generic_ptr ptr, float* alpha, float u, float v) {
+        sample_alpha_2d((const void*)ptr, u, v, *alpha);
     }
 
     // 3D texture access

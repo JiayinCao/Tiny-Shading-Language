@@ -82,6 +82,10 @@ public:
     float3 sample2d(float u, float v) const {
         return make_float3(u, v, 1234.0f);
     }
+
+    float sample_alpha_2d(float u, float v) const {
+        return u;
+    }
 };
 
 inline ShaderUnitTemplate* compile_shader_unit_template(ShadingContext* shading_context, const char* name, const char* shader_source) {

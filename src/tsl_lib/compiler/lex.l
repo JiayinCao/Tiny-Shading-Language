@@ -85,6 +85,7 @@ whitespace               [ \t\r\n\f]+
 "shader_resource"         { return SHADER_RESOURCE_HANDLE; }
 "texture2d"               { return TEXTURE2D_HANDLE; }
 "texture2d_sample"        { return TEXTURE2D_SAMPLE; }
+"texture2d_sample_alpha"  { return TEXTURE2D_SAMPLE_ALPHA; }
 "closure"                 { return CLOSURE; }
 "true"                    { return TRUE; }
 "false"                   { return FALSE; }
