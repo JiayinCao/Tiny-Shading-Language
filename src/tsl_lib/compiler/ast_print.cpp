@@ -40,6 +40,10 @@ void AstNode_Literal_GlobalValue::print() const {
     std::cout << "GlovalValue<" << m_value_name << ">";
 }
 
+void AstNode_ArgumentList::print() const {
+
+}
+
 void AstNode_Statement_TextureDeclaration::print() const {
     std::cout << "texture2d " << m_handle_name << ";" << std::endl;
 }
@@ -52,19 +56,18 @@ void AstNode_Float3Constructor::print() const {
     std::cout << "vector( ";
 
     bool first = true;
-    auto param_node = m_variables.get();
-    while (param_node) {
+    auto& args = m_arguments->get_arg_list();
+    for( auto& arg : args ){
         if (!first)
             std::cout << " , ";
 
-        param_node->print();
-        param_node = ( const AstNode_Expression* )param_node->get_sibling();
-
+        arg->print();
         first = false;
     }
 
     std::cout << ")";
 }
+
 void AstNode_Expression_Texture2DSample::print() const {
     if( m_sample_alpha )
         std::cout << "texture2d_sample_alpha" << m_texture_handle_name << ">(";
@@ -72,14 +75,12 @@ void AstNode_Expression_Texture2DSample::print() const {
         std::cout << "texture2d_sample<" << m_texture_handle_name << ">(";
 
     bool first = true;
-    const AstNode* param_node = m_variables.get();
-    while (param_node) {
+    auto& args = m_arguments->get_arg_list();
+    for (auto& arg : args) {
         if (!first)
             std::cout << " , ";
 
-        param_node->print();
-        param_node = param_node->get_sibling();
-
+        arg->print();
         first = false;
     }
 
@@ -156,7 +157,7 @@ void AstNode_FunctionCall::print() const {
     std::cout << "(";
 
     bool first = true;
-    const AstNode* param_node = m_variables.get();
+    const AstNode* param_node = m_args.get();
     while (param_node) {
         if (!first)
             std::cout << " , ";
@@ -537,11 +538,10 @@ void AstNode_Statement_VariableDecl::print() const {
 
 void AstNode_StructDeclaration::print() const{
 	std::cout << "struct " << m_name << "{" << std::endl;
-	auto member = m_members.get();
-	while(member){
-		member->print();
-		member = castType<AstNode_Statement_VariableDecl>(member->get_sibling());
-	}
+    if (m_members){
+        for (auto& member : m_members->get_member_list())
+            member->print();
+    }
 	std::cout << "};" << std::endl;
 }
 

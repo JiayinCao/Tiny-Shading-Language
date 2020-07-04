@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include <string>
+#include <vector>
 #include <stack>
 #include <unordered_map>
 #include "llvm/IR/Constants.h"
@@ -116,8 +117,11 @@ public:
             return nullptr;
 
         T* ret = dynamic_cast<T*>(node);
-        if(check)
+        if (check) {
+            if (!ret)
+                int k = 0;
             assert(ret);
+        }
         return ret;
 #else
         // there is no need to pay run-time cost since we are sure the type is correct.
@@ -397,11 +401,28 @@ public:
     void print() const override;
 };
 
+class AstNode_ArgumentList : public AstNode{
+public:
+    AstNode_ArgumentList* add_argument(const AstNode_Expression* arg) {
+        m_args.push_back(ast_ptr_from_raw<AstNode_Expression>(arg));
+        return this;
+    }
+
+    const std::vector<std::shared_ptr<const AstNode_Expression>>& get_arg_list() const {
+        return m_args;
+    }
+
+    void print() const override;
+
+private:
+    std::vector<std::shared_ptr<const AstNode_Expression>> m_args;
+};
+
 class AstNode_FunctionCall : public AstNode_Expression {
 public:
-    AstNode_FunctionCall(const char* func_name, AstNode_Expression* variables) : 
+    AstNode_FunctionCall(const char* func_name, AstNode_ArgumentList* args) :
         m_name(func_name), 
-        m_variables(ast_ptr_from_raw<AstNode_Expression>(variables)) {}
+        m_args(ast_ptr_from_raw<AstNode_ArgumentList>(args)) {}
 
     llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
@@ -409,27 +430,27 @@ public:
 
 private:
     std::string m_name;
-    ast_ptr<AstNode_Expression> m_variables;
+    ast_ptr<AstNode_ArgumentList> m_args;
 };
 
 class AstNode_Float3Constructor: public AstNode_Expression {
 public:
-    AstNode_Float3Constructor(AstNode_Expression* variables) : 
-        m_variables(ast_ptr_from_raw<AstNode_Expression>(variables)) {}
+    AstNode_Float3Constructor(AstNode_ArgumentList* variables) :
+        m_arguments(ast_ptr_from_raw<AstNode_ArgumentList>(variables)) {}
 
     llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
     void print() const override;
 
 private:
-    ast_ptr<AstNode_Expression> m_variables;
+    ast_ptr<AstNode_ArgumentList> m_arguments;
 };
 
 class AstNode_Expression_MakeClosure : public AstNode_Expression {
 public:
-    AstNode_Expression_MakeClosure(const char* closure_name, AstNode_Expression* args) : 
+    AstNode_Expression_MakeClosure(const char* closure_name, AstNode_ArgumentList* args) :
         m_name(closure_name), 
-        m_args(ast_ptr_from_raw<AstNode_Expression>(args)) {}
+        m_args(ast_ptr_from_raw<AstNode_ArgumentList>(args)) {}
 
     llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
@@ -441,7 +462,7 @@ public:
 
 private:
     const std::string m_name;
-    ast_ptr<AstNode_Expression> m_args;
+    ast_ptr<AstNode_ArgumentList> m_args;
 };
 
 class AstNode_Ternary : public AstNode_Expression {
@@ -924,6 +945,24 @@ private:
 	ast_ptr<AstNode_VariableDecl> m_var_decls;
 };
 
+class AstNode_Statement_StructMemberDecls : public AstNode {
+public:
+    AstNode_Statement_StructMemberDecls* add_member_decl(AstNode_Statement_VariableDecl* var) {
+        auto ptr = ast_ptr_from_raw<AstNode_Statement_VariableDecl>(var);
+        m_members.push_back(ptr);
+        return this;
+    }
+
+    const std::vector<std::shared_ptr<const AstNode_Statement_VariableDecl>>& get_member_list() const {
+        return m_members;
+    }
+
+    void print() const override {}
+
+private:
+    std::vector<std::shared_ptr<const AstNode_Statement_VariableDecl>> m_members;
+};
+
 class AstNode_Statement_Loop : public AstNode_Statement {
 public:
 	AstNode_Statement_Loop(AstNode_Expression* cond, AstNode_Statement* statements): 
@@ -1014,17 +1053,17 @@ private:
 
 class AstNode_StructDeclaration : public AstNode, LLVM_Value {
 public:
-	AstNode_StructDeclaration(const char* struct_name, AstNode_Statement_VariableDecl* members ) : 
+	AstNode_StructDeclaration(const char* struct_name, AstNode_Statement_StructMemberDecls* members ) :
         m_name(struct_name), 
-        m_members(ast_ptr_from_raw<AstNode_Statement_VariableDecl>(members)) {}
+        m_members(ast_ptr_from_raw<AstNode_Statement_StructMemberDecls>(members)) {}
 
 	llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
 	void print() const override;
 
 private:
-	const std::string					m_name;
-    ast_ptr<AstNode_Statement_VariableDecl>	m_members;
+	const std::string m_name;
+    ast_ptr<AstNode_Statement_StructMemberDecls>	m_members;
 };
 
 class AstNode_StructMemberRef : public AstNode_Lvalue {
@@ -1073,8 +1112,8 @@ private:
 
 class AstNode_Expression_Texture2DSample : public AstNode_Expression {
 public:
-    AstNode_Expression_Texture2DSample(const char* texture_handle_name, AstNode_Expression* variables, const bool sample_alpha = false) 
-        : m_texture_handle_name(texture_handle_name), m_variables(ast_ptr_from_raw<AstNode_Expression>(variables)), m_sample_alpha(sample_alpha){}
+    AstNode_Expression_Texture2DSample(const char* texture_handle_name, AstNode_ArgumentList* variables, const bool sample_alpha = false)
+        : m_texture_handle_name(texture_handle_name), m_arguments(ast_ptr_from_raw<AstNode_ArgumentList>(variables)), m_sample_alpha(sample_alpha){}
 
     llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
@@ -1083,7 +1122,7 @@ public:
 private:
     const std::string m_texture_handle_name;
     const bool  m_sample_alpha;
-    ast_ptr<AstNode_Expression> m_variables;
+    ast_ptr<AstNode_ArgumentList> m_arguments;
 };
 
 TSL_NAMESPACE_END

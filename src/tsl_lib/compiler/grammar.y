@@ -225,7 +225,7 @@ STATEMENT_TEXTURE_DEF:
 STRUCT_DEF:
 	"struct" ID "{" STATEMENT_STRUCT_MEMBERS_DECLARATION "}" ";"
 	{
-		AstNode_Statement_VariableDecl* members = AstNode::castType<AstNode_Statement_VariableDecl>($4);
+		AstNode_Statement_StructMemberDecls* members = AstNode::castType<AstNode_Statement_StructMemberDecls>($4);
 		AstNode_StructDeclaration* struct_declaration = new AstNode_StructDeclaration( $2 , members );
 		tsl_compiler->push_structure_declaration(struct_declaration);
 		$$ = struct_declaration;
@@ -233,12 +233,19 @@ STRUCT_DEF:
 
 STATEMENT_STRUCT_MEMBERS_DECLARATION:
 	STATEMENT_VARIABLES_DECLARATION
+    {
+        AstNode_Statement_StructMemberDecls* node = new AstNode_Statement_StructMemberDecls();
+        AstNode_Statement_VariableDecl* member = AstNode::castType<AstNode_Statement_VariableDecl>($1);
+        node->add_member_decl(member);
+
+        $$ = node;
+    }
 	|
-	STATEMENT_VARIABLES_DECLARATION STATEMENT_STRUCT_MEMBERS_DECLARATION
+	STATEMENT_STRUCT_MEMBERS_DECLARATION STATEMENT_VARIABLES_DECLARATION
 	{
-		AstNode* node_arg = $1;
-		AstNode* node_args = $2;
-		$$ = node_arg->append( node_args );
+        AstNode_Statement_StructMemberDecls* members = AstNode::castType<AstNode_Statement_StructMemberDecls>($1);
+        AstNode_Statement_VariableDecl* member = AstNode::castType<AstNode_Statement_VariableDecl>($2);
+        $$ = members->add_member_decl(member);
 	}
 	;
 
@@ -577,23 +584,23 @@ EXPRESSION:
 
 EXPRESSION_FLOAT3_CONSTRUCTOR:
     TYPE_COLOR "(" FUNCTION_ARGUMENTS ")"{
-		AstNode_Expression* args = AstNode::castType<AstNode_Expression>($3);
+		AstNode_ArgumentList* args = AstNode::castType<AstNode_ArgumentList>($3);
 		$$ = new AstNode_Float3Constructor( args );
     }
     |
     TYPE_VECTOR "(" FUNCTION_ARGUMENTS ")"{
-		AstNode_Expression* args = AstNode::castType<AstNode_Expression>($3);
+		AstNode_ArgumentList* args = AstNode::castType<AstNode_ArgumentList>($3);
 		$$ = new AstNode_Float3Constructor( args );
     };
     
 EXPRESSION_TEXTURE_SAMPLE:
     "texture2d_sample" "<" ID ">" "(" FUNCTION_ARGUMENTS ")"{
-        AstNode_Expression* args = AstNode::castType<AstNode_Expression>($6);
+        AstNode_ArgumentList* args = AstNode::castType<AstNode_ArgumentList>($6);
 		$$ = new AstNode_Expression_Texture2DSample( $3 , args );
     }
     |
     "texture2d_sample_alpha" "<" ID ">" "(" FUNCTION_ARGUMENTS ")"{
-        AstNode_Expression* args = AstNode::castType<AstNode_Expression>($6);
+        AstNode_ArgumentList* args = AstNode::castType<AstNode_ArgumentList>($6);
 		$$ = new AstNode_Expression_Texture2DSample( $3 , args , true );
     }
 
@@ -824,7 +831,7 @@ EXPRESSION_ASSIGN:
 // Function call, this is only non-shader function. TSL doesn't allow calling shader function.
 EXPRESSION_FUNCTION_CALL:
 	ID "(" FUNCTION_ARGUMENTS ")" {
-		AstNode_Expression* args = AstNode::castType<AstNode_Expression>($3);
+		AstNode_ArgumentList* args = AstNode::castType<AstNode_ArgumentList>($3);
 		$$ = new AstNode_FunctionCall( $1 , args );
 	};
 
@@ -832,7 +839,7 @@ EXPRESSION_FUNCTION_CALL:
 EXPRESSION_MAKE_CLOSURE:
     "make_closure" "<" ID ">" "(" FUNCTION_ARGUMENTS ")"
     {
-        AstNode_Expression* args = AstNode::castType<AstNode_Expression>($6);
+        AstNode_ArgumentList* args = AstNode::castType<AstNode_ArgumentList>($6);
 		$$ = new AstNode_Expression_MakeClosure( $3 , args );
 
         // notify the compiler to generate pre-decleration
@@ -846,11 +853,16 @@ FUNCTION_ARGUMENTS:
 	}
 	|
 	EXPRESSION
+    {
+        AstNode_Expression* arg = AstNode::castType<AstNode_Expression>($1);
+        AstNode_ArgumentList* args = new AstNode_ArgumentList();
+        $$ = args->add_argument(arg);
+    }
 	|
-	EXPRESSION "," FUNCTION_ARGUMENTS {
-		AstNode* node_arg = $1;
-		AstNode* node_args = $3;
-		$$ = node_arg->append( node_args );
+	FUNCTION_ARGUMENTS "," EXPRESSION {
+        AstNode_ArgumentList* args = AstNode::castType<AstNode_ArgumentList>($1);
+        AstNode_Expression* arg = AstNode::castType<AstNode_Expression>($3);
+		$$ = args->add_argument( arg );
 	};
 
 

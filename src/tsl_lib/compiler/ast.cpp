@@ -1275,14 +1275,13 @@ llvm::Value* AstNode_Expression_MakeClosure::codegen(LLVM_Compile_Context& conte
     // declare the function first.
     auto function = context.m_closures_maps[m_name];
 
-    std::vector<Value*> args;
-    auto node = m_args.get();
-    while (node) {
-        args.push_back(node->codegen(context));
-        node = castType<const AstNode_Expression>(node->get_sibling());
+    std::vector<Value*> args_llvm;
+    if (m_args) {
+        for (const auto& arg : m_args->get_arg_list())
+            args_llvm.push_back(arg->codegen(context));
     }
 
-    return context.builder->CreateCall(function, args);
+    return context.builder->CreateCall(function, args_llvm);
 }
 
 llvm::Value* AstNode_FunctionCall::codegen(LLVM_Compile_Context& context) const {
@@ -1293,25 +1292,30 @@ llvm::Value* AstNode_FunctionCall::codegen(LLVM_Compile_Context& context) const 
     }
 
     auto ast_func = it->second.second;
-    std::vector<Value*> args;
-    const AstNode_Expression* node = m_variables.get();
+
     const AstNode_VariableDecl* var_decl = ast_func->m_variables.get();
-    while (node) {
-        if (var_decl->get_config() & VariableConfig::OUTPUT) {
-            // this node must be a LValue
-            const AstNode_Lvalue* lvalue = dynamic_cast<const AstNode_Lvalue*>(node);
-            if (!lvalue)
-                return nullptr;
-            args.push_back(lvalue->get_value_address(context));
+    std::vector<Value*> args_llvm;
+
+    if (m_args) {
+        const auto& args = m_args->get_arg_list();
+        for (auto i = 0u; i < args.size(); ++i) {
+            if (var_decl->get_config() & VariableConfig::OUTPUT) {
+                const AstNode_Lvalue* lvalue = dynamic_cast<const AstNode_Lvalue*>(args[i].get());
+                if (!lvalue) {
+                    emit_error("Right value can't be used as an output argument.");
+                    return nullptr;
+                }
+                args_llvm.push_back(lvalue->get_value_address(context));
+            }
+            else {
+                args_llvm.push_back(args[i]->codegen(context));
+            }
+
+            var_decl = castType< AstNode_VariableDecl>(var_decl->get_sibling());
         }
-        else {
-            args.push_back(node->codegen(context));
-        }
-        node = castType<const AstNode_Expression>(node->get_sibling());
-        var_decl = castType< AstNode_VariableDecl>(var_decl->get_sibling());
     }
 
-    return context.builder->CreateCall(it->second.first, args);
+    return context.builder->CreateCall(it->second.first, args_llvm);
 }
 
 llvm::Value* AstNode_Float3Constructor::codegen(LLVM_Compile_Context& context) const {
@@ -1325,23 +1329,37 @@ llvm::Value* AstNode_Float3Constructor::codegen(LLVM_Compile_Context& context) c
     const auto type = struct_ty->second.m_llvm_type;
     auto ret = context.builder->CreateAlloca(type);
 
-    int i = 0;
-    auto node = m_variables.get();
-    while (node) {
-        if (i > 3) {
-            emit_warning("Too many arguments in vector constructor, the dummy ones will be ignored.");
-            break;
+    llvm::Value* last_arg = nullptr;
+
+    if (!m_arguments) {
+        const auto default_value = get_llvm_constant_fp(0.0f, context);
+        for (auto i = 0u; i < 3u; ++i) {
+            auto gep = context.builder->CreateConstGEP2_32(nullptr, ret, 0, i);
+            context.builder->CreateStore(default_value, gep);
+        }
+    } else {
+        const auto& args = m_arguments->get_arg_list();
+
+        int i = 0;
+        for (auto& arg : args) {
+            if (i >= 3) {
+                emit_warning("Too many arguments in vector constructor, the dummy ones will be ignored.");
+                break;
+            }
+
+            auto value = arg->codegen(context);
+            auto gep = context.builder->CreateConstGEP2_32(nullptr, ret, 0, i++);
+            context.builder->CreateStore(value, gep);
+
+            last_arg = gep;
         }
 
-        auto value = node->codegen(context);
-        auto gep = context.builder->CreateConstGEP2_32(nullptr, ret, 0, i++);
-        context.builder->CreateStore(value, gep);
-        node = castType<const AstNode_Expression>(node->get_sibling());
-    }
+        assert(last_arg);
 
-    if (i < 3) {
-        emit_error("Insufficient argument in vector constructor.");
-        return nullptr;
+        while (i < 3) {
+            auto gep = context.builder->CreateConstGEP2_32(nullptr, ret, 0, i++);
+            context.builder->CreateStore(last_arg, gep);
+        }
     }
 
     return context.builder->CreateLoad(ret);
@@ -1608,45 +1626,35 @@ llvm::Value* AstNode_StructDeclaration::codegen(LLVM_Compile_Context& context) c
 		return nullptr;
 
 	std::vector<llvm::Type*> member_types;
-	auto member = m_members.get();
-	while( member ){
-		const auto decls = member->get_variable_decl();
 
-		auto decl = decls;
-		while (decl) {
+	if(m_members){
+		const auto& members = m_members->get_member_list();
+
+		for( const auto& member : members ){
+            const auto decl = member->get_variable_decl();
 			const auto type = decl->data_type();
 			auto llvm_type = get_type_from_context(type, context);
 			member_types.push_back(llvm_type);
-
-			decl = castType<AstNode_VariableDecl>(decl->get_sibling());
 		}
-
-		member = castType<AstNode_Statement_VariableDecl>(member->get_sibling());
 	}
 	auto structure_type = StructType::create(member_types, m_name);
 
 	auto& item = context.m_structure_type_maps[m_name];
 	item.m_llvm_type = structure_type;
 
+    bool type_pushed = false;
 	int i = 0;
-	member = m_members.get();
-	while (member) {
-		const auto decls = member->get_variable_decl();
+	if (m_members) {
+        const auto& members = m_members->get_member_list();
 
-		bool type_pushed = false;
+        for (const auto& member : members) {
+            const auto decl = member->get_variable_decl();
+            const auto name = decl->get_var_name();
+            const auto type = decl->data_type();
 
-		auto decl = decls;
-		while(decl){
-			const auto name = decl->get_var_name();
-			const auto type = decl->data_type();
-
-			item.m_member_types[name] = std::make_pair(i++, type);
-			type_pushed = true;
-
-			decl = castType<AstNode_VariableDecl>(decl->get_sibling());
-		}
-
-		member = castType<AstNode_Statement_VariableDecl>(member->get_sibling());
+            item.m_member_types[name] = std::make_pair(i++, type);
+            type_pushed = true;
+        }
 	}
 
 	return nullptr;
@@ -1774,10 +1782,14 @@ llvm::Value* AstNode_Expression_Texture2DSample::codegen(LLVM_Compile_Context& c
             Value* ret = context.builder->CreateAlloca(float3_struct_ty);
             args.push_back(ret);
 
-            const AstNode_Expression* node = m_variables.get();
-            while (node) {
-                args.push_back(node->codegen(context));
-                node = castType<AstNode_Expression>(node->get_sibling());
+            if (m_arguments) {
+                const auto& func_args = m_arguments->get_arg_list();
+                for (const auto& arg : func_args)
+                    args.push_back(arg->codegen(context));
+            }
+            else {
+                emit_error("Texture2d sampling has not argument passed in.");
+                return nullptr;
             }
 
             context.builder->CreateCall(texture2d_sample_function, args);
@@ -1792,10 +1804,14 @@ llvm::Value* AstNode_Expression_Texture2DSample::codegen(LLVM_Compile_Context& c
             Value* ret = context.builder->CreateAlloca(get_float_ty(context));
             args.push_back(ret);
 
-            const AstNode_Expression* node = m_variables.get();
-            while (node) {
-                args.push_back(node->codegen(context));
-                node = castType<AstNode_Expression>(node->get_sibling());
+            if (m_arguments) {
+                const auto& func_args = m_arguments->get_arg_list();
+                for (const auto& arg : func_args)
+                    args.push_back(arg->codegen(context));
+            }
+            else {
+                emit_error("Texture2d sampling has not argument passed in.");
+                return nullptr;
             }
 
             context.builder->CreateCall(texture2d_sample_function, args);

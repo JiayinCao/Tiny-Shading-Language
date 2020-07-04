@@ -60,7 +60,7 @@ Ast_Memory_Guard::~Ast_Memory_Guard() {
 }
 
 void ast_ptr_tracking(const AstNode* node) {
-    assert(nullptr == ast_ptr_from_raw(node));
+    assert(nullptr == ast_ptr_from_raw<AstNode>(node));
 
     if (g_tsl_memory_janitor_stack.size()) {
         auto& janitor = g_tsl_memory_janitor_stack.back();
@@ -89,5 +89,7 @@ INSTANTIATION_AST_PTR_FROM_RAW(AstNode_FunctionBody)
 INSTANTIATION_AST_PTR_FROM_RAW(AstNode_Statement_VariableDecl)
 INSTANTIATION_AST_PTR_FROM_RAW(AstNode_FunctionPrototype)
 INSTANTIATION_AST_PTR_FROM_RAW(AstNode_StructDeclaration)
+INSTANTIATION_AST_PTR_FROM_RAW(AstNode_ArgumentList)
+INSTANTIATION_AST_PTR_FROM_RAW(AstNode_Statement_StructMemberDecls)
 
 TSL_NAMESPACE_END
