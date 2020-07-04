@@ -62,8 +62,9 @@ struct ShaderUnitTemplate_Impl {
     /**< Shader resource table. */
     ShaderResourceTable     m_shader_resource_table;
 
+    const bool  m_allow_optimization = true;
+
     // This will be allowed once I have most feature completed.
-    const bool  m_allow_optimization = false;
     const bool  m_allow_verification = false;
 
     /**< Description of exposed arguments. */
