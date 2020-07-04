@@ -15,6 +15,7 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
+#include <memory>
 #include "llvm/IR/Verifier.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/InstCombine/InstCombine.h"
@@ -28,6 +29,7 @@
 #include "global_module.h"
 #include "llvm_util.h"
 #include "system/impl.h"
+#include "ast_memory_janitor.h"
 
 // a temporary ugly solution for debugging for now
 // #define DEBUG_OUTPUT
@@ -103,16 +105,16 @@ void TslCompiler_Impl::reset(const std::string& name) {
 }
 
 void TslCompiler_Impl::push_function(AstNode_FunctionPrototype* node, const bool is_shader) {
-    auto ptr = std::unique_ptr<const AstNode_FunctionPrototype>(node);
+    auto ptr = ast_ptr_from_raw<AstNode_FunctionPrototype>(node);
     if (is_shader)
-        m_ast_root = std::move(ptr);
+        m_ast_root = ptr;
     else
-        m_functions.push_back(std::move(ptr));
+        m_functions.push_back(ptr);
 }
 
 void TslCompiler_Impl::push_structure_declaration(AstNode_StructDeclaration* structure) {
-    auto ptr = std::unique_ptr<const AstNode_StructDeclaration>(structure);
-	m_structures.push_back(std::move(ptr));
+    auto ptr = ast_ptr_from_raw<AstNode_StructDeclaration>(structure);
+	m_structures.push_back(ptr);
 
 #ifdef DEBUG_OUTPUT
 	// structure->print();
@@ -120,8 +122,8 @@ void TslCompiler_Impl::push_structure_declaration(AstNode_StructDeclaration* str
 }
 
 void TslCompiler_Impl::push_global_parameter(const AstNode_Statement* var_declaration) {
-    auto ptr = std::unique_ptr<const AstNode_Statement>(var_declaration);
-    m_global_var.push_back(std::move(ptr));
+    auto ptr = ast_ptr_from_raw<AstNode_Statement>(var_declaration);
+    m_global_var.push_back(ptr);
 }
 
 void* TslCompiler_Impl::get_scanner() {
@@ -129,8 +131,9 @@ void* TslCompiler_Impl::get_scanner() {
 }
 
 bool TslCompiler_Impl::compile(const char* source_code, ShaderUnitTemplate* su) {
+    AST_MEMORY_GUARD
     PROTECT_CONTEXT(su->get_name());
-
+    
 #ifdef DEBUG_OUTPUT
     std::cout << source_code << std::endl;
 #endif
@@ -207,7 +210,7 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnitTemplate* su) 
         m_ast_root->parse_shader_parameters(su->m_shader_unit_template_impl->m_exposed_args);
 
         // keep track of the ast root of this shader unit
-        su_pvt->m_ast_root = std::move(m_ast_root);
+        su_pvt->m_ast_root = m_ast_root;
 
         // it should be safe to assume llvm function has to be generated, otherwise, the shader is invalid.
         if (!su_pvt->m_llvm_function)

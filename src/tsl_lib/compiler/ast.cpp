@@ -1567,8 +1567,8 @@ llvm::Value* AstNode_ScoppedStatement::codegen(LLVM_Compile_Context& context) co
 }
 
 void AstNode_CompoundStatements::append_statement(AstNode_Statement* statement) {
-    auto ptr = std::unique_ptr<const AstNode_Statement>(statement);
-    m_statements.push_back(std::move(ptr));
+    auto ptr = ast_ptr_from_raw<AstNode_Statement>(statement);
+    m_statements.push_back(ptr);
 }
 
 llvm::Value* AstNode_CompoundStatements::codegen(LLVM_Compile_Context& context) const {

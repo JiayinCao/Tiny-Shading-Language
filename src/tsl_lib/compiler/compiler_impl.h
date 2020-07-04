@@ -136,17 +136,17 @@ private:
     void* m_scanner = nullptr;
 
     // root ast node of the parsed program
-    std::unique_ptr<const AstNode_FunctionPrototype>                m_ast_root;
+    std::shared_ptr<const AstNode_FunctionPrototype>                m_ast_root;
 
     // the shader unit/group template name being compiled.
     std::string                                                     m_shader_root_function_name;
 
     // global functions defined in this module
-    std::vector<std::unique_ptr<const AstNode_FunctionPrototype>>   m_functions;
+    std::vector<std::shared_ptr<const AstNode_FunctionPrototype>>   m_functions;
 	// global structure declaration in this module, maybe I should merge it with the above one
-	std::vector<std::unique_ptr<const AstNode_StructDeclaration>>	m_structures;
+	std::vector<std::shared_ptr<const AstNode_StructDeclaration>>	m_structures;
     // global variables defined in this module
-    std::vector<std::unique_ptr<const AstNode_Statement>>           m_global_var;
+    std::vector<std::shared_ptr<const AstNode_Statement>>           m_global_var;
 
 	// data type cache
 	DataType	m_type_cache = { DataTypeEnum::VOID , nullptr };
@@ -181,4 +181,5 @@ private:
         TslCompiler_Impl& impl;
     };
 };
+
 TSL_NAMESPACE_END
