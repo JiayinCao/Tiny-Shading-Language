@@ -511,8 +511,8 @@ llvm::Value* AstNode_Binary_Multi::codegen(LLVM_Compile_Context& context) const 
 
             return builder.CreateLoad(ret);
         }
-        else if (left->getType() == float3_struct_ty && right->getType() == float_ty ||
-                 left->getType() == float_ty && right->getType() == float3_struct_ty) {
+        else if (( left->getType() == float3_struct_ty && right->getType() == float_ty ) ||
+                 ( left->getType() == float_ty && right->getType() == float3_struct_ty )) {
             // always make sure left is the float3
             if (left->getType() == float_ty) {
                 auto tmp = left;
