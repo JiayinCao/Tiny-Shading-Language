@@ -20,7 +20,9 @@
 TEST(Math, Full_Test) {
     validate_shader(R"(
         shader func(){
-            int a = 1 , b = 2 , c = 4;
+            int a = 1;
+            int b = 2;
+            int c = 4;
 
             int sum_test = a + b;
             sum_test += c;
@@ -43,7 +45,8 @@ TEST(Math, Full_Test) {
 TEST(Math, Bit_Operation) {
     validate_shader(R"(
         shader func(){
-            int a = 1 , b = 2;
+            int a = 1;
+            int b = 2;
 
             int sum_test = ( a & b ) ^ ( a | b );
 
@@ -58,7 +61,8 @@ TEST(Math, Bit_Operation) {
 TEST(Math, Assigns) {
     validate_shader(R"(
         shader func(){
-            int k = 0, a = 1;
+            int k = 0;
+            int a = 1;
             k += a;
             k -= a;
             k *= a;
@@ -103,7 +107,8 @@ TEST(Math, VecMulVec) {
         }
 
         shader piecewise_mul( out vector data ){
-            vector arg0, arg1;
+            vector arg0;
+            vector arg1;
             arg0 = make_float3( 1.0f, 2.0f, 3.0f );
             arg1 = make_float3( 2.0f, 4.0f, 4.0f );
             data = arg0 * arg1;

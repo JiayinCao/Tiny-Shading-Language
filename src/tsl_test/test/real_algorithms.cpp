@@ -318,7 +318,9 @@ TEST(Practical, ClimbingStairs) {
         int climbStairs(int n) {
             if (n == 1) return 1;
             if (n == 2) return 2;
-            int a = 1, b = 2, c = 3;
+            int a = 1;
+            int b = 2;
+            int c = 3;
             for (int i = 3; i <= n; ++i){
                 c = a + b;
                 a = b;
@@ -439,7 +441,8 @@ TEST(Practical, HappyNumber) {
         }
 
         bool isHappy(int n) {
-            int slow = n, fast = n;
+            int slow = n;
+            int fast = n;
             do {
                 slow = next(slow);
                 fast = next(next(fast));
@@ -1127,7 +1130,9 @@ TEST(Practical, FindKthNumber) {
             int cnt = 1;
             k--;
             while (k) {
-                int st = 0, head = cnt, tail = cnt + 1;
+                int st = 0;
+                int head = cnt;
+                int tail = cnt + 1;
                 while (head <= n) {
                     if (tail > n + 1)
                         st += n + 1 - head;
@@ -1433,7 +1438,9 @@ TEST(Practical, NthUglyNumber) {
         }
 
         int nthUglyNumber(int n) {
-            int i2 = 1, i3 = 1, i5 = 1;
+            int i2 = 1;
+            int i3 = 1;
+            int i5 = 1;
 
             int ugly[n + 1];
             ugly[1] = 1;
@@ -1552,7 +1559,8 @@ TEST(Practical, FindComplement) {
         }
 
         int findComplement(int n) {
-            int sum = 0, i = 0;
+            int sum = 0;
+            int i = 0;
             while (n) {
                 if (!(n & 1)) {
                     sum += mypow(2, i);

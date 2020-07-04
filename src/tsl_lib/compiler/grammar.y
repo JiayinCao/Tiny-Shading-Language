@@ -136,7 +136,7 @@
 %token SHADER_RESOURCE_HANDLE
 
 %type <p> PROGRAM FUNCTION_ARGUMENT_DECL FUNCTION_ARGUMENT_DECLS SHADER_FUNCTION_ARGUMENT_DECLS FUNCTION_BODY VARIABLE_LVALUE ID_OR_FIELD FUNCTION_ARGUMENTS SHADER_FUNCTION_ARGUMENT_DECL FOR_INIT_STATEMENT STRUCT_DEF
-%type <p> STATEMENT STATEMENTS STATEMENT_RETURN STATEMENT_EXPRESSION_OPT STATEMENT_COMPOUND_EXPRESSION STATEMENT_VARIABLES_DECLARATIONS VARIABLE_DECLARATION VARIABLE_DECLARATIONS STATEMENT_CONDITIONAL STATEMENT_LOOP 
+%type <p> STATEMENT STATEMENTS STATEMENT_RETURN STATEMENT_EXPRESSION_OPT STATEMENT_COMPOUND_EXPRESSION STATEMENT_VARIABLES_DECLARATION STATEMENT_CONDITIONAL STATEMENT_LOOP 
 %type <p> STATEMENT_SCOPED STATEMENT_LOOPMOD STATEMENT_STRUCT_MEMBERS_DECLARATION
 %type <p> EXPRESSION_COMPOUND EXPRESSION_CONST EXPRESSION_BINARY EXPRESSION EXPRESSION_VARIABLE EXPRESSION_FUNCTION_CALL EXPRESSION_TERNARY EXPRESSION_COMPOUND_OPT EXPRESSION_SCOPED EXPRESSION_ASSIGN EXPRESSION_UNARY 
 %type <p> EXPRESSION_TYPECAST EXPRESSION_MAKE_CLOSURE EXPRESSION_TEXTURE_SAMPLE EXPRESSION_FLOAT3_CONSTRUCTOR
@@ -196,7 +196,7 @@ GLOBAL_STATEMENTS:
 //  - Shader function definition.
 //  - Texture declaration.
 GLOBAL_STATEMENT:
-	STATEMENT_VARIABLES_DECLARATIONS{
+	STATEMENT_VARIABLES_DECLARATION{
 	}
 	|
     SHADER_DEF {
@@ -236,9 +236,9 @@ STRUCT_DEF:
 	};
 
 STATEMENT_STRUCT_MEMBERS_DECLARATION:
-	STATEMENT_VARIABLES_DECLARATIONS
+	STATEMENT_VARIABLES_DECLARATION
 	|
-	STATEMENT_VARIABLES_DECLARATIONS STATEMENT_STRUCT_MEMBERS_DECLARATION
+	STATEMENT_VARIABLES_DECLARATION STATEMENT_STRUCT_MEMBERS_DECLARATION
 	{
 		AstNode* node_arg = $1;
 		AstNode* node_args = $2;
@@ -409,7 +409,7 @@ STATEMENT:
     |
     STATEMENT_LOOPMOD
 	|
-	STATEMENT_VARIABLES_DECLARATIONS
+	STATEMENT_VARIABLES_DECLARATION
 	|
 	STATEMENT_CONDITIONAL
 	|
@@ -452,43 +452,31 @@ STATEMENT_EXPRESSION_OPT:
 		$$ = nullptr;
 	};
 
-STATEMENT_VARIABLES_DECLARATIONS:
-	TYPE VARIABLE_DECLARATIONS ";"
+STATEMENT_VARIABLES_DECLARATION:
+	TYPE ID ";"
 	{
-		AstNode_VariableDecl* vars = AstNode::castType<AstNode_VariableDecl>($2);
-		$$ = new AstNode_Statement_VariableDecls(vars);
-	};
-
-VARIABLE_DECLARATIONS:
-	VARIABLE_DECLARATION
-	|
-	VARIABLE_DECLARATION "," VARIABLE_DECLARATIONS {
-		AstNode* variable = $1;
-		AstNode* variables = $3;
-		$$ = variable->append( variables );
-	};
-
-VARIABLE_DECLARATION:
-	ID {
-		const DataType type = tsl_compiler->data_type_cache();
-		AstNode_SingleVariableDecl* node = new AstNode_SingleVariableDecl($1, type);
-		$$ = node;
+        const DataType type = $1;
+		AstNode_SingleVariableDecl* var = new AstNode_SingleVariableDecl($2, type);
+		$$ = new AstNode_Statement_VariableDecls(var);
 	}
     |
-    ID "[" EXPRESSION "]" {
-        const DataType type = tsl_compiler->data_type_cache();
-        AstNode_Expression* cnt = AstNode::castType<AstNode_Expression>($3);
-		AstNode_ArrayDecl* node = new AstNode_ArrayDecl($1, type, cnt);
-		$$ = node;
+    TYPE ID "[" EXPRESSION "]" ";"
+    {
+        const DataType type = $1;
+        AstNode_Expression* cnt = AstNode::castType<AstNode_Expression>($4);
+		AstNode_ArrayDecl* var = new AstNode_ArrayDecl($2, type, cnt);
+
+        $$ = new AstNode_Statement_VariableDecls(var);
     }
-	|
-	ID "=" EXPRESSION {
-		// initialization is not correctly handled yet.
-		const DataType type = tsl_compiler->data_type_cache();
-		AstNode_Expression* init_exp = AstNode::castType<AstNode_Expression>($3);
-		AstNode_SingleVariableDecl* node = new AstNode_SingleVariableDecl($1, type, VariableConfig::NONE, init_exp);
-		$$ = node;
-	};
+    |
+    TYPE ID "=" EXPRESSION ";"
+    {
+		const DataType type = $1;
+		AstNode_Expression* init_exp = AstNode::castType<AstNode_Expression>($4);
+		AstNode_SingleVariableDecl* var = new AstNode_SingleVariableDecl($2, type, VariableConfig::NONE, init_exp);
+		
+        $$ = new AstNode_Statement_VariableDecls(var);
+    };
 
 STATEMENT_CONDITIONAL:
 	"if" "(" EXPRESSION_COMPOUND ")" STATEMENT %prec IF_THEN {
@@ -533,7 +521,7 @@ FOR_INIT_STATEMENT:
 	STATEMENT_COMPOUND_EXPRESSION{
 	}
 	|
-	STATEMENT_VARIABLES_DECLARATIONS {
+	STATEMENT_VARIABLES_DECLARATION {
 	};
 	
 STATEMENT_COMPOUND_EXPRESSION:

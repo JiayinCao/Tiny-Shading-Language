@@ -938,12 +938,7 @@ llvm::Value* AstNode_ArrayDecl::codegen(LLVM_Compile_Context& context) const {
 }
 
 llvm::Value* AstNode_Statement_VariableDecls::codegen(LLVM_Compile_Context& context) const {
-    auto decl = m_var_decls.get();
-    while (decl) {
-        decl->codegen(context);
-        decl = castType<AstNode_VariableDecl>(decl->get_sibling());
-    }
-
+    m_var_decls->codegen(context);
     return nullptr;
 }
 

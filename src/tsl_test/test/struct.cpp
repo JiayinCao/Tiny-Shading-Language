@@ -35,7 +35,8 @@ TEST(Struct, StructureDefine) {
 TEST(Struct, StructureDefineRecusive) {
 	const auto shader_source = R"(
 		struct vec2 {
-			float x, y;
+			float x;
+            float y;
 		};
 
 		struct vec3 {

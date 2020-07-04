@@ -21,7 +21,8 @@ TEST(Variables, Full_Test) {
     validate_shader(R"(
         int k = 0;
         float gg = 0;
-        float t = 0.0, kkk = 0.0;
+        float t = 0.0;
+        float kkk = 0.0;
         shader func(){
             int k = 0;
             float gg = 0;
@@ -53,7 +54,8 @@ TEST(Variables, Global_Variables) {
     validate_shader(R"(
         int k = 0;
         float gg = 0;
-        float t = 0.0, kkk = 0.0;
+        float t = 0.0;
+        float kkk = 0.0;
         shader func(){
         }
     )");
@@ -64,7 +66,8 @@ TEST(Variables, Local_Variables) {
         shader func(){
             int k = 0;
             float gg = 0.0;
-            float t = 0.0, kkk = 0.0;
+            float t = 0.0;
+            float kkk = 0.0;
         }
     )");
 }
@@ -73,7 +76,8 @@ TEST(Variables, Only_Global_Variables) {
     validate_shader(R"(
         int k = 0;
         float gg = 0;
-        float t = 0.0, kkk = 0.0;
+        float t = 0.0;
+        float kkk = 0.0;
     )");
 }
 
