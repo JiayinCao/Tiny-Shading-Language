@@ -19,11 +19,11 @@
 
 TEST(Variables, Full_Test) {
     validate_shader(R"(
-        int k = 0;
-        float gg = 0;
-        float t = 0.0;
-        float kkk = 0.0;
         shader func(){
+            int k = 0;
+            float gg = 0;
+            float t = 0.0;
+            float kkk = 0.0;
             int k = 0;
             float gg = 0;
             // CustomData cd;
@@ -40,23 +40,9 @@ TEST(Variables, Full_Test) {
             }
         }
 
-        int after_shader = 0;
-        
         // not quite sure about whether to allow this, to be decided later.
         shader second_func(){
-        }
-
-        int _this_should_work = 0;
-    )");
-}
-
-TEST(Variables, Global_Variables) {
-    validate_shader(R"(
-        int k = 0;
-        float gg = 0;
-        float t = 0.0;
-        float kkk = 0.0;
-        shader func(){
+            int _this_should_work = 0;
         }
     )");
 }
@@ -69,15 +55,6 @@ TEST(Variables, Local_Variables) {
             float t = 0.0;
             float kkk = 0.0;
         }
-    )");
-}
-
-TEST(Variables, Only_Global_Variables) {
-    validate_shader(R"(
-        int k = 0;
-        float gg = 0;
-        float t = 0.0;
-        float kkk = 0.0;
     )");
 }
 

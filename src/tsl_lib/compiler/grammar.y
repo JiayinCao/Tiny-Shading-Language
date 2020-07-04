@@ -190,15 +190,11 @@ GLOBAL_STATEMENTS:
 	};
 
 // Global statement could be one of the followings
-//  - Global variable decleration.
 //  - Global function definition.
 //  - Global data structure definition.
 //  - Shader function definition.
 //  - Texture declaration.
 GLOBAL_STATEMENT:
-	STATEMENT_VARIABLES_DECLARATION{
-	}
-	|
     SHADER_DEF {
     }
 	|
