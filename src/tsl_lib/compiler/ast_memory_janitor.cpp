@@ -15,8 +15,6 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-#pragma once
-
 #include <memory>
 #include <unordered_map>
 #include "ast_memory_janitor.h"
@@ -49,7 +47,7 @@ private:
 };
 
 // this should not be visible outside this file
-static std::vector<TSL_Memory_Janior>   g_tsl_memory_janitor_stack;
+thread_local static std::vector<TSL_Memory_Janior>   g_tsl_memory_janitor_stack;
 
 Ast_Memory_Guard::Ast_Memory_Guard() {
     g_tsl_memory_janitor_stack.push_back(TSL_Memory_Janior());
