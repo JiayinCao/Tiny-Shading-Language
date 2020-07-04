@@ -138,7 +138,7 @@
 %type <p> PROGRAM FUNCTION_ARGUMENT_DECL FUNCTION_ARGUMENT_DECLS SHADER_FUNCTION_ARGUMENT_DECLS FUNCTION_BODY VARIABLE_LVALUE ID_OR_FIELD FUNCTION_ARGUMENTS SHADER_FUNCTION_ARGUMENT_DECL FOR_INIT_STATEMENT STRUCT_DEF
 %type <p> STATEMENT STATEMENTS STATEMENT_RETURN STATEMENT_EXPRESSION_OPT STATEMENT_COMPOUND_EXPRESSION STATEMENT_VARIABLES_DECLARATION STATEMENT_CONDITIONAL STATEMENT_LOOP 
 %type <p> STATEMENT_SCOPED STATEMENT_LOOPMOD STATEMENT_STRUCT_MEMBERS_DECLARATION
-%type <p> EXPRESSION_COMPOUND EXPRESSION_CONST EXPRESSION_BINARY EXPRESSION EXPRESSION_VARIABLE EXPRESSION_FUNCTION_CALL EXPRESSION_TERNARY EXPRESSION_COMPOUND_OPT EXPRESSION_SCOPED EXPRESSION_ASSIGN EXPRESSION_UNARY 
+%type <p> EXPRESSION_CONST EXPRESSION_BINARY EXPRESSION EXPRESSION_VARIABLE EXPRESSION_FUNCTION_CALL EXPRESSION_TERNARY EXPRESSION_OPT EXPRESSION_SCOPED EXPRESSION_ASSIGN EXPRESSION_UNARY 
 %type <p> EXPRESSION_TYPECAST EXPRESSION_MAKE_CLOSURE EXPRESSION_TEXTURE_SAMPLE EXPRESSION_FLOAT3_CONSTRUCTOR
 %type <c> OP_UNARY
 %type <t> TYPE
@@ -253,7 +253,7 @@ STATEMENT_STRUCT_MEMBERS_DECLARATION:
 SHADER_DEF:
 	SHADER_FUNC_ID ID "(" SHADER_FUNCTION_ARGUMENT_DECLS ")" FUNCTION_BODY {
 		AstNode_FunctionBody*		body = AstNode::castType<AstNode_FunctionBody>($6);
-		AstNode_VariableDecl*		variables = AstNode::castType<AstNode_VariableDecl>($4);
+		AstNode_MultiVariableDecl*	variables = AstNode::castType<AstNode_MultiVariableDecl>($4);
         const char*                 name = tsl_compiler->get_shader_root_function_name().c_str();
 		AstNode_FunctionPrototype*	function = new AstNode_FunctionPrototype(name, variables, body, true);
 		tsl_compiler->push_function(function, true);
@@ -265,16 +265,17 @@ SHADER_FUNCTION_ARGUMENT_DECLS:
 		$$ = nullptr;
 	}
 	|
-	SHADER_FUNCTION_ARGUMENT_DECL{
+	SHADER_FUNCTION_ARGUMENT_DECL
+    {
+        AstNode_MultiVariableDecl* node = new AstNode_MultiVariableDecl();
+        AstNode_SingleVariableDecl* var_decl = AstNode::castType<AstNode_SingleVariableDecl>($1);
+        $$ = node->add_var(var_decl);
 	}
 	|
-	SHADER_FUNCTION_ARGUMENT_DECL "," SHADER_FUNCTION_ARGUMENT_DECLS {
-		AstNode* node_arg = $1;
-		AstNode* node_args = $3;
-		if(!node_arg)
-			$$ = node_args;
-		else
-			$$ = node_arg->append( node_args );
+	SHADER_FUNCTION_ARGUMENT_DECLS "," SHADER_FUNCTION_ARGUMENT_DECL {
+		AstNode_MultiVariableDecl* node = AstNode::castType<AstNode_MultiVariableDecl>($1);
+        AstNode_SingleVariableDecl* var_decl = AstNode::castType<AstNode_SingleVariableDecl>($3);
+        $$ = node->add_var(var_decl);
 	};
 
 SHADER_FUNCTION_ARGUMENT_DECL:
@@ -292,8 +293,8 @@ ARGUMENT_METADATA:
 FUNCTION_DEF:
 	TYPE ID "(" FUNCTION_ARGUMENT_DECLS ")" FUNCTION_BODY {
 		AstNode_FunctionBody*		body = AstNode::castType<AstNode_FunctionBody>($6);
-		AstNode_VariableDecl*		variables = AstNode::castType<AstNode_VariableDecl>($4);
-		AstNode_FunctionPrototype*	function = new AstNode_FunctionPrototype($2, variables, body, false, $1);
+		AstNode_MultiVariableDecl*	arguments = AstNode::castType<AstNode_MultiVariableDecl>($4);
+		AstNode_FunctionPrototype*	function = new AstNode_FunctionPrototype($2, arguments, body, false, $1);
 
         tsl_compiler->push_function(function);
 	};
@@ -306,13 +307,15 @@ FUNCTION_ARGUMENT_DECLS:
 	|
 	FUNCTION_ARGUMENT_DECL
 	{
-		$$ = $1;
+        AstNode_MultiVariableDecl* node = new AstNode_MultiVariableDecl();
+        AstNode_SingleVariableDecl* var_decl = AstNode::castType<AstNode_SingleVariableDecl>($1);
+        $$ = node->add_var(var_decl);
 	}
 	|
-	FUNCTION_ARGUMENT_DECL "," FUNCTION_ARGUMENT_DECLS{
-		AstNode* node_arg = $1;
-		AstNode* node_args = $3;
-		$$ = node_arg->append( node_args );
+	FUNCTION_ARGUMENT_DECLS "," FUNCTION_ARGUMENT_DECL{
+        AstNode_MultiVariableDecl* node = AstNode::castType<AstNode_MultiVariableDecl>($1);
+        AstNode_SingleVariableDecl* var_decl = AstNode::castType<AstNode_SingleVariableDecl>($3);
+        $$ = node->add_var(var_decl);
 	};
 
 FUNCTION_ARGUMENT_DECL:
@@ -448,7 +451,7 @@ STATEMENT_RETURN:
 	};
 
 STATEMENT_EXPRESSION_OPT:
-	EXPRESSION_COMPOUND {
+	EXPRESSION {
 	}
 	|
 	/* empty */ {
@@ -482,13 +485,13 @@ STATEMENT_VARIABLES_DECLARATION:
     };
 
 STATEMENT_CONDITIONAL:
-	"if" "(" EXPRESSION_COMPOUND ")" STATEMENT %prec IF_THEN {
+	"if" "(" EXPRESSION ")" STATEMENT %prec IF_THEN {
 		AstNode_Expression* cond = AstNode::castType<AstNode_Expression>($3);
 		AstNode_Statement*	true_statements = AstNode::castType<AstNode_Statement>($5);
 		$$ = new AstNode_Statement_Condition( cond , true_statements );
 	}
 	|
-	"if" "(" EXPRESSION_COMPOUND ")" STATEMENT "else" STATEMENT {
+	"if" "(" EXPRESSION ")" STATEMENT "else" STATEMENT {
 		AstNode_Expression* cond = AstNode::castType<AstNode_Expression>($3);
 		AstNode_Statement*	true_statements = AstNode::castType<AstNode_Statement>($5);
 		AstNode_Statement*	false_statements = AstNode::castType<AstNode_Statement>($7);
@@ -496,19 +499,19 @@ STATEMENT_CONDITIONAL:
 	};
 	
 STATEMENT_LOOP:
-	"while" "(" EXPRESSION_COMPOUND ")" STATEMENT{
+	"while" "(" EXPRESSION ")" STATEMENT{
 		AstNode_Expression* cond = AstNode::castType<AstNode_Expression>($3);
 		AstNode_Statement*	statements = AstNode::castType<AstNode_Statement>($5);
 		$$ = new AstNode_Statement_Loop_While( cond , statements );
 	}
 	|
-	"do" STATEMENT "while" "(" EXPRESSION_COMPOUND ")" ";"{
+	"do" STATEMENT "while" "(" EXPRESSION ")" ";"{
 		AstNode_Expression* cond = AstNode::castType<AstNode_Expression>($5);
 		AstNode_Statement*	statements = AstNode::castType<AstNode_Statement>($2);
 		$$ = new AstNode_Statement_Loop_DoWhile( cond , statements );
 	}
 	|
-	"for" "(" FOR_INIT_STATEMENT EXPRESSION_COMPOUND_OPT ";" EXPRESSION_COMPOUND_OPT ")" STATEMENT {
+	"for" "(" FOR_INIT_STATEMENT EXPRESSION_OPT ";" EXPRESSION_OPT ")" STATEMENT {
         AstNode_Statement*  init = AstNode::castType<AstNode_Statement>($3);
         AstNode_Expression* cond = AstNode::castType<AstNode_Expression>($4);
         AstNode_Expression* iter = AstNode::castType<AstNode_Expression>($6);
@@ -528,31 +531,18 @@ FOR_INIT_STATEMENT:
 	};
 	
 STATEMENT_COMPOUND_EXPRESSION:
-	EXPRESSION_COMPOUND ";" {
+	EXPRESSION ";" {
 		AstNode_Expression* expression = AstNode::castType<AstNode_Expression>($1);
 		$$ = new AstNode_Statement_CompoundExpression(expression);
 	}
 
-EXPRESSION_COMPOUND_OPT:
+EXPRESSION_OPT:
 	/* empty */ 
 	{
 		$$ = nullptr;
 	}
 	|
-	EXPRESSION_COMPOUND;
-
-EXPRESSION_COMPOUND:
-	EXPRESSION
-    /*
-    Comma operator provides very little value to the language, it is not supported for simplicity for now.
-	| 
-	EXPRESSION "," EXPRESSION_COMPOUND {
-		AstNode* exp = $1;
-		AstNode* extra_exp = $3;
-		$$ = exp->append( extra_exp );
-	}
-    */
-    ;
+	EXPRESSION;
 
 // Exrpession always carries a value so that it can be used as input for anything needs a value,
 // like if condition, function parameter, etc.
@@ -894,7 +884,7 @@ EXPRESSION_CONST:
 
 // Scopped expression
 EXPRESSION_SCOPED:
-	"(" EXPRESSION_COMPOUND ")" {
+	"(" EXPRESSION ")" {
 		$$ = $2;
 	};
 

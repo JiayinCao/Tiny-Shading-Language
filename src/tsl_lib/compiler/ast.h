@@ -117,11 +117,8 @@ public:
             return nullptr;
 
         T* ret = dynamic_cast<T*>(node);
-        if (check) {
-            if (!ret)
-                int k = 0;
+        if (check)
             assert(ret);
-        }
         return ret;
 #else
         // there is no need to pay run-time cost since we are sure the type is correct.
@@ -152,8 +149,7 @@ public:
         return m_next_sibling;
     }
 
-    // helper function to print the ast
-    virtual void print() const = 0;
+    virtual void print() const {}
 
 protected:
     AstNode* m_next_sibling = nullptr;
@@ -412,8 +408,6 @@ public:
         return m_args;
     }
 
-    void print() const override;
-
 private:
     std::vector<std::shared_ptr<const AstNode_Expression>> m_args;
 };
@@ -533,6 +527,24 @@ private:
 	const DataType			m_type;
 	const VariableConfig	m_config;
     ast_ptr<AstNode_Expression>		m_init_exp;
+};
+
+class AstNode_MultiVariableDecl : public AstNode {
+public:
+    AstNode_MultiVariableDecl* add_var(AstNode_SingleVariableDecl* var) {
+        if (!var)
+            return this;
+        auto ptr = ast_ptr_from_raw<AstNode_SingleVariableDecl>(var);
+        m_vars.push_back(ptr);
+        return this;
+    }
+
+    const std::vector<std::shared_ptr<const AstNode_SingleVariableDecl>>& get_var_list() const {
+        return m_vars;
+    }
+
+private:
+    std::vector<std::shared_ptr<const AstNode_SingleVariableDecl>>  m_vars;
 };
 
 class AstNode_ArrayDecl : public AstNode_VariableDecl {
@@ -957,8 +969,6 @@ public:
         return m_members;
     }
 
-    void print() const override {}
-
 private:
     std::vector<std::shared_ptr<const AstNode_Statement_VariableDecl>> m_members;
 };
@@ -1025,9 +1035,9 @@ private:
 
 class AstNode_FunctionPrototype : public AstNode, LLVM_Function {
 public:
-	AstNode_FunctionPrototype(const char* func_name, AstNode_VariableDecl* variables, AstNode_FunctionBody* body, bool is_shader = false, DataType type = { DataTypeEnum::VOID , nullptr } )
+	AstNode_FunctionPrototype(const char* func_name, AstNode_MultiVariableDecl* variables, AstNode_FunctionBody* body, bool is_shader = false, DataType type = { DataTypeEnum::VOID , nullptr } )
 		                     :m_name(func_name), m_is_shader(is_shader), m_return_type(type),
-                              m_variables(ast_ptr_from_raw<AstNode_VariableDecl>(variables)), 
+                              m_variables(ast_ptr_from_raw<AstNode_MultiVariableDecl>(variables)),
                               m_body(ast_ptr_from_raw<AstNode_FunctionBody>(body)){}
 
 	llvm::Function* codegen( LLVM_Compile_Context& context ) const override;
@@ -1045,8 +1055,8 @@ private:
     const bool          m_is_shader;
     const DataType		m_return_type;
 
-    ast_ptr<AstNode_VariableDecl>	  m_variables;
-    ast_ptr<AstNode_FunctionBody>     m_body;
+    ast_ptr<AstNode_MultiVariableDecl>	m_variables;
+    ast_ptr<AstNode_FunctionBody>       m_body;
 
     friend class AstNode_FunctionCall;
 };

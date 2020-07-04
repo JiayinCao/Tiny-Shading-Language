@@ -98,35 +98,37 @@ void LLVM_Compile_Context::pop_var_symbol_layer() {
 }
 
 llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& context ) const {
-	int arg_cnt = 0;
-	const AstNode_VariableDecl* variable = m_variables.get();
-	while( variable ){
-		++arg_cnt;
-		variable = castType<const AstNode_VariableDecl>(variable->get_sibling());
-	}
+    static std::vector<std::shared_ptr<const AstNode_SingleVariableDecl>> empty_args;
+
+    // no function overloading for simplicity, at least for now.
+    if (context.m_func_symbols.count(m_name) != 0) {
+        std::cout << "Duplicated function named : " << m_name << std::endl;
+        return nullptr;
+    }
+
+    const auto& args = m_variables ? m_variables->get_var_list() : empty_args;
+    const auto arg_cnt = args.size();
 
     // clear the symbol maps, no global var for now
     context.push_var_symbol_layer();
 
 	// parse argument types
-	std::vector<llvm::Type*>	args(arg_cnt);
-	variable = m_variables.get();
+	std::vector<llvm::Type*>	llvm_args;
 	int i = 0;
-	while( variable ){
-        auto raw_type = get_type_from_context(variable->data_type(), context);
-        args[i++] = (variable->get_config() & VariableConfig::OUTPUT) ? raw_type->getPointerTo() : raw_type;
-		variable = castType<const AstNode_VariableDecl>(variable->get_sibling());
+	for( auto& arg : args ){
+        auto raw_type = get_type_from_context(arg->data_type(), context);
+        llvm_args.push_back((arg->get_config() & VariableConfig::OUTPUT) ? raw_type->getPointerTo() : raw_type);
 	}
 
     // the last argument is always tsl_global
     if(context.tsl_global_ty)
-        args.push_back(context.tsl_global_ty->getPointerTo());
+        llvm_args.push_back(context.tsl_global_ty->getPointerTo());
 
 	// parse return types
 	auto return_type = get_type_from_context(m_return_type , context);
 
 	// declare the function prototype
-	llvm::FunctionType *function_type = llvm::FunctionType::get(return_type, args, false);
+	llvm::FunctionType *function_type = llvm::FunctionType::get(return_type, llvm_args, false);
 
 	if( !function_type )
 		return nullptr;
@@ -136,23 +138,16 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 	llvm::Function* function = llvm::Function::Create(function_type, link_type, m_name, context.module);
 
 	// For debugging purposes, set the name of all arguments
-	variable = m_variables.get();
+    i = 0;
 	for (auto &arg : function->args()) {
-        if (!variable) {
+        if (i >= args.size()) {
             arg.setName("tsl_global");
             context.tsl_global_value = &arg;
             break;
         }
-		arg.setName(variable->get_var_name());
-		variable = castType<AstNode_VariableDecl>(variable->get_sibling());
+		arg.setName(args[i]->get_var_name());
+        ++i;
 	}
-
-    // no function overloading for simplicity, at least for now.
-    if (context.m_func_symbols.count(m_name) != 0) {
-        std::cout << "Duplicated function named : " << m_name << std::endl;
-        function->eraseFromParent();
-        return nullptr;
-    }
 
     context.m_func_symbols[m_name] = std::make_pair(function, this);
 
@@ -163,8 +158,7 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 
         // push the argument into the symbol table first
         int i = 0;
-        variable = m_variables.get();
-        while (variable) {
+        for( auto& variable : args ){
             const auto name = variable->get_var_name();
             const auto raw_type = get_type_from_context(variable->data_type(), context);
 
@@ -185,8 +179,6 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
                 
                 context.push_var_symbol(name, alloc_var, variable->data_type());
             }
-
-            variable = castType<AstNode_VariableDecl>(variable->get_sibling());
             ++i;
         }
 
@@ -209,16 +201,17 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
 void AstNode_FunctionPrototype::parse_shader_parameters(std::vector<ArgDescriptor>& params) const {
     params.clear();
 
-    const AstNode_VariableDecl* variable = m_variables.get();
-    while (variable) {
-        const auto raw_type = variable->data_type();
+    if (m_variables) {
+        const auto& args = m_variables->get_var_list();
+        for (auto& variable : args) {
+            const auto raw_type = variable->data_type();
 
-        ArgDescriptor arg;
-        arg.m_name = variable->get_var_name();
-        arg.m_type = type_from_internal_type(raw_type);
-        arg.m_is_output = variable->get_config() & VariableConfig::OUTPUT;
-        params.push_back(arg);
-        variable = castType<const AstNode_VariableDecl>(variable->get_sibling());
+            ArgDescriptor arg;
+            arg.m_name = variable->get_var_name();
+            arg.m_type = type_from_internal_type(raw_type);
+            arg.m_is_output = variable->get_config() & VariableConfig::OUTPUT;
+            params.push_back(arg);
+        }
     }
 }
 
@@ -246,6 +239,11 @@ llvm::Value* AstNode_Literal_GlobalValue::codegen(LLVM_Compile_Context& context)
     for (int i = 0; i < context.m_tsl_global_mapping.size(); ++i){
         const auto& arg = context.m_tsl_global_mapping[i];
         if (arg.m_name == m_value_name) {
+            if (!context.tsl_global_value) {
+                emit_error("No tsl global passed in, fatal error.");
+                return nullptr;
+            }
+
             auto gep0 = context.builder->CreateConstGEP2_32(nullptr, context.tsl_global_value, 0, i);
             return context.builder->CreateLoad(gep0);
         }
@@ -1293,13 +1291,19 @@ llvm::Value* AstNode_FunctionCall::codegen(LLVM_Compile_Context& context) const 
 
     auto ast_func = it->second.second;
 
-    const AstNode_VariableDecl* var_decl = ast_func->m_variables.get();
+    static const std::vector<std::shared_ptr<const AstNode_SingleVariableDecl>> empty_var_decls;
+    const auto& var_decls = ast_func->m_variables ? ast_func->m_variables->get_var_list() : empty_var_decls;
     std::vector<Value*> args_llvm;
 
     if (m_args) {
         const auto& args = m_args->get_arg_list();
+
+        if (args.size() != var_decls.size()) {
+            emit_error("Incorrect number of arguments passed in function %s", m_name.c_str());
+        }
+
         for (auto i = 0u; i < args.size(); ++i) {
-            if (var_decl->get_config() & VariableConfig::OUTPUT) {
+            if (var_decls[i]->get_config() & VariableConfig::OUTPUT) {
                 const AstNode_Lvalue* lvalue = dynamic_cast<const AstNode_Lvalue*>(args[i].get());
                 if (!lvalue) {
                     emit_error("Right value can't be used as an output argument.");
@@ -1310,8 +1314,12 @@ llvm::Value* AstNode_FunctionCall::codegen(LLVM_Compile_Context& context) const 
             else {
                 args_llvm.push_back(args[i]->codegen(context));
             }
-
-            var_decl = castType< AstNode_VariableDecl>(var_decl->get_sibling());
+        }
+    }
+    else {
+        if (var_decls.size()) {
+            emit_error("Missing arguments in function call %s.", m_name.c_str());
+            return nullptr;
         }
     }
 

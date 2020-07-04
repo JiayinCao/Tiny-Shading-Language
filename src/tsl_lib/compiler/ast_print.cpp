@@ -40,10 +40,6 @@ void AstNode_Literal_GlobalValue::print() const {
     std::cout << "GlovalValue<" << m_value_name << ">";
 }
 
-void AstNode_ArgumentList::print() const {
-
-}
-
 void AstNode_Statement_TextureDeclaration::print() const {
     std::cout << "texture2d " << m_handle_name << ";" << std::endl;
 }
