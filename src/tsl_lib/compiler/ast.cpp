@@ -181,12 +181,9 @@ llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& contex
             }
             ++i;
         }
-
-        auto statement = m_body->m_statements.get();
-        while (statement) {
-            statement->codegen(context);
-            statement = (const AstNode_Statement*)statement->get_sibling();
-        }
+        
+        if(m_body->m_statements)
+            m_body->m_statements->codegen(context);
 
         auto& last_block = function->getBasicBlockList().back();
         if (nullptr == last_block.getTerminator())
@@ -1123,7 +1120,7 @@ llvm::Value* AstNode_ExpAssign_ShrEq::codegen(LLVM_Compile_Context& context) con
     return updated_value;
 }
 
-llvm::Value* AstNode_Statement_CompoundExpression::codegen(LLVM_Compile_Context& context) const{
+llvm::Value* AstNode_Statement_Expression::codegen(LLVM_Compile_Context& context) const{
 	return m_expression->codegen(context);
 }
 
@@ -1411,11 +1408,8 @@ llvm::Value* AstNode_Statement_Condition::codegen(LLVM_Compile_Context& context)
     context.push_var_symbol_layer();
 
     builder.SetInsertPoint(then_bb);
-    auto statement = m_true_statements.get();
-    while (statement) {
-        statement->codegen(context);
-        statement = castType<AstNode_Statement>(statement->get_sibling());
-    }
+    if(m_true_statements)
+        m_true_statements->codegen(context);
     
     if (function->getBasicBlockList().back().getTerminator() == nullptr)
         builder.CreateBr(merge_bb);
@@ -1424,11 +1418,8 @@ llvm::Value* AstNode_Statement_Condition::codegen(LLVM_Compile_Context& context)
         function->getBasicBlockList().push_back(else_bb);
         builder.SetInsertPoint(else_bb);
 
-        auto statement = m_false_statements.get();
-        while (statement) {
-            statement->codegen(context);
-            statement = castType<AstNode_Statement>(statement->get_sibling());
-        }
+        if(m_false_statements)
+            m_false_statements->codegen(context);
 
         if (function->getBasicBlockList().back().getTerminator() == nullptr)
             builder.CreateBr(merge_bb);
@@ -1466,11 +1457,8 @@ llvm::Value* AstNode_Statement_Loop_While::codegen(LLVM_Compile_Context& context
     function->getBasicBlockList().push_back(loop_body_bb);
     builder.SetInsertPoint(loop_body_bb);
 
-    auto statement = m_statements.get();
-    while (statement) {
-        statement->codegen(context);
-        statement = castType<AstNode_Statement>(statement->get_sibling());
-    }
+    if(m_statements)
+        m_statements->codegen(context);
     builder.CreateBr(loop_begin_bb);
 
     function->getBasicBlockList().push_back(loop_end_bb);
@@ -1499,11 +1487,9 @@ llvm::Value* AstNode_Statement_Loop_DoWhile::codegen(LLVM_Compile_Context& conte
     builder.CreateBr(loop_bb);
 
     builder.SetInsertPoint(loop_bb);
-    auto statement = m_statements.get();
-    while (statement) {
-        statement->codegen(context);
-        statement = castType<AstNode_Statement>(statement->get_sibling());
-    }
+
+    if(m_statements)
+        m_statements->codegen(context);
 
     auto cond = m_condition->codegen(context);
     cond = convert_to_bool(cond, context);
@@ -1557,11 +1543,10 @@ llvm::Value* AstNode_Statement_Loop_For::codegen(LLVM_Compile_Context& context) 
     // here is the body of the loop
     function->getBasicBlockList().push_back(loop_body_bb);
     builder.SetInsertPoint(loop_body_bb);
-    auto statement = m_statements.get();
-    while (statement) {
-        statement->codegen(context);
-        statement = castType<AstNode_Statement>(statement->get_sibling());
-    }
+
+    if(m_statements)
+        m_statements->codegen(context);
+
     builder.CreateBr(loop_iter_bb);
 
     // the iteration block

@@ -114,14 +114,11 @@ void AstNode_FunctionPrototype::print() const{
 	std::cout << str_from_data_type(m_return_type) << " " << m_name << "(";
 
 	bool first = true;
-	const AstNode* param_node = m_variables.get();
-	while (param_node) {
+	for( auto& var : m_variables->get_var_list() ){
 		if (!first)
 			std::cout << ", ";
 
-		param_node->print();
-		param_node = param_node->get_sibling();
-
+        var->print();
 		first = false;
 	}
 
@@ -135,11 +132,7 @@ void AstNode_FunctionBody::print() const{
 	std::cout<<"{"<<std::endl;
 	
 	// print the statements here
-	const AstNode* statement = m_statements.get();
-	while(statement){
-		statement->print();
-		statement = statement->get_sibling();
-	}
+    m_statements->print();
 
 	std::cout<<"}"<<std::endl;
 }
@@ -153,14 +146,11 @@ void AstNode_FunctionCall::print() const {
     std::cout << "(";
 
     bool first = true;
-    const AstNode* param_node = m_args.get();
-    while (param_node) {
+    for (auto& arg : m_args->get_arg_list()){
         if (!first)
             std::cout << " , ";
 
-        param_node->print();
-        param_node = param_node->get_sibling();
-
+        arg->print();
         first = false;
     }
 
@@ -442,17 +432,9 @@ void AstNode_Statement_Return::print() const {
 	std::cout<< ";" << std::endl;
 }
 
-void AstNode_Statement_CompoundExpression::print() const {
-	auto expression = m_expression.get();
-	bool is_first = true;
-	while(expression){
-		if( !is_first )
-			std::cout<<", ";
-		expression->print();
-        expression = castType<AstNode_Expression>(expression->get_sibling());
-
-		is_first = false;
-	}
+void AstNode_Statement_Expression::print() const {
+	auto expression = m_expression;
+    m_expression->print();
 	std::cout<<";"<<std::endl;
 }
 
@@ -515,20 +497,7 @@ void AstNode_Statement_Loop_DoWhile::print() const{
 void AstNode_Statement_VariableDecl::print() const {
 	bool is_first = true;
 	DataType type = { DataTypeEnum::VOID , nullptr };
-
-	auto variable = m_var_decls.get();
-	while( variable ){
-		if( is_first ){
-			type = variable->data_type();
-			std::cout<<str_from_data_type(variable->data_type())<<" ";
-			is_first = false;
-		}else
-			std::cout<<", ";
-
-		variable->printVariableOnly();
-		variable = castType<AstNode_VariableDecl>(variable->get_sibling());
-	}
-
+    m_var_decls->printVariableOnly();
 	std::cout<<";"<<std::endl;
 }
 

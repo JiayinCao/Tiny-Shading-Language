@@ -104,12 +104,6 @@ public:
     AstNode() { ast_ptr_tracking(this); }
     virtual ~AstNode() {}
 
-    // Append a sibling to the ast node.
-    AstNode* append(AstNode* node) {
-        m_next_sibling = node;
-        return this;
-    }
-    
     template<class T>
     static T* castType(AstNode* node, bool check = true) {
 #ifndef TSL_FINAL
@@ -141,18 +135,7 @@ public:
 #endif
     }
 
-    AstNode* get_sibling() {
-        return m_next_sibling;
-    }
-
-    const AstNode* get_sibling() const {
-        return m_next_sibling;
-    }
-
     virtual void print() const {}
-
-protected:
-    AstNode* m_next_sibling = nullptr;
 };
 
 class AstNode_Expression : public AstNode, public LLVM_Value {
@@ -911,9 +894,9 @@ private:
     ast_ptr<AstNode_Expression> m_expression;
 };
 
-class AstNode_Statement_CompoundExpression : public AstNode_Statement {
+class AstNode_Statement_Expression : public AstNode_Statement {
 public:
-	AstNode_Statement_CompoundExpression(AstNode_Expression* expression) :
+	AstNode_Statement_Expression(AstNode_Expression* expression) :
         m_expression(ast_ptr_from_raw<AstNode_Expression>(expression)) {}
 
 	llvm::Value* codegen(LLVM_Compile_Context& context) const override;
