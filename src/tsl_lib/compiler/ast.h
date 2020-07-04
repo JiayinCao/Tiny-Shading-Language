@@ -871,9 +871,9 @@ private:
     ast_ptr<AstNode_Statement>	m_false_statements;
 };
 
-class AstNode_Statement_VariableDecls: public AstNode_Statement {
+class AstNode_Statement_VariableDecl: public AstNode_Statement {
 public:
-	AstNode_Statement_VariableDecls(AstNode_VariableDecl* var_decls) :m_var_decls(var_decls) {}
+	AstNode_Statement_VariableDecl(AstNode_VariableDecl* var_decls) :m_var_decls(var_decls) {}
 
     llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
@@ -892,7 +892,7 @@ public:
 
 protected:
     ast_ptr<AstNode_Expression>	    m_condition;
-    ast_ptr<AstNode_Statement>	m_statements;
+    ast_ptr<AstNode_Statement>	    m_statements;
 };
 
 class AstNode_Statement_Loop_For : public AstNode_Statement_Loop {
@@ -969,7 +969,7 @@ private:
 
 class AstNode_StructDeclaration : public AstNode, LLVM_Value {
 public:
-	AstNode_StructDeclaration(const char* struct_name, AstNode_Statement_VariableDecls* members ) : m_name(struct_name), m_members(members) {}
+	AstNode_StructDeclaration(const char* struct_name, AstNode_Statement_VariableDecl* members ) : m_name(struct_name), m_members(members) {}
 
 	llvm::Value* codegen(LLVM_Compile_Context& context) const override;
 
@@ -977,7 +977,7 @@ public:
 
 private:
 	const std::string					m_name;
-    ast_ptr<AstNode_Statement_VariableDecls>	m_members;
+    ast_ptr<AstNode_Statement_VariableDecl>	m_members;
 };
 
 class AstNode_StructMemberRef : public AstNode_Lvalue {

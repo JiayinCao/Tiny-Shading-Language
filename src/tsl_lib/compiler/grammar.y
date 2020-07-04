@@ -229,7 +229,7 @@ STATEMENT_TEXTURE_DEF:
 STRUCT_DEF:
 	"struct" ID "{" STATEMENT_STRUCT_MEMBERS_DECLARATION "}" ";"
 	{
-		AstNode_Statement_VariableDecls* members = AstNode::castType<AstNode_Statement_VariableDecls>($4);
+		AstNode_Statement_VariableDecl* members = AstNode::castType<AstNode_Statement_VariableDecl>($4);
 		AstNode_StructDeclaration* struct_declaration = new AstNode_StructDeclaration( $2 , members );
 		tsl_compiler->push_structure_declaration(struct_declaration);
 		$$ = struct_declaration;
@@ -457,7 +457,7 @@ STATEMENT_VARIABLES_DECLARATION:
 	{
         const DataType type = $1;
 		AstNode_SingleVariableDecl* var = new AstNode_SingleVariableDecl($2, type);
-		$$ = new AstNode_Statement_VariableDecls(var);
+		$$ = new AstNode_Statement_VariableDecl(var);
 	}
     |
     TYPE ID "[" EXPRESSION "]" ";"
@@ -466,7 +466,7 @@ STATEMENT_VARIABLES_DECLARATION:
         AstNode_Expression* cnt = AstNode::castType<AstNode_Expression>($4);
 		AstNode_ArrayDecl* var = new AstNode_ArrayDecl($2, type, cnt);
 
-        $$ = new AstNode_Statement_VariableDecls(var);
+        $$ = new AstNode_Statement_VariableDecl(var);
     }
     |
     TYPE ID "=" EXPRESSION ";"
@@ -475,7 +475,7 @@ STATEMENT_VARIABLES_DECLARATION:
 		AstNode_Expression* init_exp = AstNode::castType<AstNode_Expression>($4);
 		AstNode_SingleVariableDecl* var = new AstNode_SingleVariableDecl($2, type, VariableConfig::NONE, init_exp);
 		
-        $$ = new AstNode_Statement_VariableDecls(var);
+        $$ = new AstNode_Statement_VariableDecl(var);
     };
 
 STATEMENT_CONDITIONAL:

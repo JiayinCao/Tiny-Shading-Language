@@ -937,7 +937,7 @@ llvm::Value* AstNode_ArrayDecl::codegen(LLVM_Compile_Context& context) const {
     return nullptr;
 }
 
-llvm::Value* AstNode_Statement_VariableDecls::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Statement_VariableDecl::codegen(LLVM_Compile_Context& context) const {
     m_var_decls->codegen(context);
     return nullptr;
 }
@@ -1621,7 +1621,7 @@ llvm::Value* AstNode_StructDeclaration::codegen(LLVM_Compile_Context& context) c
 			decl = castType<AstNode_VariableDecl>(decl->get_sibling());
 		}
 
-		member = castType<AstNode_Statement_VariableDecls>(member->get_sibling());
+		member = castType<AstNode_Statement_VariableDecl>(member->get_sibling());
 	}
 	auto structure_type = StructType::create(member_types, m_name);
 
@@ -1646,7 +1646,7 @@ llvm::Value* AstNode_StructDeclaration::codegen(LLVM_Compile_Context& context) c
 			decl = castType<AstNode_VariableDecl>(decl->get_sibling());
 		}
 
-		member = castType<AstNode_Statement_VariableDecls>(member->get_sibling());
+		member = castType<AstNode_Statement_VariableDecl>(member->get_sibling());
 	}
 
 	return nullptr;

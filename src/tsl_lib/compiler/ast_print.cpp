@@ -515,7 +515,7 @@ void AstNode_Statement_Loop_DoWhile::print() const{
 	std::cout << ")" << std::endl;
 }
 
-void AstNode_Statement_VariableDecls::print() const {
+void AstNode_Statement_VariableDecl::print() const {
 	bool is_first = true;
 	DataType type = { DataTypeEnum::VOID , nullptr };
 
@@ -540,7 +540,7 @@ void AstNode_StructDeclaration::print() const{
 	auto member = m_members.get();
 	while(member){
 		member->print();
-		member = castType<AstNode_Statement_VariableDecls>(member->get_sibling());
+		member = castType<AstNode_Statement_VariableDecl>(member->get_sibling());
 	}
 	std::cout << "};" << std::endl;
 }

@@ -32,7 +32,9 @@ public:
 
     // No error will be output since there are invalid unit tests.
     void catch_debug(const DEBUG_LEVEL level, const char* error) const override {
-
+#if defined(TSL_DEBUG)
+        std::cout << error << std::endl;
+#endif
     }
 
     // Sample texture 2d

@@ -104,6 +104,9 @@ macro(source_group_by_dir source_files)
     endforeach(sgbd_file)
 endmacro(source_group_by_dir)
 
+# make sure there is a seperate macro for debug build
+set( CMAKE_CXX_FLAGS_DEBUG           "${CMAKE_CXX_FLAGS_DEBUG} -DTSL_DEBUG")
+
 add_subdirectory( src/tsl_lib )
 add_subdirectory( src/tsl_test )
 
