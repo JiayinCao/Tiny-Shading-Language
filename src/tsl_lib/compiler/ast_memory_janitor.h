@@ -28,27 +28,23 @@
 
 TSL_NAMESPACE_BEGIN
 
-//! @brief  A helper class to make sure there is a temporary janitor during the life time of this guard.
+// A helper class to make sure there is a temporary janitor during the life time of this guard.
 class Ast_Memory_Guard {
 public:
     Ast_Memory_Guard();
     ~Ast_Memory_Guard();
 };
 
-class AstNode;
-
-template<class T>
-using ast_ptr = const std::shared_ptr<const T>;
-
-//! @brief  Keep track of this AstNode
-void track_ast_node(const AstNode*);
+// Keep track of this AstNode. This should be called in the constructor of AstNode to secure memory leak problem.
+// All ast nodes have to be allocated on heap because the smart pointers will try deleting them eventually.
+// Having an ast node on stack will easily introduce a crash. Since all ast nodes are allocated by Bison script,
+// they are allocated on heap instead of stack.
+void ast_ptr_tracking(const class AstNode*);
 
 // It is very important to go through this function whenver TSL manages a raw pointer with smart pointer.
-// Failing to do it will result in crash.
+// Failing to do it will result in crash. All other parts of the compiler has to convert their raw pointer input
+// through this interface, which will locate the shared_ptr registered during construction.
 template<class T>
-std::shared_ptr<const T>    ast_ptr_from_raw(const AstNode* ptr);
-
-// just a macro to hide the details
-#define AST_MEMORY_GUARD        Ast_Memory_Guard ast_memory_guard;
+std::shared_ptr<const T>    ast_ptr_from_raw(const class AstNode* ptr);
 
 TSL_NAMESPACE_END

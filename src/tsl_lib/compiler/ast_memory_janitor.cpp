@@ -27,8 +27,6 @@ class TSL_Memory_Janior {
 public:
     //! @brief  Keep track of this node
     void track_ast_node(const AstNode* node) {
-        assert(m_ast_nodes.count(node) == 0);
-
         auto ptr = std::shared_ptr<const AstNode>(node);
         m_ast_nodes[node] = ptr;
     }
@@ -46,7 +44,11 @@ private:
     std::unordered_map<const AstNode*, std::shared_ptr<const AstNode>>  m_ast_nodes;
 };
 
-// this should not be visible outside this file
+// This container is purely for the purpose of keeping track of the life time of AstNodes.
+// As a matter of fact, it is more for incorrect shaders where the compiler fails to compile during parsing because some of the
+// ast node will get dangled leaving memory leak. For correct shaders, all nodes will be owned by something in the shader template,
+// which eventually will be destroyed at some point.
+// In order to make it thread safe, thread local storage is needed here to prevent data racing among threads.
 thread_local static std::vector<TSL_Memory_Janior>   g_tsl_memory_janitor_stack;
 
 Ast_Memory_Guard::Ast_Memory_Guard() {
@@ -57,7 +59,9 @@ Ast_Memory_Guard::~Ast_Memory_Guard() {
     g_tsl_memory_janitor_stack.pop_back();
 }
 
-void track_ast_node(const AstNode* node) {
+void ast_ptr_tracking(const AstNode* node) {
+    assert(nullptr == ast_ptr_from_raw(node));
+
     if (g_tsl_memory_janitor_stack.size()) {
         auto& janitor = g_tsl_memory_janitor_stack.back();
         janitor.track_ast_node(node);
@@ -74,6 +78,7 @@ std::shared_ptr<const T>  ast_ptr_from_raw(const AstNode* ptr) {
     return nullptr;
 }
 
+// Instantiation with some concrete class that will be used in the compiler.
 #define INSTANTIATION_AST_PTR_FROM_RAW(T) template std::shared_ptr<const T>  ast_ptr_from_raw(const AstNode* ptr);
 
 INSTANTIATION_AST_PTR_FROM_RAW(AstNode_Expression)

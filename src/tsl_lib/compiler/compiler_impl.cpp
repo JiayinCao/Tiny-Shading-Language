@@ -131,7 +131,9 @@ void* TslCompiler_Impl::get_scanner() {
 }
 
 bool TslCompiler_Impl::compile(const char* source_code, ShaderUnitTemplate* su) {
-    AST_MEMORY_GUARD
+    // memory guard for preventing memory leak due to ast node allocation.
+    Ast_Memory_Guard ast_memory_guard;
+
     PROTECT_CONTEXT(su->get_name());
     
 #ifdef DEBUG_OUTPUT

@@ -33,6 +33,9 @@
 
 TSL_NAMESPACE_BEGIN
 
+template<class T>
+using ast_ptr = const std::shared_ptr<const T>;
+
 class AstNode_FunctionPrototype;
 
 struct StructMemberTypeMetaData{
@@ -97,10 +100,7 @@ public:
  */
 class AstNode {
 public:
-    AstNode() {
-        // It is fairly important to make sure that all ast nodes exits in heap instead of stack.
-        track_ast_node(this);
-    }
+    AstNode() { ast_ptr_tracking(this); }
     virtual ~AstNode() {}
 
     // Append a sibling to the ast node.
