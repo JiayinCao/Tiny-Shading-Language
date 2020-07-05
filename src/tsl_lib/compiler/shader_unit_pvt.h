@@ -28,6 +28,7 @@ TSL_NAMESPACE_BEGIN
 
 class GlobalModule;
 class AstNode_FunctionPrototype;
+class ShaderUnitTemplate;
 
 struct ShaderArgMetaData {
     std::string             m_name;
@@ -62,6 +63,9 @@ public:
 
     // the legacy manager, this is for optimization
     std::unique_ptr<llvm::legacy::FunctionPassManager> m_fpm = nullptr;
+
+    /**< Shader unit template that creates this shader instance. */
+    std::shared_ptr<ShaderUnitTemplate> m_shader_unit_template;
 
     // the function address for host code to call
     uint64_t m_function_pointer = 0;

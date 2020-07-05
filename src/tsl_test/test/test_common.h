@@ -88,10 +88,10 @@ public:
     }
 };
 
-inline ShaderUnitTemplate* compile_shader_unit_template(ShadingContext* shading_context, const char* name, const char* shader_source) {
+inline std::shared_ptr<ShaderUnitTemplate> compile_shader_unit_template(ShadingContext* shading_context, const char* name, const char* shader_source) {
     const auto shader_unit_template = shading_context->begin_shader_unit_template(name);
-    const auto ret = shading_context->compile_shader_unit_template(shader_unit_template, shader_source);
-    shading_context->end_shader_unit_template(shader_unit_template);
+    const auto ret = shading_context->compile_shader_unit_template(shader_unit_template.get(), shader_source);
+    shading_context->end_shader_unit_template(shader_unit_template.get());
     return ret && shader_unit_template ? shader_unit_template : nullptr;
 }
 
@@ -99,14 +99,14 @@ inline void validate_shader(const char* shader_source, bool valid = true, TslCom
     auto shading_context = ShadingSystem::get_instance().make_shading_context();
 
     const auto name = std::to_string(g_name_counter++);
-    const auto shader_unit = compile_shader_unit_template(shading_context, name.c_str(), shader_source);
+    const auto shader_unit = compile_shader_unit_template(shading_context.get(), name.c_str(), shader_source);
     const auto ret = shader_unit != nullptr;
 
     EXPECT_EQ(ret, valid);
 }
 
 template<class T>
-inline std::pair<T, std::unique_ptr<ShaderInstance>> compile_shader(const char* shader_source) {
+inline std::pair<T, std::shared_ptr<ShaderInstance>> compile_shader(const char* shader_source) {
     auto shading_context = ShadingSystem::get_instance().make_shading_context();
 
     // register the tsl global data structure
@@ -114,7 +114,7 @@ inline std::pair<T, std::unique_ptr<ShaderInstance>> compile_shader(const char* 
 
     // this name is meanless, but I just want something unique
     const auto name = std::to_string(g_name_counter++);
-    const auto shader_unit_template = compile_shader_unit_template(shading_context, name.c_str(), shader_source);
+    const auto shader_unit_template = compile_shader_unit_template(shading_context.get(), name.c_str(), shader_source);
 
     if (!shader_unit_template)
         return std::make_pair(nullptr, nullptr);
@@ -125,5 +125,5 @@ inline std::pair<T, std::unique_ptr<ShaderInstance>> compile_shader(const char* 
     if(Tsl_Namespace::TSL_Resolving_Succeed != shading_context->resolve_shader_instance(shader_instance.get()))
         return std::make_pair(nullptr, nullptr);
 
-    return std::make_pair((T)shader_instance->get_function(), std::move(shader_instance));
+    return std::make_pair((T)shader_instance->get_function(), shader_instance);
 }

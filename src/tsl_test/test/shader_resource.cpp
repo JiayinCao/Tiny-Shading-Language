@@ -48,10 +48,10 @@ TEST(ShaderResource, SimpleTexture) {
     shader_unit_template->register_texture("g_diffuse", &texture_simple);
 
     // compile the shader unit
-    shading_context->compile_shader_unit_template(shader_unit_template, shader_source);
+    shading_context->compile_shader_unit_template(shader_unit_template.get(), shader_source);
 
     // shader unit done.
-    shading_context->end_shader_unit_template(shader_unit_template);
+    shading_context->end_shader_unit_template(shader_unit_template.get());
 
     // make a shader instance after the template is ready
     auto shader_instance = shader_unit_template->make_shader_instance();
@@ -103,10 +103,10 @@ TEST(ShaderResource, SimpleTextureAlpha) {
     shader_unit_template->register_texture("g_diffuse", &texture_simple);
 
     // compile the shader unit
-    shading_context->compile_shader_unit_template(shader_unit_template, shader_source);
+    shading_context->compile_shader_unit_template(shader_unit_template.get(), shader_source);
 
     // shader unit done.
-    shading_context->end_shader_unit_template(shader_unit_template);
+    shading_context->end_shader_unit_template(shader_unit_template.get());
 
     // make a shader instance after the template is ready
     auto shader_instance = shader_unit_template->make_shader_instance();
@@ -163,10 +163,10 @@ TEST(ShaderResource, CustomShaderResource) {
     shader_unit_template->register_shader_resource("custom_data", &custom_data);
 
     // compile the shader unit
-    shading_context->compile_shader_unit_template(shader_unit_template, shader_source);
+    shading_context->compile_shader_unit_template(shader_unit_template.get(), shader_source);
 
     // shader unit done.
-    shading_context->end_shader_unit_template(shader_unit_template);
+    shading_context->end_shader_unit_template(shader_unit_template.get());
 
     // make a shader instance after the template is ready
     auto shader_instance = shader_unit_template->make_shader_instance();

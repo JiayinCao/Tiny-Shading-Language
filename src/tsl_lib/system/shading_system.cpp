@@ -47,12 +47,9 @@ ShadingSystem::~ShadingSystem() {
     g_shading_system_impl = nullptr;
 }
 
-ShadingContext* ShadingSystem::make_shading_context() {
-    std::lock_guard<std::mutex> lock(g_shading_system_impl->m_context_mutex);
-
-    auto shading_context = new ShadingContext(g_shading_system_impl.get());
-    g_shading_system_impl->m_contexts.insert(std::unique_ptr<ShadingContext>(shading_context));
-    return shading_context;
+std::shared_ptr<ShadingContext> ShadingSystem::make_shading_context() {
+    auto ptr = new ShadingContext(g_shading_system_impl.get());
+    return std::shared_ptr<ShadingContext>(ptr);
 }
 
 ClosureID ShadingSystem::register_closure_type(const std::string& name, ClosureVarList& mapping, int structure_size) {

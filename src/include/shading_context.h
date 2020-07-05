@@ -59,7 +59,7 @@ public:
     //! @brief  Private constructor to limit the construction of shader instance through ShaderUnitTemplate.
     //!
     //! @param  sut     Shader unit template that is used to construct this shader instance.
-    ShaderInstance(const ShaderUnitTemplate& sut);
+    ShaderInstance(std::shared_ptr<ShaderUnitTemplate> sut);
 
     //! @brief  Destructor
     ~ShaderInstance();
@@ -79,14 +79,9 @@ public:
     //! @brief  Get shader unit template.
     //!
     //! @return     The shader template.
-    const ShaderUnitTemplate& get_shader_template() const {
-        return m_shader_unit_template;
-    }
+    const ShaderUnitTemplate& get_shader_template() const;
 
 private:
-    /**< Shader unit template that creates this shader instance. */
-    const ShaderUnitTemplate& m_shader_unit_template;
-
     /**< Private data inside shader instance. */
     ShaderInstance_Pvt* m_shader_instance_data = nullptr;
 
@@ -95,13 +90,20 @@ private:
     friend class ShaderUnitTemplate;
 };
 
+// WARNING
+// This might introduce some sort of connection between the compiler used to compile TSL and the renderer.
+// However, this is always a trade off between larger audiance and safer code. Since TSL is mainly designed for my
+// own renderer SORT, I would sacrifice some inpendency of the compilers to be used for safer code.
+template class TSL_INTERFACE std::weak_ptr<ShaderUnitTemplate>;
+template class TSL_INTERFACE std::enable_shared_from_this<ShaderUnitTemplate>;
+
 //! @brief  ShaderUnitTemplate defines the shader of a single shader unit.
 /**
  * A shader unit template defines the basic behavior of a shader unit.
  * Multiple shader units can be groupped into a shader group template.
  * A shader unit template can't be executed, it needs to instance a shader instance for shader execution.
  */
-class TSL_INTERFACE ShaderUnitTemplate {
+class TSL_INTERFACE ShaderUnitTemplate : public std::enable_shared_from_this<ShaderUnitTemplate> {
 public:
     //! @brief  Constructor.
     //!
@@ -117,7 +119,7 @@ public:
     //! @brief  Make a shader instance
     //!
     //! @return         Make a new shader instance.
-    std::unique_ptr<ShaderInstance>     make_shader_instance();
+    std::shared_ptr<ShaderInstance>     make_shader_instance();
 
     //! @brief  Parse shader dependencies.
     //!
@@ -168,7 +170,7 @@ public:
     //! @param  shader_unit     A shader unit to be added in the group.
     //! @param  is_root         Whether the shader unit is the root of the group, there has to be exactly one root in each shader group.
     //! @return                 Whether the shader unit is added in the group.
-    bool add_shader_unit(const std::string& name, ShaderUnitTemplate* shader_unit, const bool is_root = false);
+    bool add_shader_unit(const std::string& name, std::shared_ptr<ShaderUnitTemplate> shader_unit, const bool is_root = false);
 
     //! @brief  Connect shader unit in the shader group.
     //!
@@ -219,7 +221,7 @@ public:
     //!
     //! @param  name    Name of the shader group.
     //! @return         A pointer to the newly allocated shader group.
-    ShaderGroupTemplate* begin_shader_group_template(const std::string& name);
+    std::shared_ptr<ShaderGroupTemplate> begin_shader_group_template(const std::string& name);
 
     //! @brief  Resolve a shader group template before using it.
     //!
@@ -229,9 +231,14 @@ public:
 
     //! @brief  Make a new shader unit template.
     //!
+    //! It is up to the renderer to keep this template alive during its usage.
+    //! Though shader unit template is needed during shader compilation or groupping,
+    //! once it creates an instance, the instance will also keep its owner template alive by
+    //! holding a shared pointer.
+    //!
     //! @param  name    Name of the shader unit template.
     //! @return         Shader unit template to be returned.
-    ShaderUnitTemplate*  begin_shader_unit_template(const std::string& name);
+    std::shared_ptr<ShaderUnitTemplate>  begin_shader_unit_template(const std::string& name);
 
     //! @breif  Ending of making a shader unit template.
     //!

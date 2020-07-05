@@ -33,16 +33,6 @@ TSL_NAMESPACE_BEGIN
 class GlobalModule;
 
 struct ShadingSystem_Impl {
-    /**< Data structure holding all contexts. */
-    std::unordered_set<std::unique_ptr<ShadingContext>>    m_contexts;
-    /**< Making sure context related operation is thread-safe. */
-    std::mutex                                             m_context_mutex;
-
-    /**< a container holding all shader unit. */
-    std::unordered_map<std::string, std::unique_ptr<ShaderUnitTemplate>> m_shader_units;
-    /**< a mutex to make sure shader_group access is thread-safe. */
-    std::mutex m_shader_unit_mutex;
-
     /**< Closure register */
     GlobalModule* m_global_module = nullptr;
 
@@ -78,7 +68,7 @@ struct ShaderUnitTemplate_Impl {
     */
 struct ShaderUnitTemplateCopy {
     std::string         m_name;
-    ShaderUnitTemplate* m_shader_unit_template = nullptr;
+    std::shared_ptr<ShaderUnitTemplate> m_shader_unit_template;
 };
 
 struct ShaderGroupTemplate_Impl {

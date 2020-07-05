@@ -102,7 +102,7 @@ public:
     //! of this class comes to end.
     //!
     //! @return             Allocated memory points to an instance of a newly created shading_context.
-    ShadingContext*         make_shading_context();
+    std::shared_ptr<ShadingContext>  make_shading_context();
 
     //! @brief  Register closure id.
     //!

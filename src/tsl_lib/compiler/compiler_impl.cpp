@@ -342,8 +342,8 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
         shader_unit->parse_dependencies(su_pvt);
 
         // no need to declare the function multiple times if it is defined before
-        if (visited_module.count(shader_unit)){
-            shader_unit_llvm_function[shader_unit_name] = visited_module[shader_unit];
+        if (visited_module.count(shader_unit.get())){
+            shader_unit_llvm_function[shader_unit_name] = visited_module[shader_unit.get()];
         } else {
             // get the shader exposed parameters
             const auto& params = shader_unit->m_shader_unit_template_impl->m_exposed_args;
@@ -381,7 +381,7 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
             const auto& name = shader_unit->get_name();
             shader_unit_llvm_function[name] = function;
 
-            visited_module[shader_unit] = function;
+            visited_module[shader_unit.get()] = function;
         }
     }
 

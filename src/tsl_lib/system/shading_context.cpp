@@ -44,12 +44,14 @@ const std::string& ShaderUnitTemplate::get_name() const {
     return m_shader_unit_template_impl->m_name;
 }
 
-std::unique_ptr<ShaderInstance> ShaderUnitTemplate::make_shader_instance() {
-    return std::make_unique<ShaderInstance>(*this);
+std::shared_ptr<ShaderInstance> ShaderUnitTemplate::make_shader_instance() {
+    auto ptr = shared_from_this();
+    return std::make_shared<ShaderInstance>(ptr);
 }
 
-ShaderInstance::ShaderInstance(const ShaderUnitTemplate& sut) : m_shader_unit_template(sut) {
+ShaderInstance::ShaderInstance(std::shared_ptr<ShaderUnitTemplate> sut) {
     m_shader_instance_data = new ShaderInstance_Pvt();
+    m_shader_instance_data->m_shader_unit_template = sut;
 }
 
 ShaderInstance::~ShaderInstance() {
@@ -58,6 +60,10 @@ ShaderInstance::~ShaderInstance() {
 
 uint64_t ShaderInstance::get_function() const {
     return m_shader_instance_data->m_function_pointer;
+}
+
+const ShaderUnitTemplate& ShaderInstance::get_shader_template() const {
+    return *m_shader_instance_data->m_shader_unit_template.get();
 }
 
 void ShaderUnitTemplate::parse_dependencies(ShaderUnitTemplate_Pvt* sut) const {
@@ -119,7 +125,7 @@ void ShaderGroupTemplate::parse_dependencies(ShaderUnitTemplate_Pvt* sut) const 
     sut->m_dependencies.insert(m_shader_unit_template_impl->m_shader_unit_data->m_module.get());
 }
 
-bool ShaderGroupTemplate::add_shader_unit(const std::string& name, ShaderUnitTemplate* shader_unit, const bool is_root) {
+bool ShaderGroupTemplate::add_shader_unit(const std::string& name, std::shared_ptr<ShaderUnitTemplate> shader_unit, const bool is_root) {
     if (!shader_unit)
         return false;
 
@@ -150,18 +156,8 @@ ShadingContext::~ShadingContext() {
     delete m_shading_context_impl;
 }
 
-ShaderUnitTemplate* ShadingContext::begin_shader_unit_template(const std::string& name) {
-    // making sure only one of the context can access the data at a time
-    std::lock_guard<std::mutex> lock(m_shading_context_impl->m_shading_system_impl->m_shader_unit_mutex);
-
-    // if the shader group is created before, return nullptr.
-    if (m_shading_context_impl->m_shading_system_impl->m_shader_units.count(name))
-        return nullptr;
-
-    // allocate the shader unit entry
-    m_shading_context_impl->m_shading_system_impl->m_shader_units[name] = std::make_unique<ShaderUnitTemplate>(name);
-
-    return m_shading_context_impl->m_shading_system_impl->m_shader_units[name].get();
+std::shared_ptr<ShaderUnitTemplate> ShadingContext::begin_shader_unit_template(const std::string& name) {
+    return std::make_shared<ShaderUnitTemplate>(name);
 }
 
 TSL_Resolving_Status ShadingContext::end_shader_unit_template(ShaderUnitTemplate* su) const {
@@ -181,7 +177,9 @@ TSL_Resolving_Status ShadingContext::resolve_shader_instance(ShaderInstance* si)
     return m_shading_context_impl->m_compiler->resolve(si);
 }
 
-ShaderGroupTemplate* ShadingContext::begin_shader_group_template(const std::string& name) {
+std::shared_ptr<ShaderGroupTemplate> ShadingContext::begin_shader_group_template(const std::string& name) {
+    return std::make_shared<ShaderGroupTemplate>(name);
+#if 0
     // making sure only one of the context can access the data at a time
     std::lock_guard<std::mutex> lock(m_shading_context_impl->m_shading_system_impl->m_shader_unit_mutex);
 
@@ -192,6 +190,7 @@ ShaderGroupTemplate* ShadingContext::begin_shader_group_template(const std::stri
     auto shader_group = new ShaderGroupTemplate(name);
     m_shading_context_impl->m_shading_system_impl->m_shader_units[name] = std::unique_ptr<ShaderGroupTemplate>(shader_group);
     return shader_group;
+#endif
 }
 
 TSL_NAMESPACE_END

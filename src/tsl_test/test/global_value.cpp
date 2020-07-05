@@ -44,7 +44,7 @@ TEST(GlobalValue, GlobalValueAsDefaultValueForArgument) {
     auto shading_context = ShadingSystem::get_instance().make_shading_context();
 
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = compile_shader_unit_template(shading_context, "random_root_shader", R"(
+    const auto root_shader_unit = compile_shader_unit_template(shading_context.get(), "random_root_shader", R"(
         shader output_node( float in_var, out float out_bxdf ){
             out_bxdf = in_var;
         }
@@ -72,7 +72,7 @@ TEST(GlobalValue, GlobalValueAsDefaultValueForArgument) {
     shader_group->init_shader_input("root_shader", "in_var", dv);
 
     // resolve the shader group
-    auto status = shading_context->end_shader_group_template(shader_group);
+    auto status = shading_context->end_shader_group_template(shader_group.get());
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, status);
 
     auto shader_instance = shader_group->make_shader_instance();
@@ -119,7 +119,7 @@ TEST(GlobalValue, GlobalValueInShaderGroup_Simple) {
     auto shading_context = ShadingSystem::get_instance().make_shading_context();
 
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = compile_shader_unit_template(shading_context, "root_shader", R"(
+    const auto root_shader_unit = compile_shader_unit_template(shading_context.get(), "root_shader", R"(
         shader output_node( out float out_bxdf ){
             out_bxdf = global_value<intensity>;
         }
@@ -142,7 +142,7 @@ TEST(GlobalValue, GlobalValueInShaderGroup_Simple) {
     shader_group->expose_shader_argument("root_shader", "out_bxdf", arg);
 
     // resolve the shader group
-    auto status = shading_context->end_shader_group_template(shader_group);
+    auto status = shading_context->end_shader_group_template(shader_group.get());
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, status);
 
     auto shader_instance = shader_group->make_shader_instance();
@@ -171,7 +171,7 @@ TEST(GlobalValue, GlobalValueInShaderGroup) {
     auto shading_context = shading_system.make_shading_context();
 
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = compile_shader_unit_template(shading_context, "root_shader_GlobalValueInShaderGroup", R"(
+    const auto root_shader_unit = compile_shader_unit_template(shading_context.get(), "root_shader_GlobalValueInShaderGroup", R"(
         shader output_node( in closure in_bxdf , out closure out_bxdf ){
             out_bxdf = in_bxdf * global_value<intensity>;
         }
@@ -179,7 +179,7 @@ TEST(GlobalValue, GlobalValueInShaderGroup) {
     EXPECT_NE(nullptr, root_shader_unit);
 
     // a bxdf node
-    const auto bxdf_shader_unit = compile_shader_unit_template(shading_context, "bxdf_shader_GlobalValueInShaderGroup", R"(
+    const auto bxdf_shader_unit = compile_shader_unit_template(shading_context.get(), "bxdf_shader_GlobalValueInShaderGroup", R"(
         shader lambert_node( out closure out_bxdf ){
             out_bxdf = make_closure<lambert>( 111, 4.0f );
         }
@@ -207,7 +207,7 @@ TEST(GlobalValue, GlobalValueInShaderGroup) {
     shader_group->expose_shader_argument("root_shader_GlobalValueInShaderGroup", "out_bxdf", arg);
 
     // resolve the shader group
-    auto status = shading_context->end_shader_group_template(shader_group);
+    auto status = shading_context->end_shader_group_template(shader_group.get());
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, status);
 
     auto shader_instance = shader_group->make_shader_instance();
