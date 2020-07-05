@@ -39,6 +39,18 @@ struct ShadingSystem_Impl;
 struct ShaderUnitTemplate_Impl;
 struct ShaderGroupTemplate_Impl;
 struct ShadingContext_Impl;
+class ShadingContext;
+
+#if defined(TSL_ON_WINDOWS)
+    // WARNING
+    // This might introduce some sort of connection between the compiler used to compile TSL and the renderer.
+    // However, this is always a trade off between larger audiance and safer code. Since TSL is mainly designed for my
+    // own renderer SORT, I would sacrifice some inpendency of the compilers to be used for safer code.
+    template class TSL_INTERFACE std::weak_ptr<ShaderUnitTemplate>;
+    template class TSL_INTERFACE std::enable_shared_from_this<ShaderUnitTemplate>;
+    template class TSL_INTERFACE std::weak_ptr<ShadingContext>;
+    template class TSL_INTERFACE std::enable_shared_from_this<ShadingContext>;
+#endif
 
 //! @brief  Shader resource handle interface.
 class TSL_INTERFACE ShaderResourceHandle {
@@ -90,13 +102,6 @@ private:
     friend class ShaderUnitTemplate;
 };
 
-// WARNING
-// This might introduce some sort of connection between the compiler used to compile TSL and the renderer.
-// However, this is always a trade off between larger audiance and safer code. Since TSL is mainly designed for my
-// own renderer SORT, I would sacrifice some inpendency of the compilers to be used for safer code.
-template class TSL_INTERFACE std::weak_ptr<ShaderUnitTemplate>;
-template class TSL_INTERFACE std::enable_shared_from_this<ShaderUnitTemplate>;
-
 //! @brief  ShaderUnitTemplate defines the shader of a single shader unit.
 /**
  * A shader unit template defines the basic behavior of a shader unit.
@@ -107,8 +112,8 @@ class TSL_INTERFACE ShaderUnitTemplate : public std::enable_shared_from_this<Sha
 public:
     //! @brief  Constructor.
     //!
-    //! @param  name            Name of the shader unit.
-    ShaderUnitTemplate(const std::string& name);
+    //! @param  name    Name of the shader unit.
+    ShaderUnitTemplate(const std::string& name, std::shared_ptr<ShadingContext> context);
 
     //! @brief  Destructor.
     virtual ~ShaderUnitTemplate();
@@ -159,7 +164,8 @@ public:
     //! @brief  Constructor.
     //!
     //! @param  name            The name fo the shader group.
-    ShaderGroupTemplate(const std::string& name);
+    //! @param  context         The shading context created the shader group template
+    ShaderGroupTemplate(const std::string& name, std::shared_ptr<ShadingContext> context);
 
     //! @brief  Destructor.
     ~ShaderGroupTemplate();
@@ -212,7 +218,7 @@ private:
  * Since shading_context is available in each thread, things like shader compilation and shader 
  * execution could be exectued in multi-threaded too.
  */
-class TSL_INTERFACE ShadingContext {
+class TSL_INTERFACE ShadingContext : public std::enable_shared_from_this<ShadingContext> {
 public:
     //! @brief  Destructor.
     ~ShadingContext();

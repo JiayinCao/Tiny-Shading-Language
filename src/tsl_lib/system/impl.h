@@ -44,6 +44,9 @@ struct ShaderUnitTemplate_Impl {
     /**< Name of the shader unit. */
     std::string m_name;
 
+    /**< The llvm context created in the shading_context is needed as long as this is alive. */
+    std::shared_ptr<ShadingContext> m_shading_context;
+
     /**< A private data structure hiding all LLVM details. */
     ShaderUnitTemplate_Pvt* m_shader_unit_data = nullptr;
 

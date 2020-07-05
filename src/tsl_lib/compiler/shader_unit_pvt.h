@@ -46,26 +46,34 @@ public:
     // the dependent llvm module
     std::unordered_set<const llvm::Module*> m_dependencies;
 
-    // ast node
-    std::shared_ptr<const AstNode_FunctionPrototype> m_ast_root = nullptr;
-
     // llvm function pointer
     llvm::Function* m_llvm_function = nullptr;
+
     // root function name
     std::string     m_root_function_name;
+
+    // ast node
+    std::shared_ptr<const AstNode_FunctionPrototype> m_ast_root = nullptr;
 };
 
 // This data structure hides all LLVM related data from ShaderInstance.
 struct ShaderInstance_Pvt {
 public:
+    ~ShaderInstance_Pvt() {
+        // explicit order of destruction is mandatory here to prevent crashing in LLVM code.
+        m_execution_engine = nullptr;
+        m_fpm = nullptr;
+        m_shader_unit_template = nullptr;
+    }
+
+    /**< Shader unit template that creates this shader instance. */
+    std::shared_ptr<ShaderUnitTemplate> m_shader_unit_template;
+
     // the execute engine for this module
     std::unique_ptr<llvm::ExecutionEngine> m_execution_engine = nullptr;
 
     // the legacy manager, this is for optimization
     std::unique_ptr<llvm::legacy::FunctionPassManager> m_fpm = nullptr;
-
-    /**< Shader unit template that creates this shader instance. */
-    std::shared_ptr<ShaderUnitTemplate> m_shader_unit_template;
 
     // the function address for host code to call
     uint64_t m_function_pointer = 0;
