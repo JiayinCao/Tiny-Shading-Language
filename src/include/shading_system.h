@@ -25,11 +25,16 @@
 
 TSL_NAMESPACE_BEGIN
 
-class ShadingContext;
+//! @brief  Debug information levels.
+enum class TSL_DEBUG_LEVEL : unsigned int {
+    TSL_DEBUG_INFO,         // General debugging information.
+    TSL_DEBUG_WARNING,      // A warning means there is some badly written code in shader sources.
+    TSL_DEBUG_ERROR,        // An error will most likely result failure in shader compilation.
+};
 
 //! @brief  ShadingSystem callback interface.
 /**
- * ShadingSystemInterface offers a chance for renderers to do things like, output error or log, allocate memory for bxdf.
+ * ShadingSystemInterface offers a chance for renderers to do things like, outputing errors or logs, allocating memory for bxdf.
  * All methods in this interface need to be implemented in a thread-safe manner, it is renderer's job to make sure of it.
  * TSL won't synchronize upon calling these calls.
  */
@@ -45,20 +50,13 @@ public:
     //!  - This implementation has to be thread safe.
     virtual void*   allocate(unsigned int size) const = 0;
 
-    //! @brief  Debug information levels.
-    enum DEBUG_LEVEL {
-        DEBUG_INFO,
-        DEBUG_WARNING,
-        DEBUG_ERROR,
-    };
-
-    //! @brief  This will be called when there is error during shader compilation.
+    //! @brief  This will be automatically called when there is error during shader compilation.
     //!
     //! @param  level       Debug level.
     //! @param  error       String describing the error.
-    virtual void    catch_debug(const DEBUG_LEVEL level, const char* error) const = 0;
+    virtual void    catch_debug(const TSL_DEBUG_LEVEL level, const char* error) const = 0;
 
-    //! @brief  Sample 2d texture.
+    //! @brief  Sample a 2d texture.
     //!
     //! @param  texture     Texture handle.
     //! @param  u           UV coordinate.
@@ -91,22 +89,37 @@ public:
     //! @brief  Destructor.
     ~ShadingSystem();
 
-    //! @brief  Get shading system instance
+    //! @brief  Make the only instance of shading system in TSL system.
     //!
-    //! Shading system is a singleton.
-    static ShadingSystem& get_instance();
+    //! This has to be called before anything in TSL called. The interface to be registered is very important to shader
+    //! compilation. ShadingSystem will take over the ownership of the pointer passed in. Renderers don't need to 
+    //! deallocate the memory of the passed in parameter, it will also need to avoid access of this parameter in renderer 
+    //! later.
+    //!
+    //! @param  ssi         The interface to be registered.
+    static void             register_shadingsystem_interface(std::unique_ptr<ShadingSystemInterface> ssi);
+
+    //! @brief  Get shading system instance.
+    //!
+    //! In order to make sure there is not a second instance of shading system in renderers, this class is a class of singleton.
+    //! There is no way to have a second instance of it, which is secured duing compilation time.
+    //!
+    //! @return             Reference to the only instance of the class.
+    static ShadingSystem&   get_instance();
 
     //! @brief  Create a new shading context.
     //!
-    //! Caller code doesn't need to release the memory allocated, it will be released automatically as the lifetime
-    //! of this class comes to end.
+    //! TSL shading system won't take responsibility of keeping shading context alive. It is up to renderers to make sure it is alive
+    //! when it is still needed. However, shading context life time will also be observed by things like shader unit template and
+    //! shader instance, meaning as long as there is a shader instance or shader unit template alive, the context which creates them
+    //! will also be alive.
     //!
-    //! @return             Allocated memory points to an instance of a newly created shading_context.
-    std::shared_ptr<ShadingContext>  make_shading_context();
+    //! @return             A smart pointer to the newly created shading context returned by TSL system.
+    std::shared_ptr<class ShadingContext>  make_shading_context();
 
     //! @brief  Register closure id.
     //!
-    //! @param  name            Name of the closure.
+    //! @param  name            Name of the closure. This has to match the one used in TSL shaders.
     //! @param  mapping         Mapping of the data inside the closure.
     //! @param  closure_size    Size of the data structure.
     //! @return                 Allocated closure id for the closure.
@@ -116,14 +129,6 @@ public:
     //!
     //! @param  mapping     Mapping of the data structure.
     void                    register_tsl_global(GlobalVarList& mapping);
-
-    //! @brief  Register ShadingSystemInterface.
-    //!
-    //! ShadingSystem will take over the ownership of the pointer passed in. Renderers don't need to deallocate the memory
-    //! of the passed in parameter, it will also need to avoid access of this parameter in renderer later.
-    //!
-    //! @param  ssi     The interface to be registered.
-    void                    register_shadingsystem_interface(std::unique_ptr<ShadingSystemInterface> ssi);
 
 private:
     //! @brief  Constructor.

@@ -31,7 +31,7 @@ public:
     }
 
     // No error will be output since there are invalid unit tests.
-    void catch_debug(const DEBUG_LEVEL level, const char* error) const override {
+    void catch_debug(const Tsl_Namespace::TSL_DEBUG_LEVEL level, const char* error) const override {
 #if defined(TSL_DEBUG)
         std::cout << error << std::endl;
 #endif

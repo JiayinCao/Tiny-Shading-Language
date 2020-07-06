@@ -82,7 +82,7 @@ void  emit_error(const char* format, ...) {
 
     const auto callback = g_shading_system_impl->m_callback.get();
     if (callback)
-        callback->catch_debug(ShadingSystemInterface::DEBUG_ERROR, buf.get());
+        callback->catch_debug(TSL_DEBUG_LEVEL::TSL_DEBUG_ERROR, buf.get());
 }
 
 void  emit_warning(const char* format, ...) {
@@ -98,7 +98,7 @@ void  emit_warning(const char* format, ...) {
 
     const auto callback = g_shading_system_impl->m_callback.get();
     if (callback)
-        callback->catch_debug(ShadingSystemInterface::DEBUG_WARNING, buf.get());
+        callback->catch_debug(TSL_DEBUG_LEVEL::TSL_DEBUG_WARNING, buf.get());
 }
 
 void  sample_2d(const void* texture, float u, float v, float3& color) {
