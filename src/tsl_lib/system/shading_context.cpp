@@ -71,15 +71,6 @@ void ShaderUnitTemplate::parse_dependencies(ShaderUnitTemplate_Pvt* sut) const {
     sut->m_dependencies.insert(m_shader_unit_template_impl->m_shader_unit_data->m_module.get());
 }
 
-bool ShaderUnitTemplate::register_texture(const std::string name, const void* th) {
-    if (m_shader_unit_template_impl->m_shader_texture_table.count(name))
-        return false;
-    if (!th)
-        return false;
-    m_shader_unit_template_impl->m_shader_texture_table[name] = th;
-    return true;
-}
-
 bool ShaderUnitTemplate::register_shader_resource(const std::string& name, const ShaderResourceHandle* srh) {
     if (m_shader_unit_template_impl->m_shader_resource_table.count(name))
         return false;

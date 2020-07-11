@@ -174,7 +174,6 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnitTemplate* su) 
 		compile_context.context = &m_llvm_context;
 		compile_context.module = module;
 		compile_context.builder = &builder;
-        compile_context.m_shader_texture_table = &su->m_shader_unit_template_impl->m_shader_texture_table;
         compile_context.m_shader_resource_table = &su->m_shader_unit_template_impl->m_shader_resource_table;
 
         // declare tsl global

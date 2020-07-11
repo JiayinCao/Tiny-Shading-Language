@@ -1712,8 +1712,8 @@ DataType AstNode_StructMemberRef::get_var_type(LLVM_Compile_Context& context) co
 
 llvm::Value* AstNode_Statement_TextureDeclaration::codegen(LLVM_Compile_Context& context) const {
     // find the registered texture
-    auto it = context.m_shader_texture_table->find(m_handle_name);
-    if (it == context.m_shader_texture_table->end()){
+    auto it = context.m_shader_resource_table->find(m_handle_name);
+    if (it == context.m_shader_resource_table->end()){
         emit_error("Texture handle (%s) not registered.", m_handle_name.c_str());
         return nullptr;
     }

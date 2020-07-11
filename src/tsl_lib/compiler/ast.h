@@ -54,7 +54,6 @@ struct LLVM_Compile_Context{
     llvm::Type*         tsl_global_ty = nullptr;
     llvm::Value*        tsl_global_value = nullptr;
     GlobalVarList       m_tsl_global_mapping;
-    ShaderTextureTable*     m_shader_texture_table = nullptr;
     ShaderResourceTable*    m_shader_resource_table = nullptr;
 
     // closured touched in the shader

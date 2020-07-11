@@ -49,9 +49,7 @@ struct ShaderUnitTemplate_Impl {
 
     /**< A private data structure hiding all LLVM details. */
     ShaderUnitTemplate_Pvt* m_shader_unit_data = nullptr;
-
-    /**< Shader texture table. */
-    ShaderTextureTable      m_shader_texture_table;
+    
     /**< Shader resource table. */
     ShaderResourceTable     m_shader_resource_table;
 

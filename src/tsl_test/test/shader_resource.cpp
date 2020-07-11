@@ -45,7 +45,7 @@ TEST(ShaderResource, SimpleTexture) {
     const auto shader_unit_template = shading_context->begin_shader_unit_template("texture_handle_shader");
 
     // register the texture handle
-    shader_unit_template->register_texture("g_diffuse", &texture_simple);
+    shader_unit_template->register_shader_resource("g_diffuse", (const ShaderResourceHandle*)&texture_simple);
 
     // compile the shader unit
     shading_context->compile_shader_unit_template(shader_unit_template.get(), shader_source);
@@ -100,7 +100,7 @@ TEST(ShaderResource, SimpleTextureAlpha) {
     const auto shader_unit_template = shading_context->begin_shader_unit_template("texture_handle_alpha");
 
     // register the texture handle
-    shader_unit_template->register_texture("g_diffuse", &texture_simple);
+    shader_unit_template->register_shader_resource("g_diffuse", (const ShaderResourceHandle *)&texture_simple);
 
     // compile the shader unit
     shading_context->compile_shader_unit_template(shader_unit_template.get(), shader_source);

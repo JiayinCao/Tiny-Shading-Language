@@ -74,6 +74,7 @@ public:
     //!
     //! It is up to renderers to inteprate the returned pointer. It has to match what the shader exposes.
     //! Failing to match the signature will result in unknown error, likely crash.
+    //! Since the function pointer is already catched, this function has very minimal cost in term of performance.
     //!
     //! @return     A function pointer points to code memory.
     uint64_t        get_function() const;
@@ -107,14 +108,6 @@ public:
     //!
     //! @return         Make a new shader instance.
     std::shared_ptr<ShaderInstance>     make_shader_instance();
-
-    //! @brief  Register texture handle in this shader unit.
-    //!
-    //! It is renderer's job to keep these memory alive.
-    //!
-    //! @param  name    Name of the texture handle defined in shader.
-    //! @param  th      The texture handle to be registered.
-    bool                register_texture(const std::string name, const void* th);
 
     //! @brief  Register resource handle in this shader unit.
     //!
@@ -193,8 +186,8 @@ private:
 //! @brief  Shading context should be a per-thread resource that is for shader related stuff.
 /**
  * Unlike shading_system, shading_context is not designed to be thread-safe, meaning each thread
- * should have their own copy of a shading_system.
- * shading_context is used for shader related operations, like shader compilation, shader execution.
+ * should have their own copy of a shading_context.
+ * shading_context is used for shader related operations, like shader compilation, shader resolving.
  * Since shading_context is available in each thread, things like shader compilation and shader 
  * execution could be exectued in multi-threaded too.
  */
@@ -204,6 +197,9 @@ public:
     ~ShadingContext();
 
     //! @brief  Make a new shader group.
+    //!
+    //! ShadingContext won't keep maintaining the lifetime the returned ShaderGroupTemplate.
+    //! It is renderers' job to keep them alive.
     //!
     //! @param  name    Name of the shader group.
     //! @return         A pointer to the newly allocated shader group.
