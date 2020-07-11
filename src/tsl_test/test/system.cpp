@@ -16,14 +16,15 @@
  */
 
 #include "gtest/gtest.h"
+#include "shading_context.h"
 #include "shading_system.h"
 
 USE_TSL_NAMESPACE
 
 TEST(TSL, Basic) {
     // allocate a shading context
-    auto sc = ShadingSystem::get_instance().make_shading_context();
-
+    std::shared_ptr<ShadingContext> sc = ShadingSystem::get_instance().make_shading_context();
+    
     // make sure the context is allocated.
-    EXPECT_NE(sc, nullptr);
+    EXPECT_NE(sc.get(), nullptr);
 }
