@@ -62,18 +62,15 @@ public:
     ~ShaderInstance_Pvt() {
         // explicit order of destruction is mandatory here to prevent crashing in LLVM code.
         m_execution_engine = nullptr;
-        m_fpm = nullptr;
         m_shader_unit_template = nullptr;
     }
 
     /**< Shader unit template that creates this shader instance. */
     std::shared_ptr<ShaderUnitTemplate> m_shader_unit_template;
 
-    // the execute engine for this module
+    // the execute engine for this module, it is important to keep this execution engine alive to make sure
+    // the raw function pointer is still valid.
     std::unique_ptr<llvm::ExecutionEngine> m_execution_engine = nullptr;
-
-    // the legacy manager, this is for optimization
-    std::unique_ptr<llvm::legacy::FunctionPassManager> m_fpm = nullptr;
 
     // the function address for host code to call
     uint64_t m_function_pointer = 0;

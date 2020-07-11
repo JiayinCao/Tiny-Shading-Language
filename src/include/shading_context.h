@@ -83,8 +83,8 @@ private:
     /**< Private data inside shader instance. */
     ShaderInstance_Pvt* m_shader_instance_data = nullptr;
 
-    TSL_MAKE_FRIEND(ShaderUnitTemplate)
-    TSL_MAKE_FRIEND(TslCompiler_Impl)
+    TSL_MAKE_CLASS_FRIEND(ShaderUnitTemplate)
+    TSL_MAKE_CLASS_FRIEND(TslCompiler_Impl)
     TSL_HIDE_CONSTRUCTOR(ShaderInstance, std::shared_ptr<ShaderUnitTemplate> sut)
 };
 
@@ -111,22 +111,22 @@ public:
 
     //! @brief  Register resource handle in this shader unit.
     //!
+    //! Resource could be anything that will be used in shaders. Commonly, this is used to implement
+    //! texture and measured brdf.
+    //!
     //! @param  name    Name of the shader resource handle defined in shader.
     //! @param  srh     The shader resource handle to be registered.
     bool                register_shader_resource(const std::string& name, const ShaderResourceHandle* srh);
 
 protected:
+    /**< Private data inside shader unit template. */
     ShaderUnitTemplate_Impl* m_shader_unit_template_impl = nullptr;
 
-    //! @brief  Parse shader dependencies.
-    //!
-    //! @param sut      Dependencies of this module.
-    virtual void        parse_dependencies(ShaderUnitTemplate_Pvt* sut) const;
-
-    TSL_MAKE_FRIEND(ShaderInstance)
-    TSL_MAKE_FRIEND(ShaderGroupTemplate)
-    TSL_MAKE_FRIEND(ShadingContext)
-    TSL_MAKE_FRIEND(TslCompiler_Impl)
+    TSL_MAKE_CLASS_FRIEND(ShaderInstance)
+    TSL_MAKE_CLASS_FRIEND(ShaderGroupTemplate)
+    TSL_MAKE_CLASS_FRIEND(ShadingContext)
+    TSL_MAKE_CLASS_FRIEND(TslCompiler_Impl)
+    TSL_MAKE_STRUCT_FRIEND(ShaderGroupTemplate_Impl)
     TSL_HIDE_CONSTRUCTOR(ShaderUnitTemplate, const std::string& name, std::shared_ptr<ShadingContext> context)
 };
 
@@ -138,10 +138,10 @@ protected:
  */
 class TSL_INTERFACE ShaderGroupTemplate : public ShaderUnitTemplate{
 public:
-    //! @brief  Destructor.
-    ~ShaderGroupTemplate();
-
     //! @brief  Add a shader unit in the group.
+    //!
+    //! The original name of the shader template means little in shader group since a same shader unit template could be 'instanced'
+    //! multiple times in a shader group template. The name passed in is used to differentiate them.
     //!
     //! @param  name            Name of the shader unit added in the group.
     //! @param  shader_unit     A shader unit to be added in the group.
@@ -150,6 +150,11 @@ public:
     bool add_shader_unit(const std::string& name, std::shared_ptr<ShaderUnitTemplate> shader_unit, const bool is_root = false);
 
     //! @brief  Connect shader unit in the shader group.
+    //!
+    //! The name used here for both source and target nodes are the ones passed in through add_shader_unit, not the shader unit
+    //! template node.
+    //! Note, this function has very minimal cost since it only caches the connection instead of connecting them for real.
+    //! This also means it is not mandatory to keep any specific order of connection shader unit templates and adding shader unit templates.
     //!
     //! @param  ssu     source shader unit
     //! @param  sspn    source shader parameter name
@@ -169,17 +174,8 @@ public:
     //! @param  spn     source shader parameter name
     void init_shader_input(const std::string& su, const std::string& spn, const ShaderUnitInputDefaultValue& val);
 
-private:
-    /**< Shader group template implementation. */
-    ShaderGroupTemplate_Impl* m_shader_group_template_impl = nullptr;
-
-    //! @brief  Parse shader group dependencies.
-    //!
-    //! @param sut      Dependencies of this module.
-    void parse_dependencies(ShaderUnitTemplate_Pvt* sut) const override;
-
-    TSL_MAKE_FRIEND(ShadingContext)
-    TSL_MAKE_FRIEND(TslCompiler_Impl)
+    TSL_MAKE_CLASS_FRIEND(ShadingContext)
+    TSL_MAKE_CLASS_FRIEND(TslCompiler_Impl)
     TSL_HIDE_CONSTRUCTOR(ShaderGroupTemplate, const std::string& name, std::shared_ptr<ShadingContext> context)
 };
 
@@ -247,7 +243,7 @@ private:
     /**< Shading context implementation. */
     ShadingContext_Impl* m_shading_context_impl = nullptr;
 
-    TSL_MAKE_FRIEND(ShadingSystem)
+    TSL_MAKE_CLASS_FRIEND(ShadingSystem)
     TSL_HIDE_CONSTRUCTOR(ShadingContext, ShadingSystem_Impl* shading_system_impl)
 };
 

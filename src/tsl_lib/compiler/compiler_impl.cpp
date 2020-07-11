@@ -239,20 +239,20 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderInstance* si) {
     // optimization pass, this is pretty cool because I don't have to implement those sophisticated optimization algorithms.
     if (shader_template.m_shader_unit_template_impl->m_allow_optimization) {
         // Create a new pass manager attached to it.
-        shader_instance_data->m_fpm = std::make_unique<llvm::legacy::FunctionPassManager>(cloned_module.get());
+        auto fpm = std::make_unique<llvm::legacy::FunctionPassManager>(cloned_module.get());
 
         // Do simple "peephole" optimizations and bit-twiddling optzns.
-        shader_instance_data->m_fpm->add(llvm::createInstructionCombiningPass());
+        fpm->add(llvm::createInstructionCombiningPass());
         // Re-associate expressions.
-        shader_instance_data->m_fpm->add(llvm::createReassociatePass());
+        fpm->add(llvm::createReassociatePass());
         // Eliminate Common SubExpressions.
-        shader_instance_data->m_fpm->add(llvm::createGVNPass());
+        fpm->add(llvm::createGVNPass());
         // Simplify the control flow graph (deleting unreachable blocks, etc).
-        shader_instance_data->m_fpm->add(llvm::createCFGSimplificationPass());
+        fpm->add(llvm::createCFGSimplificationPass());
 
-        shader_instance_data->m_fpm->doInitialization();
+        fpm->doInitialization();
 
-        shader_instance_data->m_fpm->run(*shader_template_data->m_llvm_function);
+        fpm->run(*shader_template_data->m_llvm_function);
     }
 
     // make sure the function is valid
@@ -287,18 +287,19 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
     if (!sg)
         return TSL_Resolving_InvalidInput;
 
-    auto su_pvt = sg->m_shader_unit_template_impl->m_shader_unit_data;
+    ShaderGroupTemplate_Impl* sg_impl = (ShaderGroupTemplate_Impl*)sg->m_shader_unit_template_impl;
+    auto su_pvt = sg_impl->m_shader_unit_data;
     if (!su_pvt)
         return TSL_Resolving_InvalidInput;
 
     auto module = su_pvt->m_module.get();
 
     // if no root shader setup yet, return false
-    if (sg->m_shader_group_template_impl->m_root_shader_unit_name == "")
+    if (sg_impl->m_root_shader_unit_name == "")
         return TSL_Resolving_ShaderGroupWithoutRoot;
 
     // if we can't find the root shader, it should return false
-    if (0 == sg->m_shader_group_template_impl->m_shader_units.count(sg->m_shader_group_template_impl->m_root_shader_unit_name))
+    if (0 == sg_impl->m_shader_units.count(sg_impl->m_root_shader_unit_name))
         return TSL_Resolving_ShaderGroupWithoutRoot;
 
     // essentially, this is a topological sort
@@ -306,17 +307,17 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
     std::unordered_set<std::string>   current_shader_units_being_visited;
 
     // get the root shader
-    auto root_shader = sg->m_shader_group_template_impl->m_shader_units[sg->m_shader_group_template_impl->m_root_shader_unit_name];
+    auto root_shader = sg_impl->m_shader_units[sg_impl->m_root_shader_unit_name];
 
     // allocate the shader module for this shader group
-    sg->m_shader_unit_template_impl->m_shader_unit_data->m_module = std::make_unique<llvm::Module>(sg->get_name(), m_llvm_context);
-    module = sg->m_shader_unit_template_impl->m_shader_unit_data->m_module.get();
+    sg_impl->m_shader_unit_data->m_module = std::make_unique<llvm::Module>(sg->get_name(), m_llvm_context);
+    module = sg_impl->m_shader_unit_data->m_module.get();
 
     llvm::IRBuilder<> builder(m_llvm_context);
 
     LLVM_Compile_Context compile_context;
     compile_context.context = &m_llvm_context;
-    compile_context.module = sg->m_shader_unit_template_impl->m_shader_unit_data->m_module.get();
+    compile_context.module = sg_impl->m_shader_unit_data->m_module.get();
     compile_context.builder = &builder;
 
     const auto llvm_void_ty = get_void_ty(compile_context);
@@ -329,7 +330,7 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
     std::unordered_map<ShaderUnitTemplate*, llvm::Function*> visited_module;
     std::unordered_map<std::string, llvm::Function*>         shader_unit_llvm_function;
     // pre-declare all shader interfaces
-    for (auto& shader_unit_wrapper : sg->m_shader_group_template_impl->m_shader_units) {
+    for (auto& shader_unit_wrapper : sg_impl->m_shader_units) {
         const auto& shader_unit_name = shader_unit_wrapper.second.m_name;
         auto shader_unit = shader_unit_wrapper.second.m_shader_unit_template;
         auto local_su_pvt = shader_unit->m_shader_unit_template_impl->m_shader_unit_data;
@@ -338,7 +339,7 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
         local_su_pvt->m_module->print(llvm::errs(), nullptr);
 #endif
         // parse shader unit dependencies
-        shader_unit->parse_dependencies(su_pvt);
+        shader_unit->m_shader_unit_template_impl->parse_dependencies(su_pvt);
 
         // no need to declare the function multiple times if it is defined before
         if (visited_module.count(shader_unit.get())){
@@ -385,7 +386,7 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
     }
 
     // parse argument types
-    const auto& args = sg->m_shader_unit_template_impl->m_exposed_args;
+    const auto& args = sg_impl->m_exposed_args;
     std::vector<llvm::Type*>	llvm_arg_types(args.size());
     for (auto i = 0; i < args.size(); ++i) {
         auto raw_type = llvm_type_from_arg_type(args[i].m_type, compile_context);
@@ -436,8 +437,8 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
     builder.CreateRetVoid();
         
     // keep record of the llvm function
-    sg->m_shader_unit_template_impl->m_shader_unit_data->m_llvm_function = function;
-    sg->m_shader_unit_template_impl->m_shader_unit_data->m_root_function_name = func_name;
+    sg_impl->m_shader_unit_data->m_llvm_function = function;
+    sg_impl->m_shader_unit_data->m_root_function_name = func_name;
 
     return TSL_Resolving_Succeed;
 }
@@ -459,18 +460,20 @@ TSL_Resolving_Status TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Con
     being_visited.insert(shader_unit_copy_name);
     visited.insert(shader_unit_copy_name);
 
+    ShaderGroupTemplate_Impl* sg_impl = (ShaderGroupTemplate_Impl*)sg->m_shader_unit_template_impl;
+
     // check shader unit it depends on
     // const std::string shader_unit_name = su->get_name();
-    if (sg->m_shader_group_template_impl->m_shader_unit_connections.count(shader_unit_copy_name)) {
-        const auto& dependencies = sg->m_shader_group_template_impl->m_shader_unit_connections[shader_unit_copy_name];
+    if (sg_impl->m_shader_unit_connections.count(shader_unit_copy_name)) {
+        const auto& dependencies = sg_impl->m_shader_unit_connections[shader_unit_copy_name];
         for (const auto& dep : dependencies) {
             const auto& dep_shader_unit_name = dep.second.first;
 
             // if an undefined shader unit is assigned, simply quit the process
-            if (sg->m_shader_group_template_impl->m_shader_units.count(shader_unit_copy_name) == 0)
+            if (sg_impl->m_shader_units.count(shader_unit_copy_name) == 0)
                 return TSL_Resolving_UndefinedShaderUnit;
 
-            const auto dep_shader_unit = sg->m_shader_group_template_impl->m_shader_units[dep_shader_unit_name];
+            const auto dep_shader_unit = sg_impl->m_shader_units[dep_shader_unit_name];
             const auto ret = generate_shader_source(context, sg, dep_shader_unit, visited, being_visited, var_mapping, function_mapping, args);
             if(TSL_Resolving_Succeed != ret)
                 return ret;
@@ -486,7 +489,7 @@ TSL_Resolving_Status TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Con
 
         if (is_input) {
             bool found_connection = false;
-            auto& connections = sg->m_shader_group_template_impl->m_shader_unit_connections;
+            auto& connections = sg_impl->m_shader_unit_connections;
             if (connections.count(shader_unit_copy_name)) {
                 auto& connection = connections[shader_unit_copy_name];
                 if (connection.count(name)) {
@@ -503,8 +506,8 @@ TSL_Resolving_Status TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Con
                 bool need_allocation = true;
 
                 // check if this input is connected with exposed argument of the shader group first
-                const auto it = sg->m_shader_group_template_impl->m_input_args.find(shader_unit_copy_name);
-                if (it != sg->m_shader_group_template_impl->m_input_args.end()) {
+                const auto it = sg_impl->m_input_args.find(shader_unit_copy_name);
+                if (it != sg_impl->m_input_args.end()) {
                     const auto& shader_mapping = it->second;
                     const auto it1 = shader_mapping.find(name);
                     if (it1 != shader_mapping.end()) {
@@ -524,7 +527,7 @@ TSL_Resolving_Status TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Con
 
                     bool has_init_value = false;
 
-                    const auto& mapping = sg->m_shader_group_template_impl->m_shader_input_defaults;
+                    const auto& mapping = sg_impl->m_shader_input_defaults;
                     const auto it = mapping.find(shader_unit_copy_name);
                     if (it != mapping.end()) {
                         const auto it1 = it->second.find(name);
@@ -584,8 +587,8 @@ TSL_Resolving_Status TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Con
             bool need_allocation = true;
 
             // check if this output is connected with exposed argument of the shader group first
-            const auto it = sg->m_shader_group_template_impl->m_output_args.find(shader_unit_copy_name);
-            if (it != sg->m_shader_group_template_impl->m_output_args.end()) {
+            const auto it = sg_impl->m_output_args.find(shader_unit_copy_name);
+            if (it != sg_impl->m_output_args.end()) {
                 const auto& shader_mapping = it->second;
                 const auto it1 = shader_mapping.find(name);
                 if (it1 != shader_mapping.end()) {

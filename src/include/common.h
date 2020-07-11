@@ -32,9 +32,11 @@ TSL_NAMESPACE_BEGIN
 // Helper function to make class friendship. Code using TSL will not be interested in learning the friendship among the classes.
 // So if it is not TSL library code including this file, it won't even generate any code with this macro.
 #if BUILDING_TSL
-    #define TSL_MAKE_FRIEND(T)  friend class T;
+    #define TSL_MAKE_CLASS_FRIEND(T)    friend class T;
+    #define TSL_MAKE_STRUCT_FRIEND(T)   friend struct T;
 #else
-    #define TSL_MAKE_FRIEND(T)  /* ignore me */
+    #define TSL_MAKE_CLASS_FRIEND(T)    /* ignore me */
+    #define TSL_MAKE_STRUCT_FRIEND(T)   /* ignore me */
 #endif
 
 TSL_NAMESPACE_END

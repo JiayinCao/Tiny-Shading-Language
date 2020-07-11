@@ -60,6 +60,11 @@ struct ShaderUnitTemplate_Impl {
 
     /**< Description of exposed arguments. */
     std::vector<ArgDescriptor>  m_exposed_args;
+
+    //! @brief  Parse shader group dependencies.
+    //!
+    //! @param sut      Dependencies of this module.
+    virtual void parse_dependencies(ShaderUnitTemplate_Pvt* sut) const;
 };
 
 //! @brief  A thin wrapper to allow a shader unit added in a group more than once.
@@ -72,7 +77,7 @@ struct ShaderUnitTemplateCopy {
     std::shared_ptr<ShaderUnitTemplate> m_shader_unit_template;
 };
 
-struct ShaderGroupTemplate_Impl {
+struct ShaderGroupTemplate_Impl : public ShaderUnitTemplate_Impl {
     /**< Shader units belong to this group. */
     std::unordered_map<std::string, ShaderUnitTemplateCopy> m_shader_units;
 
@@ -91,6 +96,11 @@ struct ShaderGroupTemplate_Impl {
     /**< Shader default value. */
     using ShaderUnitInputDefaultMapping = std::unordered_map<std::string, std::unordered_map<std::string, ShaderUnitInputDefaultValue>>;
     ShaderUnitInputDefaultMapping   m_shader_input_defaults;
+
+    //! @brief  Parse shader group dependencies.
+    //!
+    //! @param sut      Dependencies of this module.
+    void parse_dependencies(ShaderUnitTemplate_Pvt* sut) const override;
 };
 
 struct ShadingContext_Impl {
