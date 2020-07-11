@@ -46,8 +46,10 @@ const std::string& ShaderUnitTemplate::get_name() const {
 }
 
 std::shared_ptr<ShaderInstance> ShaderUnitTemplate::make_shader_instance() {
-    auto ptr = shared_from_this();
-    return std::make_shared<ShaderInstance>(ptr);
+    // Ideally, I should have used make_shared instead of shared_ptr to construct this shader instance.
+    // However, in order to hide the useless interface from user of TSL, I chose to hide the constructor,
+    // leaving TSL users no choice to construct shader instance but to go through shader unit template.
+    return std::shared_ptr<ShaderInstance>(new ShaderInstance(shared_from_this()));
 }
 
 ShaderInstance::ShaderInstance(std::shared_ptr<ShaderUnitTemplate> sut) {
@@ -61,10 +63,6 @@ ShaderInstance::~ShaderInstance() {
 
 uint64_t ShaderInstance::get_function() const {
     return m_shader_instance_data->m_function_pointer;
-}
-
-const ShaderUnitTemplate& ShaderInstance::get_shader_template() const {
-    return *m_shader_instance_data->m_shader_unit_template.get();
 }
 
 void ShaderUnitTemplate::parse_dependencies(ShaderUnitTemplate_Pvt* sut) const {
@@ -158,7 +156,7 @@ ShadingContext::~ShadingContext() {
 
 std::shared_ptr<ShaderUnitTemplate> ShadingContext::begin_shader_unit_template(const std::string& name) {
     auto ptr = shared_from_this();
-    return std::make_shared<ShaderUnitTemplate>(name, ptr);
+    return std::shared_ptr<ShaderUnitTemplate>(new ShaderUnitTemplate(name, ptr));
 }
 
 TSL_Resolving_Status ShadingContext::end_shader_unit_template(ShaderUnitTemplate* su) const {
@@ -179,8 +177,7 @@ TSL_Resolving_Status ShadingContext::resolve_shader_instance(ShaderInstance* si)
 }
 
 std::shared_ptr<ShaderGroupTemplate> ShadingContext::begin_shader_group_template(const std::string& name) {
-    auto ptr = shared_from_this();
-    return std::make_shared<ShaderGroupTemplate>(name, ptr);
+    return std::shared_ptr<ShaderGroupTemplate>(new ShaderGroupTemplate(name, shared_from_this()));
 }
 
 TSL_NAMESPACE_END

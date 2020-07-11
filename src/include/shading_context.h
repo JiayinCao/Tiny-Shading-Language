@@ -17,12 +17,10 @@
 
 #pragma once
 
-#include <unordered_map>
-#include <unordered_set>
 #include <memory>
-#include <vector>
 #include <string>
 #include "tslversion.h"
+#include "common.h"
 #include "status.h"
 #include "closure.h"
 #include "shader_arg_types.h"
@@ -33,13 +31,14 @@ TSL_NAMESPACE_BEGIN
 class ShadingSystem;
 class TslCompiler;
 class ShaderUnitTemplate;
+class ShadingContext;
+
+struct ShadingSystem_Impl;
 struct ShaderUnitTemplate_Pvt;
 struct ShaderInstance_Pvt;
-struct ShadingSystem_Impl;
 struct ShaderUnitTemplate_Impl;
 struct ShaderGroupTemplate_Impl;
 struct ShadingContext_Impl;
-class ShadingContext;
 
 #if defined(TSL_ON_WINDOWS)
     // WARNING
@@ -68,38 +67,24 @@ public:
  */
 class TSL_INTERFACE ShaderInstance {
 public:
-    //! @brief  Private constructor to limit the construction of shader instance through ShaderUnitTemplate.
-    //!
-    //! @param  sut     Shader unit template that is used to construct this shader instance.
-    ShaderInstance(std::shared_ptr<ShaderUnitTemplate> sut);
-
     //! @brief  Destructor
     ~ShaderInstance();
 
     //! @brief  Get the function pointer to execute the shader.
     //!
+    //! It is up to renderers to inteprate the returned pointer. It has to match what the shader exposes.
+    //! Failing to match the signature will result in unknown error, likely crash.
+    //!
     //! @return     A function pointer points to code memory.
     uint64_t        get_function() const;
-
-    //! @brief  Get private shader instance data.
-    //!
-    //! @return     It returns a pointer to shader instance private data.
-    ShaderInstance_Pvt* get_shader_instance_data() {
-        return m_shader_instance_data;
-    }
-
-    //! @brief  Get shader unit template.
-    //!
-    //! @return     The shader template.
-    const ShaderUnitTemplate& get_shader_template() const;
 
 private:
     /**< Private data inside shader instance. */
     ShaderInstance_Pvt* m_shader_instance_data = nullptr;
 
-    // making sure ShaderUnitTemplate can access private method of this class so that it can create an instance
-    // of it.
-    friend class ShaderUnitTemplate;
+    TSL_MAKE_FRIEND(ShaderUnitTemplate)
+    TSL_MAKE_FRIEND(TslCompiler_Impl)
+    TSL_HIDE_CONSTRUCTOR(ShaderInstance, std::shared_ptr<ShaderUnitTemplate> sut)
 };
 
 //! @brief  ShaderUnitTemplate defines the shader of a single shader unit.
@@ -110,26 +95,18 @@ private:
  */
 class TSL_INTERFACE ShaderUnitTemplate : public std::enable_shared_from_this<ShaderUnitTemplate> {
 public:
-    //! @brief  Constructor.
-    //!
-    //! @param  name    Name of the shader unit.
-    ShaderUnitTemplate(const std::string& name, std::shared_ptr<ShadingContext> context);
-
     //! @brief  Destructor.
     virtual ~ShaderUnitTemplate();
 
     //! @brief          Get name of the shader unit.
+    //!
+    //! @return         Name of the shader unit template.
     const std::string&  get_name() const;
 
     //! @brief  Make a shader instance
     //!
     //! @return         Make a new shader instance.
     std::shared_ptr<ShaderInstance>     make_shader_instance();
-
-    //! @brief  Parse shader dependencies.
-    //!
-    //! @param sut      Dependencies of this module.
-    virtual void        parse_dependencies(ShaderUnitTemplate_Pvt* sut) const;
 
     //! @brief  Register texture handle in this shader unit.
     //!
@@ -148,9 +125,16 @@ public:
 protected:
     ShaderUnitTemplate_Impl* m_shader_unit_template_impl = nullptr;
 
-    // make sure shader instance can access private data of shader_unit_template
-    friend class ShaderInstance;
-    friend class TslCompiler_Impl;
+    //! @brief  Parse shader dependencies.
+    //!
+    //! @param sut      Dependencies of this module.
+    virtual void        parse_dependencies(ShaderUnitTemplate_Pvt* sut) const;
+
+    TSL_MAKE_FRIEND(ShaderInstance)
+    TSL_MAKE_FRIEND(ShaderGroupTemplate)
+    TSL_MAKE_FRIEND(ShadingContext)
+    TSL_MAKE_FRIEND(TslCompiler_Impl)
+    TSL_HIDE_CONSTRUCTOR(ShaderUnitTemplate, const std::string& name, std::shared_ptr<ShadingContext> context)
 };
 
 //! @brief  Shader group is a basic unit of shader execution.
@@ -161,12 +145,6 @@ protected:
  */
 class TSL_INTERFACE ShaderGroupTemplate : public ShaderUnitTemplate{
 public:
-    //! @brief  Constructor.
-    //!
-    //! @param  name            The name fo the shader group.
-    //! @param  context         The shading context created the shader group template
-    ShaderGroupTemplate(const std::string& name, std::shared_ptr<ShadingContext> context);
-
     //! @brief  Destructor.
     ~ShaderGroupTemplate();
 
@@ -198,16 +176,18 @@ public:
     //! @param  spn     source shader parameter name
     void init_shader_input(const std::string& su, const std::string& spn, const ShaderUnitInputDefaultValue& val);
 
+private:
+    /**< Shader group template implementation. */
+    ShaderGroupTemplate_Impl* m_shader_group_template_impl = nullptr;
+
     //! @brief  Parse shader group dependencies.
     //!
     //! @param sut      Dependencies of this module.
     void parse_dependencies(ShaderUnitTemplate_Pvt* sut) const override;
 
-private:
-    /**< Shader group template implementation. */
-    ShaderGroupTemplate_Impl* m_shader_group_template_impl = nullptr;
-
-    friend class TslCompiler_Impl;
+    TSL_MAKE_FRIEND(ShadingContext)
+    TSL_MAKE_FRIEND(TslCompiler_Impl)
+    TSL_HIDE_CONSTRUCTOR(ShaderGroupTemplate, const std::string& name, std::shared_ptr<ShadingContext> context)
 };
 
 //! @brief  Shading context should be a per-thread resource that is for shader related stuff.
@@ -268,16 +248,11 @@ public:
     TSL_Resolving_Status      resolve_shader_instance(ShaderInstance* si) const;
 
 private:
-    //! @brief  Constructor.
-    //!
-    //! shading_context can only be allocated through shading_system. Making the constructor private
-    //! will make sure users of TSL won't create instance of this class manually.
-    ShadingContext(ShadingSystem_Impl* shading_system_impl);
-
     /**< Shading context implementation. */
     ShadingContext_Impl* m_shading_context_impl = nullptr;
 
-    friend class ShadingSystem;
+    TSL_MAKE_FRIEND(ShadingSystem)
+    TSL_HIDE_CONSTRUCTOR(ShadingContext, ShadingSystem_Impl* shading_system_impl)
 };
 
 TSL_NAMESPACE_END

@@ -49,7 +49,7 @@ struct ClosureTreeNodeMul : public ClosureTreeNodeBase {
     ClosureTreeNodeBase*	m_closure = nullptr;
 };
 
-// It is very important to make sure the memory layout is as expected, there should be no fancy stuff compiler is trying to do for these data structure.
+// It is very important to make sure the memory layout is as expected, there should be no fancy stuff compiler tries to do for these data structure.
 // Because the same data structure will also be generated from LLVM, which will expect this exact memory layout. If there is miss-match, it will crash.
 static_assert( sizeof(ClosureTreeNodeBase) == sizeof(ClosureID) + sizeof(ClosureParamPtr) + 4 /* memory padding. */, "Invalid Closure Tree Node Size" );
 static_assert( sizeof(ClosureTreeNodeAdd) == sizeof(ClosureTreeNodeBase) + sizeof(ClosureTreeNodeBase*) * 2 , "Invalid ClosureTreeNodeAdd Node Size" );

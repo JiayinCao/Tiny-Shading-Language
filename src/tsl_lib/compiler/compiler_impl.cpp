@@ -226,8 +226,8 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderInstance* si) {
     if (!si)
         return TSL_Resolving_InvalidInput;
 
-    const auto& shader_template = si->get_shader_template();
-    auto shader_instance_data = si->get_shader_instance_data();
+    const auto& shader_template = *(si->m_shader_instance_data->m_shader_unit_template);
+    auto shader_instance_data = si->m_shader_instance_data;
     auto shader_template_data = shader_template.m_shader_unit_template_impl->m_shader_unit_data;
 
     // invalid shader unit template
