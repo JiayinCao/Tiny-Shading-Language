@@ -21,8 +21,7 @@
 #include <vector>
 #include <memory>
 #include "gtest/gtest.h"
-#include "shading_system.h"
-#include "shading_context.h"
+#include "tsl_system.h"
 #include "global.h"
 
 USE_TSL_NAMESPACE

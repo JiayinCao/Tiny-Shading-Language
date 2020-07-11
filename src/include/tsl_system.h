@@ -17,28 +17,23 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include "tslversion.h"
-#include "common.h"
-#include "status.h"
+#include "tsl_define.h"
 #include "closure.h"
+#include "global.h"
 #include "shader_arg_types.h"
-#include "export.h"
+#include "status.h"
 
 TSL_NAMESPACE_BEGIN
 
-class ShadingSystem;
 class TslCompiler;
 class ShaderUnitTemplate;
 class ShadingContext;
 
 struct ShadingSystem_Impl;
-struct ShaderUnitTemplate_Pvt;
-struct ShaderInstance_Pvt;
+struct ShadingContext_Impl;
 struct ShaderUnitTemplate_Impl;
 struct ShaderGroupTemplate_Impl;
-struct ShadingContext_Impl;
+struct ShaderInstance_Impl;
 
 #if defined(TSL_ON_WINDOWS)
     // WARNING
@@ -51,6 +46,114 @@ struct ShadingContext_Impl;
     template class TSL_INTERFACE std::enable_shared_from_this<ShadingContext>;
 #endif
 
+//! @brief  Debug information levels.
+enum class TSL_DEBUG_LEVEL : unsigned int {
+    TSL_DEBUG_INFO,         // General debugging information.
+    TSL_DEBUG_WARNING,      // A warning means there is some badly written code in shader sources.
+    TSL_DEBUG_ERROR,        // An error will most likely result failure in shader compilation.
+};
+
+//! @brief  ShadingSystem callback interface.
+/**
+ * ShadingSystemInterface offers a chance for renderers to do things like, outputing errors or logs, allocating memory for bxdf.
+ * All methods in this interface need to be implemented in a thread-safe manner, it is renderer's job to make sure of it.
+ * TSL won't synchronize upon calling these calls.
+ */
+class TSL_INTERFACE ShadingSystemInterface {
+public:
+    //! @brief  Virtual destructor.
+    virtual ~ShadingSystemInterface() = default;
+
+    //! @brief  Allocate memory inside shaders.
+    //!
+    //! There are things to be noticed in this interface.
+    //!  - Shaders are not responsible to release the memory allocator allocates, it is up to the renderer to do so.
+    //!  - This implementation has to be thread safe.
+    virtual void*   allocate(unsigned int size) const = 0;
+
+    //! @brief  This will be automatically called when there is error during shader compilation.
+    //!
+    //! @param  level       Debug level.
+    //! @param  error       String describing the error.
+    virtual void    catch_debug(const TSL_DEBUG_LEVEL level, const char* error) const = 0;
+
+    //! @brief  Sample a 2d texture.
+    //!
+    //! @param  texture     Texture handle.
+    //! @param  u           UV coordinate.
+    //! @param  v           UV coordinate.
+    //! @param  color       RGB of the texture pixel.
+    virtual void    sample_2d(const void* texture, float u, float v, float3& color) const = 0;
+
+    //! @brief  Sample alpha channel in a 2d texture.
+    //!
+    //! Having two separate interfaces for 2d sampling for RGB and alpha may not sound wise from a performance perspective.
+    //! However, in order to get the ball rolling as soon as possible, I'll live with it now.
+    //! To support float4 is also an alternative to be considered in the future.
+    //!
+    //! @param  texture     Texture handle.
+    //! @param  u           UV coordinate.
+    //! @param  v           UV coordinate.
+    //! @param  alpha       Alpha channel of the texture.
+    virtual void    sample_alpha_2d(const void* texture, float u, float v, float& alpha) const = 0;
+};
+
+//! @brief  Shading system is the root interface exposed through TSL system.
+/*
+ * A shading_system owns the whole TSL compiling system. A ray tracer with TSL integrated should have only one
+ * instance of this class. Most of the interfaces, unless explicitly mentioned, should be thread-safe.
+ * It owns all memory allocated of the system, it will also deallocate all memory allocated so there is no need
+ * manually maintain memory allocated through this interface.
+ */
+class TSL_INTERFACE ShadingSystem {
+public:
+    //! @brief  Destructor.
+    ~ShadingSystem();
+
+    //! @brief  Make the only instance of shading system in TSL system.
+    //!
+    //! This has to be called before anything in TSL called. The interface to be registered is very important to shader
+    //! compilation. ShadingSystem will take over the ownership of the pointer passed in. Renderers don't need to 
+    //! deallocate the memory of the passed in parameter, it will also need to avoid access of this parameter in renderer 
+    //! later.
+    //!
+    //! @param  ssi         The interface to be registered.
+    static void                             register_shadingsystem_interface(std::unique_ptr<ShadingSystemInterface> ssi);
+
+    //! @brief  Get shading system instance.
+    //!
+    //! In order to make sure there is not a second instance of shading system in renderers, this class is a class of singleton.
+    //! There is no way to have a second instance of it, which is secured duing compilation time.
+    //!
+    //! @return             Reference to the only instance of the class.
+    static ShadingSystem&                   get_instance();
+
+    //! @brief  Create a new shading context.
+    //!
+    //! TSL shading system won't take responsibility of keeping shading context alive. It is up to renderers to make sure it is alive
+    //! when it is still needed. However, shading context life time will also be observed by things like shader unit template and
+    //! shader instance, meaning as long as there is a shader instance or shader unit template alive, the context which creates them
+    //! will also be alive.
+    //!
+    //! @return             A smart pointer to the newly created shading context returned by TSL system.
+    std::shared_ptr<class ShadingContext>   make_shading_context();
+
+    //! @brief  Register closure id.
+    //!
+    //! @param  name            Name of the closure. This has to match the one used in TSL shaders.
+    //! @param  mapping         Mapping of the data inside the closure.
+    //! @param  closure_size    Size of the data structure.
+    //! @return                 Allocated closure id for the closure.
+    ClosureID                               register_closure_type(const std::string& name, ClosureVarList& mapping, int closure_size);
+
+    //! @brief  Register tsl global data.
+    //!
+    //! @param  mapping     Mapping of the data structure.
+    void                                    register_tsl_global(GlobalVarList& mapping);
+    
+    TSL_HIDE_CONSTRUCTOR(ShadingSystem)
+};
+
 //! @brief  Shader resource handle interface.
 class TSL_INTERFACE ShaderResourceHandle {
 public:
@@ -62,7 +165,7 @@ public:
 /**
  * A shader instance keeps track of the raw function pointer for shader execution.
  * Shader instances made from a same thread can't be resolved in multiple threads simultaneously.
- * But shader instance can be executed by multiple threads simultaneously once constructed and 
+ * But shader instance can be executed by multiple threads simultaneously once constructed and
  * resolved.
  */
 class TSL_INTERFACE ShaderInstance {
@@ -81,7 +184,7 @@ public:
 
 private:
     /**< Private data inside shader instance. */
-    ShaderInstance_Pvt* m_shader_instance_data = nullptr;
+    ShaderInstance_Impl* m_shader_instance_data = nullptr;
 
     TSL_MAKE_CLASS_FRIEND(ShaderUnitTemplate)
     TSL_MAKE_CLASS_FRIEND(TslCompiler_Impl)
@@ -102,7 +205,7 @@ public:
     //! @brief          Get name of the shader unit.
     //!
     //! @return         Name of the shader unit template.
-    const std::string&  get_name() const;
+    const std::string& get_name() const;
 
     //! @brief  Make a shader instance
     //!
@@ -116,7 +219,7 @@ public:
     //!
     //! @param  name    Name of the shader resource handle defined in shader.
     //! @param  srh     The shader resource handle to be registered.
-    bool                register_shader_resource(const std::string& name, const ShaderResourceHandle* srh);
+    bool                                register_shader_resource(const std::string& name, const ShaderResourceHandle* srh);
 
 protected:
     /**< Private data inside shader unit template. */
@@ -136,7 +239,7 @@ protected:
  * A shader group itself is also a shader unit, which is a quite useful feature to get recursive
  * node supported in certain material editors.
  */
-class TSL_INTERFACE ShaderGroupTemplate : public ShaderUnitTemplate{
+class TSL_INTERFACE ShaderGroupTemplate : public ShaderUnitTemplate {
 public:
     //! @brief  Add a shader unit in the group.
     //!
@@ -166,7 +269,7 @@ public:
     //!
     //! @param  su      source shader unit
     //! @param  spn     source shader parameter name
-    void expose_shader_argument(const std::string& su, const std::string& spn, const ArgDescriptor& arg_desc );
+    void expose_shader_argument(const std::string& su, const std::string& spn, const ArgDescriptor& arg_desc);
 
     //! @brief  Setup default shader argument init value
     //!
@@ -184,7 +287,7 @@ public:
  * Unlike shading_system, shading_context is not designed to be thread-safe, meaning each thread
  * should have their own copy of a shading_context.
  * shading_context is used for shader related operations, like shader compilation, shader resolving.
- * Since shading_context is available in each thread, things like shader compilation and shader 
+ * Since shading_context is available in each thread, things like shader compilation and shader
  * execution could be exectued in multi-threaded too.
  */
 class TSL_INTERFACE ShadingContext : public std::enable_shared_from_this<ShadingContext> {
@@ -199,13 +302,13 @@ public:
     //!
     //! @param  name    Name of the shader group.
     //! @return         A pointer to the newly allocated shader group.
-    std::shared_ptr<ShaderGroupTemplate> begin_shader_group_template(const std::string& name);
+    std::shared_ptr<ShaderGroupTemplate>    begin_shader_group_template(const std::string& name);
 
     //! @brief  Resolve a shader group template before using it.
     //!
     //! @param sg       The shader group to be resolved.
     //! @return         Whether the shader is resolved successfully.
-    TSL_Resolving_Status end_shader_group_template(ShaderGroupTemplate* sg) const;
+    TSL_Resolving_Status                    end_shader_group_template(ShaderGroupTemplate* sg) const;
 
     //! @brief  Make a new shader unit template.
     //!
@@ -216,12 +319,12 @@ public:
     //!
     //! @param  name    Name of the shader unit template.
     //! @return         Shader unit template to be returned.
-    std::shared_ptr<ShaderUnitTemplate>  begin_shader_unit_template(const std::string& name);
+    std::shared_ptr<ShaderUnitTemplate>     begin_shader_unit_template(const std::string& name);
 
     //! @breif  Ending of making a shader unit template.
     //!
     //! @param  sut     The shader unit template to close.
-    TSL_Resolving_Status end_shader_unit_template(ShaderUnitTemplate* su) const;
+    TSL_Resolving_Status                    end_shader_unit_template(ShaderUnitTemplate* su) const;
 
     //! @brief  Compile shader unit with source code.
     //!
@@ -231,13 +334,13 @@ public:
     //! @param sut      Shader unit template.
     //! @param source   Source code of the shader.
     //! @return         A pointer to shader unit.
-    bool  compile_shader_unit_template(ShaderUnitTemplate* sut, const char* source) const;
+    bool                                    compile_shader_unit_template(ShaderUnitTemplate* sut, const char* source) const;
 
     //! @brief  Resolve a shader instance before using it.
     //!
     //! @param si       The shader instance to be resolved.
     //! @return         Whether the shader is resolved successfully.
-    TSL_Resolving_Status      resolve_shader_instance(ShaderInstance* si) const;
+    TSL_Resolving_Status                    resolve_shader_instance(ShaderInstance* si) const;
 
 private:
     /**< Shading context implementation. */

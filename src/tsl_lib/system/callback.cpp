@@ -15,8 +15,7 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-#include "shading_system.h"
-#include "shading_context.h"
+#include "tsl_system.h"
 #include "shader_arg_types.h"
 #include "system/shader_resource_impl.h"
 #include "system/impl.h"

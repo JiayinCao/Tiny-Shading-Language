@@ -25,7 +25,7 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
-#include "tslversion.h"
+#include "tsl_define.h"
 #include "types.h"
 #include "shader_unit_pvt.h"
 #include "global.h"

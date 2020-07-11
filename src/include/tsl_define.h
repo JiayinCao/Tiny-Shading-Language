@@ -17,9 +17,47 @@
 
 #pragma once
 
-#include "tslversion.h"
+#include "tsl_version.h"
 
 TSL_NAMESPACE_BEGIN
+
+// define platform for tsl
+#if defined(_WIN32) || defined(_WIN64)
+    #define TSL_ON_WINDOWS
+#elif defined(__linux__)
+    #define TSL_ON_LINUX
+
+    // Make sure the compiler is C++14 compatible. Otherwise, make it clear that it is necessary to compile TSL in an error message.
+    #if (__cplusplus < 201300L)
+    #  error "TSL heavily uses features of C++14/11, please make sure you have a C++14 compatible compiler."
+    #endif
+#elif defined(__APPLE__)
+    #define TSL_ON_MAC
+
+        // Make sure the compiler is C++14 compatible. Otherwise, make it clear that it is necessary to compile TSL in an error message.
+    #if (__cplusplus < 201300L)
+    #  error "TSL heavily uses features of C++14/11, please make sure you have a C++14 compatible compiler."
+    #endif
+#endif
+
+#if defined(TSL_ON_WINDOWS)
+    #if BUILDING_TSL
+        #define TSL_INTERFACE __declspec(dllexport)
+    #else
+        #define TSL_INTERFACE __declspec(dllimport)
+    #endif
+#elif defined(TSL_ON_LINUX) || defined(TSL_ON_MAC)
+    #if BUILDING_TSL
+        #define TSL_INTERFACE __attribute__((visibility("default")))
+    #else
+        #define TSL_INTERFACE
+    #endif
+#else
+    //  do nothing and hope for the best?
+    #define TSL_INTERFACE
+    #define IMPORT
+    #pragma message("Unknown dynamic link import/export semantics.")
+#endif
 
 // Hide the constructors to prevent it from being constructed in a way that TSL doesn't expect.
 // Note, TSL won't even implemented these functions because if TSL users try to invoke either of these calls, compiling will

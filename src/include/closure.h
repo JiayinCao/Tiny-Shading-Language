@@ -22,8 +22,7 @@
 #include <stddef.h>
 #include <vector>
 #include <string>
-#include "tslversion.h"
-#include "export.h"
+#include "tsl_define.h"
 
 TSL_NAMESPACE_BEGIN
 

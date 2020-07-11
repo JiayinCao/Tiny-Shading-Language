@@ -22,15 +22,14 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <mutex>
-#include "tslversion.h"
 #include "shader_resource_impl.h"
-#include "shading_system.h"
-#include "shading_context.h"
+#include "tsl_system.h"
 #include "system/shader_resource_impl.h"
 
 TSL_NAMESPACE_BEGIN
 
 class GlobalModule;
+struct ShaderUnitTemplate_Pvt;
 
 struct ShadingSystem_Impl {
     /**< Closure register */

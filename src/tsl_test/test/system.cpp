@@ -16,8 +16,7 @@
  */
 
 #include "gtest/gtest.h"
-#include "shading_context.h"
-#include "shading_system.h"
+#include "tsl_system.h"
 
 USE_TSL_NAMESPACE
 

@@ -16,9 +16,8 @@
  */
 
 #include <iostream>
-#include "tslversion.h"
 #include "gtest/gtest.h"
-#include "shading_system.h"
+#include "tsl_system.h"
 #include "test/test_common.h"
 
 class ShadingSystemInterfaceSimple : public Tsl_Namespace::ShadingSystemInterface {

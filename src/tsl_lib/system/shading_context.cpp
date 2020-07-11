@@ -21,8 +21,7 @@
 #include "llvm/Transforms/Scalar/GVN.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ExecutionEngine/MCJIT.h"
-#include "shading_context.h"
-#include "shading_system.h"
+#include "tsl_system.h"
 #include "compiler/compiler.h"
 #include "compiler/shader_unit_pvt.h"
 #include "system/impl.h"
@@ -57,7 +56,7 @@ std::shared_ptr<ShaderInstance> ShaderUnitTemplate::make_shader_instance() {
 }
 
 ShaderInstance::ShaderInstance(std::shared_ptr<ShaderUnitTemplate> sut) {
-    m_shader_instance_data = new ShaderInstance_Pvt();
+    m_shader_instance_data = new ShaderInstance_Impl();
     m_shader_instance_data->m_shader_unit_template = sut;
 }
 

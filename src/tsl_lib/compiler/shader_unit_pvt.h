@@ -21,7 +21,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/IR/LegacyPassManager.h"
-#include "tslversion.h"
+#include "tsl_version.h"
 #include "shader_arg_types.h"
 
 TSL_NAMESPACE_BEGIN
@@ -57,9 +57,9 @@ public:
 };
 
 // This data structure hides all LLVM related data from ShaderInstance.
-struct ShaderInstance_Pvt {
+struct ShaderInstance_Impl {
 public:
-    ~ShaderInstance_Pvt() {
+    ~ShaderInstance_Impl() {
         // explicit order of destruction is mandatory here to prevent crashing in LLVM code.
         m_execution_engine = nullptr;
         m_shader_unit_template = nullptr;

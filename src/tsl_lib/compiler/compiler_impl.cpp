@@ -25,7 +25,7 @@
 #include "compiler_impl.h"
 #include "ast.h"
 #include "shader_unit_pvt.h"
-#include "shading_context.h"
+#include "tsl_system.h"
 #include "global_module.h"
 #include "llvm_util.h"
 #include "system/impl.h"

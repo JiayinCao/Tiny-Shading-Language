@@ -17,8 +17,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
-#include "shading_system.h"
-#include "shading_context.h"
+#include "tsl_system.h"
 #include "compiler/global_module.h"
 #include "llvm/Support/TargetSelect.h"
 #include "system/impl.h"

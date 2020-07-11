@@ -61,7 +61,7 @@ set (TSL_LIBRARY_VERSION_PATCH 0)
 project (TSL)
 
 # generate tsl header file based on tsl version
-set (versionfile tslversion.h)
+set (versionfile tsl_version.h)
 message (STATUS "Create ${versionfile} from ${versionfile}.in")
 configure_file (${TSL_SOURCE_DIR}/src/include/${versionfile}.in "${TSL_SOURCE_DIR}/src/include/${versionfile}" @ONLY)
 list (APPEND version_head "${TSL_SOURCE_DIR}/src/include/${versionfile}")
