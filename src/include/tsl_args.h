@@ -87,7 +87,7 @@ struct GlobalVarList{
 
 #define DECLARE_TSLGLOBAL_BEGIN(T)          struct T {
 #define DECLARE_TSLGLOBAL_VAR(VT,V)         VT V;
-#define DECLARE_TSLGLOBAL_END()             static GlobalVarList m_var_list; };
+#define DECLARE_TSLGLOBAL_END()             static GlobalVarList m_var_list; static bool shader_unit_register( ShaderUnitTemplate* sut ) { return sut->register_tsl_global( m_var_list ); } };
 
 #define IMPLEMENT_TSLGLOBAL_BEGIN(T)        GlobalVarList T::m_var_list( std::vector<GlobalVar>({
 #define IMPLEMENT_TSLGLOBAL_VAR(VT,V)       { GlobalVar( #V, #VT ) },
