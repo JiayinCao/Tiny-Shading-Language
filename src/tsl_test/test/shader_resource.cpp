@@ -18,11 +18,11 @@
 #include "test_common.h"
 
 namespace {
-    DECLARE_TSLGLOBAL_BEGIN(TslGlobal)
+    DECLARE_TSLGLOBAL_BEGIN(AnotherTslGlobal)
     DECLARE_TSLGLOBAL_VAR(float3, basecolor)
     DECLARE_TSLGLOBAL_END()
 
-    IMPLEMENT_TSLGLOBAL_BEGIN(TslGlobal)
+    IMPLEMENT_TSLGLOBAL_BEGIN(AnotherTslGlobal)
     IMPLEMENT_TSLGLOBAL_VAR(float3, basecolor)
     IMPLEMENT_TSLGLOBAL_END()
 }
@@ -37,7 +37,7 @@ TEST(ShaderResource, SimpleTexture) {
     )";
 
     // tsl global data
-    TslGlobal tsl_global;
+    AnotherTslGlobal tsl_global;
     tsl_global.basecolor = make_float3(123.0f);
 
     // the texture handle
@@ -73,7 +73,7 @@ TEST(ShaderResource, SimpleTexture) {
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, resolve_ret);
 
     // get the raw function pointer for execution
-    auto func_ptr = (void(*)(float3*, TslGlobal*))shader_instance->get_function();
+    auto func_ptr = (void(*)(float3*, AnotherTslGlobal*))shader_instance->get_function();
     EXPECT_NE(nullptr, func_ptr);
 
     float3 data;
@@ -93,7 +93,7 @@ TEST(ShaderResource, SimpleTextureAlpha) {
     )";
 
     // tsl global data
-    TslGlobal tsl_global;
+    AnotherTslGlobal tsl_global;
     tsl_global.basecolor = make_float3(123.0f);
 
     // the texture handle
@@ -129,7 +129,7 @@ TEST(ShaderResource, SimpleTextureAlpha) {
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, resolve_ret);
 
     // get the raw function pointer for execution
-    auto func_ptr = (void(*)(float*, TslGlobal*))shader_instance->get_function();
+    auto func_ptr = (void(*)(float*, AnotherTslGlobal*))shader_instance->get_function();
     EXPECT_NE(nullptr, func_ptr);
 
     float data;

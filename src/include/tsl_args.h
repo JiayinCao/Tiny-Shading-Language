@@ -51,9 +51,9 @@ struct GlobalVarList{
 #define DECLARE_TSLGLOBAL_VAR(VT,V)         VT V;
 #define DECLARE_TSLGLOBAL_END()             static GlobalVarList m_var_list; };
 
-#define IMPLEMENT_TSLGLOBAL_BEGIN(T)        GlobalVarList T::m_var_list({
+#define IMPLEMENT_TSLGLOBAL_BEGIN(T)        GlobalVarList T::m_var_list( std::vector<GlobalVar>({
 #define IMPLEMENT_TSLGLOBAL_VAR(VT,V)       { GlobalVar( #V, #VT ) },
-#define IMPLEMENT_TSLGLOBAL_END()           });
+#define IMPLEMENT_TSLGLOBAL_END()           }) );
 
 
 // -----------------------------------------------------------------------------------------------------------
