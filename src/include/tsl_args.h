@@ -28,12 +28,50 @@ TSL_NAMESPACE_BEGIN
 // TSL global variable declaration.
 // -----------------------------------------------------------------------------------------------------------
 
-// This needs to be refactored later, I would like to make it shader template related instead of a global configuration.
+// Shader execution commonly needs to communicate with its host program, renderers. In TSL, most of the
+// comminucation is done through this TSL Global data structure. It is like the constant buffer concept in GPU
+// shaders, execpt that each shader execution comes with one specific instance of tsl global, unlike GPU shader
+// instances will share constant buffers across thousands even more executions.
+//
+// In order to inform the TSL shader about the memory layout of tsl global, it is necessary to define a data
+// structure the following way,
+//
+//   DECLARE_TSLGLOBAL_BEGIN(TslGlobal)
+//   DECLARE_TSLGLOBAL_VAR(float3, view_direction)
+//   DECLARE_TSLGLOBAL_VAR(float3, uvw)
+//   DECLARE_TSLGLOBAL_VAR(float, custom_variable)
+//   DECLARE_TSLGLOBAL_END()
+//
+// As we can see from the above definition, there is view direction, uvw and another custom variable. The way it
+// is used is totally up to renderers. Also, the layout of the global variable is also customizable from renderers
+// to renderers. A common case is for surface shader having one type of tsl global and volume shader having another
+// one.
+// To implement the data structure, it is necessary to define it in a cpp file this way
+//
+//   IMPLEMENT_TSLGLOBAL_BEGIN(TslGlobal)
+//   IMPLEMENT_TSLGLOBAL_VAR(float3, view_direction)
+//   IMPLEMENT_TSLGLOBAL_VAR(float3, uvw)
+//   IMPLEMENT_TSLGLOBAL_VAR(float, custom_variable)
+//   IMPLEMENT_TSLGLOBAL_END()
+//
+// Before each shader execution, it is up to renderers to make sure a proper data structure is passed in through
+// the form of pointer so that TSL shader can have a chance to load proper data.
+// For example loading view_direction data in the above defined function works like this in a shader,
+//
+//   shader function_name(out float3 var){
+//      var = global_value<view_direction>;
+//   }
+//
+// A few things derserve our attention
+//   - Trying to load a variable not defined in TSL will result in compilation error.
+//   - Shader group has to register with a TSL global type that is consitent with its shader units'. If there is
+//     two shader units with two different TSL global layout, it will result TSL_Resolving_InconsistentTSLGlobalType
+//     during shader group compilation.
 
+//! @brief  Global variable description.
 struct GlobalVar {
     std::string m_name;
     std::string m_type;
-
     GlobalVar(const std::string& name, const std::string& type) :
         m_name(name), m_type(type) {}
 };
