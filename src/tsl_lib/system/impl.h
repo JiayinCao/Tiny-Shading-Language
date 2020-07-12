@@ -58,7 +58,7 @@ struct ShaderUnitTemplate_Impl {
     const bool  m_allow_verification = false;
 
     /**< Description of exposed arguments. */
-    std::vector<ArgDescriptor>  m_exposed_args;
+    std::vector<ExposedArgDescriptor>  m_exposed_args;
 
     //! @brief  Parse shader group dependencies.
     //!

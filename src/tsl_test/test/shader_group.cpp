@@ -56,9 +56,9 @@ TEST(ShaderGroup, BasicShaderGroup) {
     shader_group->connect_shader_units("bxdf_shader_test_BasicShaderGroup", "out_bxdf", "root_shader_BasicShaderGroup", "in_bxdf");
 
     // expose the shader interface
-    ArgDescriptor arg;
+    ExposedArgDescriptor arg;
     arg.m_name = "out_bxdf";
-    arg.m_type = TSL_TYPE_CLOSURE;
+    arg.m_type = ShaderArgumentTypeEnum::TSL_TYPE_CLOSURE;
     arg.m_is_output = true;
     shader_group->expose_shader_argument("root_shader_BasicShaderGroup", "out_bxdf", arg);
 
@@ -140,9 +140,9 @@ TEST(ShaderGroup, DuplicateShaderUnits) {
     shader_group->init_shader_input("bxdf_shader1", "test", dv);
 
     // expose the shader interface
-    ArgDescriptor arg;
+    ExposedArgDescriptor arg;
     arg.m_name = "out_bxdf";
-    arg.m_type = TSL_TYPE_CLOSURE;
+    arg.m_type = ShaderArgumentTypeEnum::TSL_TYPE_CLOSURE;
     arg.m_is_output = true;
     shader_group->expose_shader_argument("root_shader_DuplicateShaderUnits", "out_bxdf", arg);
 
@@ -218,14 +218,14 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
     shader_group->connect_shader_units("bxdf_shader", "out_bxdf", "root_shader", "in_bxdf");
 
     // expose the shader interface
-    ArgDescriptor arg;
+    ExposedArgDescriptor arg;
     arg.m_name = "out_bxdf";
-    arg.m_type = TSL_TYPE_FLOAT;
+    arg.m_type = ShaderArgumentTypeEnum::TSL_TYPE_FLOAT;
     arg.m_is_output = true;
     shader_group->expose_shader_argument("root_shader", "out_bxdf", arg);
 
     arg.m_name = "in_bxdf";
-    arg.m_type = TSL_TYPE_FLOAT;
+    arg.m_type = ShaderArgumentTypeEnum::TSL_TYPE_FLOAT;
     arg.m_is_output = false;
     shader_group->expose_shader_argument("bxdf_shader", "in_bxdf", arg);
 
@@ -276,34 +276,34 @@ TEST(ShaderGroup, ShaderGroupArgTypes) {
     EXPECT_EQ(true, ret);
 
     // expose the shader interface
-    ArgDescriptor arg;
+    ExposedArgDescriptor arg;
     arg.m_name = "i";
-    arg.m_type = TSL_TYPE_INT;
+    arg.m_type = ShaderArgumentTypeEnum::TSL_TYPE_INT;
     arg.m_is_output = true;
     shader_group->expose_shader_argument("root_shader", "i", arg);
 
     arg.m_name = "f";
-    arg.m_type = TSL_TYPE_FLOAT;
+    arg.m_type = ShaderArgumentTypeEnum::TSL_TYPE_FLOAT;
     arg.m_is_output = true;
     shader_group->expose_shader_argument("root_shader", "f", arg);
 
     arg.m_name = "d";
-    arg.m_type = TSL_TYPE_DOUBLE;
+    arg.m_type = ShaderArgumentTypeEnum::TSL_TYPE_DOUBLE;
     arg.m_is_output = true;
     shader_group->expose_shader_argument("root_shader", "d", arg);
 
     arg.m_name = "b";
-    arg.m_type = TSL_TYPE_BOOL;
+    arg.m_type = ShaderArgumentTypeEnum::TSL_TYPE_BOOL;
     arg.m_is_output = true;
     shader_group->expose_shader_argument("root_shader", "b", arg);
 
     arg.m_name = "f3";
-    arg.m_type = TSL_TYPE_FLOAT3;
+    arg.m_type = ShaderArgumentTypeEnum::TSL_TYPE_FLOAT3;
     arg.m_is_output = true;
     shader_group->expose_shader_argument("root_shader", "vec", arg);
 
     arg.m_name = "c";
-    arg.m_type = TSL_TYPE_CLOSURE;
+    arg.m_type = ShaderArgumentTypeEnum::TSL_TYPE_CLOSURE;
     arg.m_is_output = true;
     shader_group->expose_shader_argument("root_shader", "c", arg);
 
@@ -370,29 +370,29 @@ TEST(ShaderGroup, ShaderGroupInputDefaults) {
     EXPECT_EQ(true, ret);
 
     // expose the shader interface
-    ArgDescriptor arg;
+    ExposedArgDescriptor arg;
     arg.m_name = "i";
-    arg.m_type = TSL_TYPE_INT;
+    arg.m_type = ShaderArgumentTypeEnum::TSL_TYPE_INT;
     arg.m_is_output = true;
     shader_group->expose_shader_argument("root_shader", "i", arg);
 
     arg.m_name = "f";
-    arg.m_type = TSL_TYPE_FLOAT;
+    arg.m_type = ShaderArgumentTypeEnum::TSL_TYPE_FLOAT;
     arg.m_is_output = true;
     shader_group->expose_shader_argument("root_shader", "f", arg);
 
     arg.m_name = "d";
-    arg.m_type = TSL_TYPE_DOUBLE;
+    arg.m_type = ShaderArgumentTypeEnum::TSL_TYPE_DOUBLE;
     arg.m_is_output = true;
     shader_group->expose_shader_argument("root_shader", "d", arg);
 
     arg.m_name = "b";
-    arg.m_type = TSL_TYPE_BOOL;
+    arg.m_type = ShaderArgumentTypeEnum::TSL_TYPE_BOOL;
     arg.m_is_output = true;
     shader_group->expose_shader_argument("root_shader", "b", arg);
 
     arg.m_name = "f3";
-    arg.m_type = TSL_TYPE_FLOAT3;
+    arg.m_type = ShaderArgumentTypeEnum::TSL_TYPE_FLOAT3;
     arg.m_is_output = true;
     shader_group->expose_shader_argument("root_shader", "f3", arg);
 
@@ -527,7 +527,7 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
         shader_group0->connect_shader_units("bxdf_shader", "out_bxdf", "root_shader", "in_bxdf");
 
         // expose the shader interface
-        ArgDescriptor arg;
+        ExposedArgDescriptor arg;
         arg.m_name = "out_bxdf";
         arg.m_type = TSL_TYPE_FLOAT;
         arg.m_is_output = true;
@@ -575,7 +575,7 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
     shader_group1->connect_shader_units("constant_shader", "out_bxdf", "final_shader", "bxdf1");
 
     // expose the shader interface
-    ArgDescriptor arg;
+    ExposedArgDescriptor arg;
     arg.m_name = "out_bxdf";
     arg.m_type = TSL_TYPE_FLOAT;
     arg.m_is_output = true;
@@ -654,9 +654,9 @@ TEST(ShaderGroup, RealProblem0) {
     shader_group->connect_shader_units("constant_color", "Result", "bxdf_shader", "Diffuse");
 
     // expose the shader interface
-    ArgDescriptor arg;
+    ExposedArgDescriptor arg;
     arg.m_name = "out_bxdf";
-    arg.m_type = TSL_TYPE_CLOSURE;
+    arg.m_type = ShaderArgumentTypeEnum::TSL_TYPE_CLOSURE;
     arg.m_is_output = true;
     shader_group->expose_shader_argument("root_shader", "out_bxdf", arg);
 

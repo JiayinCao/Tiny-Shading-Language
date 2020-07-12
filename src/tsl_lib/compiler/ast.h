@@ -1030,7 +1030,7 @@ public:
 
 	void print() const override;
 
-    void parse_shader_parameters(std::vector< ArgDescriptor>& params) const;
+    void parse_shader_parameters(std::vector< ExposedArgDescriptor>& params) const;
 
 private:
 	const std::string	m_name;

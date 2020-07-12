@@ -281,7 +281,7 @@ public:
     //!
     //! @param  su      source shader unit
     //! @param  spn     source shader parameter name
-    void expose_shader_argument(const std::string& su, const std::string& spn, const ArgDescriptor& arg_desc);
+    void expose_shader_argument(const std::string& su, const std::string& spn, const ExposedArgDescriptor& arg_desc);
 
     //! @brief  Setup default shader argument init value
     //!

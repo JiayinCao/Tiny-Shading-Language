@@ -179,7 +179,8 @@ static_assert(sizeof(ClosureTreeNodeMul) == sizeof(ClosureTreeNodeBase) + sizeof
 // TSL function argument declaration.
 // -----------------------------------------------------------------------------------------------------------
 
-enum ShaderArgumentTypeEnum : unsigned int {
+//! @brief  Shader argument types
+enum class ShaderArgumentTypeEnum : unsigned int {
     TSL_TYPE_INVALID = 0,
     TSL_TYPE_INT,
     TSL_TYPE_FLOAT,
@@ -190,34 +191,98 @@ enum ShaderArgumentTypeEnum : unsigned int {
     TSL_TYPE_CLOSURE
 };
 
+//! @brief  Basic float3 defined in TSL.
+/**
+ * It is intentionally to make it as simple as possible.
+ * All related methods are inline and global to operate on it.
+ */
 struct float3 {
     float x, y, z;
 };
 
-inline float3 make_float3(float x, float y, float z) {
-    float3 ret;
-    ret.x = x; ret.y = y; ret.z = z;;
-    return ret;
-}
-
-union ArgDefaultValue {
-    float       m_float;
-    int         m_int;
-    double      m_double;
-    bool        m_bool;
-    float3      m_float3;
-    const char* m_global_var_name;  // to keep it as simple as possible, it is up to renderer to keep track of the memory
-};
-
-struct ArgDescriptor {
+//! @brief  Exposed argument descriptor.
+/**
+ * Argument descriptor is used to describe the exposed arguments in a shader group template.
+ * This data structure keeps track of argument name, type and output signature, meaning it is
+ * both for input arguments and output arguments.
+ * This is only used for shader group, shader unit exposes everything defined in the shader
+ * source code.
+ */
+struct ExposedArgDescriptor {
     std::string             m_name;
     ShaderArgumentTypeEnum  m_type = ShaderArgumentTypeEnum::TSL_TYPE_INVALID;
     bool                    m_is_output = false;
 };
 
+//! @brief  Default value for shader template argument.
+/**
+ * Sometimes exposed input value of a shader unit template defined in a shader group template
+ * doesn't have anything connected. It is necessary to have this defined so that TSL knows what
+ * value starts with.
+ * Failing to define default value for unconnected shader unit template inputs will result
+ * in shader group resolving failure.
+ */
 struct ShaderUnitInputDefaultValue {
     ShaderArgumentTypeEnum  m_type = ShaderArgumentTypeEnum::TSL_TYPE_INVALID;
-    ArgDefaultValue         m_val;
+
+    union ArgDefaultValue {
+        float       m_float;
+        int         m_int;
+        double      m_double;
+        bool        m_bool;
+        float3      m_float3;
+        const char* m_global_var_name;  // to keep it as simple as possible, it is up to renderer to keep track of the memory
+    } m_val;
 };
+
+// Following are just some helper function to make things easier
+inline float3 make_float3(float x, float y, float z) {
+    float3 ret; ret.x = x; ret.y = y; ret.z = z;; return ret;
+}
+inline float3 make_float3(float x) {
+    return make_float3(x, x, x);
+}
+inline float3 operator + (const float3& a, const float3& b) {
+    return make_float3(a.x + b.x, a.y + b.y, a.z + b.z);
+}
+inline float3 operator - (const float3& a, const float3& b) {
+    return make_float3(a.x - b.x, a.y - b.y, a.z - b.z);
+}
+inline float3 operator * (const float3& a, const float3& b) {
+    return make_float3(a.x * b.x, a.y * b.y, a.z * b.z);
+}
+inline float3 operator / (const float3& a, const float3& b) {
+    return make_float3(a.x / b.x, a.y / b.y, a.z / b.z);
+}
+inline float3 operator + (const float3& a, const float b) {
+    return make_float3(a.x + b, a.y + b, a.z + b);
+}
+inline float3 operator - (const float3& a, const float b) {
+    return make_float3(a.x - b, a.y - b, a.z - b);
+}
+inline float3 operator * (const float3& a, const float b) {
+    return make_float3(a.x * b, a.y * b, a.z * b);
+}
+inline float3 operator / (const float3& a, const float b) {
+    return make_float3(a.x / b, a.y / b, a.z / b);
+}
+inline float3 operator + (const float a, const float3& b) {
+    return make_float3(a + b.x, a + b.y, a + b.z);
+}
+inline float3 operator - (const float a, const float3& b) {
+    return make_float3(a - b.x, a - b.y, a - b.z);
+}
+inline float3 operator * (const float a, const float3& b) {
+    return make_float3(a * b.x, a * b.y, a * b.z);
+}
+inline float3 operator / (const float a, const float3& b) {
+    return make_float3(a / b.x, a / b.y, a / b.z);
+}
+inline float dot(const float3& a, const float3& b) {
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+inline float3 cross(const float3& a, const float3& b) {
+    return make_float3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+}
 
 TSL_NAMESPACE_END

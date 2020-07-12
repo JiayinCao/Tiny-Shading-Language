@@ -60,9 +60,9 @@ TEST(GlobalValue, GlobalValueAsDefaultValueForArgument) {
     EXPECT_EQ(true, ret);
 
     // expose the shader interface
-    ArgDescriptor arg;
+    ExposedArgDescriptor arg;
     arg.m_name = "out_bxdf";
-    arg.m_type = TSL_TYPE_FLOAT;
+    arg.m_type = ShaderArgumentTypeEnum::TSL_TYPE_FLOAT;
     arg.m_is_output = true;
     shader_group->expose_shader_argument("root_shader", "out_bxdf", arg);
 
@@ -135,9 +135,9 @@ TEST(GlobalValue, GlobalValueInShaderGroup_Simple) {
     EXPECT_EQ(true, ret);
 
     // expose the shader interface
-    ArgDescriptor arg;
+    ExposedArgDescriptor arg;
     arg.m_name = "out_bxdf";
-    arg.m_type = TSL_TYPE_FLOAT;
+    arg.m_type = ShaderArgumentTypeEnum::TSL_TYPE_FLOAT;
     arg.m_is_output = true;
     shader_group->expose_shader_argument("root_shader", "out_bxdf", arg);
 
@@ -200,9 +200,9 @@ TEST(GlobalValue, GlobalValueInShaderGroup) {
     shader_group->connect_shader_units("bxdf_shader_GlobalValueInShaderGroup", "out_bxdf", "root_shader_GlobalValueInShaderGroup", "in_bxdf");
 
     // expose the shader interface
-    ArgDescriptor arg;
+    ExposedArgDescriptor arg;
     arg.m_name = "out_bxdf";
-    arg.m_type = TSL_TYPE_CLOSURE;
+    arg.m_type = ShaderArgumentTypeEnum::TSL_TYPE_CLOSURE;
     arg.m_is_output = true;
     shader_group->expose_shader_argument("root_shader_GlobalValueInShaderGroup", "out_bxdf", arg);
 

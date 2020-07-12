@@ -90,7 +90,7 @@ void ShaderGroupTemplate::connect_shader_units(const std::string& ssu, const std
     sg_impl->m_shader_unit_connections[tsu][tspn] = std::make_pair(ssu, sspn);
 }
 
-void ShaderGroupTemplate::expose_shader_argument(const std::string & ssu, const std::string & sspn, const ArgDescriptor & arg_desc){
+void ShaderGroupTemplate::expose_shader_argument(const std::string & ssu, const std::string & sspn, const ExposedArgDescriptor & arg_desc){
     const auto i = m_shader_unit_template_impl->m_exposed_args.size();
     m_shader_unit_template_impl->m_exposed_args.push_back(arg_desc);
 
