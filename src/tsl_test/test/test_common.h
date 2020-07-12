@@ -26,11 +26,6 @@
 
 USE_TSL_NAMESPACE
 
-DECLARE_TSLGLOBAL_BEGIN()
-DECLARE_TSLGLOBAL_VAR(float, intensity)
-DECLARE_TSLGLOBAL_VAR(float3, diffuse)
-DECLARE_TSLGLOBAL_END()
-
 DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeLambert, "lambert")
 DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, int, base_color)
 DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, float, normal)
@@ -94,6 +89,19 @@ inline std::shared_ptr<ShaderUnitTemplate> compile_shader_unit_template(ShadingC
     return ret && shader_unit_template ? shader_unit_template : nullptr;
 }
 
+template<class TG>
+inline std::shared_ptr<ShaderUnitTemplate> compile_shader_unit_template(ShadingContext* shading_context, const char* name, const char* shader_source) {
+    const auto shader_unit_template = shading_context->begin_shader_unit_template(name);
+
+    // register tsl shader global
+    TG tg;
+    shader_unit_template->register_tsl_global(tg.m_var_list);
+
+    const auto ret = shading_context->compile_shader_unit_template(shader_unit_template.get(), shader_source);
+    shading_context->end_shader_unit_template(shader_unit_template.get());
+    return ret && shader_unit_template ? shader_unit_template : nullptr;
+}
+
 inline void validate_shader(const char* shader_source, bool valid = true, TslCompiler* compiler = nullptr) {
     auto shading_context = ShadingSystem::get_instance().make_shading_context();
 
@@ -108,9 +116,6 @@ template<class T>
 inline std::pair<T, std::shared_ptr<ShaderInstance>> compile_shader(const char* shader_source) {
     auto shading_context = ShadingSystem::get_instance().make_shading_context();
 
-    // register the tsl global data structure
-    TslGlobal::RegisterGlobal(ShadingSystem::get_instance());
-
     // this name is meanless, but I just want something unique
     const auto name = std::to_string(g_name_counter++);
     const auto shader_unit_template = compile_shader_unit_template(shading_context.get(), name.c_str(), shader_source);
@@ -122,6 +127,40 @@ inline std::pair<T, std::shared_ptr<ShaderInstance>> compile_shader(const char* 
 
     // resolve the shader before using it.
     if(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed != shading_context->resolve_shader_instance(shader_instance.get()))
+        return std::make_pair(nullptr, nullptr);
+
+    return std::make_pair((T)shader_instance->get_function(), shader_instance);
+}
+
+template<class T, class TG>
+inline std::pair<T, std::shared_ptr<ShaderInstance>> compile_shader(const char* shader_source) {
+    auto shading_context = ShadingSystem::get_instance().make_shading_context();
+
+    // this name is meanless, but I just want something unique
+    const auto name = std::to_string(g_name_counter++);
+
+    // make the shader
+    const auto shader_unit_template = shading_context->begin_shader_unit_template(name);
+
+    if(!shader_unit_template)
+        return std::make_pair(nullptr, nullptr);
+
+    // register tsl shader global
+    TG tg;
+    shader_unit_template->register_tsl_global(tg.m_var_list);
+
+    // compile the shader
+    const auto ret = shading_context->compile_shader_unit_template(shader_unit_template.get(), shader_source);
+
+    // ending compiling
+    shading_context->end_shader_unit_template(shader_unit_template.get());
+    if( !ret )
+        return std::make_pair(nullptr, nullptr);
+
+    auto shader_instance = shader_unit_template->make_shader_instance();
+
+    // resolve the shader before using it.
+    if (Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed != shading_context->resolve_shader_instance(shader_instance.get()))
         return std::make_pair(nullptr, nullptr);
 
     return std::make_pair((T)shader_instance->get_function(), shader_instance);

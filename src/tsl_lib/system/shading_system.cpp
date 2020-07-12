@@ -55,10 +55,6 @@ ClosureID ShadingSystem::register_closure_type(const std::string& name, ClosureA
     return g_shading_system_impl->m_global_module->register_closure_type(name, mapping, structure_size);
 }
 
-void ShadingSystem::register_tsl_global(GlobalVarList& mapping) {
-    return g_shading_system_impl->m_global_module->register_tsl_global(mapping);
-}
-
 void ShadingSystem::register_shadingsystem_interface(std::unique_ptr<ShadingSystemInterface> ssi){
     g_shading_system_impl->m_callback = std::move(ssi);
 }

@@ -62,6 +62,7 @@ enum class TSL_Resolving_Status : unsigned int {
     TSL_Resolving_UndefinedShaderUnit,              /*< A specific shader unit is not defined in the shader group. */
     TSL_Resolving_InvalidArgType,                   /*< One of the input arguments defined in the shader group template is not defined. */
     TSL_Resolving_ArgumentWithoutInitialization,    /*< One of the arguments passed in doesn't have a valid initialization value. */
+    TSL_Resolving_InconsistentTSLGlobalType,        /*< Shader units defined in the shader group has multile version of TSL Global. */
     TSL_Resolving_UnspecifiedError                  /*< This error type is not specified somehow. */
 };
 
@@ -158,11 +159,6 @@ public:
     //! @return                 Allocated closure id for the closure.
     ClosureID                               register_closure_type(const std::string& name, ClosureArgList& mapping, int closure_size);
 
-    //! @brief  Register tsl global data.
-    //!
-    //! @param  mapping     Mapping of the data structure.
-    void                                    register_tsl_global(GlobalVarList& mapping);
-    
     TSL_HIDE_CONSTRUCTOR(ShadingSystem)
 };
 
@@ -223,6 +219,12 @@ public:
     //!
     //! @return         Make a new shader instance.
     std::shared_ptr<ShaderInstance>     make_shader_instance();
+
+    //! @brief  Register tsl global.
+    //!
+    //! @param  tslg    Tsl global memory layout.
+    //! @return         Whether the tsl global is registered successfully.
+    bool                                register_tsl_global(const GlobalVarList& tslg);
 
     //! @brief  Register resource handle in this shader unit.
     //!

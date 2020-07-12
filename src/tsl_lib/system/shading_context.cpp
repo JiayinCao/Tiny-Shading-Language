@@ -25,8 +25,51 @@
 #include "compiler/compiler.h"
 #include "compiler/shader_unit_pvt.h"
 #include "system/impl.h"
+#include "tsl_args.h"
 
 TSL_NAMESPACE_BEGIN
+
+
+namespace {
+    // Cyclic redundancy check
+    // https://en.wikipedia.org/wiki/Cyclic_redundancy_check#CRC-32_algorithm
+    //
+    // Computation of cyclic redundancy checks
+    // https://en.wikipedia.org/wiki/Computation_of_cyclic_redundancy_checks
+    //
+    // Fast CRC32
+    // https://create.stephan-brumme.com/crc32/#bitwise
+
+    static constexpr unsigned int Polynomial = 0xEDB88320;
+
+    static unsigned int crc32_bitwise(const std::string& s) {
+        const char* data = s.c_str();
+        unsigned length = s.length();
+        unsigned int crc = 0;
+        while (length--) {
+            crc ^= *data++;
+
+            crc = (crc >> 1) ^ (-int(crc & 1) & Polynomial);
+            crc = (crc >> 1) ^ (-int(crc & 1) & Polynomial);
+            crc = (crc >> 1) ^ (-int(crc & 1) & Polynomial);
+            crc = (crc >> 1) ^ (-int(crc & 1) & Polynomial);
+            crc = (crc >> 1) ^ (-int(crc & 1) & Polynomial);
+            crc = (crc >> 1) ^ (-int(crc & 1) & Polynomial);
+            crc = (crc >> 1) ^ (-int(crc & 1) & Polynomial);
+            crc = (crc >> 1) ^ (-int(crc & 1) & Polynomial);
+        }
+        return ~crc;
+    }
+
+    const unsigned generated_hash(const std::vector<GlobalVar>& var_list) {
+        unsigned hash = 0;
+        for (const auto& global_var : var_list) {
+            hash = hash ^ crc32_bitwise(global_var.m_name);
+            hash = hash ^ crc32_bitwise(global_var.m_type);
+        }
+        return 0;
+    }
+}
 
 ShaderUnitTemplate::ShaderUnitTemplate(const std::string& name, std::shared_ptr<ShadingContext> context){
     // this means that it is a shader group template.
@@ -53,6 +96,16 @@ std::shared_ptr<ShaderInstance> ShaderUnitTemplate::make_shader_instance() {
     // However, in order to hide the useless interface from user of TSL, I chose to hide the constructor,
     // leaving TSL users no choice to construct shader instance but to go through shader unit template.
     return std::shared_ptr<ShaderInstance>(new ShaderInstance(shared_from_this()));
+}
+
+bool ShaderUnitTemplate::register_tsl_global(const GlobalVarList& tslg) {
+    if (!m_shader_unit_template_impl->m_tsl_global.m_var_list.empty()) {
+        emit_warning("TSL global already registered in shader unit template %s.", get_name().c_str());
+        return false;
+    }
+    m_shader_unit_template_impl->m_tsl_global = tslg;
+    m_shader_unit_template_impl->m_tsl_global_hash = generated_hash(tslg.m_var_list);
+    return true;
 }
 
 ShaderInstance::ShaderInstance(std::shared_ptr<ShaderUnitTemplate> sut) {
@@ -176,6 +229,17 @@ void ShaderUnitTemplate_Impl::parse_dependencies(ShaderUnitTemplate_Pvt* sut) co
     if (!sut)
         return;
     sut->m_dependencies.insert(m_shader_unit_data->m_module.get());
+}
+
+GlobalVarList::GlobalVarList(const std::vector<GlobalVar>& var_list) :
+    m_var_list(var_list) /* keep track of the variable list. */{
+}
+
+GlobalVarList::GlobalVarList(){
+}
+
+GlobalVarList::GlobalVarList(const GlobalVarList& copy) :
+    m_var_list(copy.m_var_list){
 }
 
 TSL_NAMESPACE_END

@@ -233,11 +233,17 @@ llvm::Value* AstNode_Literal_Bool::codegen(LLVM_Compile_Context& context) const 
 }
 
 llvm::Value* AstNode_Literal_GlobalValue::codegen(LLVM_Compile_Context& context) const {
-    for (int i = 0; i < context.m_tsl_global_mapping.size(); ++i){
-        const auto& arg = context.m_tsl_global_mapping[i];
+    if (!context.tsl_global_mapping) {
+        emit_error("TSL global variable is not registered.");
+        return nullptr;
+    }
+    const auto& tsl_global_mapping = context.tsl_global_mapping->m_var_list;
+
+    for (int i = 0; i < tsl_global_mapping.size(); ++i){
+        const auto& arg = tsl_global_mapping[i];
         if (arg.m_name == m_value_name) {
             if (!context.tsl_global_value) {
-                emit_error("No tsl global passed in, fatal error.");
+                emit_error("TSL global variable is not passed in, fatal error.");
                 return nullptr;
             }
 

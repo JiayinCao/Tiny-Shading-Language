@@ -17,17 +17,28 @@
 
 #include "test_common.h"
 
+namespace {
+    DECLARE_TSLGLOBAL_BEGIN(TslGlobal)
+    DECLARE_TSLGLOBAL_VAR(float3, basecolor)
+    DECLARE_TSLGLOBAL_END()
+
+    IMPLEMENT_TSLGLOBAL_BEGIN(TslGlobal)
+    IMPLEMENT_TSLGLOBAL_VAR(float3, basecolor)
+    IMPLEMENT_TSLGLOBAL_END()
+}
+
 TEST(ShaderResource, SimpleTexture) {
     auto shader_source = R"(
         texture2d g_diffuse;
         shader function_name(out color diffuse){
-            diffuse = texture2d_sample<g_diffuse>( global_value<intensity> , 2.0f );
+            color base_color = global_value<basecolor>;
+            diffuse = texture2d_sample<g_diffuse>( base_color.r , 2.0f );
         }
     )";
 
     // tsl global data
     TslGlobal tsl_global;
-    tsl_global.intensity = 123.0f;
+    tsl_global.basecolor = make_float3(123.0f);
 
     // the texture handle
     TextureSimple texture_simple;
@@ -37,15 +48,15 @@ TEST(ShaderResource, SimpleTexture) {
 
     // make a shader context
     auto shading_context = shading_system.make_shading_context();
-
-    // register the tsl global data structure
-    TslGlobal::RegisterGlobal(shading_system);
-
+    
     // compile the shader
     const auto shader_unit_template = shading_context->begin_shader_unit_template("texture_handle_shader");
 
     // register the texture handle
     shader_unit_template->register_shader_resource("g_diffuse", (const ShaderResourceHandle*)&texture_simple);
+
+    // register tsl_global
+    shader_unit_template->register_tsl_global(tsl_global.m_var_list);
 
     // compile the shader unit
     shading_context->compile_shader_unit_template(shader_unit_template.get(), shader_source);
@@ -76,13 +87,14 @@ TEST(ShaderResource, SimpleTextureAlpha) {
     auto shader_source = R"(
         texture2d g_diffuse;
         shader function_name(out float diffuse){
-            diffuse = texture2d_sample_alpha<g_diffuse>( global_value<intensity> , 2.0f );
+            color base_color = global_value<basecolor>;
+            diffuse = texture2d_sample_alpha<g_diffuse>( base_color.r , 2.0f );
         }
     )";
 
     // tsl global data
     TslGlobal tsl_global;
-    tsl_global.intensity = 123.0f;
+    tsl_global.basecolor = make_float3(123.0f);
 
     // the texture handle
     TextureSimple texture_simple;
@@ -93,14 +105,14 @@ TEST(ShaderResource, SimpleTextureAlpha) {
     // make a shader context
     auto shading_context = shading_system.make_shading_context();
 
-    // register the tsl global data structure
-    TslGlobal::RegisterGlobal(shading_system);
-
     // compile the shader
     const auto shader_unit_template = shading_context->begin_shader_unit_template("texture_handle_alpha");
 
     // register the texture handle
     shader_unit_template->register_shader_resource("g_diffuse", (const ShaderResourceHandle *)&texture_simple);
+
+    // register tsl_global
+    shader_unit_template->register_tsl_global(tsl_global.m_var_list);
 
     // compile the shader unit
     shading_context->compile_shader_unit_template(shader_unit_template.get(), shader_source);
@@ -139,10 +151,6 @@ TEST(ShaderResource, CustomShaderResource) {
         }
     )";
 
-    // tsl global data
-    TslGlobal tsl_global;
-    tsl_global.intensity = 123.0f;
-
     // the texture handle
     CustomShaderResource custom_data;
 
@@ -151,9 +159,6 @@ TEST(ShaderResource, CustomShaderResource) {
 
     // make a shader context
     auto shading_context = shading_system.make_shading_context();
-
-    // register the tsl global data structure
-    TslGlobal::RegisterGlobal(shading_system);
 
     // compile the shader
     const auto shader_unit_template = shading_context->begin_shader_unit_template("custom_reousrce_shader");
@@ -177,11 +182,11 @@ TEST(ShaderResource, CustomShaderResource) {
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, resolve_ret);
 
     // get the raw function pointer for execution
-    auto func_ptr = (void(*)(Tsl_Namespace::ClosureTreeNodeBase**, TslGlobal*))shader_instance->get_function();
+    auto func_ptr = (void(*)(Tsl_Namespace::ClosureTreeNodeBase**))shader_instance->get_function();
     EXPECT_NE(nullptr, func_ptr);
 
     Tsl_Namespace::ClosureTreeNodeBase* closure = nullptr;
-    func_ptr(&closure, &tsl_global);
+    func_ptr(&closure);
 
     EXPECT_EQ(g_measured_brdf_id, closure->m_id);
     const ClosureTypeMeasuredBrdf* param = (const ClosureTypeMeasuredBrdf*)closure->m_params;

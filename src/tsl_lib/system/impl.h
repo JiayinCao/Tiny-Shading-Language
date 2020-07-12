@@ -52,6 +52,11 @@ struct ShaderUnitTemplate_Impl {
     /**< Shader resource table. */
     ShaderResourceTable     m_shader_resource_table;
 
+    /**< TSL global data. */
+    GlobalVarList           m_tsl_global;
+    unsigned                m_tsl_global_hash = 0;
+
+    // enable optimization by default.
     const bool  m_allow_optimization = true;
 
     // This will be allowed once I have most feature completed.

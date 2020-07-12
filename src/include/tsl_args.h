@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include "tsl_version.h"
+#include "tsl_define.h"
 
 TSL_NAMESPACE_BEGIN
 
@@ -37,15 +38,22 @@ struct GlobalVar {
         m_name(name), m_type(type) {}
 };
 
-typedef std::vector<GlobalVar> GlobalVarList;
+//! @brief  Global var list helps to track the memory layout defined in TSL global.
+struct GlobalVarList{
+    std::vector<GlobalVar>  m_var_list;         // a list keeping track of all global variables defined in TSL global.
 
-#define DECLARE_TSLGLOBAL_BEGIN()           struct TslGlobal {
+    TSL_INTERFACE GlobalVarList();
+    TSL_INTERFACE GlobalVarList(const std::vector<GlobalVar>& var_list);
+    TSL_INTERFACE GlobalVarList(const GlobalVarList&);
+};
+
+#define DECLARE_TSLGLOBAL_BEGIN(T)          struct T {
 #define DECLARE_TSLGLOBAL_VAR(VT,V)         VT V;
-#define DECLARE_TSLGLOBAL_END()             static GlobalVarList m_offsets; static void RegisterGlobal( ShadingSystem& ); };
+#define DECLARE_TSLGLOBAL_END()             static GlobalVarList m_var_list; };
 
-#define IMPLEMENT_TSLGLOBAL_BEGIN()         GlobalVarList TslGlobal::m_offsets({
+#define IMPLEMENT_TSLGLOBAL_BEGIN(T)        GlobalVarList T::m_var_list({
 #define IMPLEMENT_TSLGLOBAL_VAR(VT,V)       { GlobalVar( #V, #VT ) },
-#define IMPLEMENT_TSLGLOBAL_END()           }); void TslGlobal::RegisterGlobal( ShadingSystem& ss ) { ss.register_tsl_global( m_offsets ); }
+#define IMPLEMENT_TSLGLOBAL_END()           });
 
 
 // -----------------------------------------------------------------------------------------------------------
@@ -162,11 +170,11 @@ using ClosureArgList = std::vector<ClosureArg>;
 
 #define DECLARE_CLOSURE_TYPE_BEGIN(T, name)     struct T { static const char* get_name() { return name; }
 #define DECLARE_CLOSURE_TYPE_VAR(T,VT,V)        VT V;
-#define DECLARE_CLOSURE_TYPE_END(T)             static ClosureArgList m_offsets; static ClosureID RegisterClosure(); };
+#define DECLARE_CLOSURE_TYPE_END(T)             static ClosureArgList m_closure_args; static ClosureID RegisterClosure(); };
 
-#define IMPLEMENT_CLOSURE_TYPE_BEGIN(T)         ClosureArgList T::m_offsets({
+#define IMPLEMENT_CLOSURE_TYPE_BEGIN(T)         ClosureArgList T::m_closure_args({
 #define IMPLEMENT_CLOSURE_TYPE_VAR(T,VT,V)      { ClosureArg( #V, #VT ) },
-#define IMPLEMENT_CLOSURE_TYPE_END(T)           }); ClosureID T::RegisterClosure() { return Tsl_Namespace::ShadingSystem::get_instance().register_closure_type( T::get_name() , m_offsets , sizeof(T) ); }
+#define IMPLEMENT_CLOSURE_TYPE_END(T)           }); ClosureID T::RegisterClosure() { return Tsl_Namespace::ShadingSystem::get_instance().register_closure_type( T::get_name() , m_closure_args , sizeof(T) ); }
 
 // It is very important to make sure the memory layout is as expected, there should be no fancy stuff compiler tries to do for these data structure.
 // Because the same data structure will also be generated from LLVM, which will expect this exact memory layout. If there is miss-match, it will crash.

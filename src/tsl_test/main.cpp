@@ -63,9 +63,6 @@ int main(int argc, char** argv) {
 
     auto& shading_system = Tsl_Namespace::ShadingSystem::get_instance();
 
-    // register tsl global
-    TslGlobal::RegisterGlobal(shading_system);
-
     std::unique_ptr<ShadingSystemInterfaceSimple> ssis = std::make_unique< ShadingSystemInterfaceSimple>();
     shading_system.register_shadingsystem_interface(std::move(ssis));
 

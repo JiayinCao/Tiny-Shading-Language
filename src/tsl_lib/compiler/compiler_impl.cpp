@@ -172,6 +172,7 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnitTemplate* su) 
 		compile_context.module = module;
 		compile_context.builder = &builder;
         compile_context.m_shader_resource_table = &su->m_shader_unit_template_impl->m_shader_resource_table;
+        compile_context.tsl_global_mapping = !su->m_shader_unit_template_impl->m_tsl_global.m_var_list.empty() ? &su->m_shader_unit_template_impl->m_tsl_global : nullptr;
 
         // declare tsl global
         m_global_module.declare_closure_tree_types(m_llvm_context, &compile_context.m_structure_type_maps);
@@ -183,6 +184,25 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnitTemplate* su) 
                 return false;
 
             compile_context.m_closures_maps[closure] = function;
+        }
+        
+        // declare tsl global
+        if (compile_context.tsl_global_mapping) {
+            const auto& tsl_global = compile_context.tsl_global_mapping->m_var_list;
+            if (tsl_global.size()) {
+                // assemble the variable types
+                std::vector<llvm::Type*> arg_types;
+                for (auto& arg : tsl_global) {
+                    auto type = get_type_from_context(arg.m_type, compile_context);
+                    // this is a VERY DIRTY hack, I'll try to get back to it once most features are done.
+                    if (!type)
+                        type = get_int_32_ptr_ty(compile_context);
+                    arg_types.push_back(type);
+                }
+
+                const std::string tsl_global_name = "Tsl_Global";
+                compile_context.tsl_global_ty = llvm::StructType::create(arg_types, tsl_global_name);
+            }
         }
 
         // generate all global variables
@@ -316,6 +336,7 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
     compile_context.context = &m_llvm_context;
     compile_context.module = sg_impl->m_shader_unit_data->m_module.get();
     compile_context.builder = &builder;
+    compile_context.tsl_global_mapping = !sg_impl->m_tsl_global.m_var_list.empty() ? &sg_impl->m_tsl_global : nullptr;
 
     const auto llvm_void_ty = get_void_ty(compile_context);
 
@@ -324,6 +345,8 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
     // dependency modules
     su_pvt->m_dependencies.insert(m_global_module.get_closure_module());
 
+    unsigned tsl_global_hash = sg_impl->m_tsl_global_hash;
+
     std::unordered_map<ShaderUnitTemplate*, llvm::Function*> visited_module;
     std::unordered_map<std::string, llvm::Function*>         shader_unit_llvm_function;
     // pre-declare all shader interfaces
@@ -331,6 +354,12 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
         const auto& shader_unit_name = shader_unit_wrapper.second.m_name;
         auto shader_unit = shader_unit_wrapper.second.m_shader_unit_template;
         auto local_su_pvt = shader_unit->m_shader_unit_template_impl->m_shader_unit_data;
+
+        // only one type of tsl global can be registered across the whole group.
+        // it doesn't really matter if one shader unit doesn't have it though.
+        const auto sut_tsl_global_hash = shader_unit->m_shader_unit_template_impl->m_tsl_global_hash;
+        if (sut_tsl_global_hash && tsl_global_hash != sut_tsl_global_hash)
+            return TSL_Resolving_Status::TSL_Resolving_InconsistentTSLGlobalType;
 
 #ifdef DEBUG_OUTPUT
         local_su_pvt->m_module->print(llvm::errs(), nullptr);
@@ -379,6 +408,25 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
             shader_unit_llvm_function[name] = function;
 
             visited_module[shader_unit.get()] = function;
+        }
+    }
+
+    // declare tsl global
+    if (compile_context.tsl_global_mapping) {
+        const auto& tsl_global = compile_context.tsl_global_mapping->m_var_list;
+        if (tsl_global.size()) {
+            // assemble the variable types
+            std::vector<llvm::Type*> arg_types;
+            for (auto& arg : tsl_global) {
+                auto type = get_type_from_context(arg.m_type, compile_context);
+                // this is a VERY DIRTY hack, I'll try to get back to it once most features are done.
+                if (!type)
+                    type = get_int_32_ptr_ty(compile_context);
+                arg_types.push_back(type);
+            }
+
+            const std::string tsl_global_name = "Tsl_Global";
+            compile_context.tsl_global_ty = llvm::StructType::create(arg_types, tsl_global_name);
         }
     }
 
@@ -550,14 +598,20 @@ TSL_Resolving_Status TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Con
                                 break;
                             case ShaderArgumentTypeEnum::TSL_TYPE_GLOBAL:
                                 has_init_value = false;
-                                for (int i = 0; i < context.m_tsl_global_mapping.size(); ++i) {
-                                    const auto& arg = context.m_tsl_global_mapping[i];
-                                    if (arg.m_name == std::string(var.m_val.m_global_var_name)) {
-                                        auto gep0 = context.builder->CreateConstGEP2_32(nullptr, context.tsl_global_value, 0, i);
-                                        llvm_value = context.builder->CreateLoad(gep0);
-                                        has_init_value = true;
-                                        break;
+                                if (context.tsl_global_mapping) {
+                                    auto& tsl_global_mapping = *context.tsl_global_mapping;
+                                    for (int i = 0; i < tsl_global_mapping.m_var_list.size(); ++i) {
+                                        const auto& arg = tsl_global_mapping.m_var_list[i];
+                                        if (arg.m_name == std::string(var.m_val.m_global_var_name)) {
+                                            auto gep0 = context.builder->CreateConstGEP2_32(nullptr, context.tsl_global_value, 0, i);
+                                            llvm_value = context.builder->CreateLoad(gep0);
+                                            has_init_value = true;
+                                            break;
+                                        }
                                     }
+                                }
+                                else {
+                                    emit_error("TSL global variable is not registered.");
                                 }
                                 break;
                             default:

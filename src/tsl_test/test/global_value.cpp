@@ -17,6 +17,18 @@
 
 #include "test_common.h"
 
+namespace {
+    DECLARE_TSLGLOBAL_BEGIN(TslGlobal)
+    DECLARE_TSLGLOBAL_VAR(float, intensity)
+    DECLARE_TSLGLOBAL_VAR(float3, diffuse)
+    DECLARE_TSLGLOBAL_END()
+
+    IMPLEMENT_TSLGLOBAL_BEGIN(TslGlobal)
+    IMPLEMENT_TSLGLOBAL_VAR(float, intensity)
+    IMPLEMENT_TSLGLOBAL_VAR(float3, diffuse)
+    IMPLEMENT_TSLGLOBAL_END()
+}
+
 TEST(GlobalValue, AccessData) {
     auto shader_source = R"(
         shader function_name(out float var){
@@ -27,7 +39,7 @@ TEST(GlobalValue, AccessData) {
     TslGlobal tsl_global;
     tsl_global.intensity = 123.0f;
 
-    auto ret = compile_shader<void(*)(float*, TslGlobal*)>(shader_source);
+    auto ret = compile_shader<void(*)(float*, TslGlobal*), TslGlobal>(shader_source);
     auto func_ptr = ret.first;
 
     float data = 0.0f;
@@ -44,7 +56,7 @@ TEST(GlobalValue, GlobalValueAsDefaultValueForArgument) {
     auto shading_context = ShadingSystem::get_instance().make_shading_context();
 
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = compile_shader_unit_template(shading_context.get(), "random_root_shader", R"(
+    const auto root_shader_unit = compile_shader_unit_template<TslGlobal>(shading_context.get(), "random_root_shader", R"(
         shader output_node( float in_var, out float out_bxdf ){
             out_bxdf = in_var;
         }
@@ -58,6 +70,8 @@ TEST(GlobalValue, GlobalValueAsDefaultValueForArgument) {
     // add the two shader units in this group
     auto ret = shader_group->add_shader_unit("root_shader", root_shader_unit, true);
     EXPECT_EQ(true, ret);
+
+    shader_group->register_tsl_global(tsl_global.m_var_list);
 
     // expose the shader interface
     ExposedArgDescriptor arg;
@@ -101,7 +115,7 @@ TEST(GlobalValue, AccessDataFloat3) {
     tsl_global.intensity = 321.0f;
     tsl_global.diffuse = make_float3(1.0f, 123.0f, 3.0f);
 
-    auto ret = compile_shader<void(*)(float*, TslGlobal*)>(shader_source);
+    auto ret = compile_shader<void(*)(float*, TslGlobal*), TslGlobal>(shader_source);
     auto func_ptr = ret.first;
 
     float data = 0.0f;
@@ -119,7 +133,7 @@ TEST(GlobalValue, GlobalValueInShaderGroup_Simple) {
     auto shading_context = ShadingSystem::get_instance().make_shading_context();
 
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = compile_shader_unit_template(shading_context.get(), "root_shader", R"(
+    const auto root_shader_unit = compile_shader_unit_template<TslGlobal>(shading_context.get(), "root_shader", R"(
         shader output_node( out float out_bxdf ){
             out_bxdf = global_value<intensity>;
         }
@@ -133,6 +147,9 @@ TEST(GlobalValue, GlobalValueInShaderGroup_Simple) {
     // add the two shader units in this group
     auto ret = shader_group->add_shader_unit("root_shader", root_shader_unit, true);
     EXPECT_EQ(true, ret);
+
+    // register tsl global
+    shader_group->register_tsl_global(tsl_global.m_var_list);
 
     // expose the shader interface
     ExposedArgDescriptor arg;
@@ -171,7 +188,7 @@ TEST(GlobalValue, GlobalValueInShaderGroup) {
     auto shading_context = shading_system.make_shading_context();
 
     // the root shader node, this usually matches to the output node in material system
-    const auto root_shader_unit = compile_shader_unit_template(shading_context.get(), "root_shader_GlobalValueInShaderGroup", R"(
+    const auto root_shader_unit = compile_shader_unit_template<TslGlobal>(shading_context.get(), "root_shader_GlobalValueInShaderGroup", R"(
         shader output_node( in closure in_bxdf , out closure out_bxdf ){
             out_bxdf = in_bxdf * global_value<intensity>;
         }
@@ -179,7 +196,7 @@ TEST(GlobalValue, GlobalValueInShaderGroup) {
     EXPECT_NE(nullptr, root_shader_unit);
 
     // a bxdf node
-    const auto bxdf_shader_unit = compile_shader_unit_template(shading_context.get(), "bxdf_shader_GlobalValueInShaderGroup", R"(
+    const auto bxdf_shader_unit = compile_shader_unit_template<TslGlobal>(shading_context.get(), "bxdf_shader_GlobalValueInShaderGroup", R"(
         shader lambert_node( out closure out_bxdf ){
             out_bxdf = make_closure<lambert>( 111, 4.0f );
         }
@@ -198,6 +215,9 @@ TEST(GlobalValue, GlobalValueInShaderGroup) {
 
     // setup connections between shader units
     shader_group->connect_shader_units("bxdf_shader_GlobalValueInShaderGroup", "out_bxdf", "root_shader_GlobalValueInShaderGroup", "in_bxdf");
+
+    // register tsl global
+    shader_group->register_tsl_global(tsl_global.m_var_list);
 
     // expose the shader interface
     ExposedArgDescriptor arg;

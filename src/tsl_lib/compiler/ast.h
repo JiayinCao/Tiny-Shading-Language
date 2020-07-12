@@ -53,7 +53,7 @@ struct LLVM_Compile_Context{
 	llvm::IRBuilder<>*	builder = nullptr;
     llvm::Type*         tsl_global_ty = nullptr;
     llvm::Value*        tsl_global_value = nullptr;
-    GlobalVarList       m_tsl_global_mapping;
+    GlobalVarList*      tsl_global_mapping = nullptr;
     ShaderResourceTable*    m_shader_resource_table = nullptr;
 
     // closured touched in the shader

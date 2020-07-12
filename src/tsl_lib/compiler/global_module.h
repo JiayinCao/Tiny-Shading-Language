@@ -46,12 +46,7 @@ public:
     bool init();
 
     // I prefer this way of registering a lot than the below one, need to follow this
-    //template<class T>
-    //ClosureID register_closure_type(const std::string& name);
-
     ClosureID       register_closure_type(const std::string& name, ClosureArgList& mapping, int structure_size);
-
-    void            register_tsl_global(GlobalVarList& mapping);
 
     // get global closure maker module
     llvm::Module*   get_closure_module();
@@ -80,10 +75,6 @@ private:
 	const llvm::Type*   m_closure_base_type = nullptr;
 
     Tsl_Namespace::LLVM_Compile_Context m_llvm_compiling_context;
-
-    /**< Tsl global metadata. */
-    GlobalVarList m_tsl_global_mapping;
-    int m_tsl_global_size = 0;
 };
 
 TSL_NAMESPACE_END
