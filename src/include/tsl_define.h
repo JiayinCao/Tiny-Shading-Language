@@ -67,7 +67,7 @@ TSL_NAMESPACE_BEGIN
                                         T(T&);             /* Hide copy constructor. */ \
                                         T(T&&);            /* Hide movable constructor. */
 
-// Helper function to make class friendship. Code using TSL will not be interested in learning the friendship among the classes.
+// Helper macros to make class friendship. Code using TSL will not be interested in learning the friendship among the classes.
 // So if it is not TSL library code including this file, it won't even generate any code with this macro.
 #if BUILDING_TSL
     #define TSL_MAKE_CLASS_FRIEND(T)    friend class T;

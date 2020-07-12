@@ -23,6 +23,12 @@
 
 TSL_NAMESPACE_BEGIN
 
+// -----------------------------------------------------------------------------------------------------------
+// TSL global variable declaration.
+// -----------------------------------------------------------------------------------------------------------
+
+// This needs to be refactored later, I would like to make it shader template related instead of a global configuration.
+
 struct GlobalVar {
     std::string m_name;
     std::string m_type;
@@ -40,6 +46,138 @@ typedef std::vector<GlobalVar> GlobalVarList;
 #define IMPLEMENT_TSLGLOBAL_BEGIN()         GlobalVarList TslGlobal::m_offsets({
 #define IMPLEMENT_TSLGLOBAL_VAR(VT,V)       { GlobalVar( #V, #VT ) },
 #define IMPLEMENT_TSLGLOBAL_END()           }); void TslGlobal::RegisterGlobal( ShadingSystem& ss ) { ss.register_tsl_global( m_offsets ); }
+
+
+// -----------------------------------------------------------------------------------------------------------
+// TSL closure handle.
+// -----------------------------------------------------------------------------------------------------------
+
+// Closure is the concept that defered certain operations from TSL to renderers. Closures will be composed 
+// into a tree form and this will commonly be the result of TSL shader execution. The closure tree is just 
+// another form to represent a linearized weighted combination of different closures. This perfectly matches 
+// the BSDF system in most open-source renderers. Basically, a bsdf is also a linear combination of weighted 
+// bxdf. Renderers could simply anaylyse the closure tree to reconstruct the bsdf in its shading system. 
+// This is just one example of how TSL could be used in renderers. Things like volumetric rendering, in which 
+// there is a different system than bsdf, TSL could also be very helpful.
+
+using ClosureID = int;
+constexpr ClosureID INVALID_CLOSURE_ID = 0;
+constexpr ClosureID CLOSURE_ADD = -1;
+constexpr ClosureID CLOSURE_MUL = -2;
+
+using ClosureParamPtr = void*;
+
+//! @brief  Basic data structure maps to a closure in renderers.
+/**
+ * This is the data structure that points to a closure or another closure tree node. The id field identifies 
+ * which closure it is. A negative id means the closure node could be an adding closure node ( it adds two 
+ * closures together ) or a multiplication node ( it scales a closure ). A positive id will match to a 
+ * specific closure to be explained in renderers.
+ */
+struct ClosureTreeNodeBase {
+    ClosureID           m_id = INVALID_CLOSURE_ID;
+    ClosureParamPtr     m_params = nullptr;
+};
+
+//! @brief  Closure adding together.
+/**
+ * Adding two closures together.
+ */
+struct ClosureTreeNodeAdd : public ClosureTreeNodeBase {
+    ClosureTreeNodeBase* m_closure0 = nullptr;
+    ClosureTreeNodeBase* m_closure1 = nullptr;
+};
+
+//! @brief  Scaling a closure.
+/**
+ * This is a closure node that scales a closure.
+ */
+struct ClosureTreeNodeMul : public ClosureTreeNodeBase {
+    float m_weight = 1.0f;
+    ClosureTreeNodeBase* m_closure = nullptr;
+};
+
+//! @brief  Closure tree is nothing but a pointer to the root node.
+struct ClosureTree {
+    ClosureTreeNodeBase* m_root = nullptr;
+};
+
+//! @brief  Closure argument.
+/**
+ * Each closure could have a few arguments when being constructed. Those argument could be constructed
+ * from other shader instructions. This data structure keeps track of each arguments name and type.
+ */
+struct ClosureArg {
+    const std::string m_name;       // name of the argument
+    const std::string m_type;       // type of the argument
+    ClosureArg(const std::string& name, const std::string& type) : m_name(name), m_type(type) {}
+};
+using ClosureArgList = std::vector<ClosureArg>;
+
+// In order to claim a valid closure, it is necessary to define them in the way TSL expect. Though it is
+// technically possible to register closure manually, it is strongly recommanded to go through these macros
+// which already handles the lower level details.
+//
+// For example, claiming a lambert closure could goes like this in a header file,
+//    DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeLambert, "lambert")
+//    DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, float3, base_color)
+//    DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, float3, normal)
+//    DECLARE_CLOSURE_TYPE_END(ClosureTypeLambert)
+//
+// It is clearly shown in the above code that lambert has two different parameters passed, one is the base
+// color, the other is the normal to support normal map.
+//
+// Of course, apart from defining it, it is also necessary to find a cpp file to implement the structure this
+// way,
+//    IMPLEMENT_CLOSURE_TYPE_BEGIN(ClosureTypeLambert)
+//    IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambert, float3, base_color)
+//    IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambert, float3, normal)
+//    IMPLEMENT_CLOSURE_TYPE_END(ClosureTypeLambert)
+//
+// Internally, this will creates a list of ClosureArg so that the compiler knows about the detail of it.
+//
+// One important thing to mention here is that Closure itself could be used as an argument for constructing
+// another closure type, like the commonly available bxdf in renderers like Coat, which coats another glossy
+// layer on top of another brdf that could be any other brdf in the system. In this case, one can simply define
+// the following code to implement it
+//    DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeCoat, "coat")
+//    DECLARE_CLOSURE_TYPE_VAR(ClosureTypeCoat, void*, closure)
+//    DECLARE_CLOSURE_TYPE_VAR(ClosureTypeCoat, float, roughness)
+//    DECLARE_CLOSURE_TYPE_VAR(ClosureTypeCoat, float, ior)
+//    DECLARE_CLOSURE_TYPE_VAR(ClosureTypeCoat, float3, sigma)
+//    DECLARE_CLOSURE_TYPE_VAR(ClosureTypeCoat, float3, normal)
+//    DECLARE_CLOSURE_TYPE_END(ClosureTypeCoat)
+//
+// With the data structure declared in the source code, it is necessary to register it in the TSL shading system
+// before compiling shader so that by the time the compiler sees the keyword, it is able to translate it to
+// correct machine code.
+//    ClosureTypeLambert::RegisterClosure();
+//
+// After the above configuration, it is fairly easy to construct a closure inside TSL shader, just do this,
+//    shader closure_make(out closure o0){
+//       color3 base_color = color3(1.0f, 1.0f, 1.0f);
+//       vector normal = vector(0.0f, 1.0f, 0.0f);
+//       o0 = make_closure<lambert>(base_color, normal);
+//    }
+
+#define DECLARE_CLOSURE_TYPE_BEGIN(T, name)     struct T { static const char* get_name() { return name; }
+#define DECLARE_CLOSURE_TYPE_VAR(T,VT,V)        VT V;
+#define DECLARE_CLOSURE_TYPE_END(T)             static ClosureArgList m_offsets; static ClosureID RegisterClosure(); };
+
+#define IMPLEMENT_CLOSURE_TYPE_BEGIN(T)         ClosureArgList T::m_offsets({
+#define IMPLEMENT_CLOSURE_TYPE_VAR(T,VT,V)      { ClosureArg( #V, #VT ) },
+#define IMPLEMENT_CLOSURE_TYPE_END(T)           }); ClosureID T::RegisterClosure() { return Tsl_Namespace::ShadingSystem::get_instance().register_closure_type( T::get_name() , m_offsets , sizeof(T) ); }
+
+// It is very important to make sure the memory layout is as expected, there should be no fancy stuff compiler tries to do for these data structure.
+// Because the same data structure will also be generated from LLVM, which will expect this exact memory layout. If there is miss-match, it will crash.
+static_assert(sizeof(ClosureTreeNodeBase) == sizeof(ClosureID) + sizeof(ClosureParamPtr) + 4 /* memory padding. */, "Invalid Closure Tree Node Size");
+static_assert(sizeof(ClosureTreeNodeAdd) == sizeof(ClosureTreeNodeBase) + sizeof(ClosureTreeNodeBase*) * 2, "Invalid ClosureTreeNodeAdd Node Size");
+static_assert(sizeof(ClosureTreeNodeMul) == sizeof(ClosureTreeNodeBase) + sizeof(float) + 4 /* memory padding. */ + sizeof(ClosureTreeNodeBase*), "Invalid ClosureTreeNodeMul Node Size");
+
+
+// -----------------------------------------------------------------------------------------------------------
+// TSL function argument declaration.
+// -----------------------------------------------------------------------------------------------------------
 
 enum ShaderArgumentTypeEnum : unsigned int {
     TSL_TYPE_INVALID = 0,
@@ -81,57 +219,5 @@ struct ShaderUnitInputDefaultValue {
     ShaderArgumentTypeEnum  m_type = ShaderArgumentTypeEnum::TSL_TYPE_INVALID;
     ArgDefaultValue         m_val;
 };
-
-using generic_ptr = int*;
-
-using ClosureID = int;
-constexpr ClosureID INVALID_CLOSURE_ID = 0;
-constexpr ClosureID CLOSURE_ADD = -1;
-constexpr ClosureID CLOSURE_MUL = -2;
-
-using ClosureParamPtr = void*;
-
-struct ClosureTreeNodeBase {
-    ClosureID           m_id = INVALID_CLOSURE_ID;
-    ClosureParamPtr     m_params = nullptr;
-};
-
-struct ClosureTreeNodeAdd : public ClosureTreeNodeBase {
-    ClosureTreeNodeBase* m_closure0 = nullptr;
-    ClosureTreeNodeBase* m_closure1 = nullptr;
-};
-
-struct ClosureTreeNodeMul : public ClosureTreeNodeBase {
-    float m_weight = 1.0f;
-    ClosureTreeNodeBase* m_closure = nullptr;
-};
-
-// It is very important to make sure the memory layout is as expected, there should be no fancy stuff compiler tries to do for these data structure.
-// Because the same data structure will also be generated from LLVM, which will expect this exact memory layout. If there is miss-match, it will crash.
-static_assert(sizeof(ClosureTreeNodeBase) == sizeof(ClosureID) + sizeof(ClosureParamPtr) + 4 /* memory padding. */, "Invalid Closure Tree Node Size");
-static_assert(sizeof(ClosureTreeNodeAdd) == sizeof(ClosureTreeNodeBase) + sizeof(ClosureTreeNodeBase*) * 2, "Invalid ClosureTreeNodeAdd Node Size");
-static_assert(sizeof(ClosureTreeNodeMul) == sizeof(ClosureTreeNodeBase) + sizeof(float) + 4 /* memory padding. */ + sizeof(ClosureTreeNodeBase*), "Invalid ClosureTreeNodeMul Node Size");
-
-struct ClosureTree {
-    ClosureTreeNodeBase* m_root = nullptr;
-};
-
-struct ClosureVar {
-    const std::string m_name;
-    const std::string m_type;
-
-    ClosureVar(const std::string& name, const std::string& type) :
-        m_name(name), m_type(type) {}
-};
-
-typedef std::vector<ClosureVar> ClosureVarList;
-
-#define DECLARE_CLOSURE_TYPE_BEGIN(T, name)     struct T { static const char* get_name() { return name; }
-#define DECLARE_CLOSURE_TYPE_VAR(T,VT,V)        VT V;
-#define DECLARE_CLOSURE_TYPE_END(T)             static ClosureVarList m_offsets; static ClosureID RegisterClosure( Tsl_Namespace::ShadingSystem& ); };
-
-#define IMPLEMENT_CLOSURE_TYPE_BEGIN(T)         ClosureVarList T::m_offsets({
-#define IMPLEMENT_CLOSURE_TYPE_VAR(T,VT,V)      { ClosureVar( #V, #VT ) },
-#define IMPLEMENT_CLOSURE_TYPE_END(T)           }); ClosureID T::RegisterClosure( Tsl_Namespace::ShadingSystem& ss ) { return ss.register_closure_type( T::get_name() , m_offsets , sizeof(T) ); }
 
 TSL_NAMESPACE_END

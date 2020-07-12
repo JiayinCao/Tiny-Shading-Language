@@ -33,10 +33,10 @@ struct LLVM_Compile_Context;
 
 struct ClosureItem {
     const ClosureID         m_closure_id = INVALID_CLOSURE_ID;
-    const ClosureVarList&   m_var_list;
+    const ClosureArgList&   m_var_list;
     const int               m_structure_size;
 
-    ClosureItem(ClosureID id, ClosureVarList& var_list, int structure_size) 
+    ClosureItem(ClosureID id, ClosureArgList& var_list, int structure_size) 
         : m_closure_id(id), m_var_list(var_list), m_structure_size(structure_size) {}
 };
 
@@ -49,7 +49,7 @@ public:
     //template<class T>
     //ClosureID register_closure_type(const std::string& name);
 
-    ClosureID       register_closure_type(const std::string& name, ClosureVarList& mapping, int structure_size);
+    ClosureID       register_closure_type(const std::string& name, ClosureArgList& mapping, int structure_size);
 
     void            register_tsl_global(GlobalVarList& mapping);
 

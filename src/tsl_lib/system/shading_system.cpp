@@ -51,7 +51,7 @@ std::shared_ptr<ShadingContext> ShadingSystem::make_shading_context() {
     return std::shared_ptr<ShadingContext>(ptr);
 }
 
-ClosureID ShadingSystem::register_closure_type(const std::string& name, ClosureVarList& mapping, int structure_size) {
+ClosureID ShadingSystem::register_closure_type(const std::string& name, ClosureArgList& mapping, int structure_size) {
     return g_shading_system_impl->m_global_module->register_closure_type(name, mapping, structure_size);
 }
 

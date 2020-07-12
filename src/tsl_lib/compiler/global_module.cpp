@@ -106,7 +106,7 @@ void GlobalModule::register_tsl_global(GlobalVarList& mapping) {
     m_tsl_global_mapping = mapping;
 }
 
-ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureVarList& arg_list, int structure_size) {
+ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureArgList& arg_list, int structure_size) {
     std::lock_guard<std::mutex> lock(m_closure_mutex);
 
 	// if it is already registered, simply return with the previous registered id

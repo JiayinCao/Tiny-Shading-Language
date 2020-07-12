@@ -27,6 +27,8 @@ TSL_NAMESPACE_BEGIN
 #define DLLEXPORT
 #endif
 
+using generic_ptr = int*;
+
 extern "C" {
     // allocate memory inside shaders
     DLLEXPORT int* TSL_MALLOC(int size) {

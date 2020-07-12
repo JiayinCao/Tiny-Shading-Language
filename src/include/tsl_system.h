@@ -156,7 +156,7 @@ public:
     //! @param  mapping         Mapping of the data inside the closure.
     //! @param  closure_size    Size of the data structure.
     //! @return                 Allocated closure id for the closure.
-    ClosureID                               register_closure_type(const std::string& name, ClosureVarList& mapping, int closure_size);
+    ClosureID                               register_closure_type(const std::string& name, ClosureArgList& mapping, int closure_size);
 
     //! @brief  Register tsl global data.
     //!
