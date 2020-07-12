@@ -103,8 +103,6 @@ inline Tsl_Namespace::ShaderArgumentTypeEnum type_from_internal_type(const Tsl_N
     case Tsl_Namespace::DataTypeEnum::STRUCT:
         if(0 == strcmp("float3", type.m_structure_name))
             return Tsl_Namespace::ShaderArgumentTypeEnum::TSL_TYPE_FLOAT3;
-        else if(0 == strcmp("float4", type.m_structure_name))
-            return Tsl_Namespace::ShaderArgumentTypeEnum::TSL_TYPE_FLOAT4;
     default:
         break;
     }
@@ -118,8 +116,6 @@ inline llvm::Type* get_type_from_context(const std::string& type, Tsl_Namespace:
         return get_float_ty(context);
     else if (type == "float3")
         return context.m_structure_type_maps["float3"].m_llvm_type;
-    else if( type == "float4" )
-        return context.m_structure_type_maps["float4"].m_llvm_type;
     else if( type == "double" )
         return get_double_ty(context);
     else if( type == "matrix" )

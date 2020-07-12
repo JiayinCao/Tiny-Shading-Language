@@ -59,7 +59,7 @@ TEST(ShaderResource, SimpleTexture) {
 
     // resolve the shader instance
     const auto resolve_ret = shading_context->resolve_shader_instance(shader_instance.get());
-    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, resolve_ret);
+    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, resolve_ret);
 
     // get the raw function pointer for execution
     auto func_ptr = (void(*)(float3*, TslGlobal*))shader_instance->get_function();
@@ -114,7 +114,7 @@ TEST(ShaderResource, SimpleTextureAlpha) {
 
     // resolve the shader instance
     const auto resolve_ret = shading_context->resolve_shader_instance(shader_instance.get());
-    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, resolve_ret);
+    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, resolve_ret);
 
     // get the raw function pointer for execution
     auto func_ptr = (void(*)(float*, TslGlobal*))shader_instance->get_function();
@@ -174,7 +174,7 @@ TEST(ShaderResource, CustomShaderResource) {
 
     // resolve the shader instance
     const auto resolve_ret = shading_context->resolve_shader_instance(shader_instance.get());
-    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Succeed, resolve_ret);
+    EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, resolve_ret);
 
     // get the raw function pointer for execution
     auto func_ptr = (void(*)(Tsl_Namespace::ClosureTreeNodeBase**, TslGlobal*))shader_instance->get_function();

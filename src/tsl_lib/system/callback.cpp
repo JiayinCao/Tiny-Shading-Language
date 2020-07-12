@@ -43,12 +43,6 @@ extern "C" {
     DLLEXPORT void TSL_TEXTURE2D_SAMPLE_ALPHA(generic_ptr ptr, float* alpha, float u, float v) {
         sample_alpha_2d((const void*)ptr, u, v, *alpha);
     }
-
-    // 3D texture access
-    float4 TSL_TEXTURE_SAMPLE_3D(generic_ptr ptr, float u, float v, float w) {
-        // to be implemented
-        return float4();
-    }
 }
 
 TSL_NAMESPACE_END

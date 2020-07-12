@@ -17,11 +17,10 @@
 
 #pragma once
 
-#include "tsl_define.h"
 #include "closure.h"
 #include "global.h"
 #include "shader_arg_types.h"
-#include "status.h"
+#include "tsl_system.h"
 
 TSL_NAMESPACE_BEGIN
 
@@ -51,6 +50,20 @@ enum class TSL_DEBUG_LEVEL : unsigned int {
     TSL_DEBUG_INFO,         // General debugging information.
     TSL_DEBUG_WARNING,      // A warning means there is some badly written code in shader sources.
     TSL_DEBUG_ERROR,        // An error will most likely result failure in shader compilation.
+};
+
+//! @brief  Error message for resolving shader templates
+enum class TSL_Resolving_Status : unsigned int {
+    TSL_Resolving_Succeed = 0,
+    TSL_Resolving_InvalidInput,                     /*< Input is nullptr. */
+    TSL_Resolving_ShaderGroupWithoutRoot,           /*< No shader unit defined as root in the input shader group. */
+    TSL_Resolving_ShaderGroupWithCycles,            /*< There is cycles detected in the shader group. */
+    TSL_Resolving_InvalidShaderGroupTemplate,       /*< Invalid shader group template. */
+    TSL_Resolving_LLVMFunctionVerificationFailed,   /*< LLVM verfication of the */
+    TSL_Resolving_UndefinedShaderUnit,              /*< A specific shader unit is not defined in the shader group. */
+    TSL_Resolving_InvalidArgType,                   /*< One of the input arguments defined in the shader group template is not defined. */
+    TSL_Resolving_ArgumentWithoutInitialization,    /*< One of the arguments passed in doesn't have a valid initialization value. */
+    TSL_Resolving_UnspecifiedError                  /*< This error type is not specified somehow. */
 };
 
 //! @brief  ShadingSystem callback interface.

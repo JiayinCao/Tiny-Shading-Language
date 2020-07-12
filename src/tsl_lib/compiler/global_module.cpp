@@ -226,28 +226,6 @@ void GlobalModule::declare_global_module(LLVM_Compile_Context& context){
     float3_meta_data.m_member_types["b"] = { 2 , { DataTypeEnum::FLOAT , nullptr } };
     context.m_structure_type_maps["float3"] = float3_meta_data;
 
-    // add some intrinsic data structure
-    const auto float4_struct = "float4";
-    const std::vector<Type*> float4_members = {
-        get_float_ty(context),
-        get_float_ty(context),
-        get_float_ty(context),
-        get_float_ty(context)
-    };
-    auto float4_struct_llvm_type = StructType::create(float4_members, float4_struct);
-
-    StructMemberTypeMetaData float4_meta_data;
-    float4_meta_data.m_llvm_type = float4_struct_llvm_type;
-    float4_meta_data.m_member_types["x"] = { 0 , { DataTypeEnum::FLOAT , nullptr } };
-    float4_meta_data.m_member_types["y"] = { 1 , { DataTypeEnum::FLOAT , nullptr } };
-    float4_meta_data.m_member_types["z"] = { 2 , { DataTypeEnum::FLOAT , nullptr } };
-    float4_meta_data.m_member_types["w"] = { 3 , { DataTypeEnum::FLOAT , nullptr } };
-    float4_meta_data.m_member_types["r"] = { 0 , { DataTypeEnum::FLOAT , nullptr } };
-    float4_meta_data.m_member_types["g"] = { 1 , { DataTypeEnum::FLOAT , nullptr } };
-    float4_meta_data.m_member_types["b"] = { 2 , { DataTypeEnum::FLOAT , nullptr } };
-    float4_meta_data.m_member_types["w"] = { 3 , { DataTypeEnum::FLOAT , nullptr } };
-    context.m_structure_type_maps["float4"] = float4_meta_data;
-
     // malloc function
     Function* malloc_function = Function::Create(FunctionType::get(get_int_32_ptr_ty(context), { get_int_32_ty(context) }, false), Function::ExternalLinkage, "TSL_MALLOC", context.module);
 	context.m_func_symbols["TSL_MALLOC"] = std::make_pair(malloc_function, nullptr);

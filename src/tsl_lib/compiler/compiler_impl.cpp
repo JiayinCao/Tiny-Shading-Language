@@ -73,9 +73,6 @@ static llvm::Type* llvm_type_from_arg_type(const ShaderArgumentTypeEnum type, LL
     case ShaderArgumentTypeEnum::TSL_TYPE_FLOAT3:
         llvm_type = context.m_structure_type_maps["float3"].m_llvm_type;
         break;
-    case ShaderArgumentTypeEnum::TSL_TYPE_FLOAT4:
-        llvm_type = context.m_structure_type_maps["float4"].m_llvm_type;
-        break;
     default:
         // not supported yet
         break;
@@ -223,7 +220,7 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnitTemplate* su) 
 
 TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderInstance* si) {
     if (!si)
-        return TSL_Resolving_InvalidInput;
+        return TSL_Resolving_Status::TSL_Resolving_InvalidInput;
 
     const auto& shader_template = *(si->m_shader_instance_data->m_shader_unit_template);
     auto shader_instance_data = si->m_shader_instance_data;
@@ -231,7 +228,7 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderInstance* si) {
 
     // invalid shader unit template
     if (!shader_template_data->m_module || !shader_template_data->m_llvm_function)
-        return TSL_Resolving_InvalidShaderGroupTemplate;
+        return TSL_Resolving_Status::TSL_Resolving_InvalidShaderGroupTemplate;
 
     // don't consume the module to avoid limitation of creating more shader instance
     auto cloned_module = llvm::CloneModule(*shader_template_data->m_module);
@@ -257,7 +254,7 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderInstance* si) {
 
     // make sure the function is valid
     if (shader_template.m_shader_unit_template_impl->m_allow_verification && !llvm::verifyFunction(*shader_template_data->m_llvm_function, &llvm::errs()))
-        return TSL_Resolving_LLVMFunctionVerificationFailed;
+        return TSL_Resolving_Status::TSL_Resolving_LLVMFunctionVerificationFailed;
 
 #ifdef DEBUG_OUTPUT
     cloned_module->print(llvm::errs(), nullptr);
@@ -278,29 +275,29 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderInstance* si) {
     // resolve the function pointer
     shader_instance_data->m_function_pointer = shader_instance_data->m_execution_engine->getFunctionAddress(shader_template_data->m_root_function_name);
 
-    return TSL_Resolving_Succeed;
+    return TSL_Resolving_Status::TSL_Resolving_Succeed;
 }
 
 TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
     PROTECT_CONTEXT("");
 
     if (!sg)
-        return TSL_Resolving_InvalidInput;
+        return TSL_Resolving_Status::TSL_Resolving_InvalidInput;
 
     ShaderGroupTemplate_Impl* sg_impl = (ShaderGroupTemplate_Impl*)sg->m_shader_unit_template_impl;
     auto su_pvt = sg_impl->m_shader_unit_data;
     if (!su_pvt)
-        return TSL_Resolving_InvalidInput;
+        return TSL_Resolving_Status::TSL_Resolving_InvalidInput;
 
     auto module = su_pvt->m_module.get();
 
     // if no root shader setup yet, return false
     if (sg_impl->m_root_shader_unit_name == "")
-        return TSL_Resolving_ShaderGroupWithoutRoot;
+        return TSL_Resolving_Status::TSL_Resolving_ShaderGroupWithoutRoot;
 
     // if we can't find the root shader, it should return false
     if (0 == sg_impl->m_shader_units.count(sg_impl->m_root_shader_unit_name))
-        return TSL_Resolving_ShaderGroupWithoutRoot;
+        return TSL_Resolving_Status::TSL_Resolving_ShaderGroupWithoutRoot;
 
     // essentially, this is a topological sort
     std::unordered_set<std::string>   visited_shader_units;
@@ -427,7 +424,7 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
 
     // generate wrapper shader source code.
     const auto ret = generate_shader_source(compile_context, sg, root_shader, visited_shader_units, current_shader_units_being_visited, var_mapping, shader_unit_llvm_function, llvm_args);
-    if (ret != TSL_Resolving_Succeed)
+    if (ret != TSL_Resolving_Status::TSL_Resolving_Succeed)
         return ret;
         
     // pop var table
@@ -440,7 +437,7 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
     sg_impl->m_shader_unit_data->m_llvm_function = function;
     sg_impl->m_shader_unit_data->m_root_function_name = func_name;
 
-    return TSL_Resolving_Succeed;
+    return TSL_Resolving_Status::TSL_Resolving_Succeed;
 }
 
 TSL_Resolving_Status TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Context& context, ShaderGroupTemplate* sg, const ShaderUnitTemplateCopy& suc, std::unordered_set<std::string>& visited, std::unordered_set<std::string>& being_visited,
@@ -450,11 +447,11 @@ TSL_Resolving_Status TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Con
 
     // cycles detected, incorrect shader setup!!!
     if (being_visited.count(shader_unit_copy_name))
-        return TSL_Resolving_ShaderGroupWithCycles;
+        return TSL_Resolving_Status::TSL_Resolving_ShaderGroupWithCycles;
 
     // avoid generating code for this shader unit again
     if (visited.count(shader_unit_copy_name))
-        return TSL_Resolving_Succeed;
+        return TSL_Resolving_Status::TSL_Resolving_Succeed;
 
     // push shader unit in cache so that we can detect cycles
     being_visited.insert(shader_unit_copy_name);
@@ -471,11 +468,11 @@ TSL_Resolving_Status TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Con
 
             // if an undefined shader unit is assigned, simply quit the process
             if (sg_impl->m_shader_units.count(shader_unit_copy_name) == 0)
-                return TSL_Resolving_UndefinedShaderUnit;
+                return TSL_Resolving_Status::TSL_Resolving_UndefinedShaderUnit;
 
             const auto dep_shader_unit = sg_impl->m_shader_units[dep_shader_unit_name];
             const auto ret = generate_shader_source(context, sg, dep_shader_unit, visited, being_visited, var_mapping, function_mapping, args);
-            if(TSL_Resolving_Succeed != ret)
+            if(TSL_Resolving_Status::TSL_Resolving_Succeed != ret)
                 return ret;
         }
     }
@@ -522,7 +519,7 @@ TSL_Resolving_Status TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Con
                 {
                     llvm::Type* llvm_type = llvm_type_from_arg_type(type, context);
                     if (!llvm_type)
-                        return TSL_Resolving_InvalidArgType;
+                        return TSL_Resolving_Status::TSL_Resolving_InvalidArgType;
                     llvm_type = llvm_type->getPointerTo();
 
                     bool has_init_value = false;
@@ -578,7 +575,7 @@ TSL_Resolving_Status TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Con
                     if (!has_init_value) {
                         emit_error("Shader group '%s' has a shader unit instance '%s' with a argument '%s' without any initialization and connection.", sg->get_name().c_str(), shader_unit_copy_name.c_str(), name.c_str() );
 
-                        return TSL_Resolving_ArgumentWithoutInitialization;
+                        return TSL_Resolving_Status::TSL_Resolving_ArgumentWithoutInitialization;
                     }
                 }
             }
@@ -621,7 +618,7 @@ TSL_Resolving_Status TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Con
     // erase the shader unit from being visited
     being_visited.erase(shader_unit_copy_name);
 
-    return TSL_Resolving_Succeed;
+    return TSL_Resolving_Status::TSL_Resolving_Succeed;
 }
 
 TSL_NAMESPACE_END

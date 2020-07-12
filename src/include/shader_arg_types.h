@@ -28,7 +28,6 @@ enum ShaderArgumentTypeEnum : unsigned int {
     TSL_TYPE_DOUBLE,
     TSL_TYPE_BOOL,
     TSL_TYPE_FLOAT3,
-    TSL_TYPE_FLOAT4,
     TSL_TYPE_GLOBAL,
     TSL_TYPE_CLOSURE
 };
@@ -37,19 +36,9 @@ struct float3 {
     float x, y, z;
 };
 
-struct float4 {
-    float x, y, z, w;
-};
-
 inline float3 make_float3(float x, float y, float z) {
     float3 ret;
     ret.x = x; ret.y = y; ret.z = z;;
-    return ret;
-}
-
-inline float4 make_float4(float x, float y, float z, float w) {
-    float4 ret;
-    ret.x = x; ret.y = y; ret.z = z; ret.w = w;
     return ret;
 }
 
@@ -59,7 +48,6 @@ union ArgDefaultValue {
     double      m_double;
     bool        m_bool;
     float3      m_float3;
-    float4      m_float4;
     const char* m_global_var_name;  // to keep it as simple as possible, it is up to renderer to keep track of the memory
 };
 
