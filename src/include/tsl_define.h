@@ -29,14 +29,14 @@ TSL_NAMESPACE_BEGIN
 
     // Make sure the compiler is C++14 compatible. Otherwise, make it clear that it is necessary to compile TSL in an error message.
     #if (__cplusplus < 201300L)
-    #  error "TSL heavily uses features of C++14/11, please make sure you have a C++14 compatible compiler."
+      #error "TSL heavily uses features of C++14/11, please make sure you have a C++14 compatible compiler."
     #endif
 #elif defined(__APPLE__)
     #define TSL_ON_MAC
 
         // Make sure the compiler is C++14 compatible. Otherwise, make it clear that it is necessary to compile TSL in an error message.
     #if (__cplusplus < 201300L)
-    #  error "TSL heavily uses features of C++14/11, please make sure you have a C++14 compatible compiler."
+      #error "TSL heavily uses features of C++14/11, please make sure you have a C++14 compatible compiler."
     #endif
 #endif
 
@@ -56,7 +56,7 @@ TSL_NAMESPACE_BEGIN
     //  do nothing and hope for the best?
     #define TSL_INTERFACE
     #define IMPORT
-    #pragma message("Unknown dynamic link import/export semantics.")
+    #error "Unknown dynamic link import/export semantics."
 #endif
 
 // Hide the constructors to prevent it from being constructed in a way that TSL doesn't expect.
