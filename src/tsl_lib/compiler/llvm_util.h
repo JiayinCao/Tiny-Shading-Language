@@ -24,7 +24,7 @@
 #include "llvm/IR/Type.h"
 #include "llvm/IR/IRBuilder.h"
 #include "ast.h"
-#include "shader_arg_types.h"
+#include "tsl_args.h"
 
 inline llvm::LLVMContext&   get_llvm_context(Tsl_Namespace::LLVM_Compile_Context& context) {
     return *context.context;

@@ -17,10 +17,9 @@
 
 #pragma once
 
-#include "closure.h"
-#include "global.h"
-#include "shader_arg_types.h"
-#include "tsl_system.h"
+#include <memory>
+#include "tsl_args.h"
+#include "tsl_define.h"
 
 TSL_NAMESPACE_BEGIN
 

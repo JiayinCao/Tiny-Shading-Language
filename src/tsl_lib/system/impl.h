@@ -22,14 +22,14 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <mutex>
-#include "shader_resource_impl.h"
 #include "tsl_system.h"
-#include "system/shader_resource_impl.h"
 
 TSL_NAMESPACE_BEGIN
 
 class GlobalModule;
+class ShaderResourceHandle;
 struct ShaderUnitTemplate_Pvt;
+using ShaderResourceTable = std::unordered_map<std::string, const ShaderResourceHandle*>;
 
 struct ShadingSystem_Impl {
     /**< Closure register */

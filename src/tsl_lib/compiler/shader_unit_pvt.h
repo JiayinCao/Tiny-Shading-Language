@@ -22,7 +22,7 @@
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "tsl_version.h"
-#include "shader_arg_types.h"
+#include "tsl_args.h"
 
 TSL_NAMESPACE_BEGIN
 

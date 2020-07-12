@@ -24,9 +24,8 @@
 #include <memory>
 #include <unordered_map>
 #include "tsl_version.h"
-#include "closure.h"
 #include "ast.h"
-#include "global.h"
+#include "tsl_args.h"
 
 TSL_NAMESPACE_BEGIN
 

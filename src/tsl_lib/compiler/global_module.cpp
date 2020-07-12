@@ -33,7 +33,7 @@
 #include "global_module.h"
 #include "compiler/ast.h"
 #include "compiler/llvm_util.h"
-#include "closure.h"
+#include "tsl_args.h"
 #include "tsl_std.h"
 
 TSL_NAMESPACE_BEGIN

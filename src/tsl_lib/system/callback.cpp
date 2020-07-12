@@ -16,8 +16,7 @@
  */
 
 #include "tsl_system.h"
-#include "shader_arg_types.h"
-#include "system/shader_resource_impl.h"
+#include "tsl_args.h"
 #include "system/impl.h"
 
 TSL_NAMESPACE_BEGIN

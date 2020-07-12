@@ -28,9 +28,9 @@
 #include "tsl_define.h"
 #include "types.h"
 #include "shader_unit_pvt.h"
-#include "global.h"
-#include "system/shader_resource_impl.h"
+#include "tsl_args.h"
 #include "ast_memory_janitor.h"
+#include "system/impl.h"
 
 TSL_NAMESPACE_BEGIN
 

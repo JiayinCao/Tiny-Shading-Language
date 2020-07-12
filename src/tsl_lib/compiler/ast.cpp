@@ -23,7 +23,7 @@
 #include "ast.h"
 #include "llvm_util.h"
 #include "global_module.h"
-#include "global.h"
+#include "tsl_args.h"
 #include "system/impl.h"
 
 using namespace llvm;

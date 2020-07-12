@@ -18,7 +18,7 @@
 #include <unordered_map>
 #include <string>
 #include "test_common.h"
-#include "closure.h"
+#include "tsl_args.h"
 
 TEST(Closure, ClosureMake) {
     auto& shading_system = ShadingSystem::get_instance();

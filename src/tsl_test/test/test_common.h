@@ -22,7 +22,7 @@
 #include <memory>
 #include "gtest/gtest.h"
 #include "tsl_system.h"
-#include "global.h"
+#include "tsl_args.h"
 
 USE_TSL_NAMESPACE
 
