@@ -22,14 +22,37 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <mutex>
+#include <llvm/IR/Module.h>
+#include <llvm/ExecutionEngine/ExecutionEngine.h>
+#include <llvm/IR/LegacyPassManager.h>
 #include "tsl_system.h"
 
 TSL_NAMESPACE_BEGIN
 
 class GlobalModule;
 class ShaderResourceHandle;
-struct ShaderUnitTemplate_Pvt;
+class AstNode_FunctionPrototype;
 using ShaderResourceTable = std::unordered_map<std::string, const ShaderResourceHandle*>;
+
+// This data structure hides all LLVM related data from ShaderInstance.
+struct ShaderInstance_Impl {
+public:
+    ~ShaderInstance_Impl() {
+        // explicit order of destruction is mandatory here to prevent crashing in LLVM code.
+        m_execution_engine = nullptr;
+        m_shader_unit_template = nullptr;
+    }
+
+    /**< Shader unit template that creates this shader instance. */
+    std::shared_ptr<ShaderUnitTemplate> m_shader_unit_template;
+
+    // the execute engine for this module, it is important to keep this execution engine alive to make sure
+    // the raw function pointer is still valid.
+    std::unique_ptr<llvm::ExecutionEngine> m_execution_engine = nullptr;
+
+    // the function address for host code to call
+    uint64_t m_function_pointer = 0;
+};
 
 struct ShadingSystem_Impl {
     /**< Closure register */
@@ -46,9 +69,6 @@ struct ShaderUnitTemplate_Impl {
     /**< The llvm context created in the shading_context is needed as long as this is alive. */
     std::shared_ptr<ShadingContext> m_shading_context;
 
-    /**< A private data structure hiding all LLVM details. */
-    ShaderUnitTemplate_Pvt* m_shader_unit_data = nullptr;
-    
     /**< Shader resource table. */
     ShaderResourceTable     m_shader_resource_table;
 
@@ -56,19 +76,34 @@ struct ShaderUnitTemplate_Impl {
     GlobalVarList           m_tsl_global;
     unsigned                m_tsl_global_hash = 0;
 
+    /**< root function name. */
+    std::string     m_root_function_name;
+
+    /**< root ast node. */
+    std::shared_ptr<const AstNode_FunctionPrototype> m_ast_root = nullptr;
+
+    /**< Description of exposed arguments. */
+    std::vector<ExposedArgDescriptor>  m_exposed_args;
+
     // enable optimization by default.
     const bool  m_allow_optimization = true;
 
     // This will be allowed once I have most feature completed.
     const bool  m_allow_verification = false;
 
-    /**< Description of exposed arguments. */
-    std::vector<ExposedArgDescriptor>  m_exposed_args;
+    // the llvm module owned by this shader unit
+    std::unique_ptr<llvm::Module> m_module = nullptr;
+
+    // the dependent llvm module
+    std::unordered_set<const llvm::Module*> m_dependencies;
+
+    // llvm function pointer
+    llvm::Function* m_llvm_function = nullptr;
 
     //! @brief  Parse shader group dependencies.
     //!
     //! @param sut      Dependencies of this module.
-    virtual void parse_dependencies(ShaderUnitTemplate_Pvt* sut) const;
+    virtual void parse_dependencies(ShaderUnitTemplate_Impl* sut) const;
 };
 
 //! @brief  A thin wrapper to allow a shader unit added in a group more than once.
@@ -104,7 +139,7 @@ struct ShaderGroupTemplate_Impl : public ShaderUnitTemplate_Impl {
     //! @brief  Parse shader group dependencies.
     //!
     //! @param sut      Dependencies of this module.
-    void parse_dependencies(ShaderUnitTemplate_Pvt* sut) const override;
+    void parse_dependencies(ShaderUnitTemplate_Impl* sut) const override;
 };
 
 struct ShadingContext_Impl {

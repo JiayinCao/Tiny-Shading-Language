@@ -24,7 +24,6 @@
 #include "llvm/ExecutionEngine/MCJIT.h"
 #include "compiler_impl.h"
 #include "ast.h"
-#include "shader_unit_pvt.h"
 #include "tsl_system.h"
 #include "global_module.h"
 #include "llvm_util.h"
@@ -154,7 +153,7 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnitTemplate* su) 
     if( parsing_result != 0 )
 		return false;
 
-    auto su_pvt = su->m_shader_unit_template_impl->m_shader_unit_data;
+    auto su_pvt = su->m_shader_unit_template_impl;
 
     // shader_unit_pvt holds the life time of this module, whenever it is needed by execution engine
     // another module is cloned from this one.
@@ -171,8 +170,8 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnitTemplate* su) 
 		compile_context.context = &m_llvm_context;
 		compile_context.module = module;
 		compile_context.builder = &builder;
-        compile_context.m_shader_resource_table = &su->m_shader_unit_template_impl->m_shader_resource_table;
-        compile_context.tsl_global_mapping = !su->m_shader_unit_template_impl->m_tsl_global.m_var_list.empty() ? &su->m_shader_unit_template_impl->m_tsl_global : nullptr;
+        compile_context.m_shader_resource_table = &su_pvt->m_shader_resource_table;
+        compile_context.tsl_global_mapping = !su_pvt->m_tsl_global.m_var_list.empty() ? &su_pvt->m_tsl_global : nullptr;
 
         // declare tsl global
         m_global_module.declare_closure_tree_types(m_llvm_context, &compile_context.m_structure_type_maps);
@@ -219,16 +218,16 @@ bool TslCompiler_Impl::compile(const char* source_code, ShaderUnitTemplate* su) 
 
 		// generate code for the shader in this module
 		su_pvt->m_llvm_function = m_ast_root->codegen(compile_context);
-        su_pvt->m_root_function_name = m_ast_root->get_function_name();
 
         // there is usually just one global module as dependent in all shader unit.
         su_pvt->m_dependencies.insert(m_global_module.get_closure_module());
 
         // parse exposed shader arguments
-        m_ast_root->parse_shader_parameters(su->m_shader_unit_template_impl->m_exposed_args);
+        m_ast_root->parse_shader_parameters(su_pvt->m_exposed_args);
 
         // keep track of the ast root of this shader unit
         su_pvt->m_ast_root = m_ast_root;
+        su_pvt->m_root_function_name = m_ast_root->get_function_name();
 
         // it should be safe to assume llvm function has to be generated, otherwise, the shader is invalid.
         if (!su_pvt->m_llvm_function)
@@ -244,17 +243,17 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderInstance* si) {
 
     const auto& shader_template = *(si->m_shader_instance_data->m_shader_unit_template);
     auto shader_instance_data = si->m_shader_instance_data;
-    auto shader_template_data = shader_template.m_shader_unit_template_impl->m_shader_unit_data;
+    auto shader_template_data = shader_template.m_shader_unit_template_impl;
 
     // invalid shader unit template
-    if (!shader_template_data->m_module || !shader_template_data->m_llvm_function)
+    if (!shader_template_data || !shader_template_data->m_module || !shader_template_data->m_llvm_function)
         return TSL_Resolving_Status::TSL_Resolving_InvalidShaderGroupTemplate;
 
     // don't consume the module to avoid limitation of creating more shader instance
     auto cloned_module = llvm::CloneModule(*shader_template_data->m_module);
 
     // optimization pass, this is pretty cool because I don't have to implement those sophisticated optimization algorithms.
-    if (shader_template.m_shader_unit_template_impl->m_allow_optimization) {
+    if (shader_template_data->m_allow_optimization) {
         // Create a new pass manager attached to it.
         auto fpm = std::make_unique<llvm::legacy::FunctionPassManager>(cloned_module.get());
 
@@ -273,7 +272,7 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderInstance* si) {
     }
 
     // make sure the function is valid
-    if (shader_template.m_shader_unit_template_impl->m_allow_verification && !llvm::verifyFunction(*shader_template_data->m_llvm_function, &llvm::errs()))
+    if (shader_template_data->m_allow_verification && !llvm::verifyFunction(*shader_template_data->m_llvm_function, &llvm::errs()))
         return TSL_Resolving_Status::TSL_Resolving_LLVMFunctionVerificationFailed;
 
 #ifdef DEBUG_OUTPUT
@@ -293,7 +292,7 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderInstance* si) {
     }
 
     // resolve the function pointer
-    shader_instance_data->m_function_pointer = shader_instance_data->m_execution_engine->getFunctionAddress(shader_template_data->m_root_function_name);
+    shader_instance_data->m_function_pointer = shader_instance_data->m_execution_engine->getFunctionAddress(shader_template.m_shader_unit_template_impl->m_root_function_name);
 
     return TSL_Resolving_Status::TSL_Resolving_Succeed;
 }
@@ -305,11 +304,10 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
         return TSL_Resolving_Status::TSL_Resolving_InvalidInput;
 
     ShaderGroupTemplate_Impl* sg_impl = (ShaderGroupTemplate_Impl*)sg->m_shader_unit_template_impl;
-    auto su_pvt = sg_impl->m_shader_unit_data;
-    if (!su_pvt)
+    if (!sg_impl)
         return TSL_Resolving_Status::TSL_Resolving_InvalidInput;
 
-    auto module = su_pvt->m_module.get();
+    auto module = sg_impl->m_module.get();
 
     // if no root shader setup yet, return false
     if (sg_impl->m_root_shader_unit_name == "")
@@ -327,14 +325,14 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
     auto root_shader = sg_impl->m_shader_units[sg_impl->m_root_shader_unit_name];
 
     // allocate the shader module for this shader group
-    sg_impl->m_shader_unit_data->m_module = std::make_unique<llvm::Module>(sg->get_name(), m_llvm_context);
-    module = sg_impl->m_shader_unit_data->m_module.get();
+    sg_impl->m_module = std::make_unique<llvm::Module>(sg->get_name(), m_llvm_context);
+    module = sg_impl->m_module.get();
 
     llvm::IRBuilder<> builder(m_llvm_context);
 
     LLVM_Compile_Context compile_context;
     compile_context.context = &m_llvm_context;
-    compile_context.module = sg_impl->m_shader_unit_data->m_module.get();
+    compile_context.module = sg_impl->m_module.get();
     compile_context.builder = &builder;
     compile_context.tsl_global_mapping = !sg_impl->m_tsl_global.m_var_list.empty() ? &sg_impl->m_tsl_global : nullptr;
 
@@ -343,7 +341,7 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
     m_global_module.declare_global_module(compile_context);
 
     // dependency modules
-    su_pvt->m_dependencies.insert(m_global_module.get_closure_module());
+    sg_impl->m_dependencies.insert(m_global_module.get_closure_module());
 
     unsigned tsl_global_hash = sg_impl->m_tsl_global_hash;
 
@@ -353,19 +351,19 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
     for (auto& shader_unit_wrapper : sg_impl->m_shader_units) {
         const auto& shader_unit_name = shader_unit_wrapper.second.m_name;
         auto shader_unit = shader_unit_wrapper.second.m_shader_unit_template;
-        auto local_su_pvt = shader_unit->m_shader_unit_template_impl->m_shader_unit_data;
+        auto shader_unit_data = shader_unit->m_shader_unit_template_impl;
 
         // only one type of tsl global can be registered across the whole group.
         // it doesn't really matter if one shader unit doesn't have it though.
-        const auto sut_tsl_global_hash = shader_unit->m_shader_unit_template_impl->m_tsl_global_hash;
+        const auto sut_tsl_global_hash = shader_unit_data->m_tsl_global_hash;
         if (sut_tsl_global_hash && tsl_global_hash != sut_tsl_global_hash)
             return TSL_Resolving_Status::TSL_Resolving_InconsistentTSLGlobalType;
 
 #ifdef DEBUG_OUTPUT
-        local_su_pvt->m_module->print(llvm::errs(), nullptr);
+        shader_unit->m_module->print(llvm::errs(), nullptr);
 #endif
         // parse shader unit dependencies
-        shader_unit->m_shader_unit_template_impl->parse_dependencies(su_pvt);
+        shader_unit_data->parse_dependencies(sg_impl);
 
         // no need to declare the function multiple times if it is defined before
         if (visited_module.count(shader_unit.get())){
@@ -390,7 +388,7 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
             llvm::FunctionType* function_type = llvm::FunctionType::get(llvm_void_ty, args, false);
 
             // create the function prototype
-            const auto& func_name = local_su_pvt->m_root_function_name;
+            const auto& func_name = shader_unit->m_shader_unit_template_impl->m_root_function_name;
             llvm::Function* function = llvm::Function::Create(function_type, llvm::Function::ExternalLinkage, func_name, compile_context.module);
 
             // For debugging purposes, set the name of all arguments
@@ -482,8 +480,8 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
     builder.CreateRetVoid();
         
     // keep record of the llvm function
-    sg_impl->m_shader_unit_data->m_llvm_function = function;
-    sg_impl->m_shader_unit_data->m_root_function_name = func_name;
+    sg_impl->m_llvm_function = function;
+    sg_impl->m_root_function_name = func_name;
 
     return TSL_Resolving_Status::TSL_Resolving_Succeed;
 }

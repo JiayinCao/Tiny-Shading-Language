@@ -22,12 +22,11 @@
 #include <vector>
 #include <stack>
 #include <unordered_map>
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/IRBuilder.h"
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/Function.h>
+#include <llvm/IR/IRBuilder.h>
 #include "tsl_define.h"
 #include "types.h"
-#include "shader_unit_pvt.h"
 #include "tsl_args.h"
 #include "ast_memory_janitor.h"
 #include "system/impl.h"

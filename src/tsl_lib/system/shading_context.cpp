@@ -23,12 +23,10 @@
 #include "llvm/ExecutionEngine/MCJIT.h"
 #include "tsl_system.h"
 #include "compiler/compiler.h"
-#include "compiler/shader_unit_pvt.h"
 #include "system/impl.h"
 #include "tsl_args.h"
 
 TSL_NAMESPACE_BEGIN
-
 
 namespace {
     // Cyclic redundancy check
@@ -77,13 +75,11 @@ ShaderUnitTemplate::ShaderUnitTemplate(const std::string& name, std::shared_ptr<
         return;
 
     m_shader_unit_template_impl = new ShaderUnitTemplate_Impl();
-    m_shader_unit_template_impl->m_shader_unit_data = new ShaderUnitTemplate_Pvt();
     m_shader_unit_template_impl->m_name = name;
     m_shader_unit_template_impl->m_shading_context = context;
 }
 
 ShaderUnitTemplate::~ShaderUnitTemplate(){
-    delete m_shader_unit_template_impl->m_shader_unit_data;
     delete m_shader_unit_template_impl;
 }
 
@@ -133,7 +129,6 @@ bool ShaderUnitTemplate::register_shader_resource(const std::string& name, const
 ShaderGroupTemplate::ShaderGroupTemplate(const std::string& name, std::shared_ptr<ShadingContext> context)
     :ShaderUnitTemplate("", nullptr){
     m_shader_unit_template_impl = new ShaderGroupTemplate_Impl();
-    m_shader_unit_template_impl->m_shader_unit_data = new ShaderUnitTemplate_Pvt();
     m_shader_unit_template_impl->m_name = name;
     m_shader_unit_template_impl->m_shading_context = context;
 }
@@ -219,16 +214,16 @@ std::shared_ptr<ShaderGroupTemplate> ShadingContext::begin_shader_group_template
     return std::shared_ptr<ShaderGroupTemplate>(new ShaderGroupTemplate(name, shared_from_this()));
 }
 
-void ShaderGroupTemplate_Impl::parse_dependencies(ShaderUnitTemplate_Pvt* sut) const {
+void ShaderGroupTemplate_Impl::parse_dependencies(ShaderUnitTemplate_Impl* sut) const {
     for (const auto& shader_unit : m_shader_units)
         shader_unit.second.m_shader_unit_template->m_shader_unit_template_impl->parse_dependencies(sut);
-    sut->m_dependencies.insert(m_shader_unit_data->m_module.get());
+    sut->m_dependencies.insert(m_module.get());
 }
 
-void ShaderUnitTemplate_Impl::parse_dependencies(ShaderUnitTemplate_Pvt* sut) const {
+void ShaderUnitTemplate_Impl::parse_dependencies(ShaderUnitTemplate_Impl* sut) const {
     if (!sut)
         return;
-    sut->m_dependencies.insert(m_shader_unit_data->m_module.get());
+    sut->m_dependencies.insert(m_module.get());
 }
 
 GlobalVarList::GlobalVarList(const std::vector<GlobalVar>& var_list) :
