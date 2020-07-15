@@ -33,6 +33,9 @@ class GlobalModule;
 class ShaderResourceHandle;
 class AstNode_FunctionPrototype;
 using ShaderResourceTable = std::unordered_map<std::string, const ShaderResourceHandle*>;
+using ShaderUnitConnection = std::unordered_map<std::string, std::unordered_map<std::string, std::pair<std::string, std::string>>>;
+using ShaderWrapperConnection = std::unordered_map<std::string, std::unordered_map<std::string, int>>;
+using ShaderUnitInputDefaultMapping = std::unordered_map<std::string, std::unordered_map<std::string, ShaderUnitInputDefaultValue>>;
 
 // This data structure hides all LLVM related data from ShaderInstance.
 struct ShaderInstance_Impl {
@@ -48,7 +51,7 @@ public:
 
     // the execute engine for this module, it is important to keep this execution engine alive to make sure
     // the raw function pointer is still valid.
-    std::unique_ptr<llvm::ExecutionEngine> m_execution_engine = nullptr;
+    std::unique_ptr<llvm::ExecutionEngine> m_execution_engine;
 
     // the function address for host code to call
     uint64_t m_function_pointer = 0;
@@ -56,7 +59,7 @@ public:
 
 struct ShadingSystem_Impl {
     /**< Closure register */
-    GlobalModule* m_global_module = nullptr;
+    std::unique_ptr<GlobalModule> m_global_module;
 
     /**< This is needs to be bound before shader compilation. */
     std::unique_ptr<ShadingSystemInterface> m_callback;
@@ -66,38 +69,33 @@ struct ShaderUnitTemplate_Impl {
     /**< Name of the shader unit. */
     std::string m_name;
 
+    /**< TSL global data. */
+    GlobalVarList           m_tsl_global;
+    unsigned                m_tsl_global_hash = 0;
+
+    /**< root function name. */
+    std::string             m_root_function_name;
+
+    /**< root ast node. */
+    std::shared_ptr<const AstNode_FunctionPrototype> m_ast_root;
+
     /**< The llvm context created in the shading_context is needed as long as this is alive. */
     std::shared_ptr<ShadingContext> m_shading_context;
 
     /**< Shader resource table. */
     ShaderResourceTable     m_shader_resource_table;
 
-    /**< TSL global data. */
-    GlobalVarList           m_tsl_global;
-    unsigned                m_tsl_global_hash = 0;
-
-    /**< root function name. */
-    std::string     m_root_function_name;
-
-    /**< root ast node. */
-    std::shared_ptr<const AstNode_FunctionPrototype> m_ast_root = nullptr;
-
     /**< Description of exposed arguments. */
     std::vector<ExposedArgDescriptor>  m_exposed_args;
 
-    // enable optimization by default.
-    const bool  m_allow_optimization = true;
-
-    // This will be allowed once I have most feature completed.
-    const bool  m_allow_verification = false;
-
     // the llvm module owned by this shader unit
-    std::unique_ptr<llvm::Module> m_module = nullptr;
+    std::unique_ptr<llvm::Module> m_module;
 
     // the dependent llvm module
     std::unordered_set<const llvm::Module*> m_dependencies;
 
     // llvm function pointer
+    // this is just a copy to the llvm object, the memory ownership is maintained through m_module.
     llvm::Function* m_llvm_function = nullptr;
 
     //! @brief  Parse shader group dependencies.
@@ -108,32 +106,29 @@ struct ShaderUnitTemplate_Impl {
 
 //! @brief  A thin wrapper to allow a shader unit added in a group more than once.
 /**
-    * In order to allow a shader unit to be added in a shader group multiple times, there needs to be a thin wrapper
-    * to differentiate different instances of shader unit.
-    */
+  * In order to allow a shader unit to be added in a shader group multiple times, there needs to be a thin wrapper
+  * to differentiate different instances of shader unit.
+  */
 struct ShaderUnitTemplateCopy {
     std::string         m_name;
     std::shared_ptr<ShaderUnitTemplate> m_shader_unit_template;
 };
 
 struct ShaderGroupTemplate_Impl : public ShaderUnitTemplate_Impl {
-    /**< Shader units belong to this group. */
-    std::unordered_map<std::string, ShaderUnitTemplateCopy> m_shader_units;
-
     /**< Name of the root shader unit. */
     std::string  m_root_shader_unit_name;
 
+    /**< Shader units belong to this group. */
+    std::unordered_map<std::string, ShaderUnitTemplateCopy> m_shader_units;
+
     /**< Shader unit connection. */
-    using ShaderUnitConnection = std::unordered_map<std::string, std::unordered_map<std::string, std::pair<std::string, std::string>>>;
-    ShaderUnitConnection m_shader_unit_connections;
+    ShaderUnitConnection            m_shader_unit_connections;
 
     /**< Wrapper parameter connection. */
-    using ShaderWrapperConnection = std::unordered_map<std::string, std::unordered_map<std::string, int>>;
-    ShaderWrapperConnection     m_input_args;
-    ShaderWrapperConnection     m_output_args;
+    ShaderWrapperConnection         m_input_args;
+    ShaderWrapperConnection         m_output_args;
 
     /**< Shader default value. */
-    using ShaderUnitInputDefaultMapping = std::unordered_map<std::string, std::unordered_map<std::string, ShaderUnitInputDefaultValue>>;
     ShaderUnitInputDefaultMapping   m_shader_input_defaults;
 
     //! @brief  Parse shader group dependencies.
@@ -147,7 +142,7 @@ struct ShadingContext_Impl {
     std::unique_ptr<TslCompiler> m_compiler;
 
     /**< Shading system owning the context. */
-    ShadingSystem_Impl* m_shading_system_impl = nullptr;
+    std::shared_ptr<ShadingSystem_Impl> m_shading_system_impl = nullptr;
 };
 
 //! @brief  Allocate memory in shader.

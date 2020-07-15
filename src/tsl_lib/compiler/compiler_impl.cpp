@@ -253,7 +253,7 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderInstance* si) {
     auto cloned_module = llvm::CloneModule(*shader_template_data->m_module);
 
     // optimization pass, this is pretty cool because I don't have to implement those sophisticated optimization algorithms.
-    if (shader_template_data->m_allow_optimization) {
+    {
         // Create a new pass manager attached to it.
         auto fpm = std::make_unique<llvm::legacy::FunctionPassManager>(cloned_module.get());
 
@@ -272,7 +272,8 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderInstance* si) {
     }
 
     // make sure the function is valid
-    if (shader_template_data->m_allow_verification && !llvm::verifyFunction(*shader_template_data->m_llvm_function, &llvm::errs()))
+    constexpr bool allow_verification = false;  // disabled for now
+    if (allow_verification && !llvm::verifyFunction(*shader_template_data->m_llvm_function, &llvm::errs()))
         return TSL_Resolving_Status::TSL_Resolving_LLVMFunctionVerificationFailed;
 
 #ifdef DEBUG_OUTPUT

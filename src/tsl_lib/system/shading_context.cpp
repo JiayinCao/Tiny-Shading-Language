@@ -178,7 +178,7 @@ bool ShaderGroupTemplate::add_shader_unit(const std::string& name, std::shared_p
     return true;
 }
 
-ShadingContext::ShadingContext(ShadingSystem_Impl* shading_system_impl){
+ShadingContext::ShadingContext(std::shared_ptr<ShadingSystem_Impl> shading_system_impl){
     m_shading_context_impl = new ShadingContext_Impl();
     m_shading_context_impl->m_shading_system_impl = shading_system_impl;
     m_shading_context_impl->m_compiler = std::make_unique<TslCompiler>(*shading_system_impl->m_global_module);

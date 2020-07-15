@@ -25,7 +25,7 @@
 TSL_NAMESPACE_BEGIN
 
 /** This data structure is only accessable from shading system */
-static std::unique_ptr<ShadingSystem_Impl> g_shading_system_impl = nullptr;
+static std::shared_ptr<ShadingSystem_Impl> g_shading_system_impl = nullptr;
 
 ShadingSystem& ShadingSystem::get_instance() {
     static ShadingSystem ss;
@@ -36,9 +36,9 @@ ShadingSystem::ShadingSystem() {
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
 
-    g_shading_system_impl = std::make_unique<ShadingSystem_Impl>();
+    g_shading_system_impl = std::make_shared<ShadingSystem_Impl>();
 
-    g_shading_system_impl->m_global_module = new GlobalModule();
+    g_shading_system_impl->m_global_module = std::make_unique<GlobalModule>();
     g_shading_system_impl->m_global_module->init();
 }
 
@@ -47,7 +47,7 @@ ShadingSystem::~ShadingSystem() {
 }
 
 std::shared_ptr<ShadingContext> ShadingSystem::make_shading_context() {
-    auto ptr = new ShadingContext(g_shading_system_impl.get());
+    auto ptr = new ShadingContext(g_shading_system_impl);
     return std::shared_ptr<ShadingContext>(ptr);
 }
 

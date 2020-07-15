@@ -361,7 +361,7 @@ private:
     ShadingContext_Impl* m_shading_context_impl = nullptr;
 
     TSL_MAKE_CLASS_FRIEND(ShadingSystem)
-    TSL_HIDE_CONSTRUCTOR(ShadingContext, ShadingSystem_Impl* shading_system_impl)
+    TSL_HIDE_CONSTRUCTOR(ShadingContext, std::shared_ptr<ShadingSystem_Impl> shading_system_impl)
 };
 
 TSL_NAMESPACE_END
