@@ -27,6 +27,7 @@
 	#include "compiler/ast.h"
 	#include "compiler/types.h"
 	#include "compiler/compiler_impl.h"
+    #include "compiler/str_helper.h"
     #include "system/impl.h"
 
 	USE_TSL_NAMESPACE
@@ -971,7 +972,7 @@ TYPE:
     }
 	|
 	"vector" {
-		const char* s = tsl_compiler->claim_permanent_address("float3");
+		const char* s = make_str_unique("float3");
 		DataType type = { DataTypeEnum::STRUCT , s };
 		$$ = type;
 
@@ -979,7 +980,7 @@ TYPE:
 	}
 	|
 	"color" {
-		const char* s = tsl_compiler->claim_permanent_address("float3");
+		const char* s = make_str_unique("float3");
 		DataType type = { DataTypeEnum::STRUCT , s };
 		$$ = type;
 
@@ -1006,7 +1007,7 @@ TYPE:
 		// In an ideal world, it should just use the name of the struct, however it generates
 		// a conflict, I don't have time to dig in for now.
 
-		const char* s = tsl_compiler->claim_permanent_address($2);
+		const char* s = make_str_unique($2);
 		DataType type = { DataTypeEnum::STRUCT , s };
 		$$ = type;
 

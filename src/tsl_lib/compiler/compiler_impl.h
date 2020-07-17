@@ -114,17 +114,6 @@ public:
         m_closures_in_shader.insert(name);
     }
 
-	//! claim string, this will return a permanent address for each string, each unique string get their own ( one single ) address too.
-	const char*	claim_permanent_address(const char* str){
-		auto it = m_string_container.find(str);
-		if( it != m_string_container.end() )
-			return it->c_str();
-
-		m_string_container.insert( str );
-		
-		return m_string_container.find(str)->c_str();
-	}
-
     //! @brief  Name replacement of shader unit root function.
     const std::string& get_shader_root_function_name() const {
         return m_shader_root_function_name;

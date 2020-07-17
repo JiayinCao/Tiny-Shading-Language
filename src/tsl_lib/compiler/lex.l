@@ -30,6 +30,7 @@
   #include "tsl_version.h"
   #include "tsl_define.h"
   #include "compiler/compiler_impl.h"
+  #include "compiler/str_helper.h"
   #include "compiled_grammar.hpp"
 
   #if __cplusplus > 199711L
@@ -156,11 +157,7 @@ whitespace               [ \t\r\n\f]+
 "!"                       { return OP_NOT; }
 
 {identifier}              { 
-                                #ifdef TSL_ON_WINDOWS
-                                    yylval->s = _strdup(yytext);
-                                #else
-                                    yylval->s = strdup(yytext);
-                                #endif
+                                yylval->s = Tsl_Namespace::make_str_unique(yytext);
                                 return ID;
                           }
 
