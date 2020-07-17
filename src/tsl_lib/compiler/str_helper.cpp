@@ -15,8 +15,6 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-#pragma once
-
 #include <memory>
 #include <string>
 #include <atomic>

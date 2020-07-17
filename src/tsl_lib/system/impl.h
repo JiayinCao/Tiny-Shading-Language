@@ -102,6 +102,9 @@ struct ShaderUnitTemplate_Impl {
     //!
     //! @param sut      Dependencies of this module.
     virtual void parse_dependencies(ShaderUnitTemplate_Impl* sut) const;
+
+    //! @brief  Virtual destructor, this is needed to make sure deletes all members of derived class.
+    virtual ~ShaderUnitTemplate_Impl() {}
 };
 
 //! @brief  A thin wrapper to allow a shader unit added in a group more than once.
