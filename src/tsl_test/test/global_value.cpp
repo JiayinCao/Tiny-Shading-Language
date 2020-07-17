@@ -61,11 +61,11 @@ TEST(GlobalValue, GlobalValueAsDefaultValueForArgument) {
             out_bxdf = in_var;
         }
     )");
-    EXPECT_NE(nullptr, root_shader_unit);
+    EXPECT_VALID_SMART_PTR(root_shader_unit);
 
     // make a shader group
     auto shader_group = shading_context->begin_shader_group_template("GlobalValueAsDefaultValueForArgument");
-    EXPECT_NE(nullptr, shader_group);
+    EXPECT_VALID_SMART_PTR(shader_group);
 
     // add the two shader units in this group
     auto ret = shader_group->add_shader_unit("root_shader", root_shader_unit, true);
@@ -95,7 +95,7 @@ TEST(GlobalValue, GlobalValueAsDefaultValueForArgument) {
 
     // get the function pointer
     auto raw_function = (void(*)(float*, TslGlobal*))shader_instance->get_function();
-    EXPECT_NE(nullptr, raw_function);
+    EXPECT_VALID_RAW_PTR(raw_function);
 
     // execute the shader
     float ret_value = 0.0f;
@@ -138,11 +138,11 @@ TEST(GlobalValue, GlobalValueInShaderGroup_Simple) {
             out_bxdf = global_value<intensity>;
         }
     )");
-    EXPECT_NE(nullptr, root_shader_unit);
+    EXPECT_VALID_SMART_PTR(root_shader_unit);
 
     // make a shader group
     auto shader_group = shading_context->begin_shader_group_template("GlobalValueInShaderGroup_Simple");
-    EXPECT_NE(nullptr, shader_group);
+    EXPECT_VALID_SMART_PTR(shader_group);
 
     // add the two shader units in this group
     auto ret = shader_group->add_shader_unit("root_shader", root_shader_unit, true);
@@ -168,7 +168,7 @@ TEST(GlobalValue, GlobalValueInShaderGroup_Simple) {
 
     // get the function pointer
     auto raw_function = (void(*)(float*, TslGlobal*))shader_instance->get_function();
-    EXPECT_NE(nullptr, raw_function);
+    EXPECT_VALID_RAW_PTR(raw_function);
 
     // execute the shader
     float ret_value = 0.0f;
@@ -193,7 +193,7 @@ TEST(GlobalValue, GlobalValueInShaderGroup) {
             out_bxdf = in_bxdf * global_value<intensity>;
         }
     )");
-    EXPECT_NE(nullptr, root_shader_unit);
+    EXPECT_VALID_SMART_PTR(root_shader_unit);
 
     // a bxdf node
     const auto bxdf_shader_unit = compile_shader_unit_template<TslGlobal>(shading_context.get(), "bxdf_shader_GlobalValueInShaderGroup", R"(
@@ -201,11 +201,11 @@ TEST(GlobalValue, GlobalValueInShaderGroup) {
             out_bxdf = make_closure<lambert>( 111, 4.0f );
         }
     )");
-    EXPECT_NE(nullptr, bxdf_shader_unit);
+    EXPECT_VALID_SMART_PTR(bxdf_shader_unit);
 
     // make a shader group
     auto shader_group = shading_context->begin_shader_group_template("GlobalValueInShaderGroup");
-    EXPECT_NE(nullptr, shader_group);
+    EXPECT_VALID_SMART_PTR(shader_group);
 
     // add the two shader units in this group
     auto ret = shader_group->add_shader_unit("root_shader_GlobalValueInShaderGroup", root_shader_unit, true);
@@ -236,7 +236,7 @@ TEST(GlobalValue, GlobalValueInShaderGroup) {
 
     // get the function pointer
     auto raw_function = (void(*)(ClosureTreeNodeBase**, TslGlobal*))shader_instance->get_function();
-    EXPECT_NE(nullptr, raw_function);
+    EXPECT_VALID_RAW_PTR(raw_function);
 
     // execute the shader
     ClosureTreeNodeBase* closure = nullptr;

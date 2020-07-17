@@ -31,7 +31,7 @@ TEST(ShaderGroup, BasicShaderGroup) {
             out_bxdf = in_bxdf * 0.5f;
         }
     )");
-    EXPECT_NE(nullptr, root_shader_unit);
+    EXPECT_VALID_SMART_PTR(root_shader_unit);
 
     // a bxdf node
     const auto bxdf_shader_unit = compile_shader_unit_template(shading_context.get(), "bxdf_shader_BasicShaderGroup", R"(
@@ -40,11 +40,11 @@ TEST(ShaderGroup, BasicShaderGroup) {
             out_bxdf = make_closure<lambert>( 111, 4.0f );
         }
     )");
-    EXPECT_NE(nullptr, bxdf_shader_unit);
+    EXPECT_VALID_SMART_PTR(bxdf_shader_unit);
 
     // make a shader group
     auto shader_group = shading_context->begin_shader_group_template("BasicShaderGroup");
-    EXPECT_NE(nullptr, shader_group);
+    EXPECT_VALID_SMART_PTR(shader_group);
 
     // add the two shader units in this group
     auto ret = shader_group->add_shader_unit("root_shader_BasicShaderGroup", root_shader_unit, true);
@@ -72,7 +72,7 @@ TEST(ShaderGroup, BasicShaderGroup) {
 
     // get the function pointer
     auto raw_function = (void(*)(ClosureTreeNodeBase**))shader_instance->get_function();
-    EXPECT_NE(nullptr, raw_function);
+    EXPECT_VALID_RAW_PTR(raw_function);
 
     // execute the shader
     ClosureTreeNodeBase* closure = nullptr;
@@ -104,7 +104,7 @@ TEST(ShaderGroup, DuplicateShaderUnits) {
             out_bxdf = ( in_bxdf0 + in_bxdf1 ) * 0.5f;
         }
     )");
-    EXPECT_NE(nullptr, root_shader_unit);
+    EXPECT_VALID_SMART_PTR(root_shader_unit);
 
     // a bxdf node
     const auto bxdf_shader_unit = compile_shader_unit_template(shading_context.get(), "bxdf_shader_DuplicateShaderUnits", R"(
@@ -112,11 +112,11 @@ TEST(ShaderGroup, DuplicateShaderUnits) {
             out_bxdf = make_closure<lambert>( 111, test );
         }
     )");
-    EXPECT_NE(nullptr, bxdf_shader_unit);
+    EXPECT_VALID_SMART_PTR(bxdf_shader_unit);
 
     // make a shader group
     auto shader_group = shading_context->begin_shader_group_template("first shader");
-    EXPECT_NE(nullptr, shader_group);
+    EXPECT_VALID_SMART_PTR(shader_group);
 
     // add the two shader units in this group
     auto ret = shader_group->add_shader_unit("root_shader_DuplicateShaderUnits", root_shader_unit, true);
@@ -156,7 +156,7 @@ TEST(ShaderGroup, DuplicateShaderUnits) {
 
     // get the function pointer
     auto raw_function = (void(*)(ClosureTreeNodeBase**))shader_instance->get_function();
-    EXPECT_NE(nullptr, raw_function);
+    EXPECT_VALID_RAW_PTR(raw_function);
 
     // execute the shader
     ClosureTreeNodeBase* closure = nullptr;
@@ -193,7 +193,7 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
             out_bxdf = in_bxdf * 1231.0f;
         }
     )");
-    EXPECT_NE(nullptr, root_shader_unit);
+    EXPECT_VALID_SMART_PTR(root_shader_unit);
 
     // a bxdf node
     const auto bxdf_shader_unit = compile_shader_unit_template(shading_context.get(), "bxdf_shader_ShaderGroupWithoutClosure", R"(
@@ -202,11 +202,11 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
             // dummy = 1.0f;
         }
     )");
-    EXPECT_NE(nullptr, bxdf_shader_unit);
+    EXPECT_VALID_SMART_PTR(bxdf_shader_unit);
 
     // make a shader group
     auto shader_group = shading_context->begin_shader_group_template("ShaderGroupWithoutClosure");
-    EXPECT_NE(nullptr, shader_group);
+    EXPECT_VALID_SMART_PTR(shader_group);
 
     // add the two shader units in this group
     auto ret = shader_group->add_shader_unit("root_shader", root_shader_unit, true);
@@ -239,7 +239,7 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
 
     // get the function pointer
     auto raw_function = (void(*)(float*, float))shader_instance->get_function();
-    EXPECT_NE(nullptr, raw_function);
+    EXPECT_VALID_RAW_PTR(raw_function);
 
     // execute the shader
     float closure , in_bxdf = 0.5f;
@@ -265,11 +265,11 @@ TEST(ShaderGroup, ShaderGroupArgTypes) {
             vec.x = 1.0f; vec.y = 2.0f; vec.b = 3.0f;
         }
     )");
-    EXPECT_NE(nullptr, root_shader_unit);
+    EXPECT_VALID_SMART_PTR(root_shader_unit);
 
     // make a shader group
     auto shader_group = shading_context->begin_shader_group_template("ShaderGroupArgTypes");
-    EXPECT_NE(nullptr, shader_group);
+    EXPECT_VALID_SMART_PTR(shader_group);
 
     // add the two shader units in this group
     auto ret = shader_group->add_shader_unit("root_shader", root_shader_unit, true);
@@ -317,7 +317,7 @@ TEST(ShaderGroup, ShaderGroupArgTypes) {
 
     // get the function pointer
     auto raw_function = (void(*)(int*, float*, double*, bool*, Tsl_Namespace::float3*, ClosureTreeNodeBase**))shader_instance->get_function();
-    EXPECT_NE(nullptr, raw_function);
+    EXPECT_VALID_RAW_PTR(raw_function);
 
     // execute the shader
     float f;
@@ -359,11 +359,11 @@ TEST(ShaderGroup, ShaderGroupInputDefaults) {
             f3 = if3;
         }
     )");
-    EXPECT_NE(nullptr, root_shader_unit);
+    EXPECT_VALID_SMART_PTR(root_shader_unit);
 
     // make a shader group
     auto shader_group = shading_context->begin_shader_group_template("ShaderGroupInputDefaults");
-    EXPECT_NE(nullptr, shader_group);
+    EXPECT_VALID_SMART_PTR(shader_group);
 
     // add the two shader units in this group
     auto ret = shader_group->add_shader_unit("root_shader", root_shader_unit, true);
@@ -431,7 +431,7 @@ TEST(ShaderGroup, ShaderGroupInputDefaults) {
 
     // get the function pointer
     auto raw_function = (void(*)(int*, float*, double*, bool*, Tsl_Namespace::float3*))shader_instance->get_function();
-    EXPECT_NE(nullptr, raw_function);
+    EXPECT_VALID_RAW_PTR(raw_function);
 
     // execute the shader
     float f;
@@ -502,7 +502,7 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
                 out_bxdf = in_bxdf * 1231.0f;
             }
         )");
-        EXPECT_NE(nullptr, root_shader_unit);
+        EXPECT_VALID_SMART_PTR(root_shader_unit);
 
         // a bxdf node
         const auto bxdf_shader_unit = compile_shader_unit_template(shading_context.get(), "bxdf_shader_ShaderGroupRecursive", R"(
@@ -511,11 +511,11 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
                 // dummy = 1.0f;
             }
         )");
-        EXPECT_NE(nullptr, bxdf_shader_unit);
+        EXPECT_VALID_SMART_PTR(bxdf_shader_unit);
 
         // make a shader group
         shader_group0 = shading_context->begin_shader_group_template("inner_shader");
-        EXPECT_NE(nullptr, shader_group0);
+        EXPECT_VALID_SMART_PTR(shader_group0);
 
         // add the two shader units in this group
         auto ret = shader_group0->add_shader_unit("root_shader", root_shader_unit, true);
@@ -549,7 +549,7 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
                 out_bxdf = 3.0f;
             }
         )");
-    EXPECT_NE(nullptr, constant_shader_unit);
+    EXPECT_VALID_SMART_PTR(constant_shader_unit);
 
     // a bxdf node
     const auto final_shader_unit = compile_shader_unit_template(shading_context.get(), "final_shader_ShaderGroupRecursive", R"(
@@ -557,11 +557,11 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
                 out_bxdf = bxdf0 + bxdf1;
             }
         )");
-    EXPECT_NE(nullptr, final_shader_unit);
+    EXPECT_VALID_SMART_PTR(final_shader_unit);
 
     // make another shader group
     auto shader_group1 = shading_context->begin_shader_group_template("outter shader group");
-    EXPECT_NE(nullptr, shader_group1);
+    EXPECT_VALID_SMART_PTR(shader_group1);
 
     auto ret = shader_group1->add_shader_unit("final_shader", final_shader_unit, true);
     EXPECT_EQ(true, ret);
@@ -596,7 +596,7 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
 
     // get the function pointer
     auto raw_function = (void(*)(float*))shader_instance->get_function();
-    EXPECT_NE(nullptr, raw_function);
+    EXPECT_VALID_RAW_PTR(raw_function);
 
     // execute the shader
     float closure, in_bxdf = 0.2f;
@@ -619,7 +619,7 @@ TEST(ShaderGroup, RealProblem0) {
             out_bxdf = Surface;
         }
     )");
-    EXPECT_NE(nullptr, root_shader_unit);
+    EXPECT_VALID_SMART_PTR(root_shader_unit);
 
     // a bxdf node
     const auto bxdf_shader_unit = compile_shader_unit_template(shading_context.get(), "bxdf_shader_RealProblem0", R"(
@@ -627,7 +627,7 @@ TEST(ShaderGroup, RealProblem0) {
             Result = make_closure<lambert_in_sort>( Diffuse , Normal );
         }
     )");
-    EXPECT_NE(nullptr, bxdf_shader_unit);
+    EXPECT_VALID_SMART_PTR(bxdf_shader_unit);
 
     // a constant color node
     const auto constant_color_unit = compile_shader_unit_template(shading_context.get(), "constant_color_RealProblem0", R"(
@@ -635,11 +635,11 @@ TEST(ShaderGroup, RealProblem0) {
             Result = Color;
         }
     )");
-    EXPECT_NE(nullptr, constant_color_unit);
+    EXPECT_VALID_SMART_PTR(constant_color_unit);
 
     // make a shader group
     auto shader_group = shading_context->begin_shader_group_template("RealProblem0");
-    EXPECT_NE(nullptr, shader_group);
+    EXPECT_VALID_SMART_PTR(shader_group);
 
     // add the two shader units in this group
     auto ret = shader_group->add_shader_unit("root_shader", root_shader_unit, true);
@@ -679,7 +679,7 @@ TEST(ShaderGroup, RealProblem0) {
 
     // get the function pointer
     auto raw_function = (void(*)(ClosureTreeNodeBase**))shader_instance->get_function();
-    EXPECT_NE(nullptr, raw_function);
+    EXPECT_VALID_RAW_PTR(raw_function);
 
     // execute the shader
     ClosureTreeNodeBase* closure = nullptr;

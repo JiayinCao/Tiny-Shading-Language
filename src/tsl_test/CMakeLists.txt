@@ -63,7 +63,7 @@ if (TSL_PLATFORM_MAC OR TSL_PLATFORM_LINUX)
 endif()
 
 if (TSL_PLATFORM_WIN)
-    set_target_properties( TSL_Test PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} /MD /wd4251" )
+    set_target_properties( TSL_Test PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} /MD /wd4251 /wd4530" )
 
     # enable multi-thread compiling
     SET(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} /MP${N}")

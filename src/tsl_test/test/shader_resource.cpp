@@ -66,7 +66,7 @@ TEST(ShaderResource, SimpleTexture) {
 
     // make a shader instance after the template is ready
     auto shader_instance = shader_unit_template->make_shader_instance();
-    EXPECT_NE(nullptr, shader_instance);
+    EXPECT_VALID_SMART_PTR(shader_instance);
 
     // resolve the shader instance
     const auto resolve_ret = shading_context->resolve_shader_instance(shader_instance.get());
@@ -74,7 +74,7 @@ TEST(ShaderResource, SimpleTexture) {
 
     // get the raw function pointer for execution
     auto func_ptr = (void(*)(float3*, AnotherTslGlobal*))shader_instance->get_function();
-    EXPECT_NE(nullptr, func_ptr);
+    EXPECT_VALID_RAW_PTR(func_ptr);
 
     float3 data;
     func_ptr(&data, &tsl_global);
@@ -122,7 +122,7 @@ TEST(ShaderResource, SimpleTextureAlpha) {
 
     // make a shader instance after the template is ready
     auto shader_instance = shader_unit_template->make_shader_instance();
-    EXPECT_NE(nullptr, shader_instance);
+    EXPECT_VALID_SMART_PTR(shader_instance);
 
     // resolve the shader instance
     const auto resolve_ret = shading_context->resolve_shader_instance(shader_instance.get());
@@ -130,7 +130,7 @@ TEST(ShaderResource, SimpleTextureAlpha) {
 
     // get the raw function pointer for execution
     auto func_ptr = (void(*)(float*, AnotherTslGlobal*))shader_instance->get_function();
-    EXPECT_NE(nullptr, func_ptr);
+    EXPECT_VALID_RAW_PTR(func_ptr);
 
     float data;
     func_ptr(&data, &tsl_global);
@@ -162,7 +162,7 @@ TEST(ShaderResource, CustomShaderResource) {
 
     // compile the shader
     const auto shader_unit_template = shading_context->begin_shader_unit_template("custom_reousrce_shader");
-    EXPECT_NE(nullptr, shader_unit_template);
+    EXPECT_VALID_SMART_PTR(shader_unit_template);
 
     // register the texture handle
     shader_unit_template->register_shader_resource("custom_data", &custom_data);
@@ -175,7 +175,7 @@ TEST(ShaderResource, CustomShaderResource) {
 
     // make a shader instance after the template is ready
     auto shader_instance = shader_unit_template->make_shader_instance();
-    EXPECT_NE(nullptr, shader_instance);
+    EXPECT_VALID_SMART_PTR(shader_instance);
 
     // resolve the shader instance
     const auto resolve_ret = shading_context->resolve_shader_instance(shader_instance.get());
@@ -183,7 +183,7 @@ TEST(ShaderResource, CustomShaderResource) {
 
     // get the raw function pointer for execution
     auto func_ptr = (void(*)(Tsl_Namespace::ClosureTreeNodeBase**))shader_instance->get_function();
-    EXPECT_NE(nullptr, func_ptr);
+    EXPECT_VALID_RAW_PTR(func_ptr);
 
     Tsl_Namespace::ClosureTreeNodeBase* closure = nullptr;
     func_ptr(&closure);

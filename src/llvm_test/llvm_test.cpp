@@ -52,7 +52,7 @@ namespace {
 			llvm::InitializeNativeTargetAsmPrinter();
 
 			module = std::make_unique<llvm::Module>("my cool jit", context);
-			EXPECT_NE(module, nullptr);
+			EXPECT_NE((void*)module.get(), (void*)nullptr);
 		}
 
 		~LLVM() = default;
@@ -699,7 +699,7 @@ TEST_F(LLVM, Closure_Tree_Output) {
 	shader_func();
 
 	// We should have a valid root and it should have an id that is 1024
-	EXPECT_NE(ct.m_root, nullptr);
+	EXPECT_NE((void*)ct.m_root, (void*)nullptr);
 	EXPECT_EQ(ct.m_root->m_id, 1024);
 
 	// Clear the memory allocated
@@ -770,7 +770,7 @@ TEST_F(LLVM, Multi_Thread_Compiling) {
 		std::unique_ptr<llvm::Module> module = nullptr;
 
 		module = std::make_unique<llvm::Module>("my cool jit", context);
-		EXPECT_NE(module, nullptr);
+		EXPECT_NE((void*)module.get(), (void*)nullptr);
 
 		// create external function prototype
 		// this should perfectly match 'external_func_cpp' defined above.

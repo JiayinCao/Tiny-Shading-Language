@@ -24,6 +24,9 @@
 #include "tsl_system.h"
 #include "tsl_args.h"
 
+#define EXPECT_VALID_SMART_PTR(p)   EXPECT_VALID_RAW_PTR(p.get())
+#define EXPECT_VALID_RAW_PTR(p)     EXPECT_NE((void*)NULL, (void*)p)
+
 USE_TSL_NAMESPACE
 
 DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeLambert, "lambert")

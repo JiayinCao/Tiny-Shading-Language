@@ -17,6 +17,7 @@
 
 #include "gtest/gtest.h"
 #include "tsl_system.h"
+#include "test_common.h"
 
 USE_TSL_NAMESPACE
 
@@ -25,5 +26,5 @@ TEST(TSL, Basic) {
     std::shared_ptr<ShadingContext> sc = ShadingSystem::get_instance().make_shading_context();
     
     // make sure the context is allocated.
-    EXPECT_NE(sc.get(), nullptr);
+    EXPECT_VALID_SMART_PTR(sc);
 }

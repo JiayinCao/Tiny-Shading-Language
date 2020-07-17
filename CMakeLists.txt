@@ -20,7 +20,7 @@ cmake_minimum_required (VERSION 3.7)
 # somehow using the default policy of 3.7 will crash the unit tests, I have no time looking into it for now
 cmake_policy(VERSION 3.1)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -106,6 +106,8 @@ endmacro(source_group_by_dir)
 
 # make sure there is a seperate macro for debug build
 set( CMAKE_CXX_FLAGS_DEBUG           "${CMAKE_CXX_FLAGS_DEBUG} -DTSL_DEBUG")
+
+set( CMAKE_CXX_FLAGS "${GTEST_HAS_TR1_TUPLE} -DGTEST_HAS_TR1_TUPLE=0" )
 
 add_subdirectory( src/tsl_lib )
 add_subdirectory( src/tsl_test )

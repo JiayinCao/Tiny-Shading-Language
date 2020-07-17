@@ -54,7 +54,7 @@ TEST(Thread, Full_Test) {
                     }
                 )");
 
-                EXPECT_NE(shader_unit, nullptr);
+                EXPECT_VALID_SMART_PTR(shader_unit);
         }, i);
 
         // making sure all threads are done
