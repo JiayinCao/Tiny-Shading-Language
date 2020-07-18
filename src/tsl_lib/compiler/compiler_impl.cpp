@@ -16,12 +16,13 @@
  */
 
 #include <memory>
-#include "llvm/IR/Verifier.h"
-#include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/Transforms/InstCombine/InstCombine.h"
-#include "llvm/Transforms/Scalar/GVN.h"
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/ExecutionEngine/MCJIT.h"
+#include <type_traits>
+#include <llvm/IR/Verifier.h>
+#include <llvm/Transforms/Utils/Cloning.h>
+#include <llvm/Transforms/InstCombine/InstCombine.h>
+#include <llvm/Transforms/Scalar/GVN.h>
+#include <llvm/Transforms/Scalar.h>
+#include <llvm/ExecutionEngine/MCJIT.h>
 #include "compiler_impl.h"
 #include "ast.h"
 #include "tsl_system.h"
@@ -361,7 +362,7 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
             return TSL_Resolving_Status::TSL_Resolving_InconsistentTSLGlobalType;
 
 #ifdef DEBUG_OUTPUT
-        shader_unit->m_module->print(llvm::errs(), nullptr);
+        shader_unit_data->m_module->print(llvm::errs(), nullptr);
 #endif
         // parse shader unit dependencies
         shader_unit_data->parse_dependencies(sg_impl);
@@ -579,43 +580,36 @@ TSL_Resolving_Status TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Con
                             const auto& var = it1->second;
 
                             llvm::Value* llvm_value = nullptr;
-                            switch (var.m_type) {
-                            case ShaderArgumentTypeEnum::TSL_TYPE_INT:
-                                llvm_value = get_llvm_constant_int(var.m_val.m_int, 32, context);
-                                break;
-                            case ShaderArgumentTypeEnum::TSL_TYPE_FLOAT:
-                                llvm_value = get_llvm_constant_fp(var.m_val.m_float, context);
-                                break;
-                            case ShaderArgumentTypeEnum::TSL_TYPE_DOUBLE:
-                                llvm_value = get_llvm_constant_fp(var.m_val.m_double, context);
-                                break;
-                            case ShaderArgumentTypeEnum::TSL_TYPE_BOOL:
-                                llvm_value = get_llvm_constant_int((int)var.m_val.m_bool, 1, context);
-                                break;
-                            case ShaderArgumentTypeEnum::TSL_TYPE_FLOAT3:
-                                llvm_value = get_llvm_constant_float3(var.m_val.m_float3, context);
-                                break;
-                            case ShaderArgumentTypeEnum::TSL_TYPE_GLOBAL:
+                            if (var.type() == typeid(int))
+                                llvm_value = get_llvm_constant_int(std::any_cast<int>(var), 32, context);
+                            else if( var.type() == typeid(float) )
+                                llvm_value = get_llvm_constant_fp(std::any_cast<float>(var), context);
+                            else if(var.type() == typeid(double))
+                                llvm_value = get_llvm_constant_fp(std::any_cast<double>(var), context);
+                            else if(var.type() == typeid(bool))
+                                llvm_value = get_llvm_constant_int(std::any_cast<bool>(var), 1, context);
+                            else if (var.type() == typeid(float3))
+                                llvm_value = get_llvm_constant_float3(std::any_cast<float3>(var), context);
+                            else if (var.type() == typeid(ShaderUnitInputTslGlobalRef)){
                                 has_init_value = false;
                                 if (context.tsl_global_mapping) {
+                                    const auto& tsl_global_ref = std::any_cast<ShaderUnitInputTslGlobalRef>(var);
                                     auto& tsl_global_mapping = *context.tsl_global_mapping;
                                     for (int i = 0; i < tsl_global_mapping.m_var_list.size(); ++i) {
                                         const auto& arg = tsl_global_mapping.m_var_list[i];
-                                        if (arg.m_name == std::string(var.m_val.m_global_var_name)) {
+                                        if (arg.m_name == tsl_global_ref.m_name) {
                                             auto gep0 = context.builder->CreateConstGEP2_32(nullptr, context.tsl_global_value, 0, i);
                                             llvm_value = context.builder->CreateLoad(gep0);
                                             has_init_value = true;
-                                            break;
                                         }
                                     }
+
+                                    if(!has_init_value)
+                                        emit_error("TSL global variable %s is not registered.", tsl_global_ref.m_name.c_str());
                                 }
                                 else {
-                                    emit_error("TSL global variable is not registered.");
+                                    emit_error("TSL global not available in the shader.");
                                 }
-                                break;
-                            default:
-                                has_init_value = false;
-                                break;
                             }
 
                             if (llvm_value) {

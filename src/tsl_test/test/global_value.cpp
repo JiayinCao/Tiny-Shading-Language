@@ -80,10 +80,7 @@ TEST(GlobalValue, GlobalValueAsDefaultValueForArgument) {
     arg.m_is_output = true;
     shader_group->expose_shader_argument("root_shader", "out_bxdf", arg);
 
-    ShaderUnitInputDefaultValue dv;
-    dv.m_type = ShaderArgumentTypeEnum::TSL_TYPE_GLOBAL;
-    dv.m_val.m_global_var_name = "intensity";
-    shader_group->init_shader_input("root_shader", "in_var", dv);
+    shader_group->init_shader_input("root_shader", "in_var", make_tsl_global_ref("intensity"));
 
     // resolve the shader group
     auto status = shading_context->end_shader_group_template(shader_group.get());

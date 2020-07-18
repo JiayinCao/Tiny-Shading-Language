@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <any>
 #include <string>
 #include <vector>
 #include "tsl_version.h"
@@ -260,6 +261,16 @@ struct ExposedArgDescriptor {
     bool                    m_is_output = false;
 };
 
+/**
+ * Some parameter could have a default value coming from the TSL global data structure.
+ * This is the type of data structure that defines it.
+ * The exact data will be fetched from TSL global during compilation, only a name is needed
+ * here to indicate the memory address to locate it.
+ */
+struct ShaderUnitInputTslGlobalRef {
+    std::string     m_name;
+};
+
 //! @brief  Default value for shader template argument.
 /**
  * Sometimes exposed input value of a shader unit template defined in a shader group template
@@ -268,18 +279,12 @@ struct ExposedArgDescriptor {
  * Failing to define default value for unconnected shader unit template inputs will result
  * in shader group resolving failure.
  */
-struct ShaderUnitInputDefaultValue {
-    ShaderArgumentTypeEnum  m_type = ShaderArgumentTypeEnum::TSL_TYPE_INVALID;
+using ShaderUnitInputDefaultValue = std::any;
 
-    union ArgDefaultValue {
-        float       m_float;
-        int         m_int;
-        double      m_double;
-        bool        m_bool;
-        float3      m_float3;
-        const char* m_global_var_name;  // to keep it as simple as possible, it is up to renderer to keep track of the memory
-    } m_val;
-};
+// helper function to make a data structure to reference tsl global
+inline ShaderUnitInputTslGlobalRef make_tsl_global_ref(const std::string& name) {
+    return { name };
+}
 
 // Following are just some helper function to make things easier
 inline float3 make_float3(float x, float y, float z) {

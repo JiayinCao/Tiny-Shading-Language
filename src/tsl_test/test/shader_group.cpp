@@ -130,14 +130,8 @@ TEST(ShaderGroup, DuplicateShaderUnits) {
     shader_group->connect_shader_units("bxdf_shader0", "out_bxdf", "root_shader_DuplicateShaderUnits", "in_bxdf0");
     shader_group->connect_shader_units("bxdf_shader1", "out_bxdf", "root_shader_DuplicateShaderUnits", "in_bxdf1");
 
-    ShaderUnitInputDefaultValue dv;
-    dv.m_type = ShaderArgumentTypeEnum::TSL_TYPE_FLOAT;
-    dv.m_val.m_float = 2.0f;
-    shader_group->init_shader_input("bxdf_shader0", "test", dv);
-
-    dv.m_type = ShaderArgumentTypeEnum::TSL_TYPE_FLOAT;
-    dv.m_val.m_float = 12.0f;
-    shader_group->init_shader_input("bxdf_shader1", "test", dv);
+    shader_group->init_shader_input("bxdf_shader0", "test", 2.0f);
+    shader_group->init_shader_input("bxdf_shader1", "test", 12.0f);
 
     // expose the shader interface
     ExposedArgDescriptor arg;
@@ -396,30 +390,11 @@ TEST(ShaderGroup, ShaderGroupInputDefaults) {
     arg.m_is_output = true;
     shader_group->expose_shader_argument("root_shader", "f3", arg);
 
-    ShaderUnitInputDefaultValue ii;
-    ii.m_type = ShaderArgumentTypeEnum::TSL_TYPE_INT;
-    ii.m_val.m_int = 12;
-    shader_group->init_shader_input("root_shader", "ii", ii);
-
-    ShaderUnitInputDefaultValue iff;
-    iff.m_type = ShaderArgumentTypeEnum::TSL_TYPE_FLOAT;
-    iff.m_val.m_float = 13.0f;
-    shader_group->init_shader_input("root_shader", "iff", iff);
-
-    ShaderUnitInputDefaultValue id;
-    id.m_type = ShaderArgumentTypeEnum::TSL_TYPE_DOUBLE;
-    id.m_val.m_double = 14.0;
-    shader_group->init_shader_input("root_shader", "id", id);
-
-    ShaderUnitInputDefaultValue ib;
-    ib.m_type = ShaderArgumentTypeEnum::TSL_TYPE_BOOL;
-    ib.m_val.m_bool = true;
-    shader_group->init_shader_input("root_shader", "ib", ib);
-
-    ShaderUnitInputDefaultValue if3;
-    if3.m_type = ShaderArgumentTypeEnum::TSL_TYPE_FLOAT3;
-    if3.m_val.m_float3 = { 1.0f , 2.0f , 3.0f };
-    shader_group->init_shader_input("root_shader", "if3", if3);
+    shader_group->init_shader_input("root_shader", "ii", 12);
+    shader_group->init_shader_input("root_shader", "iff", 13.0f);
+    shader_group->init_shader_input("root_shader", "id", 14.0);
+    shader_group->init_shader_input("root_shader", "ib", true);
+    shader_group->init_shader_input("root_shader", "if3", make_float3(1.0f, 2.0f, 3.0f));
 
     // resolve the shader group
     auto status = shading_context->end_shader_group_template(shader_group.get());
@@ -660,14 +635,8 @@ TEST(ShaderGroup, RealProblem0) {
     arg.m_is_output = true;
     shader_group->expose_shader_argument("root_shader", "out_bxdf", arg);
 
-    ShaderUnitInputDefaultValue ii;
-    ii.m_type = ShaderArgumentTypeEnum::TSL_TYPE_FLOAT3;
-    ii.m_val.m_float3 = make_float3( 1.0f, 2.0f, 3.0f );
-    shader_group->init_shader_input("constant_color", "Color", ii);
-
-    ii.m_type = ShaderArgumentTypeEnum::TSL_TYPE_FLOAT3;
-    ii.m_val.m_float3 = make_float3(0.0f, 1.0f, 0.0f);
-    shader_group->init_shader_input("bxdf_shader", "Normal", ii);
+    shader_group->init_shader_input("constant_color", "Color", make_float3(1.0f, 2.0f, 3.0f));
+    shader_group->init_shader_input("bxdf_shader", "Normal", make_float3(0.0f, 1.0f, 0.0f));
 
     // resolve the shader group
     auto status = shading_context->end_shader_group_template(shader_group.get());
