@@ -70,6 +70,34 @@ jobs:
            make debug
     - name: Unit test
       run: make test
+  Ubuntu_20_04:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checking Out Source Code
+      uses: actions/checkout@v1
+    - name: Configure Environment
+      run: |
+           sudo apt-get install flex
+           sudo apt-get install bison
+    - name: Get Cache Directory
+      id: cache-dir
+      run: |
+           echo "::set-output name=dir::$(pwd)"
+    - name: Load Dependencies from Cache
+      uses: actions/cache@v1
+      id: cache-dep
+      with:
+        path: ${{ steps.cache-dir.outputs.dir }}/dependencies
+        key: Ubuntu-Binoic-dep-ver-0
+    - name: Install Dependencies
+      if: steps.cache-dep.outputs.cache-hit != 'true'
+      run: make update_dep
+    - name: Build Release Version
+      run: make
+    - name: Build Debug Version
+      run: make debug
+    - name: Unit test
+      run: make test
   Ubuntu_18_04:
     runs-on: ubuntu-18.04
     steps:
