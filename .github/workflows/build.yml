@@ -107,6 +107,10 @@ jobs:
       run: |
            sudo apt-get install flex
            sudo apt-get install bison
+           sudo apt-get install -y software-properties-common
+           sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+           sudo apt update
+           sudo apt install g++-7 -y
     - name: Get Cache Directory
       id: cache-dir
       run: |
@@ -121,8 +125,18 @@ jobs:
       if: steps.cache-dep.outputs.cache-hit != 'true'
       run: make update_dep
     - name: Build Release Version
-      run: make
+      run: |
+           mkdir proj_release
+           cd proj_release
+           cmake -DCMAKE_BUILD_TYPE=Release CC=gcc-7 CXX=g++-7 ..
+           make -j 4
+           cd ..
     - name: Build Debug Version
-      run: make debug
+      run: |
+           mkdir proj_debug
+           cd proj_debug
+           cmake -DCMAKE_BUILD_TYPE=Release CC=gcc-7 CXX=g++-7 ..
+           make -j 4
+           cd ..
     - name: Unit test
       run: make test
