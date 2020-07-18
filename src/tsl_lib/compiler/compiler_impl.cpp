@@ -243,7 +243,7 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderInstance* si) {
         return TSL_Resolving_Status::TSL_Resolving_InvalidInput;
 
     const auto& shader_template = *(si->m_shader_instance_data->m_shader_unit_template);
-    auto shader_instance_data = si->m_shader_instance_data;
+    auto shader_instance_data = si->m_shader_instance_data.get();
     auto shader_template_data = shader_template.m_shader_unit_template_impl;
 
     // invalid shader unit template
@@ -305,7 +305,7 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
     if (!sg)
         return TSL_Resolving_Status::TSL_Resolving_InvalidInput;
 
-    ShaderGroupTemplate_Impl* sg_impl = (ShaderGroupTemplate_Impl*)sg->m_shader_unit_template_impl;
+    ShaderGroupTemplate_Impl* sg_impl = (ShaderGroupTemplate_Impl*)sg->m_shader_unit_template_impl.get();
     if (!sg_impl)
         return TSL_Resolving_Status::TSL_Resolving_InvalidInput;
 
@@ -505,10 +505,9 @@ TSL_Resolving_Status TslCompiler_Impl::generate_shader_source(  LLVM_Compile_Con
     being_visited.insert(shader_unit_copy_name);
     visited.insert(shader_unit_copy_name);
 
-    ShaderGroupTemplate_Impl* sg_impl = (ShaderGroupTemplate_Impl*)sg->m_shader_unit_template_impl;
+    ShaderGroupTemplate_Impl* sg_impl = (ShaderGroupTemplate_Impl*)sg->m_shader_unit_template_impl.get();
 
     // check shader unit it depends on
-    // const std::string shader_unit_name = su->get_name();
     if (sg_impl->m_shader_unit_connections.count(shader_unit_copy_name)) {
         const auto& dependencies = sg_impl->m_shader_unit_connections[shader_unit_copy_name];
         for (const auto& dep : dependencies) {

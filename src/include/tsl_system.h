@@ -33,17 +33,6 @@ struct ShaderUnitTemplate_Impl;
 struct ShaderGroupTemplate_Impl;
 struct ShaderInstance_Impl;
 
-#if defined(TSL_ON_WINDOWS)
-    // WARNING
-    // This might introduce some sort of connection between the compiler used to compile TSL and the renderer.
-    // However, this is always a trade off between larger audiance and safer code. Since TSL is mainly designed for my
-    // own renderer SORT, I would sacrifice some inpendency of the compilers to be used for safer code.
-    template class TSL_INTERFACE std::weak_ptr<ShaderUnitTemplate>;
-    template class TSL_INTERFACE std::enable_shared_from_this<ShaderUnitTemplate>;
-    template class TSL_INTERFACE std::weak_ptr<ShadingContext>;
-    template class TSL_INTERFACE std::enable_shared_from_this<ShadingContext>;
-#endif
-
 //! @brief  Debug information levels.
 enum class TSL_DEBUG_LEVEL : unsigned int {
     TSL_DEBUG_INFO,         // General debugging information.
@@ -178,9 +167,6 @@ public:
  */
 class TSL_INTERFACE ShaderInstance {
 public:
-    //! @brief  Destructor
-    ~ShaderInstance();
-
     //! @brief  Get the function pointer to execute the shader.
     //!
     //! It is up to renderers to inteprate the returned pointer. It has to match what the shader exposes.
@@ -192,7 +178,7 @@ public:
 
 private:
     /**< Private data inside shader instance. */
-    ShaderInstance_Impl* m_shader_instance_data = nullptr;
+    std::shared_ptr<ShaderInstance_Impl> m_shader_instance_data;
 
     TSL_MAKE_CLASS_FRIEND(ShaderUnitTemplate)
     TSL_MAKE_CLASS_FRIEND(TslCompiler_Impl)
@@ -207,9 +193,6 @@ private:
  */
 class TSL_INTERFACE ShaderUnitTemplate : public std::enable_shared_from_this<ShaderUnitTemplate> {
 public:
-    //! @brief  Destructor.
-    virtual ~ShaderUnitTemplate();
-
     //! @brief          Get name of the shader unit.
     //!
     //! @return         Name of the shader unit template.
@@ -237,7 +220,7 @@ public:
 
 protected:
     /**< Private data inside shader unit template. */
-    ShaderUnitTemplate_Impl* m_shader_unit_template_impl = nullptr;
+    std::shared_ptr<ShaderUnitTemplate_Impl> m_shader_unit_template_impl;
 
     TSL_MAKE_CLASS_FRIEND(ShaderInstance)
     TSL_MAKE_CLASS_FRIEND(ShaderGroupTemplate)
@@ -306,9 +289,6 @@ public:
  */
 class TSL_INTERFACE ShadingContext : public std::enable_shared_from_this<ShadingContext> {
 public:
-    //! @brief  Destructor.
-    ~ShadingContext();
-
     //! @brief  Make a new shader group.
     //!
     //! ShadingContext won't keep maintaining the lifetime the returned ShaderGroupTemplate.
@@ -358,7 +338,7 @@ public:
 
 private:
     /**< Shading context implementation. */
-    ShadingContext_Impl* m_shading_context_impl = nullptr;
+    std::shared_ptr<ShadingContext_Impl> m_shading_context_impl;
 
     TSL_MAKE_CLASS_FRIEND(ShadingSystem)
     TSL_HIDE_CONSTRUCTOR(ShadingContext, std::shared_ptr<ShadingSystem_Impl> shading_system_impl)

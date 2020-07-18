@@ -17,9 +17,9 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <llvm/Support/TargetSelect.h>
 #include "tsl_system.h"
 #include "compiler/global_module.h"
-#include "llvm/Support/TargetSelect.h"
 #include "system/impl.h"
 
 TSL_NAMESPACE_BEGIN
@@ -47,8 +47,7 @@ ShadingSystem::~ShadingSystem() {
 }
 
 std::shared_ptr<ShadingContext> ShadingSystem::make_shading_context() {
-    auto ptr = new ShadingContext(g_shading_system_impl);
-    return std::shared_ptr<ShadingContext>(ptr);
+    return std::shared_ptr<ShadingContext>(new ShadingContext(g_shading_system_impl));
 }
 
 ClosureID ShadingSystem::register_closure_type(const std::string& name, ClosureArgList& mapping, int structure_size) {

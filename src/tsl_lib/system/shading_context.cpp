@@ -16,11 +16,11 @@
  */
 
 #include <memory>
-#include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/Transforms/InstCombine/InstCombine.h"
-#include "llvm/Transforms/Scalar/GVN.h"
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/ExecutionEngine/MCJIT.h"
+#include <llvm/Transforms/Utils/Cloning.h>
+#include <llvm/Transforms/InstCombine/InstCombine.h>
+#include <llvm/Transforms/Scalar/GVN.h>
+#include <llvm/Transforms/Scalar.h>
+#include <llvm/ExecutionEngine/MCJIT.h>
 #include "tsl_system.h"
 #include "compiler/compiler.h"
 #include "system/impl.h"
@@ -74,13 +74,9 @@ ShaderUnitTemplate::ShaderUnitTemplate(const std::string& name, std::shared_ptr<
     if (context == nullptr)
         return;
 
-    m_shader_unit_template_impl = new ShaderUnitTemplate_Impl();
+    m_shader_unit_template_impl = std::make_shared<ShaderUnitTemplate_Impl>();
     m_shader_unit_template_impl->m_name = name;
     m_shader_unit_template_impl->m_shading_context = context;
-}
-
-ShaderUnitTemplate::~ShaderUnitTemplate(){
-    delete m_shader_unit_template_impl;
 }
 
 const std::string& ShaderUnitTemplate::get_name() const {
@@ -105,12 +101,8 @@ bool ShaderUnitTemplate::register_tsl_global(const GlobalVarList& tslg) {
 }
 
 ShaderInstance::ShaderInstance(std::shared_ptr<ShaderUnitTemplate> sut) {
-    m_shader_instance_data = new ShaderInstance_Impl();
+    m_shader_instance_data = std::make_shared<ShaderInstance_Impl>();
     m_shader_instance_data->m_shader_unit_template = sut;
-}
-
-ShaderInstance::~ShaderInstance() {
-    delete m_shader_instance_data;
 }
 
 uint64_t ShaderInstance::get_function() const {
@@ -128,13 +120,13 @@ bool ShaderUnitTemplate::register_shader_resource(const std::string& name, const
 
 ShaderGroupTemplate::ShaderGroupTemplate(const std::string& name, std::shared_ptr<ShadingContext> context)
     :ShaderUnitTemplate("", nullptr){
-    m_shader_unit_template_impl = new ShaderGroupTemplate_Impl();
+    m_shader_unit_template_impl = std::make_shared<ShaderGroupTemplate_Impl>();
     m_shader_unit_template_impl->m_name = name;
     m_shader_unit_template_impl->m_shading_context = context;
 }
 
 void ShaderGroupTemplate::connect_shader_units(const std::string& ssu, const std::string& sspn, const std::string& tsu, const std::string& tspn) {
-    ShaderGroupTemplate_Impl* sg_impl = (ShaderGroupTemplate_Impl*) m_shader_unit_template_impl;
+    ShaderGroupTemplate_Impl* sg_impl = (ShaderGroupTemplate_Impl*) m_shader_unit_template_impl.get();
     sg_impl->m_shader_unit_connections[tsu][tspn] = std::make_pair(ssu, sspn);
 }
 
@@ -143,7 +135,7 @@ void ShaderGroupTemplate::expose_shader_argument(const std::string & ssu, const 
     m_shader_unit_template_impl->m_exposed_args.push_back(arg_desc);
 
     // I may need to do some checking here to make sure things don't get setup in an invalid way
-    ShaderGroupTemplate_Impl* sg_impl = (ShaderGroupTemplate_Impl*)m_shader_unit_template_impl;
+    ShaderGroupTemplate_Impl* sg_impl = (ShaderGroupTemplate_Impl*)m_shader_unit_template_impl.get();
     if (arg_desc.m_is_output)
         sg_impl->m_output_args[ssu][sspn] = i;
     else
@@ -151,7 +143,7 @@ void ShaderGroupTemplate::expose_shader_argument(const std::string & ssu, const 
 }
 
 void ShaderGroupTemplate::init_shader_input(const std::string& su, const std::string& spn, const ShaderUnitInputDefaultValue& val) {
-    ShaderGroupTemplate_Impl* sg_impl = (ShaderGroupTemplate_Impl*)m_shader_unit_template_impl;
+    ShaderGroupTemplate_Impl* sg_impl = (ShaderGroupTemplate_Impl*)m_shader_unit_template_impl.get();
     sg_impl->m_shader_input_defaults[su][spn] = val;
 }
 
@@ -159,7 +151,7 @@ bool ShaderGroupTemplate::add_shader_unit(const std::string& name, std::shared_p
     if (!shader_unit)
         return false;
 
-    ShaderGroupTemplate_Impl* sg_impl = (ShaderGroupTemplate_Impl*)m_shader_unit_template_impl;
+    ShaderGroupTemplate_Impl* sg_impl = (ShaderGroupTemplate_Impl*)m_shader_unit_template_impl.get();
 
     // if an existed shader is added
     if (sg_impl->m_shader_units.count(name))
@@ -179,13 +171,9 @@ bool ShaderGroupTemplate::add_shader_unit(const std::string& name, std::shared_p
 }
 
 ShadingContext::ShadingContext(std::shared_ptr<ShadingSystem_Impl> shading_system_impl){
-    m_shading_context_impl = new ShadingContext_Impl();
+    m_shading_context_impl = std::make_shared<ShadingContext_Impl>();
     m_shading_context_impl->m_shading_system_impl = shading_system_impl;
     m_shading_context_impl->m_compiler = std::make_unique<TslCompiler>(*shading_system_impl->m_global_module);
-}
-
-ShadingContext::~ShadingContext() {
-    delete m_shading_context_impl;
 }
 
 std::shared_ptr<ShaderUnitTemplate> ShadingContext::begin_shader_unit_template(const std::string& name) {

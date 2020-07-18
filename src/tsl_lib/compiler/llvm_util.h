@@ -20,9 +20,9 @@
 
 #pragma once
 
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Type.h"
-#include "llvm/IR/IRBuilder.h"
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Type.h>
+#include <llvm/IR/IRBuilder.h>
 #include "ast.h"
 #include "tsl_args.h"
 
