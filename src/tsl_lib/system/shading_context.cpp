@@ -133,7 +133,7 @@ void ShaderGroupTemplate::connect_shader_units(const std::string& ssu, const std
 void ShaderGroupTemplate::expose_shader_argument(const std::string& su, const std::string& spn, const bool is_output, const std::string& name){
     ExposedArgDescriptor arg_desc;
     arg_desc.m_is_output = is_output;
-    arg_desc.m_name = name;
+    arg_desc.m_name = name.empty() ? spn : name;
     arg_desc.m_source_shader_unit_name = su;
     arg_desc.m_source_shader_unit_arg_name = spn;
 
