@@ -52,6 +52,7 @@ enum class TSL_Resolving_Status : unsigned int {
     TSL_Resolving_InvalidArgType,                   /*< One of the input arguments defined in the shader group template is not defined. */
     TSL_Resolving_ArgumentWithoutInitialization,    /*< One of the arguments passed in doesn't have a valid initialization value. */
     TSL_Resolving_InconsistentTSLGlobalType,        /*< Shader units defined in the shader group has multile version of TSL Global. */
+    TSL_Resolving_InvalidExposedParameter,          /*< Shader group can't have invalid exposed parameter. */
     TSL_Resolving_UnspecifiedError                  /*< This error type is not specified somehow. */
 };
 

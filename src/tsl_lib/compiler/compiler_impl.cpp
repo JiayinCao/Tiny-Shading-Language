@@ -320,20 +320,13 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
         return TSL_Resolving_Status::TSL_Resolving_ShaderGroupWithoutRoot;
 
     // parse the exposed parameter type
-    auto it = sg_impl->m_exposed_args.begin();
-    while (it != sg_impl->m_exposed_args.end()) {
-        auto& arg = *it;
-
+    for (auto& arg : sg_impl->m_exposed_args) {
         const auto& su_name = arg.m_source_shader_unit_name;
         const auto& su_arg_name = arg.m_source_shader_unit_arg_name;
 
         if (sg_impl->m_shader_units.count(su_name) == 0) {
-            emit_warning("Can't expose argument %s since there is no argument %s in shader unit %s.", arg.m_name.c_str(), su_arg_name.c_str(), su_name.c_str());
-            
-            // simply erase the dead exposed arguments links to nowhere
-            it = sg_impl->m_exposed_args.erase(it);
-
-            continue;
+            emit_error("Can't expose argument %s since there is no argument %s in shader unit %s.", arg.m_name.c_str(), su_arg_name.c_str(), su_name.c_str());
+            return TSL_Resolving_Status::TSL_Resolving_InvalidExposedParameter;
         }
 
         auto& shader_unit = sg_impl->m_shader_units[su_name];
@@ -351,14 +344,8 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
 
         if (!found) {
             emit_error("Can't find exposed argument named %s.", su_arg_name.c_str());
-
-            // simply erase the dead exposed arguments links to nowhere
-            it = sg_impl->m_exposed_args.erase(it);
-
-            continue;
+            return TSL_Resolving_Status::TSL_Resolving_InvalidExposedParameter;
         }
-
-        ++it;
     }
 
     // essentially, this is a topological sort
