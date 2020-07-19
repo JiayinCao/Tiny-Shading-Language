@@ -15,6 +15,9 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
+#include <emmintrin.h>
+#include <thread>
+#include <atomic>
 #include <memory>
 #include <type_traits>
 #include <llvm/IR/Verifier.h>
@@ -51,6 +54,31 @@ YY_BUFFER_STATE yy_scan_string(const char* yystr, void* yyscanner);
 void makeVerbose(int verbose);
 
 TSL_NAMESPACE_BEGIN
+
+// Sadly, there are few interfaces of LLVM that are not thread safe, I'm not entirely sure though.
+// But I have very little time to dig in and having a mutex is the cheappest way to avoid it.
+class spinlock_mutex {
+public:
+    void lock() {
+        // std::memory_order_acquire is neccessary here to prevent the out-of-order execution optimization.
+        // It makes sure all memory load will happen after the lock is acquired.
+        while (locked.test_and_set(std::memory_order_acquire)) {
+            // In a very contended multi-threading environment, full busy loop may not be the most efficient thing to do since
+            // they consume CPU cycles all the time. This instruction could allow delaying CPU instructions for a few cycles in
+            // some cases to allow other threads to take ownership of hardware resources.
+            // https://software.intel.com/en-us/comment/1134767
+            _mm_pause();
+        }
+    }
+    void unlock() {
+        // std::memory_order_release will make sure all memory writting operations will be finished by the time this is done.
+        locked.clear(std::memory_order_release);
+    }
+
+private:
+    std::atomic_flag locked = ATOMIC_FLAG_INIT;
+};
+static inline spinlock_mutex g_spin_lock;
 
 static llvm::Type* llvm_type_from_arg_type(const DataType type, TSL_Compile_Context& context) {
     llvm::Type* llvm_type = nullptr;
@@ -246,6 +274,9 @@ TSL_Resolving_Status TslCompiler::resolve(ShaderInstance* si) {
     // invalid shader unit template
     if (!shader_template_data || !shader_template_data->m_module || !shader_template_data->m_llvm_function)
         return TSL_Resolving_Status::TSL_Resolving_InvalidShaderGroupTemplate;
+
+    // I don't like the idea of hidden syncing inside what is supposed to be thread-safe interface, but I'll live with it for a while unless it is a perf bottleneck.
+    std::lock_guard<spinlock_mutex> lock(g_spin_lock);
 
     // don't consume the module to avoid limitation of creating more shader instance
     auto cloned_module = llvm::CloneModule(*shader_template_data->m_module);

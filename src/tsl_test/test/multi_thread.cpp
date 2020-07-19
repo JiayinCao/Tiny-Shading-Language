@@ -31,6 +31,8 @@ TEST(Thread, Full_Test) {
         std::vector<std::thread> threads(TN);
         for (int i = 0; i < TN; ++i)
             threads[i] = std::thread([&](int tid) {
+            int k = 0;
+            while (k++ < 100) {
                 char name_buffer[256] = { 0 };
                 name_buffer[0] = 'a' + tid;
                 auto shading_context = shading_system.make_shading_context();
@@ -55,6 +57,10 @@ TEST(Thread, Full_Test) {
                 )");
 
                 EXPECT_VALID_SMART_PTR(shader_unit);
+
+                auto shader_instance = shader_unit->make_shader_instance();
+                EXPECT_VALID_SMART_PTR(shader_instance);
+            }
         }, i);
 
         // making sure all threads are done
