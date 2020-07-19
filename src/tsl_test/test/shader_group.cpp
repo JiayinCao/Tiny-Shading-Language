@@ -401,7 +401,6 @@ TEST(ShaderGroup, ShaderGroupInputDefaults) {
 //         |               |
 //         -----------------
 
-#if 0
 TEST(ShaderGroup, ShaderGroupRecursive) {
     // global tsl shading system
     auto& shading_system = ShadingSystem::get_instance();
@@ -409,8 +408,10 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
     // make a shading context for shader compiling, since there is only one thread involved in this unit test, it is good enough.
     auto shading_context = shading_system.make_shading_context();
 
-    ShaderGroupTemplate* shader_group0 = nullptr;
+    std::shared_ptr<ShaderGroupTemplate> shader_group0 = nullptr;
     {
+        auto shading_context = shading_system.make_shading_context();
+
         // the root shader node, this usually matches to the output node in material system
         const auto root_shader_unit = compile_shader_unit_template(shading_context.get(), "root_shader_ShaderGroupRecursive", R"(
             shader output_node( float in_bxdf , out float out_bxdf ){
@@ -446,7 +447,7 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
         shader_group0->expose_shader_argument("bxdf_shader", "in_bxdf", false);
 
         // resolve the shader group
-        auto status = shading_context->end_shader_group_template(shader_group0);
+        auto status = shading_context->end_shader_group_template(shader_group0.get());
         EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, status);
     }
 
@@ -484,12 +485,11 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
     // expose the shader interface
     shader_group1->expose_shader_argument("final_shader", "out_bxdf");
 
-    ShaderUnitInputDefaultValue ii;
-    ii.m_val.m_float = 0.2f;
-    shader_group1->init_shader_input("inner_shader", "in_bxdf", ii);
+    // setup the default init value
+    shader_group1->init_shader_input("inner_shader", "in_bxdf", 0.2f);
 
     // resolve the shader group
-    auto status = shading_context->end_shader_group_template(shader_group1);
+    auto status = shading_context->end_shader_group_template(shader_group1.get());
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, status);
 
     auto shader_instance = shader_group1->make_shader_instance();
@@ -505,7 +505,6 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
     raw_function(&closure);
     EXPECT_EQ(1231.0f * 0.2f + 3.0f, closure);
 }
-#endif
 
 // This is a real problem I met during integration of TSL in SORT.
 TEST(ShaderGroup, RealProblem0) {
