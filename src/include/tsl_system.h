@@ -264,9 +264,13 @@ public:
 
     //! @brief  Setup shader group output
     //!
-    //! @param  su      source shader unit
-    //! @param  spn     source shader parameter name
-    void expose_shader_argument(const std::string& su, const std::string& spn, const ExposedArgDescriptor& arg_desc);
+    //! It is up to renderers to make sure exposed arguments don't have duplicated names.
+    //!
+    //! @param  su          source shader unit
+    //! @param  spn         source shader parameter name
+    //! @param  is_ouput    whether the exposed parameter is an output.
+    //! @param  name        name of the exposed parameter, if it is empty, spn will be used as exposed parameter name.
+    void expose_shader_argument(const std::string& su, const std::string& spn, const bool is_output = true, const std::string& name = "");
 
     //! @brief  Setup default shader argument init value
     //!

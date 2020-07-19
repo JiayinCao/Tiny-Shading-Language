@@ -205,7 +205,7 @@ void AstNode_FunctionPrototype::parse_shader_parameters(std::vector<ExposedArgDe
 
             ExposedArgDescriptor arg;
             arg.m_name = variable->get_var_name();
-            arg.m_type = type_from_internal_type(raw_type);
+            arg.m_type = raw_type;
             arg.m_is_output = variable->get_config() & VariableConfig::OUTPUT;
             params.push_back(arg);
         }

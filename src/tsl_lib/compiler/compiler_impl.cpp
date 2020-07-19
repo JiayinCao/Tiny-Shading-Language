@@ -52,26 +52,26 @@ void makeVerbose(int verbose);
 
 TSL_NAMESPACE_BEGIN
 
-static llvm::Type* llvm_type_from_arg_type(const ShaderArgumentTypeEnum type, LLVM_Compile_Context& context) {
+static llvm::Type* llvm_type_from_arg_type(const DataType type, LLVM_Compile_Context& context) {
     llvm::Type* llvm_type = nullptr;
-    switch (type) {
-    case ShaderArgumentTypeEnum::TSL_TYPE_CLOSURE:
+    switch (type.m_type) {
+    case DataTypeEnum::CLOSURE:
         llvm_type = get_int_32_ptr_ty(context);
         break;
-    case ShaderArgumentTypeEnum::TSL_TYPE_INT:
+    case DataTypeEnum::INT:
         llvm_type = get_int_32_ty(context);
         break;
-    case ShaderArgumentTypeEnum::TSL_TYPE_FLOAT:
+    case DataTypeEnum::FLOAT:
         llvm_type = get_float_ty(context);
         break;
-    case ShaderArgumentTypeEnum::TSL_TYPE_BOOL:
+    case DataTypeEnum::BOOL:
         llvm_type = get_int_1_ty(context);
         break;
-    case ShaderArgumentTypeEnum::TSL_TYPE_DOUBLE:
+    case DataTypeEnum::DOUBLE:
         llvm_type = get_double_ty(context);
         break;
-    case ShaderArgumentTypeEnum::TSL_TYPE_FLOAT3:
-        llvm_type = context.m_structure_type_maps["float3"].m_llvm_type;
+    case DataTypeEnum::STRUCT:
+        llvm_type = context.m_structure_type_maps[type.m_structure_name].m_llvm_type;
         break;
     default:
         // not supported yet
@@ -318,6 +318,34 @@ TSL_Resolving_Status TslCompiler_Impl::resolve(ShaderGroupTemplate* sg) {
     // if we can't find the root shader, it should return false
     if (0 == sg_impl->m_shader_units.count(sg_impl->m_root_shader_unit_name))
         return TSL_Resolving_Status::TSL_Resolving_ShaderGroupWithoutRoot;
+
+    // parse the exposed parameter type
+    for (auto& arg : sg_impl->m_exposed_args) {
+        const auto& su_name = arg.m_source_shader_unit_name;
+        const auto& su_arg_name = arg.m_source_shader_unit_arg_name;
+
+        if (sg_impl->m_shader_units.count(su_name) == 0) {
+            emit_warning("Can't expose argument %s since there is no argument %s in shader unit %s.", arg.m_name.c_str(), su_arg_name.c_str(), su_name.c_str());
+            continue;
+        }
+
+        auto& shader_unit = sg_impl->m_shader_units[su_name];
+        auto shader_unit_template = shader_unit.m_shader_unit_template.get();
+        auto shader_unit_template_data = shader_unit_template->m_shader_unit_template_impl.get();
+
+        bool found = false;
+        for (auto& source_arg : shader_unit_template_data->m_exposed_args) {
+            if (source_arg.m_name == su_arg_name) {
+                found = true;
+                arg.m_type = source_arg.m_type;
+                break;
+            }
+        }
+
+        if (!found) {
+            emit_error("Can't find exposed argument named %s.", su_arg_name.c_str());
+        }
+    }
 
     // essentially, this is a topological sort
     std::unordered_set<std::string>   visited_shader_units;

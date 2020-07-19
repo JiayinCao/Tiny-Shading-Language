@@ -74,11 +74,7 @@ TEST(GlobalValue, GlobalValueAsDefaultValueForArgument) {
     shader_group->register_tsl_global(tsl_global.m_var_list);
 
     // expose the shader interface
-    ExposedArgDescriptor arg;
-    arg.m_name = "out_bxdf";
-    arg.m_type = ShaderArgumentTypeEnum::TSL_TYPE_FLOAT;
-    arg.m_is_output = true;
-    shader_group->expose_shader_argument("root_shader", "out_bxdf", arg);
+    shader_group->expose_shader_argument("root_shader", "out_bxdf");
 
     shader_group->init_shader_input("root_shader", "in_var", make_tsl_global_ref("intensity"));
 
@@ -149,11 +145,7 @@ TEST(GlobalValue, GlobalValueInShaderGroup_Simple) {
     shader_group->register_tsl_global(tsl_global.m_var_list);
 
     // expose the shader interface
-    ExposedArgDescriptor arg;
-    arg.m_name = "out_bxdf";
-    arg.m_type = ShaderArgumentTypeEnum::TSL_TYPE_FLOAT;
-    arg.m_is_output = true;
-    shader_group->expose_shader_argument("root_shader", "out_bxdf", arg);
+    shader_group->expose_shader_argument("root_shader", "out_bxdf");
 
     // resolve the shader group
     auto status = shading_context->end_shader_group_template(shader_group.get());
@@ -217,11 +209,7 @@ TEST(GlobalValue, GlobalValueInShaderGroup) {
     shader_group->register_tsl_global(tsl_global.m_var_list);
 
     // expose the shader interface
-    ExposedArgDescriptor arg;
-    arg.m_name = "out_bxdf";
-    arg.m_type = ShaderArgumentTypeEnum::TSL_TYPE_CLOSURE;
-    arg.m_is_output = true;
-    shader_group->expose_shader_argument("root_shader_GlobalValueInShaderGroup", "out_bxdf", arg);
+    shader_group->expose_shader_argument("root_shader_GlobalValueInShaderGroup", "out_bxdf");
 
     // resolve the shader group
     auto status = shading_context->end_shader_group_template(shader_group.get());

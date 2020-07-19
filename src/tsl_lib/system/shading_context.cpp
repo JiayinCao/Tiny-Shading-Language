@@ -130,16 +130,22 @@ void ShaderGroupTemplate::connect_shader_units(const std::string& ssu, const std
     sg_impl->m_shader_unit_connections[tsu][tspn] = std::make_pair(ssu, sspn);
 }
 
-void ShaderGroupTemplate::expose_shader_argument(const std::string & ssu, const std::string & sspn, const ExposedArgDescriptor & arg_desc){
+void ShaderGroupTemplate::expose_shader_argument(const std::string& su, const std::string& spn, const bool is_output, const std::string& name){
+    ExposedArgDescriptor arg_desc;
+    arg_desc.m_is_output = is_output;
+    arg_desc.m_name = name;
+    arg_desc.m_source_shader_unit_name = su;
+    arg_desc.m_source_shader_unit_arg_name = spn;
+
     const auto i = m_shader_unit_template_impl->m_exposed_args.size();
     m_shader_unit_template_impl->m_exposed_args.push_back(arg_desc);
 
     // I may need to do some checking here to make sure things don't get setup in an invalid way
     ShaderGroupTemplate_Impl* sg_impl = (ShaderGroupTemplate_Impl*)m_shader_unit_template_impl.get();
     if (arg_desc.m_is_output)
-        sg_impl->m_output_args[ssu][sspn] = i;
+        sg_impl->m_output_args[su][spn] = i;
     else
-        sg_impl->m_input_args[ssu][sspn] = i;
+        sg_impl->m_input_args[su][spn] = i;
 }
 
 void ShaderGroupTemplate::init_shader_input(const std::string& su, const std::string& spn, const ShaderUnitInputDefaultValue& val) {

@@ -26,6 +26,7 @@
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/IR/LegacyPassManager.h>
 #include "tsl_system.h"
+#include "compiler/types.h"
 
 TSL_NAMESPACE_BEGIN
 
@@ -36,6 +37,22 @@ using ShaderResourceTable = std::unordered_map<std::string, const ShaderResource
 using ShaderUnitConnection = std::unordered_map<std::string, std::unordered_map<std::string, std::pair<std::string, std::string>>>;
 using ShaderWrapperConnection = std::unordered_map<std::string, std::unordered_map<std::string, int>>;
 using ShaderUnitInputDefaultMapping = std::unordered_map<std::string, std::unordered_map<std::string, ShaderUnitInputDefaultValue>>;
+
+//! @brief  Exposed argument descriptor.
+/**
+ * Argument descriptor is used to describe the exposed arguments in a shader group template.
+ * This data structure keeps track of argument name, type and output signature, meaning it is
+ * both for input arguments and output arguments.
+ * This is only used for shader group, shader unit exposes everything defined in the shader
+ * source code.
+ */
+struct ExposedArgDescriptor {
+    std::string             m_source_shader_unit_name;
+    std::string             m_source_shader_unit_arg_name;
+    std::string             m_name;
+    DataType                m_type;
+    bool                    m_is_output = false;
+};
 
 // This data structure hides all LLVM related data from ShaderInstance.
 struct ShaderInstance_Impl {

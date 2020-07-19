@@ -226,18 +226,6 @@ static_assert(sizeof(ClosureTreeNodeMul) == sizeof(ClosureTreeNodeBase) + sizeof
 // TSL function argument declaration.
 // -----------------------------------------------------------------------------------------------------------
 
-//! @brief  Shader argument types
-enum class ShaderArgumentTypeEnum : unsigned int {
-    TSL_TYPE_INVALID = 0,
-    TSL_TYPE_INT,
-    TSL_TYPE_FLOAT,
-    TSL_TYPE_DOUBLE,
-    TSL_TYPE_BOOL,
-    TSL_TYPE_FLOAT3,
-    TSL_TYPE_GLOBAL,
-    TSL_TYPE_CLOSURE
-};
-
 //! @brief  Basic float3 defined in TSL.
 /**
  * It is intentionally to make it as simple as possible.
@@ -245,20 +233,6 @@ enum class ShaderArgumentTypeEnum : unsigned int {
  */
 struct float3 {
     float x, y, z;
-};
-
-//! @brief  Exposed argument descriptor.
-/**
- * Argument descriptor is used to describe the exposed arguments in a shader group template.
- * This data structure keeps track of argument name, type and output signature, meaning it is
- * both for input arguments and output arguments.
- * This is only used for shader group, shader unit exposes everything defined in the shader
- * source code.
- */
-struct ExposedArgDescriptor {
-    std::string             m_name;
-    ShaderArgumentTypeEnum  m_type = ShaderArgumentTypeEnum::TSL_TYPE_INVALID;
-    bool                    m_is_output = false;
 };
 
 /**
