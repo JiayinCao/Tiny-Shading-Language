@@ -25,6 +25,7 @@
 #include "compiler/compiler.h"
 #include "system/impl.h"
 #include "tsl_args.h"
+#include "compiler/compile_context.h"
 
 TSL_NAMESPACE_BEGIN
 

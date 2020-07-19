@@ -17,12 +17,12 @@
 
 #pragma once
 
-#include <assert.h>
 #include "tsl_version.h"
 
 TSL_NAMESPACE_BEGIN
 
-enum DataTypeEnum : int{
+// Data types that can be used as funciton arguments supported in TSL.
+enum class DataTypeEnum : int{
     INVALID = 0,
 	VOID	,
 	INT		,
@@ -33,6 +33,7 @@ enum DataTypeEnum : int{
 	STRUCT
 };
 
+// A thin wrapper of data type with structure name if necessary.
 struct DataType{
 	DataTypeEnum	m_type;
 	const char*		m_structure_name;	// this is only used for structure type
@@ -42,56 +43,12 @@ static inline bool operator == (DataType& data_type0, DataType& data_type1) {
 	return data_type0.m_type == data_type1.m_type && data_type0.m_structure_name == data_type1.m_structure_name;
 }
 
-inline std::string str_from_data_type( const DataType& type ){
-	switch( type.m_type ){
-	case DataTypeEnum::INT:
-		return "int";
-	case DataTypeEnum::FLOAT:
-		return "float";
-	case DataTypeEnum::BOOL:
-		return "bool";
-    case DataTypeEnum::DOUBLE:
-        return "double";
-    case DataTypeEnum::CLOSURE:
-        return "closure";
-	case DataTypeEnum::STRUCT:
-		return "struct " + std::string(type.m_structure_name);
-	default:
-		break;
-	}
-
-	assert( type.m_type == DataTypeEnum::VOID );
-	return "void";
-}
-
+// Each argument could have some configuration
 enum VariableConfig : int {
 	NONE = 0,
 	INPUT = 1,
 	OUTPUT = 2,
 	CONST = 4,
 };
-
-inline const char* str_from_var_config(const VariableConfig type) {
-	if( type == ( VariableConfig::NONE ) )
-		return "";
-
-	if( type == ( VariableConfig::CONST ) )
-		return "const";
-
-	if( type == (VariableConfig::CONST | VariableConfig::INPUT) )
-		return "const in";
-
-	// this is useless
-	//if (type == (VariableConfig::CONST | VariableConfig::OUTPUT))
-	//	return "const output";
-
-	if( type == VariableConfig::INPUT )
-		return "in";
-
-	if( type == VariableConfig::OUTPUT )
-		return "out";
-
-	return "invalid";
-}
 
 TSL_NAMESPACE_END

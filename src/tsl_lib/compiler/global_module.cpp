@@ -56,7 +56,7 @@ bool GlobalModule::init() {
     return true;
 }
 
-void GlobalModule::declare_closure_tree_types(llvm::LLVMContext& context, StructSymbolTable* mapping) {
+void GlobalModule::declare_closure_tree_types(llvm::LLVMContext& context, Struct_Symbol_Table* mapping) {
 	// N.B, this function implementation will be 'externally' defined in std.tsl
 
     // ClosureTreeNodeBase, it has to have this 4 bytes memory padding in it so that the size is 8, otherwise, it will crash the system.
@@ -179,7 +179,7 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureAr
     return m_current_closure_id++;
 }
 
-llvm::Function* GlobalModule::declare_closure_function(const std::string& name, LLVM_Compile_Context& context) {
+llvm::Function* GlobalModule::declare_closure_function(const std::string& name, TSL_Compile_Context& context) {
     const auto it = m_closures.find(name);
     if (it == m_closures.end()) {
         emit_error("Closure '%s' not registered.", name.c_str());
@@ -201,7 +201,7 @@ llvm::Function* GlobalModule::declare_closure_function(const std::string& name, 
     return Function::Create(FunctionType::get(ret_type, arg_types, false), Function::ExternalLinkage, function_name, *context.module);
 }
 
-void GlobalModule::declare_global_module(LLVM_Compile_Context& context){
+void GlobalModule::declare_global_module(TSL_Compile_Context& context){
     // float3 data structure, this can be used as vector, color in TSL
     const auto float3_struct = "float3";
     const std::vector<Type*> float3_members = {

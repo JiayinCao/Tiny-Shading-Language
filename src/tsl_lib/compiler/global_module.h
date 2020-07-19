@@ -29,7 +29,7 @@
 
 TSL_NAMESPACE_BEGIN
 
-struct LLVM_Compile_Context;
+struct TSL_Compile_Context;
 
 struct ClosureItem {
     const ClosureID         m_closure_id = INVALID_CLOSURE_ID;
@@ -52,12 +52,12 @@ public:
     llvm::Module*   get_closure_module();
 
     // declare some global data structure type
-    void            declare_closure_tree_types(llvm::LLVMContext& context, StructSymbolTable* mapping = nullptr );
+    void            declare_closure_tree_types(llvm::LLVMContext& context, Struct_Symbol_Table* mapping = nullptr );
 
     // get declaration
-    llvm::Function* declare_closure_function(const std::string& name, LLVM_Compile_Context& context);
+    llvm::Function* declare_closure_function(const std::string& name, TSL_Compile_Context& context);
 	// declare global function
-	void			declare_global_module(LLVM_Compile_Context& context);
+	void			declare_global_module(TSL_Compile_Context& context);
 
 private:
     /**< a container holding all closures ids. */
@@ -74,7 +74,7 @@ private:
 	/**< The type of base closure node. */
 	const llvm::Type*   m_closure_base_type = nullptr;
 
-    Tsl_Namespace::LLVM_Compile_Context m_llvm_compiling_context;
+    Tsl_Namespace::TSL_Compile_Context m_llvm_compiling_context;
 };
 
 TSL_NAMESPACE_END

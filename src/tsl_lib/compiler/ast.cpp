@@ -30,74 +30,8 @@ using namespace llvm;
 
 TSL_NAMESPACE_BEGIN
 
-void LLVM_Compile_Context::reset() {
-    m_var_symbols.clear();
-    m_var_symbols.push_back({});    // this is for global variables
-}
 
-llvm::Value* LLVM_Compile_Context::get_var_symbol(const std::string& name, bool only_top_layer) {
-    if (only_top_layer) {
-        auto top = m_var_symbols.back();
-        auto it = top.find(name);
-        return it == top.end() ? nullptr : it->second.first;
-    } else {
-        auto it = m_var_symbols.rbegin();
-        while (it != m_var_symbols.rend()) {
-            auto var = it->find(name);
-            if (var != it->end())
-                return var->second.first;
-            ++it;
-        }
-    }
-
-    emit_error("Undefined variable '%s'.", name.c_str());
-
-    return nullptr;
-}
-
-DataType LLVM_Compile_Context::get_var_type(const std::string& name, bool only_top_layer){
-	if (only_top_layer) {
-		auto top = m_var_symbols.back();
-		auto it = top.find(name);
-		if( it != top.end() )
-			return it->second.second;
-	} else {
-		auto it = m_var_symbols.rbegin();
-		while (it != m_var_symbols.rend()) {
-			auto var = it->find(name);
-			if (var != it->end())
-				return var->second.second;
-			++it;
-		}
-	}
-
-    emit_error("Undefined variable '%s'.", name.c_str());
-
-	return DataType();
-}
-
-llvm::Value* LLVM_Compile_Context::push_var_symbol(const std::string& name, llvm::Value* value, DataType type) {
-    auto top_layer = m_var_symbols.back();
-
-    if (top_layer.count(name)) {
-        emit_error("Redefined variable '%s'.", name.c_str());
-        return nullptr;
-    }
-
-    m_var_symbols.back()[name] = std::make_pair(value, type);
-
-    return nullptr;
-}
-
-void LLVM_Compile_Context::push_var_symbol_layer() {
-    m_var_symbols.push_back({});
-}
-
-void LLVM_Compile_Context::pop_var_symbol_layer() {
-    m_var_symbols.pop_back();
-}
-
-llvm::Function* AstNode_FunctionPrototype::codegen( LLVM_Compile_Context& context ) const {
+llvm::Function* AstNode_FunctionPrototype::codegen( TSL_Compile_Context& context ) const {
     static std::vector<std::shared_ptr<const AstNode_SingleVariableDecl>> empty_args;
 
     // no function overloading for simplicity, at least for now.
@@ -212,27 +146,27 @@ void AstNode_FunctionPrototype::parse_shader_parameters(std::vector<ExposedArgDe
     }
 }
 
-llvm::Value* AstNode_FunctionBody::codegen( LLVM_Compile_Context& context ) const{    
+llvm::Value* AstNode_FunctionBody::codegen( TSL_Compile_Context& context ) const{    
 	return nullptr;
 }
 
-llvm::Value* AstNode_Literal_Int::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Literal_Int::codegen(TSL_Compile_Context& context) const {
     return get_llvm_constant_int(m_val, 32, context);
 }
 
-llvm::Value* AstNode_Literal_Flt::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Literal_Flt::codegen(TSL_Compile_Context& context) const {
     return get_llvm_constant_fp(m_val, context);
 }
 
-llvm::Value* AstNode_Literal_Double::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Literal_Double::codegen(TSL_Compile_Context& context) const {
     return get_llvm_constant_fp(m_val, context);
 }
 
-llvm::Value* AstNode_Literal_Bool::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Literal_Bool::codegen(TSL_Compile_Context& context) const {
     return get_llvm_constant_int((int)m_val, 1, context);
 }
 
-llvm::Value* AstNode_Literal_GlobalValue::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Literal_GlobalValue::codegen(TSL_Compile_Context& context) const {
     if (!context.tsl_global_mapping) {
         emit_error("TSL global variable is not registered.");
         return nullptr;
@@ -257,7 +191,7 @@ llvm::Value* AstNode_Literal_GlobalValue::codegen(LLVM_Compile_Context& context)
     return nullptr;
 }
 
-bool AstNode_Binary_Add::is_closure(LLVM_Compile_Context& context) const {
+bool AstNode_Binary_Add::is_closure(TSL_Compile_Context& context) const {
     if (m_left->is_closure(context) != m_right->is_closure(context)) {
         emit_error("Closure color can't be added with non closure color.");
         return false;
@@ -266,7 +200,7 @@ bool AstNode_Binary_Add::is_closure(LLVM_Compile_Context& context) const {
     return m_left->is_closure(context) && m_right->is_closure(context);
 }
 
-llvm::Value* AstNode_Binary_Add::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Binary_Add::codegen(TSL_Compile_Context& context) const {
     auto& builder = *context.builder;
 
     auto left = m_left->codegen(context);
@@ -376,7 +310,7 @@ llvm::Value* AstNode_Binary_Add::codegen(LLVM_Compile_Context& context) const {
     return converted_closure_tree_node_ptr;
 }
 
-llvm::Value* AstNode_Binary_Minus::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Binary_Minus::codegen(TSL_Compile_Context& context) const {
     auto& builder = *context.builder;
 
     auto left = m_left->codegen(context);
@@ -462,7 +396,7 @@ llvm::Value* AstNode_Binary_Minus::codegen(LLVM_Compile_Context& context) const 
     return get_llvm_sub(left, right, context);
 }
 
-bool AstNode_Binary_Multi::is_closure(LLVM_Compile_Context& context) const {
+bool AstNode_Binary_Multi::is_closure(TSL_Compile_Context& context) const {
     if (m_left->is_closure(context) && m_right->is_closure(context)) {
         emit_error("Closure color can't muliply with each other.");
         return false;
@@ -471,7 +405,7 @@ bool AstNode_Binary_Multi::is_closure(LLVM_Compile_Context& context) const {
     return m_left->is_closure(context) || m_right->is_closure(context);
 }
 
-llvm::Value* AstNode_Binary_Multi::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Binary_Multi::codegen(TSL_Compile_Context& context) const {
     auto& builder = *context.builder;
 
     auto left = m_left->codegen(context);
@@ -585,7 +519,7 @@ llvm::Value* AstNode_Binary_Multi::codegen(LLVM_Compile_Context& context) const 
 	return converted_closure_tree_node_ptr;
 }
 
-llvm::Value* AstNode_Binary_Div::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Binary_Div::codegen(TSL_Compile_Context& context) const {
     auto& builder = *context.builder;
 
     auto left = m_left->codegen(context);
@@ -671,7 +605,7 @@ llvm::Value* AstNode_Binary_Div::codegen(LLVM_Compile_Context& context) const {
     return get_llvm_div(left, right, context);
 }
 
-llvm::Value* AstNode_Binary_Mod::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Binary_Mod::codegen(TSL_Compile_Context& context) const {
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
@@ -683,7 +617,7 @@ llvm::Value* AstNode_Binary_Mod::codegen(LLVM_Compile_Context& context) const {
     return nullptr;
 }
 
-llvm::Value* AstNode_Binary_And::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Binary_And::codegen(TSL_Compile_Context& context) const {
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
@@ -693,7 +627,7 @@ llvm::Value* AstNode_Binary_And::codegen(LLVM_Compile_Context& context) const {
     return context.builder->CreateAnd(left, right);
 }
 
-llvm::Value* AstNode_Binary_Or::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Binary_Or::codegen(TSL_Compile_Context& context) const {
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
@@ -703,7 +637,7 @@ llvm::Value* AstNode_Binary_Or::codegen(LLVM_Compile_Context& context) const {
     return context.builder->CreateOr(left, right);
 }
 
-llvm::Value* AstNode_Binary_Eq::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Binary_Eq::codegen(TSL_Compile_Context& context) const {
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
@@ -715,7 +649,7 @@ llvm::Value* AstNode_Binary_Eq::codegen(LLVM_Compile_Context& context) const {
     return nullptr;
 }
 
-llvm::Value* AstNode_Binary_Ne::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Binary_Ne::codegen(TSL_Compile_Context& context) const {
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
@@ -727,7 +661,7 @@ llvm::Value* AstNode_Binary_Ne::codegen(LLVM_Compile_Context& context) const {
     return nullptr;
 }
 
-llvm::Value* AstNode_Binary_G::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Binary_G::codegen(TSL_Compile_Context& context) const {
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
@@ -739,7 +673,7 @@ llvm::Value* AstNode_Binary_G::codegen(LLVM_Compile_Context& context) const {
     return nullptr;
 }
 
-llvm::Value* AstNode_Binary_L::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Binary_L::codegen(TSL_Compile_Context& context) const {
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
@@ -751,7 +685,7 @@ llvm::Value* AstNode_Binary_L::codegen(LLVM_Compile_Context& context) const {
     return nullptr;
 }
 
-llvm::Value* AstNode_Binary_Ge::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Binary_Ge::codegen(TSL_Compile_Context& context) const {
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
@@ -763,7 +697,7 @@ llvm::Value* AstNode_Binary_Ge::codegen(LLVM_Compile_Context& context) const {
     return nullptr;
 }
 
-llvm::Value* AstNode_Binary_Le::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Binary_Le::codegen(TSL_Compile_Context& context) const {
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
@@ -775,7 +709,7 @@ llvm::Value* AstNode_Binary_Le::codegen(LLVM_Compile_Context& context) const {
     return nullptr;
 }
 
-llvm::Value* AstNode_Binary_Shl::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Binary_Shl::codegen(TSL_Compile_Context& context) const {
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
@@ -785,7 +719,7 @@ llvm::Value* AstNode_Binary_Shl::codegen(LLVM_Compile_Context& context) const {
     return nullptr;
 }
 
-llvm::Value* AstNode_Binary_Shr::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Binary_Shr::codegen(TSL_Compile_Context& context) const {
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
@@ -795,7 +729,7 @@ llvm::Value* AstNode_Binary_Shr::codegen(LLVM_Compile_Context& context) const {
     return nullptr;
 }
 
-llvm::Value* AstNode_Binary_Bit_And::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Binary_Bit_And::codegen(TSL_Compile_Context& context) const {
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
@@ -805,7 +739,7 @@ llvm::Value* AstNode_Binary_Bit_And::codegen(LLVM_Compile_Context& context) cons
     return nullptr;
 }
 
-llvm::Value* AstNode_Binary_Bit_Or::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Binary_Bit_Or::codegen(TSL_Compile_Context& context) const {
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
@@ -816,7 +750,7 @@ llvm::Value* AstNode_Binary_Bit_Or::codegen(LLVM_Compile_Context& context) const
     return nullptr;
 }
 
-llvm::Value* AstNode_Binary_Bit_Xor::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Binary_Bit_Xor::codegen(TSL_Compile_Context& context) const {
     auto left = m_left->codegen(context);
     auto right = m_right->codegen(context);
 
@@ -827,7 +761,7 @@ llvm::Value* AstNode_Binary_Bit_Xor::codegen(LLVM_Compile_Context& context) cons
     return nullptr;
 }
 
-llvm::Value* AstNode_Statement_Return::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Statement_Return::codegen(TSL_Compile_Context& context) const {
     if (!m_expression)
         return context.builder->CreateRetVoid();
 
@@ -835,7 +769,7 @@ llvm::Value* AstNode_Statement_Return::codegen(LLVM_Compile_Context& context) co
     return context.builder->CreateRet(ret_value);
 }
 
-llvm::Value* AstNode_VariableRef::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_VariableRef::codegen(TSL_Compile_Context& context) const {
     // just find it in the symbol table
     auto var = context.get_var_symbol(m_name);
     if (!var)
@@ -843,11 +777,11 @@ llvm::Value* AstNode_VariableRef::codegen(LLVM_Compile_Context& context) const {
     return context.builder->CreateLoad(var);
 }
 
-llvm::Value* AstNode_VariableRef::get_value_address(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_VariableRef::get_value_address(TSL_Compile_Context& context) const {
     return context.get_var_symbol(m_name);
 }
 
-bool AstNode_VariableRef::is_closure(LLVM_Compile_Context& context) const {
+bool AstNode_VariableRef::is_closure(TSL_Compile_Context& context) const {
     auto type = context.get_var_type(m_name);
     if (DataTypeEnum::CLOSURE == type.m_type)
         return true;
@@ -855,11 +789,11 @@ bool AstNode_VariableRef::is_closure(LLVM_Compile_Context& context) const {
     return false;
 }
 
-DataType AstNode_VariableRef::get_var_type(LLVM_Compile_Context& context) const {
+DataType AstNode_VariableRef::get_var_type(TSL_Compile_Context& context) const {
 	return context.get_var_type(m_name);
 }
 
-llvm::Value* AstNode_ArrayAccess::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_ArrayAccess::codegen(TSL_Compile_Context& context) const {
     auto var = m_var->get_value_address(context);
     auto index = m_index->codegen(context);
     
@@ -872,7 +806,7 @@ llvm::Value* AstNode_ArrayAccess::codegen(LLVM_Compile_Context& context) const {
     return context.builder->CreateLoad(value_ptr);
 }
 
-llvm::Value* AstNode_ArrayAccess::get_value_address(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_ArrayAccess::get_value_address(TSL_Compile_Context& context) const {
     auto var = m_var->get_value_address(context);
     auto index = m_index->codegen(context);
 
@@ -884,11 +818,11 @@ llvm::Value* AstNode_ArrayAccess::get_value_address(LLVM_Compile_Context& contex
     return context.builder->CreateGEP(var, index);
 }
 
-DataType AstNode_ArrayAccess::get_var_type(LLVM_Compile_Context& context) const {
+DataType AstNode_ArrayAccess::get_var_type(TSL_Compile_Context& context) const {
 	return m_var->get_var_type(context);
 }
 
-llvm::Value* AstNode_SingleVariableDecl::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_SingleVariableDecl::codegen(TSL_Compile_Context& context) const {
     auto name = m_name;
     auto type = get_type_from_context(m_type, context);
     auto init = m_init_exp.get();
@@ -914,7 +848,7 @@ llvm::Value* AstNode_SingleVariableDecl::codegen(LLVM_Compile_Context& context) 
     return nullptr;
 }
 
-llvm::Value* AstNode_ArrayDecl::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_ArrayDecl::codegen(TSL_Compile_Context& context) const {
     auto name = m_name;
 
     if (nullptr != context.get_var_symbol(name, true)) {
@@ -938,19 +872,19 @@ llvm::Value* AstNode_ArrayDecl::codegen(LLVM_Compile_Context& context) const {
     return nullptr;
 }
 
-llvm::Value* AstNode_Statement_VariableDecl::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Statement_VariableDecl::codegen(TSL_Compile_Context& context) const {
     m_var_decls->codegen(context);
     return nullptr;
 }
 
-llvm::Value* AstNode_ExpAssign_Eq::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_ExpAssign_Eq::codegen(TSL_Compile_Context& context) const {
     auto value_ptr = m_var->get_value_address(context);
     auto to_assign = m_expression->codegen(context);
     context.builder->CreateStore(to_assign, value_ptr);
     return to_assign;
 }
 
-llvm::Value* AstNode_ExpAssign_AddEq::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_ExpAssign_AddEq::codegen(TSL_Compile_Context& context) const {
     auto value_ptr = m_var->get_value_address(context);
     auto to_assign = m_expression->codegen(context);
 
@@ -961,7 +895,7 @@ llvm::Value* AstNode_ExpAssign_AddEq::codegen(LLVM_Compile_Context& context) con
     return updated_value;
 }
 
-llvm::Value* AstNode_ExpAssign_MinusEq::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_ExpAssign_MinusEq::codegen(TSL_Compile_Context& context) const {
     auto value_ptr = m_var->get_value_address(context);
     auto to_assign = m_expression->codegen(context);
 
@@ -972,7 +906,7 @@ llvm::Value* AstNode_ExpAssign_MinusEq::codegen(LLVM_Compile_Context& context) c
     return updated_value;
 }
 
-llvm::Value* AstNode_ExpAssign_MultiEq::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_ExpAssign_MultiEq::codegen(TSL_Compile_Context& context) const {
     auto value_ptr = m_var->get_value_address(context);
     auto to_assign = m_expression->codegen(context);
 
@@ -983,7 +917,7 @@ llvm::Value* AstNode_ExpAssign_MultiEq::codegen(LLVM_Compile_Context& context) c
     return updated_value;
 }
 
-llvm::Value* AstNode_ExpAssign_DivEq::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_ExpAssign_DivEq::codegen(TSL_Compile_Context& context) const {
     auto value_ptr = m_var->get_value_address(context);
     auto to_assign = m_expression->codegen(context);
 
@@ -994,7 +928,7 @@ llvm::Value* AstNode_ExpAssign_DivEq::codegen(LLVM_Compile_Context& context) con
     return updated_value;
 }
 
-llvm::Value* AstNode_ExpAssign_ModEq::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_ExpAssign_ModEq::codegen(TSL_Compile_Context& context) const {
     auto value_ptr = m_var->get_value_address(context);
     auto to_assign = m_expression->codegen(context);
 
@@ -1005,7 +939,7 @@ llvm::Value* AstNode_ExpAssign_ModEq::codegen(LLVM_Compile_Context& context) con
     return updated_value;
 }
 
-llvm::Value* AstNode_ExpAssign_AndEq::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_ExpAssign_AndEq::codegen(TSL_Compile_Context& context) const {
     auto value_ptr = m_var->get_value_address(context);
     auto value = context.builder->CreateLoad(value_ptr);
 
@@ -1032,7 +966,7 @@ llvm::Value* AstNode_ExpAssign_AndEq::codegen(LLVM_Compile_Context& context) con
     return updated_value;
 }
 
-llvm::Value* AstNode_ExpAssign_OrEq::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_ExpAssign_OrEq::codegen(TSL_Compile_Context& context) const {
     auto value_ptr = m_var->get_value_address(context);
     auto value = context.builder->CreateLoad(value_ptr);
 
@@ -1057,7 +991,7 @@ llvm::Value* AstNode_ExpAssign_OrEq::codegen(LLVM_Compile_Context& context) cons
     return updated_value;
 }
 
-llvm::Value* AstNode_ExpAssign_XorEq::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_ExpAssign_XorEq::codegen(TSL_Compile_Context& context) const {
     auto value_ptr = m_var->get_value_address(context);
     auto value = context.builder->CreateLoad(value_ptr);
 
@@ -1082,7 +1016,7 @@ llvm::Value* AstNode_ExpAssign_XorEq::codegen(LLVM_Compile_Context& context) con
     return updated_value;
 }
 
-llvm::Value* AstNode_ExpAssign_ShlEq::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_ExpAssign_ShlEq::codegen(TSL_Compile_Context& context) const {
     auto value_ptr = m_var->get_value_address(context);
     auto value = context.builder->CreateLoad(value_ptr);
 
@@ -1104,7 +1038,7 @@ llvm::Value* AstNode_ExpAssign_ShlEq::codegen(LLVM_Compile_Context& context) con
     return updated_value;
 }
 
-llvm::Value* AstNode_ExpAssign_ShrEq::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_ExpAssign_ShrEq::codegen(TSL_Compile_Context& context) const {
     auto value_ptr = m_var->get_value_address(context);
     auto value = context.builder->CreateLoad(value_ptr);
 
@@ -1126,11 +1060,11 @@ llvm::Value* AstNode_ExpAssign_ShrEq::codegen(LLVM_Compile_Context& context) con
     return updated_value;
 }
 
-llvm::Value* AstNode_Statement_Expression::codegen(LLVM_Compile_Context& context) const{
+llvm::Value* AstNode_Statement_Expression::codegen(TSL_Compile_Context& context) const{
 	return m_expression->codegen(context);
 }
 
-llvm::Value* AstNode_Expression_PreInc::codegen(LLVM_Compile_Context& context) const{
+llvm::Value* AstNode_Expression_PreInc::codegen(TSL_Compile_Context& context) const{
     auto value_ptr = m_var->get_value_address(context);
     auto value = context.builder->CreateLoad(value_ptr);
     
@@ -1146,7 +1080,7 @@ llvm::Value* AstNode_Expression_PreInc::codegen(LLVM_Compile_Context& context) c
     return value;
 }
 
-llvm::Value* AstNode_Expression_PreDec::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Expression_PreDec::codegen(TSL_Compile_Context& context) const {
     auto value_ptr = m_var->get_value_address(context);
     auto value = context.builder->CreateLoad(value_ptr);
 
@@ -1162,7 +1096,7 @@ llvm::Value* AstNode_Expression_PreDec::codegen(LLVM_Compile_Context& context) c
     return value;
 }
 
-llvm::Value* AstNode_Expression_PostInc::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Expression_PostInc::codegen(TSL_Compile_Context& context) const {
     auto value_ptr = m_var->get_value_address(context);
     auto value = context.builder->CreateLoad(value_ptr);
 
@@ -1178,7 +1112,7 @@ llvm::Value* AstNode_Expression_PostInc::codegen(LLVM_Compile_Context& context) 
     return value;
 }
 
-llvm::Value* AstNode_Expression_PostDec::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Expression_PostDec::codegen(TSL_Compile_Context& context) const {
     auto value_ptr = m_var->get_value_address(context);
     auto value = context.builder->CreateLoad(value_ptr);
 
@@ -1194,11 +1128,11 @@ llvm::Value* AstNode_Expression_PostDec::codegen(LLVM_Compile_Context& context) 
     return value;
 }
 
-llvm::Value* AstNode_Unary_Pos::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Unary_Pos::codegen(TSL_Compile_Context& context) const {
 	return m_exp->codegen(context);
 }
 
-llvm::Value* AstNode_Unary_Neg::codegen(LLVM_Compile_Context& context) const{
+llvm::Value* AstNode_Unary_Neg::codegen(TSL_Compile_Context& context) const{
     auto& builder = *context.builder;
 
 	auto operand = m_exp->codegen(context);
@@ -1236,7 +1170,7 @@ llvm::Value* AstNode_Unary_Neg::codegen(LLVM_Compile_Context& context) const{
 	return nullptr;
 }
 
-llvm::Value* AstNode_Unary_Not::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Unary_Not::codegen(TSL_Compile_Context& context) const {
     auto& builder = *context.builder;
 
     auto operand = m_exp->codegen(context);
@@ -1247,7 +1181,7 @@ llvm::Value* AstNode_Unary_Not::codegen(LLVM_Compile_Context& context) const {
     return builder.CreateNot(operand);
 }
 
-llvm::Value* AstNode_Unary_Compl::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Unary_Compl::codegen(TSL_Compile_Context& context) const {
     auto operand = m_exp->codegen(context);
 
     if (!operand->getType()->isIntegerTy()) {
@@ -1259,13 +1193,13 @@ llvm::Value* AstNode_Unary_Compl::codegen(LLVM_Compile_Context& context) const {
     return context.builder->CreateXor(zero, operand);
 }
 
-llvm::Value* AstNode_TypeCast::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_TypeCast::codegen(TSL_Compile_Context& context) const {
     // to be implemented.
     auto value = m_exp->codegen(context);
     return value;
 }
 
-llvm::Value* AstNode_Expression_MakeClosure::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Expression_MakeClosure::codegen(TSL_Compile_Context& context) const {
     const auto function_name = "make_closure_" + m_name;
 
     if (context.m_closures_maps.count(m_name) == 0) {
@@ -1285,7 +1219,7 @@ llvm::Value* AstNode_Expression_MakeClosure::codegen(LLVM_Compile_Context& conte
     return context.builder->CreateCall(function, args_llvm);
 }
 
-llvm::Value* AstNode_FunctionCall::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_FunctionCall::codegen(TSL_Compile_Context& context) const {
     auto it = context.m_func_symbols.find(m_name);
     if (it == context.m_func_symbols.end()) {
         emit_error( "Undefined function %s." , m_name.c_str() );
@@ -1329,7 +1263,7 @@ llvm::Value* AstNode_FunctionCall::codegen(LLVM_Compile_Context& context) const 
     return context.builder->CreateCall(it->second.first, args_llvm);
 }
 
-llvm::Value* AstNode_Float3Constructor::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Float3Constructor::codegen(TSL_Compile_Context& context) const {
     // if it is not a function, it could be a constructor of a structure.
     auto struct_ty = context.m_structure_type_maps.find("float3");
     if (struct_ty == context.m_structure_type_maps.end()) {
@@ -1376,7 +1310,7 @@ llvm::Value* AstNode_Float3Constructor::codegen(LLVM_Compile_Context& context) c
     return context.builder->CreateLoad(ret);
 }
 
-llvm::Value* AstNode_Ternary::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Ternary::codegen(TSL_Compile_Context& context) const {
     auto cond = m_condition->codegen(context);
     auto true_exp = m_true_expr->codegen(context);
     auto false_exp = m_false_expr->codegen(context);
@@ -1387,7 +1321,7 @@ llvm::Value* AstNode_Ternary::codegen(LLVM_Compile_Context& context) const {
     return context.builder->CreateSelect(cond, true_exp, false_exp);
 }
 
-llvm::Value* AstNode_Statement_Condition::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Statement_Condition::codegen(TSL_Compile_Context& context) const {
     auto& llvm_context = *context.context;
     auto& builder = *context.builder;
     
@@ -1439,7 +1373,7 @@ llvm::Value* AstNode_Statement_Condition::codegen(LLVM_Compile_Context& context)
     return nullptr;
 }
 
-llvm::Value* AstNode_Statement_Loop_While::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Statement_Loop_While::codegen(TSL_Compile_Context& context) const {
     auto& llvm_context = *context.context;
     auto& builder = *context.builder;
 
@@ -1478,7 +1412,7 @@ llvm::Value* AstNode_Statement_Loop_While::codegen(LLVM_Compile_Context& context
     return nullptr;
 }
 
-llvm::Value* AstNode_Statement_Loop_DoWhile::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Statement_Loop_DoWhile::codegen(TSL_Compile_Context& context) const {
     auto& llvm_context = *context.context;
     auto& builder = *context.builder;
 
@@ -1511,7 +1445,7 @@ llvm::Value* AstNode_Statement_Loop_DoWhile::codegen(LLVM_Compile_Context& conte
     return nullptr;
 }
 
-llvm::Value* AstNode_Statement_Loop_For::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Statement_Loop_For::codegen(TSL_Compile_Context& context) const {
     auto& llvm_context = *context.context;
     auto& builder = *context.builder;
 
@@ -1573,7 +1507,7 @@ llvm::Value* AstNode_Statement_Loop_For::codegen(LLVM_Compile_Context& context) 
     return nullptr;
 }
 
-llvm::Value* AstNode_ScoppedStatement::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_ScoppedStatement::codegen(TSL_Compile_Context& context) const {
     context.push_var_symbol_layer();
     
     if(m_statement)
@@ -1588,13 +1522,13 @@ void AstNode_CompoundStatements::append_statement(AstNode_Statement* statement) 
     m_statements.push_back(ptr);
 }
 
-llvm::Value* AstNode_CompoundStatements::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_CompoundStatements::codegen(TSL_Compile_Context& context) const {
     for (const auto& statement : m_statements)
         statement->codegen(context);
     return nullptr;
 }
 
-llvm::Value* AstNode_Statement_Break::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Statement_Break::codegen(TSL_Compile_Context& context) const {
     BasicBlock* bb = BasicBlock::Create(*context.context, "next_block");
 
     auto top = context.m_blocks.top();
@@ -1607,7 +1541,7 @@ llvm::Value* AstNode_Statement_Break::codegen(LLVM_Compile_Context& context) con
     return nullptr;
 }
 
-llvm::Value* AstNode_Statement_Continue::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Statement_Continue::codegen(TSL_Compile_Context& context) const {
     BasicBlock* bb = BasicBlock::Create(*context.context, "next_block");
 
     auto top = context.m_blocks.top();
@@ -1620,7 +1554,7 @@ llvm::Value* AstNode_Statement_Continue::codegen(LLVM_Compile_Context& context) 
     return nullptr;
 }
 
-llvm::Value* AstNode_StructDeclaration::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_StructDeclaration::codegen(TSL_Compile_Context& context) const {
 	if( context.m_structure_type_maps.count(m_name) )
 		return nullptr;
 
@@ -1659,12 +1593,12 @@ llvm::Value* AstNode_StructDeclaration::codegen(LLVM_Compile_Context& context) c
 	return nullptr;
 }
 
-llvm::Value* AstNode_StructMemberRef::codegen(LLVM_Compile_Context& context) const{
+llvm::Value* AstNode_StructMemberRef::codegen(TSL_Compile_Context& context) const{
 	auto value_ptr = get_value_address(context);
 	return context.builder->CreateLoad(value_ptr);
 }
 
-llvm::Value* AstNode_StructMemberRef::get_value_address(LLVM_Compile_Context& context) const{
+llvm::Value* AstNode_StructMemberRef::get_value_address(TSL_Compile_Context& context) const{
 	const auto var_type = m_var->get_var_type(context);
 
 	if( !context.m_structure_type_maps.count(var_type.m_structure_name) ){
@@ -1691,7 +1625,7 @@ llvm::Value* AstNode_StructMemberRef::get_value_address(LLVM_Compile_Context& co
 	return  member_value_ptr;
 }
 
-DataType AstNode_StructMemberRef::get_var_type(LLVM_Compile_Context& context) const{
+DataType AstNode_StructMemberRef::get_var_type(TSL_Compile_Context& context) const{
 	const auto var_type = m_var->get_var_type(context);
 
 	if (!context.m_structure_type_maps.count(var_type.m_structure_name)) {
@@ -1716,7 +1650,7 @@ DataType AstNode_StructMemberRef::get_var_type(LLVM_Compile_Context& context) co
 	return it->second.second;
 }
 
-llvm::Value* AstNode_Statement_TextureDeclaration::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Statement_TextureDeclaration::codegen(TSL_Compile_Context& context) const {
     // find the registered texture
     auto it = context.m_shader_resource_table->find(m_handle_name);
     if (it == context.m_shader_resource_table->end()){
@@ -1741,7 +1675,7 @@ llvm::Value* AstNode_Statement_TextureDeclaration::codegen(LLVM_Compile_Context&
     return nullptr;
 }
 
-llvm::Value* AstNode_Statement_ShaderResourceHandleDeclaration::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Statement_ShaderResourceHandleDeclaration::codegen(TSL_Compile_Context& context) const {
     // find the registered texture
     auto it = context.m_shader_resource_table->find(m_handle_name);
     if (it == context.m_shader_resource_table->end()) {
@@ -1766,7 +1700,7 @@ llvm::Value* AstNode_Statement_ShaderResourceHandleDeclaration::codegen(LLVM_Com
     return nullptr;
 }
 
-llvm::Value* AstNode_Expression_Texture2DSample::codegen(LLVM_Compile_Context& context) const {
+llvm::Value* AstNode_Expression_Texture2DSample::codegen(TSL_Compile_Context& context) const {
     auto texture_handle_addr = context.get_var_symbol(m_texture_handle_name);
     if (texture_handle_addr) {
         auto texture_handle = context.builder->CreateLoad(texture_handle_addr);

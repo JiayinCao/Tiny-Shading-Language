@@ -52,7 +52,7 @@ void makeVerbose(int verbose);
 
 TSL_NAMESPACE_BEGIN
 
-static llvm::Type* llvm_type_from_arg_type(const DataType type, LLVM_Compile_Context& context) {
+static llvm::Type* llvm_type_from_arg_type(const DataType type, TSL_Compile_Context& context) {
     llvm::Type* llvm_type = nullptr;
     switch (type.m_type) {
     case DataTypeEnum::CLOSURE:
@@ -164,7 +164,7 @@ bool TslCompiler::compile(const char* source_code, ShaderUnitTemplate* su) {
 	if(m_ast_root){
 		llvm::IRBuilder<> builder(m_llvm_context);
 
-		LLVM_Compile_Context compile_context;
+		TSL_Compile_Context compile_context;
 		compile_context.context = &m_llvm_context;
 		compile_context.module = module;
 		compile_context.builder = &builder;
@@ -358,7 +358,7 @@ TSL_Resolving_Status TslCompiler::resolve(ShaderGroupTemplate* sg) {
 
     llvm::IRBuilder<> builder(m_llvm_context);
 
-    LLVM_Compile_Context compile_context;
+    TSL_Compile_Context compile_context;
     compile_context.context = &m_llvm_context;
     compile_context.module = sg_impl->m_module.get();
     compile_context.builder = &builder;
@@ -514,7 +514,7 @@ TSL_Resolving_Status TslCompiler::resolve(ShaderGroupTemplate* sg) {
     return TSL_Resolving_Status::TSL_Resolving_Succeed;
 }
 
-TSL_Resolving_Status TslCompiler::generate_shader_source(  LLVM_Compile_Context& context, ShaderGroupTemplate* sg, const ShaderUnitTemplateCopy& suc, std::unordered_set<std::string>& visited, std::unordered_set<std::string>& being_visited,
+TSL_Resolving_Status TslCompiler::generate_shader_source(  TSL_Compile_Context& context, ShaderGroupTemplate* sg, const ShaderUnitTemplateCopy& suc, std::unordered_set<std::string>& visited, std::unordered_set<std::string>& being_visited,
                                                 VarMapping& var_mapping, const std::unordered_map<std::string, llvm::Function*>& function_mapping , const std::vector<llvm::Value*>& args ) {
     const auto& shader_unit_copy_name = suc.m_name;
     auto su = suc.m_shader_unit_template;

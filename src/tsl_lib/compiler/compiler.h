@@ -37,7 +37,7 @@ class ShaderUnitTemplate;
 class ShaderGroupTemplate;
 class ShaderInstance;
 class GlobalModule;
-struct LLVM_Compile_Context;
+struct TSL_Compile_Context;
 struct ShaderUnitTemplateCopy;
 
 //! @brief  Internal compiler implementation.
@@ -153,7 +153,7 @@ private:
     using VarMapping = std::unordered_map<std::string, std::unordered_map<std::string, llvm::Value*>>;
 
     //! @brief  Generate shader group source code
-    TSL_Resolving_Status    generate_shader_source(LLVM_Compile_Context& context, ShaderGroupTemplate* sg, const ShaderUnitTemplateCopy& su, std::unordered_set<std::string>& visited,
+    TSL_Resolving_Status    generate_shader_source(TSL_Compile_Context& context, ShaderGroupTemplate* sg, const ShaderUnitTemplateCopy& su, std::unordered_set<std::string>& visited,
         std::unordered_set<std::string>& being_visited, VarMapping& var_mapping,
         const std::unordered_map<std::string, llvm::Function*>& function_mapping, const std::vector<llvm::Value*>& args);
 
