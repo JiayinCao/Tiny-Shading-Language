@@ -182,7 +182,7 @@ private:
     std::shared_ptr<ShaderInstance_Impl> m_shader_instance_data;
 
     TSL_MAKE_CLASS_FRIEND(ShaderUnitTemplate)
-    TSL_MAKE_CLASS_FRIEND(TslCompiler_Impl)
+    TSL_MAKE_CLASS_FRIEND(TslCompiler)
     TSL_HIDE_CONSTRUCTOR(ShaderInstance, std::shared_ptr<ShaderUnitTemplate> sut)
 };
 
@@ -226,7 +226,7 @@ protected:
     TSL_MAKE_CLASS_FRIEND(ShaderInstance)
     TSL_MAKE_CLASS_FRIEND(ShaderGroupTemplate)
     TSL_MAKE_CLASS_FRIEND(ShadingContext)
-    TSL_MAKE_CLASS_FRIEND(TslCompiler_Impl)
+    TSL_MAKE_CLASS_FRIEND(TslCompiler)
     TSL_MAKE_STRUCT_FRIEND(ShaderGroupTemplate_Impl)
     TSL_HIDE_CONSTRUCTOR(ShaderUnitTemplate, const std::string& name, std::shared_ptr<ShadingContext> context)
 };
@@ -280,7 +280,7 @@ public:
     void init_shader_input(const std::string& su, const std::string& spn, const ShaderUnitInputDefaultValue& val);
 
     TSL_MAKE_CLASS_FRIEND(ShadingContext)
-    TSL_MAKE_CLASS_FRIEND(TslCompiler_Impl)
+    TSL_MAKE_CLASS_FRIEND(TslCompiler)
     TSL_HIDE_CONSTRUCTOR(ShaderGroupTemplate, const std::string& name, std::shared_ptr<ShadingContext> context)
 };
 

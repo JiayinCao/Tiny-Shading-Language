@@ -29,7 +29,7 @@
   #include <iostream>
   #include "tsl_version.h"
   #include "tsl_define.h"
-  #include "compiler/compiler_impl.h"
+  #include "compiler/compiler.h"
   #include "compiler/str_helper.h"
   #include "compiled_grammar.hpp"
 

@@ -21,7 +21,6 @@
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
-#include <mutex>
 #include <llvm/IR/Module.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/IR/LegacyPassManager.h>

@@ -15,16 +15,15 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-#include "tsl_system.h"
-#include "tsl_args.h"
+#include "tsl_define.h"
 #include "system/impl.h"
 
 TSL_NAMESPACE_BEGIN
 
-#ifdef _WIN32
-#define DLLEXPORT __declspec(dllexport)
+#ifdef TSL_ON_WINDOWS
+    #define DLLEXPORT __declspec(dllexport)
 #else
-#define DLLEXPORT
+    #define DLLEXPORT
 #endif
 
 using generic_ptr = int*;

@@ -26,7 +26,7 @@
 	#include "tsl_version.h"
 	#include "compiler/ast.h"
 	#include "compiler/types.h"
-	#include "compiler/compiler_impl.h"
+	#include "compiler/compiler.h"
     #include "compiler/str_helper.h"
     #include "system/impl.h"
 
@@ -54,7 +54,7 @@
 %locations
 %define api.pure
 %lex-param {void * scanner}
-%parse-param {class Tsl_Namespace::TslCompiler_Impl * tsl_compiler}
+%parse-param {class Tsl_Namespace::TslCompiler * tsl_compiler}
 
 %token <s> ID
 %token <i> INT_NUM
