@@ -118,12 +118,12 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureAr
         auto type = get_type_from_context(arg.m_type, m_llvm_compiling_context);
         // this is a VERY DIRTY hack, I'll try to get back to it once most features are done.
         if (!type)
-            type = get_int_32_ptr_ty(m_llvm_compiling_context);
+            type = get_closure_ty(m_llvm_compiling_context);
         arg_types.push_back(type);
     }
 
     // return type is always int* to avoid debugging error
-    auto ret_type = get_int_32_ptr_ty(m_llvm_compiling_context);
+    auto ret_type = get_closure_ty(m_llvm_compiling_context);
 
 	// declare the closure parameter data structure
     const auto closure_param_type = StructType::create(arg_types, closure_type_name);
@@ -180,8 +180,6 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureAr
         arg->setName(arg_list[i].m_name);
     }
 
-    // function->print(llvm::errs());
-
     m_closures.insert(make_pair(name, ClosureItem(m_current_closure_id, arg_list, structure_size)));
 
     return m_current_closure_id++;
@@ -199,14 +197,13 @@ llvm::Function* GlobalModule::declare_closure_function(const std::string& name, 
         // this is a VERY DIRTY hack, I'll try to get back to it once most features are done.
         auto var_type = get_type_from_context(arg.m_type, context);
         if (!var_type)
-            var_type = get_int_32_ptr_ty(context);
+            var_type = get_closure_ty(context);
 
         arg_types.push_back(var_type);
     }
 
     const auto function_name = "make_closure_" + name;
-    // return type is always int* to avoid debugging error
-    const auto ret_type = get_int_32_ptr_ty(context);
+    const auto ret_type = get_closure_ty(context);
     return Function::Create(FunctionType::get(ret_type, arg_types, false), Function::ExternalLinkage, function_name, *context.module);
 }
 

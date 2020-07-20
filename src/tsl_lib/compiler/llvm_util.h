@@ -66,6 +66,11 @@ inline llvm::Type*          get_void_ty(Tsl_Namespace::TSL_Compile_Context& cont
     return llvm::Type::getVoidTy(get_llvm_context(context));
 }
 
+// closure type is just a regular int*
+inline llvm::Type*          get_closure_ty(Tsl_Namespace::TSL_Compile_Context& context) {
+    return get_int_32_ptr_ty(context);
+}
+
 inline llvm::Type*          get_type_from_context(const Tsl_Namespace::DataType type, Tsl_Namespace::TSL_Compile_Context& context){
     switch (type.m_type) {
         case Tsl_Namespace::DataTypeEnum::INT:
@@ -79,7 +84,7 @@ inline llvm::Type*          get_type_from_context(const Tsl_Namespace::DataType 
         case Tsl_Namespace::DataTypeEnum::BOOL:
             return get_int_1_ty(context);
         case Tsl_Namespace::DataTypeEnum::CLOSURE:
-            return get_int_32_ptr_ty(context);
+            return get_closure_ty(context);
 		case Tsl_Namespace::DataTypeEnum::STRUCT:
 			return context.m_structure_type_maps[type.m_structure_name].m_llvm_type;
         default:
