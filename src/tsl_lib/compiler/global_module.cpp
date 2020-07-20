@@ -122,11 +122,14 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureAr
         arg_types.push_back(type);
     }
 
+    // return type is always int* to avoid debugging error
+    auto ret_type = get_int_32_ptr_ty(m_llvm_compiling_context);
+
 	// declare the closure parameter data structure
     const auto closure_param_type = StructType::create(arg_types, closure_type_name);
 
     // the function to allocate the closure data structure
-    Function* function = Function::Create(FunctionType::get(m_closure_base_type->getPointerTo(), arg_types, false), Function::ExternalLinkage, function_name, m_module.get());
+    Function* function = Function::Create(FunctionType::get(ret_type, arg_types, false), Function::ExternalLinkage, function_name, m_module.get());
     IRBuilder<> builder(BasicBlock::Create(m_llvm_context, "EntryBlock", function));
 
     // get the function to allocate memory
@@ -165,14 +168,19 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureAr
     auto dst_closure_param_ptr = builder.CreatePointerCast(gep1, closure_param_type->getPointerTo()->getPointerTo());
     builder.CreateStore(converted_param_table_ptr, dst_closure_param_ptr);
 
+    // make sure all returns have int* data type to avoid debugging error
+    const auto converted_ret = builder.CreatePointerCast(closure_tree_node_ptr, ret_type);
+
     // return the tree node pointer
-    builder.CreateRet(closure_tree_node_ptr);
+    builder.CreateRet(converted_ret);
 
     // for debugging purpose, set the name of the arguments
     for( int i = 0 ; i < arg_list.size() ; ++i ){
         auto arg = function->getArg(i);
         arg->setName(arg_list[i].m_name);
     }
+
+    // function->print(llvm::errs());
 
     m_closures.insert(make_pair(name, ClosureItem(m_current_closure_id, arg_list, structure_size)));
 
@@ -197,7 +205,8 @@ llvm::Function* GlobalModule::declare_closure_function(const std::string& name, 
     }
 
     const auto function_name = "make_closure_" + name;
-    const auto ret_type = context.m_structure_type_maps["closure_base"].m_llvm_type->getPointerTo();
+    // return type is always int* to avoid debugging error
+    const auto ret_type = get_int_32_ptr_ty(context);
     return Function::Create(FunctionType::get(ret_type, arg_types, false), Function::ExternalLinkage, function_name, *context.module);
 }
 

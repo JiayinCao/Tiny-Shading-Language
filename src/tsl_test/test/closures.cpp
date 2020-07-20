@@ -20,6 +20,7 @@
 #include "test_common.h"
 #include "tsl_args.h"
 
+
 TEST(Closure, ClosureMake) {
     auto& shading_system = ShadingSystem::get_instance();
 
@@ -47,11 +48,8 @@ TEST(Closure, ClosureMakeWithFloat3) {
 
     auto shader_source = R"(
         shader closure_make(out closure o0){
-            color diffuse;
-            diffuse.r = 1.0f;
-            diffuse.g = 2.0f;
-            diffuse.b = 3.0f;
-            o0 = make_closure<random0>( diffuse, diffuse );
+            color diffuse = color( 1.0f, 2.0f, 3.0f );
+            o0 = make_closure<random0>( diffuse );
         }
     )";
 
@@ -93,7 +91,7 @@ TEST(Closure, ClosureMakeWithDouble) {
 TEST(Closure, ClosureMul) {
     auto shader_source = R"(
         shader closure_mul(out closure o0){
-            o0 = 3.0 * make_closure<lambert>( 11 , 2.0 );
+            o0 = 3.0f * make_closure<lambert>( 11 , 2.0 );
         }
     )";
 

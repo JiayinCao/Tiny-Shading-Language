@@ -307,7 +307,9 @@ llvm::Value* AstNode_Binary_Add::codegen(TSL_Compile_Context& context) const {
     auto closure_ptr = builder.CreatePointerCast(gep2, right->getType()->getPointerTo());
     builder.CreateStore(right, closure_ptr);
 
-    return converted_closure_tree_node_ptr;
+    const auto final_type = get_int_32_ptr_ty(context);
+    auto converted_ret = builder.CreatePointerCast(converted_closure_tree_node_ptr, final_type);
+    return converted_ret;
 }
 
 llvm::Value* AstNode_Binary_Minus::codegen(TSL_Compile_Context& context) const {
@@ -516,7 +518,9 @@ llvm::Value* AstNode_Binary_Multi::codegen(TSL_Compile_Context& context) const {
 	auto closure_ptr = builder.CreatePointerCast(gep2, closure->getType()->getPointerTo());
 	builder.CreateStore(closure, closure_ptr);
 
-	return converted_closure_tree_node_ptr;
+    const auto final_type = get_int_32_ptr_ty(context);
+    auto converted_ret = builder.CreatePointerCast(converted_closure_tree_node_ptr, final_type);
+    return converted_ret;
 }
 
 llvm::Value* AstNode_Binary_Div::codegen(TSL_Compile_Context& context) const {

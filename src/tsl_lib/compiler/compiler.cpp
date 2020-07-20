@@ -301,8 +301,8 @@ TSL_Resolving_Status TslCompiler::resolve(ShaderInstance* si) {
     }
 
     // make sure the function is valid
-    constexpr bool allow_verification = false;  // disabled for now
-    if (allow_verification && !llvm::verifyFunction(*shader_template_data->m_llvm_function, &llvm::errs()))
+    constexpr bool allow_verification = true;  // disabled for now
+    if (allow_verification && llvm::verifyFunction(*shader_template_data->m_llvm_function, &llvm::errs()))
         return TSL_Resolving_Status::TSL_Resolving_LLVMFunctionVerificationFailed;
 
 #ifdef DEBUG_OUTPUT
