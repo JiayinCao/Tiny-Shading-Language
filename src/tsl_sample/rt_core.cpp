@@ -161,9 +161,8 @@ Vec radiance(const Ray& r, int depth) {
         radiance(reflRay, depth) * Re + radiance(Ray(x, tdir), depth) * Tr);
 }
 
-int rt_main() {
+int rt_main(int samps) {
     const auto w = 1024u, h = 768u;    // resolution of the image
-    const auto samps = 4;            // sample per pixel
     const auto inv_samps = 1.0f / samps;
     const auto total_pixel_cnt = w * h;
 

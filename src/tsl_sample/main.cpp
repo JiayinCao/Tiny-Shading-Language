@@ -28,7 +28,10 @@
          github repository:      https://github.com/JiayinCao/SORT
 */
 
-int rt_main();
+#include <string>
+
+int rt_main(int);
 int main(int argc, char* argv[]) {
-    return rt_main();
+    const int spp = (argc < 2) ? 4 : std::atoi(argv[1]);
+    return rt_main(spp / 4);
 }
