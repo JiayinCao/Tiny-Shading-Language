@@ -15,6 +15,20 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
+/*
+    This project is mainly for the purpose of verifying features offered by TSL are properly executed
+    as expected. It has quite a few number of unit tests that verify lots of areas in the shading
+    language. If anything inside the shading language breaks, there is a good chance it will fail at
+    least one of the unit tests in it.
+    Every commit show make sure all unit tests are passed before checking in on Git. Otherwise, it means
+    there is a bug in the system.
+    
+    WARNING, since it is a shading language, there is for sure tons of corner cases which I didn't cover
+    that could also break the system. I will try covering as much as possible in the future, but since 
+    it already replaced all features offered by OSL in my renderer SORT (http://sort-renderer.com/), the
+    priority of populating this project with more unit tests is relatively low.
+*/
+
 #include <iostream>
 #include "gtest/gtest.h"
 #include "tsl_system.h"

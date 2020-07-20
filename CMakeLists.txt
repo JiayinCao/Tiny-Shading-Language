@@ -115,6 +115,7 @@ add_subdirectory( src/tsl_test )
 # only generate the two projects if this macro is not defined
 if (NOT ${BUILD_TSL_INSTALL})
 	add_subdirectory( src/llvm_test )
+	add_subdirectory( src/tsl_sample )
 endif()
 
 # hide the llvm generated project
