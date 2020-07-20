@@ -63,7 +63,7 @@ TEST(ShaderGroup, BasicShaderGroup) {
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, status);
 
     auto shader_instance = shader_group->make_shader_instance();
-    status = shading_context->resolve_shader_instance(shader_instance.get());
+    status = shader_instance->resolve_shader_instance();
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, status);
 
     // get the function pointer
@@ -137,7 +137,7 @@ TEST(ShaderGroup, DuplicateShaderUnits) {
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, status);
 
     auto shader_instance = shader_group->make_shader_instance();
-    status = shading_context->resolve_shader_instance(shader_instance.get());
+    status = shader_instance->resolve_shader_instance();
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, status);
 
     // get the function pointer
@@ -212,7 +212,7 @@ TEST(ShaderGroup, ShaderGroupWithoutClosure) {
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, status);
 
     auto shader_instance = shader_group->make_shader_instance();
-    status = shading_context->resolve_shader_instance(shader_instance.get());
+    status = shader_instance->resolve_shader_instance();
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, status);
 
     // get the function pointer
@@ -266,7 +266,7 @@ TEST(ShaderGroup, ShaderGroupArgTypes) {
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, status);
 
     auto shader_instance = shader_group->make_shader_instance();
-    status = shading_context->resolve_shader_instance(shader_instance.get());
+    status = shader_instance->resolve_shader_instance();
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, status);
 
     // get the function pointer
@@ -341,7 +341,7 @@ TEST(ShaderGroup, ShaderGroupInputDefaults) {
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, status);
 
     auto shader_instance = shader_group->make_shader_instance();
-    status = shading_context->resolve_shader_instance(shader_instance.get());
+    status = shader_instance->resolve_shader_instance();
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, status);
 
     // get the function pointer
@@ -493,7 +493,7 @@ TEST(ShaderGroup, ShaderGroupRecursive) {
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, status);
 
     auto shader_instance = shader_group1->make_shader_instance();
-    status = shading_context->resolve_shader_instance(shader_instance.get());
+    status = shader_instance->resolve_shader_instance();
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, status);
 
     // get the function pointer
@@ -565,7 +565,7 @@ TEST(ShaderGroup, RealProblem0) {
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, status);
 
     auto shader_instance = shader_group->make_shader_instance();
-    status = shading_context->resolve_shader_instance(shader_instance.get());
+    status = shader_instance->resolve_shader_instance();
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, status);
 
     // get the function pointer

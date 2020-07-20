@@ -87,7 +87,7 @@ public:
 
 inline std::shared_ptr<ShaderUnitTemplate> compile_shader_unit_template(ShadingContext* shading_context, const char* name, const char* shader_source) {
     const auto shader_unit_template = shading_context->begin_shader_unit_template(name);
-    const auto ret = shading_context->compile_shader_unit_template(shader_unit_template.get(), shader_source);
+    const auto ret = shader_unit_template->compile_shader_source(shader_source);
     shading_context->end_shader_unit_template(shader_unit_template.get());
     return ret && shader_unit_template ? shader_unit_template : nullptr;
 }
@@ -98,8 +98,7 @@ inline std::shared_ptr<ShaderUnitTemplate> compile_shader_unit_template(ShadingC
 
     // register tsl shader global
     TG::shader_unit_register(shader_unit_template.get());
-
-    const auto ret = shading_context->compile_shader_unit_template(shader_unit_template.get(), shader_source);
+    const auto ret = shader_unit_template->compile_shader_source(shader_source);
     shading_context->end_shader_unit_template(shader_unit_template.get());
     return ret && shader_unit_template ? shader_unit_template : nullptr;
 }
@@ -128,7 +127,7 @@ inline std::pair<T, std::shared_ptr<ShaderInstance>> compile_shader(const char* 
     auto shader_instance = shader_unit_template->make_shader_instance();
 
     // resolve the shader before using it.
-    if(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed != shading_context->resolve_shader_instance(shader_instance.get()))
+    if(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed != shader_instance->resolve_shader_instance())
         return std::make_pair(nullptr, nullptr);
 
     return std::make_pair((T)shader_instance->get_function(), shader_instance);
@@ -148,7 +147,7 @@ inline std::pair<T, std::shared_ptr<ShaderInstance>> compile_shader(const char* 
     auto shader_instance = shader_unit_template->make_shader_instance();
 
     // resolve the shader before using it.
-    if (Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed != shading_context->resolve_shader_instance(shader_instance.get()))
+    if (Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed != shader_instance->resolve_shader_instance())
         return std::make_pair(nullptr, nullptr);
 
     return std::make_pair((T)shader_instance->get_function(), shader_instance);

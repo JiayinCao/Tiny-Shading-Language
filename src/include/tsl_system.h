@@ -104,7 +104,7 @@ public:
 //! @brief  Shading system is the root interface exposed through TSL system.
 /*
  * A shading_system owns the whole TSL compiling system. A ray tracer with TSL integrated should have only one
- * instance of this class. Most of the interfaces, unless explicitly mentioned, should be thread-safe.
+ * instance of this class. Its interfaces are not thread-safe, use them in one single thread at a time.
  * It owns all memory allocated of the system, it will also deallocate all memory allocated so there is no need
  * manually maintain memory allocated through this interface.
  */
@@ -168,6 +168,13 @@ public:
  */
 class TSL_INTERFACE ShaderInstance {
 public:
+    //! @brief  Resolve the shader instance.
+    //!
+    //! This needs to be called before the below interface is called.
+    //!
+    //! @return     Whether resolving is successful or not.
+    TSL_Resolving_Status    resolve_shader_instance();
+
     //! @brief  Get the function pointer to execute the shader.
     //!
     //! It is up to renderers to inteprate the returned pointer. It has to match what the shader exposes.
@@ -175,7 +182,7 @@ public:
     //! Since the function pointer is already catched, this function has very minimal cost in term of performance.
     //!
     //! @return     A function pointer points to code memory.
-    uint64_t        get_function() const;
+    uint64_t                get_function() const;
 
 private:
     /**< Private data inside shader instance. */
@@ -219,6 +226,14 @@ public:
     //! @param  srh     The shader resource handle to be registered.
     bool                                register_shader_resource(const std::string& name, const ShaderResourceHandle* srh);
 
+    //! @brief  Compile the shader unit given a piece of source code.
+    //!
+    //! If the shader unit template is compiled with other source code, it will fail.
+    //!
+    //! @param  source  The source code of the shader unit template.
+    //! @return         Whether the source code is compiled successfully.
+    bool                                compile_shader_source(const char* source);
+
     //! @brief  Enable llvm verification.
     //!
     //! By default it is disabled for faster compilation, it is not suggest to enable it unless there is shader related
@@ -243,7 +258,7 @@ protected:
 /**
  * A shader group is composed of multiple shader units with all of them connected with each other.
  * A shader group itself is also a shader unit, which is a quite useful feature to get recursive
- * node supported in certain material editors.
+ * node supported in material editors.
  */
 class TSL_INTERFACE ShaderGroupTemplate : public ShaderUnitTemplate {
 public:
@@ -292,13 +307,17 @@ public:
     TSL_HIDE_CONSTRUCTOR(ShaderGroupTemplate, const std::string& name, std::shared_ptr<ShadingContext> context)
 };
 
-//! @brief  Shading context should be a per-thread resource that is for shader related stuff.
+//! @brief  Shading context should be a per-thread resource that is for making shader templates.
 /**
- * Unlike shading_system, shading_context is not designed to be thread-safe, meaning each thread
- * should have their own copy of a shading_context.
- * shading_context is used for shader related operations, like shader compilation, shader resolving.
- * Since shading_context is available in each thread, things like shader compilation and shader
- * execution could be exectued in multi-threaded too.
+ * Though, ShadingContext's interface is not thread-safe, just like ShadingSystem. The difference here is that
+ * it is allowed to have multiple instances of shading context. It is up to renderers to make sure a single 
+ * shading context doesn't get accessed into different threads simultaneously. An easy way to guarantee this is
+ * to cache one shading context for each thread and each thread only uses its own shading context.
+ * Shading context is responsible for maintaining lots of internal useful data structures under the hood, though
+ * the only exposed interfaces are only for making shader template.
+ * Also it is important to make sure shading context is alive during the life time of the shader it allocates,
+ * renderers do not need to explicitly do it since there is a reference of its shader keeping the context alive,
+ * meaning there is no way to destroy the shading context illegally with shaders left alive.
  */
 class TSL_INTERFACE ShadingContext : public std::enable_shared_from_this<ShadingContext> {
 public:
@@ -308,7 +327,7 @@ public:
     //! It is renderers' job to keep them alive.
     //!
     //! @param  name    Name of the shader group.
-    //! @return         A pointer to the newly allocated shader group.
+    //! @return         A smart shared pointer to the newly allocated shader group.
     std::shared_ptr<ShaderGroupTemplate>    begin_shader_group_template(const std::string& name);
 
     //! @brief  Resolve a shader group template before using it.
@@ -333,27 +352,13 @@ public:
     //! @param  sut     The shader unit template to close.
     TSL_Resolving_Status                    end_shader_unit_template(ShaderUnitTemplate* su) const;
 
-    //! @brief  Compile shader unit with source code.
-    //!
-    //! The function will return nullptr if for any reason the shader unit is failed to created,
-    //! like invalid shader code or the name is already existed.
-    //!
-    //! @param sut      Shader unit template.
-    //! @param source   Source code of the shader.
-    //! @return         A pointer to shader unit.
-    bool                                    compile_shader_unit_template(ShaderUnitTemplate* sut, const char* source) const;
-
-    //! @brief  Resolve a shader instance before using it.
-    //!
-    //! @param si       The shader instance to be resolved.
-    //! @return         Whether the shader is resolved successfully.
-    TSL_Resolving_Status                    resolve_shader_instance(ShaderInstance* si) const;
-
 private:
     /**< Shading context implementation. */
     std::shared_ptr<ShadingContext_Impl> m_shading_context_impl;
 
     TSL_MAKE_CLASS_FRIEND(ShadingSystem)
+    TSL_MAKE_CLASS_FRIEND(ShaderUnitTemplate)
+    TSL_MAKE_CLASS_FRIEND(ShaderInstance)
     TSL_HIDE_CONSTRUCTOR(ShadingContext, std::shared_ptr<ShadingSystem_Impl> shading_system_impl)
 };
 

@@ -119,6 +119,13 @@ bool ShaderUnitTemplate::register_shader_resource(const std::string& name, const
     return true;
 }
 
+bool ShaderUnitTemplate::compile_shader_source(const char* source) {
+    // make sure there is no other source code compiled before
+    if (m_shader_unit_template_impl->m_ast_root)
+        return false;
+    return m_shader_unit_template_impl->m_shading_context->m_shading_context_impl->m_compiler->compile(source, this);
+}
+
 void ShaderUnitTemplate::set_llvm_vericiation_enabled(bool enabled) {
     m_shader_unit_template_impl->m_llvm_verification_enabled = enabled;
 }
@@ -197,16 +204,12 @@ TSL_Resolving_Status ShadingContext::end_shader_unit_template(ShaderUnitTemplate
     return TSL_Resolving_Status::TSL_Resolving_Succeed;
 }
 
-bool  ShadingContext::compile_shader_unit_template(ShaderUnitTemplate * sut, const char* source) const {
-    return m_shading_context_impl->m_compiler->compile(source, sut);
-}
-
 TSL_Resolving_Status ShadingContext::end_shader_group_template(ShaderGroupTemplate* sg) const {
     return m_shading_context_impl->m_compiler->resolve(sg);
 }
 
-TSL_Resolving_Status ShadingContext::resolve_shader_instance(ShaderInstance* si) const {
-    return m_shading_context_impl->m_compiler->resolve(si);
+TSL_Resolving_Status ShaderInstance::resolve_shader_instance(){
+    return m_shader_instance_data->m_shader_unit_template->m_shader_unit_template_impl->m_shading_context->m_shading_context_impl->m_compiler->resolve(this);
 }
 
 std::shared_ptr<ShaderGroupTemplate> ShadingContext::begin_shader_group_template(const std::string& name) {

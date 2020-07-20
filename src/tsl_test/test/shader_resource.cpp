@@ -59,7 +59,7 @@ TEST(ShaderResource, SimpleTexture) {
     shader_unit_template->register_tsl_global(tsl_global.m_var_list);
 
     // compile the shader unit
-    shading_context->compile_shader_unit_template(shader_unit_template.get(), shader_source);
+    shader_unit_template->compile_shader_source(shader_source);
 
     // shader unit done.
     shading_context->end_shader_unit_template(shader_unit_template.get());
@@ -69,7 +69,7 @@ TEST(ShaderResource, SimpleTexture) {
     EXPECT_VALID_SMART_PTR(shader_instance);
 
     // resolve the shader instance
-    const auto resolve_ret = shading_context->resolve_shader_instance(shader_instance.get());
+    const auto resolve_ret = shader_instance->resolve_shader_instance();
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, resolve_ret);
 
     // get the raw function pointer for execution
@@ -115,7 +115,7 @@ TEST(ShaderResource, SimpleTextureAlpha) {
     shader_unit_template->register_tsl_global(tsl_global.m_var_list);
 
     // compile the shader unit
-    shading_context->compile_shader_unit_template(shader_unit_template.get(), shader_source);
+    shader_unit_template->compile_shader_source(shader_source);
 
     // shader unit done.
     shading_context->end_shader_unit_template(shader_unit_template.get());
@@ -125,7 +125,7 @@ TEST(ShaderResource, SimpleTextureAlpha) {
     EXPECT_VALID_SMART_PTR(shader_instance);
 
     // resolve the shader instance
-    const auto resolve_ret = shading_context->resolve_shader_instance(shader_instance.get());
+    const auto resolve_ret = shader_instance->resolve_shader_instance();
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, resolve_ret);
 
     // get the raw function pointer for execution
@@ -168,7 +168,7 @@ TEST(ShaderResource, CustomShaderResource) {
     shader_unit_template->register_shader_resource("custom_data", &custom_data);
 
     // compile the shader unit
-    shading_context->compile_shader_unit_template(shader_unit_template.get(), shader_source);
+    shader_unit_template->compile_shader_source(shader_source);
 
     // shader unit done.
     shading_context->end_shader_unit_template(shader_unit_template.get());
@@ -178,7 +178,7 @@ TEST(ShaderResource, CustomShaderResource) {
     EXPECT_VALID_SMART_PTR(shader_instance);
 
     // resolve the shader instance
-    const auto resolve_ret = shading_context->resolve_shader_instance(shader_instance.get());
+    const auto resolve_ret = shader_instance->resolve_shader_instance();
     EXPECT_EQ(Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed, resolve_ret);
 
     // get the raw function pointer for execution
