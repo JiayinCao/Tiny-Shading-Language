@@ -404,6 +404,25 @@ TSL_Resolving_Status TslCompiler::resolve(ShaderGroupTemplate* sg) {
 
     unsigned tsl_global_hash = sg_impl->m_tsl_global_hash;
 
+    // declare tsl global
+    if (compile_context.tsl_global_mapping) {
+        const auto& tsl_global = compile_context.tsl_global_mapping->m_var_list;
+        if (tsl_global.size()) {
+            // assemble the variable types
+            std::vector<llvm::Type*> arg_types;
+            for (auto& arg : tsl_global) {
+                auto type = get_type_from_context(arg.m_type, compile_context);
+                // this is a VERY DIRTY hack, I'll try to get back to it once most features are done.
+                if (!type)
+                    type = get_int_32_ptr_ty(compile_context);
+                arg_types.push_back(type);
+            }
+
+            const std::string tsl_global_name = "Tsl_Global";
+            compile_context.tsl_global_ty = llvm::StructType::create(arg_types, tsl_global_name);
+        }
+    }
+
     std::unordered_map<ShaderUnitTemplate*, llvm::Function*> visited_module;
     std::unordered_map<std::string, llvm::Function*>         shader_unit_llvm_function;
     // pre-declare all shader interfaces
@@ -462,28 +481,10 @@ TSL_Resolving_Status TslCompiler::resolve(ShaderGroupTemplate* sg) {
 
             // update shader unit root functions
             const auto& name = shader_unit->get_name();
+
             shader_unit_llvm_function[name] = function;
 
             visited_module[shader_unit.get()] = function;
-        }
-    }
-
-    // declare tsl global
-    if (compile_context.tsl_global_mapping) {
-        const auto& tsl_global = compile_context.tsl_global_mapping->m_var_list;
-        if (tsl_global.size()) {
-            // assemble the variable types
-            std::vector<llvm::Type*> arg_types;
-            for (auto& arg : tsl_global) {
-                auto type = get_type_from_context(arg.m_type, compile_context);
-                // this is a VERY DIRTY hack, I'll try to get back to it once most features are done.
-                if (!type)
-                    type = get_int_32_ptr_ty(compile_context);
-                arg_types.push_back(type);
-            }
-
-            const std::string tsl_global_name = "Tsl_Global";
-            compile_context.tsl_global_ty = llvm::StructType::create(arg_types, tsl_global_name);
         }
     }
 

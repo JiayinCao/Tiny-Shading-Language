@@ -68,7 +68,7 @@ llvm::Function* AstNode_FunctionPrototype::codegen( TSL_Compile_Context& context
 		return nullptr;
 
 	// create the function prototype
-    const auto link_type = m_is_shader ? llvm::Function::ExternalLinkage : llvm::Function::InternalLinkage;
+    const auto link_type = ( m_is_shader || ( m_body == nullptr ) )? llvm::Function::ExternalLinkage : llvm::Function::InternalLinkage;
 	llvm::Function* function = llvm::Function::Create(function_type, link_type, m_name, context.module);
 
 	// For debugging purposes, set the name of all arguments
