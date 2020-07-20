@@ -219,6 +219,14 @@ public:
     //! @param  srh     The shader resource handle to be registered.
     bool                                register_shader_resource(const std::string& name, const ShaderResourceHandle* srh);
 
+    //! @brief  Enable llvm verification.
+    //!
+    //! By default it is disabled for faster compilation, it is not suggest to enable it unless there is shader related
+    //! rendering problem. However, even if there is rendering artifacts, enabling it won't guarantee finding the problem.
+    //!
+    //! @param  enabled         Whether to enable llvm verification, by default it is skipped for faster compilation.
+    void                                set_llvm_vericiation_enabled(bool enabled);
+
 protected:
     /**< Private data inside shader unit template. */
     std::shared_ptr<ShaderUnitTemplate_Impl> m_shader_unit_template_impl;

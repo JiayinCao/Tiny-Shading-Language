@@ -114,6 +114,9 @@ struct ShaderUnitTemplate_Impl {
     // this is just a copy to the llvm object, the memory ownership is maintained through m_module.
     llvm::Function* m_llvm_function = nullptr;
 
+    /**< Whether llvm verification is enabled. */
+    bool m_llvm_verification_enabled = false;
+
     //! @brief  Parse shader group dependencies.
     //!
     //! @param sut      Dependencies of this module.

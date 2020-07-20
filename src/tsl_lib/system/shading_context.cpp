@@ -119,6 +119,10 @@ bool ShaderUnitTemplate::register_shader_resource(const std::string& name, const
     return true;
 }
 
+void ShaderUnitTemplate::set_llvm_vericiation_enabled(bool enabled) {
+    m_shader_unit_template_impl->m_llvm_verification_enabled = enabled;
+}
+
 ShaderGroupTemplate::ShaderGroupTemplate(const std::string& name, std::shared_ptr<ShadingContext> context)
     :ShaderUnitTemplate("", nullptr){
     m_shader_unit_template_impl = std::make_shared<ShaderGroupTemplate_Impl>();
