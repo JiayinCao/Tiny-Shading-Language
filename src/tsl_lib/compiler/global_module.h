@@ -40,12 +40,19 @@ struct ClosureItem {
         : m_closure_id(id), m_var_list(var_list), m_structure_size(structure_size) {}
 };
 
+//! @brief  Global module of TSL.
+/**
+ * Unlike other modules owned by shader unit template, global module only have one instance owned by the system.
+ * It is mainly for defining functions to allocate registered closure data structures.
+ * Every single module will have this module attached so that it will know some of the very fundermental data
+ * available in TSL
+ */
 class GlobalModule {
 public:
     // initialize the register
     bool init();
 
-    // I prefer this way of registering a lot than the below one, need to follow this
+    // register a closure type
     ClosureID       register_closure_type(const std::string& name, ClosureArgList& mapping, int structure_size);
 
     // get global closure maker module
@@ -56,6 +63,7 @@ public:
 
     // get declaration
     llvm::Function* declare_closure_function(const std::string& name, TSL_Compile_Context& context);
+
 	// declare global function
 	void			declare_global_module(TSL_Compile_Context& context);
 
