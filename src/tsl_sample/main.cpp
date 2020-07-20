@@ -28,10 +28,7 @@
          github repository:      https://github.com/JiayinCao/SORT
 */
 
-#include <iostream>
-
-using namespace std;
-
-int main(int argc, char** argv) {
-    return 0;
+int rt_main();
+int main(int argc, char* argv[]) {
+    return rt_main();
 }
