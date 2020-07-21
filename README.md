@@ -8,6 +8,9 @@ The goal of TSL is to provide shader programming ability to open source ray trac
 Though, it is specifically designed for my own renderer. 
 This programming language can totally be used in any other CPU based ray tracing project.
 
+Following is the image generated in the sample ray tracing program with TSL integrated in this project (I'm still working on it to implement more fun stuff in this image.)
+![](https://github.com/JiayinCao/Tiny-Shading-Language/blob/master/gallery/tsl_sample.jpg?raw=true)
+
 # Note
 
 TSL is functional enough to replace all of the OSL features used in SORT at this point.
