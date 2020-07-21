@@ -16,7 +16,7 @@
  */
 
 /*
- * This is a modified verion of small pt (http://www.kevinbeason.com/smallpt/), a program
+ * This is a modified version of small pt (http://www.kevinbeason.com/smallpt/), a program
  * that was originally less than 100 lines and does a unbiased path tracing algorithm.
  *
  * The reason I picked this project as the beginning of the sample is to take advantage of
@@ -24,7 +24,7 @@
  * started quickly. My main focus in this project is to demonstrate the usage of TSL, it
  * doesn't need to come with a sophisticated ray tracer. Since I don't care about simplicity
  * and this program serves more as a tutorial, clarity is more important than simplicity,
- * the program below is heavily modified by myself with more comment to make thing sclear.
+ * the program below is heavily modified by myself with more comment to make things clear.
  *
  * TSL related logic is not handled here though.
  */
@@ -52,7 +52,7 @@ Sphere spheres[] = {
   Sphere(  1e5,    Vec(50, 1e5 + 81.6,81.6),    Vec(),          Vec(.75,.75,.75),   DIFF,		false),   //Top 
   Sphere(  16.5,   Vec(27, 16.5,47),            Vec(),          Vec(1,1,1) * .999,  SPEC,		false),   //Mirr 
   Sphere(  16.5,   Vec(73, 20.5,78),            Vec(),          Vec(1,1,1) * .999,  REFR,		false),   //Glas 
-  Sphere(  600,    Vec(50, 681.6 - .27,81.6),   Vec(12,12,12),  Vec(),              DIFF,		false)    //Lite 
+  Sphere(  600,    Vec(50, 681.6 - .27,81.6),   Vec(12,12,12) * 2.f,  Vec(),              DIFF,		false)    //Lite 
 };
 
 // helper function to make thing easier.
@@ -114,7 +114,7 @@ Vec radiance(Ray r) {
 		if (depth > 10)
 			break;
 
-        r.o = p + wi * 0.01f;
+        r.o = p + wi * 0.0001f;
         r.d = wi;
     }
     return l;
@@ -172,7 +172,7 @@ int rt_main(int samps) {
     // this kind of synchronization is by no means the most performant one, but it does do its job
     while (pixel_cnt < total_pixel_cnt) {
         int k = pixel_cnt;
-        fprintf(stderr, "\rRendering (%d spp) %5.2f%% %d %d", samps * 4, 100. * pixel_cnt / total_pixel_cnt, k, total_pixel_cnt);
+        fprintf(stderr, "\rRendering (%d spp) %5.2f%% %d %d", samps, 100. * pixel_cnt / total_pixel_cnt, k, total_pixel_cnt);
     }
 
 	// making sure all threads are done

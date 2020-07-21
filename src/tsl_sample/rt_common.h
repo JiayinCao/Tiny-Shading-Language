@@ -62,8 +62,8 @@ struct Sphere {
 
 // generate a random number
 inline float    random_number() {
-    static std::random_device r;
-    static std::default_random_engine e1(r());
+    thread_local static std::random_device r;
+    thread_local static std::default_random_engine e1(r());
     std::uniform_int_distribution<int> uniform_dist(0, 65535);
     return (float)uniform_dist(e1) / 65535.f;
 }
