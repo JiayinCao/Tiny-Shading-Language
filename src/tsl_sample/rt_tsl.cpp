@@ -90,7 +90,7 @@ struct Material {
     std::shared_ptr<ShaderInstance>     m_shader_instance;
 
     // the resolved raw function pointer
-    shader_raw_func                     m_shader_func;
+    shader_raw_func                     m_shader_func = nullptr;
 };
 
 // all materials available to use in this program
@@ -107,32 +107,65 @@ static ClosureID g_closure_lambert = INVALID_CLOSURE_ID;
  * It is no the simplest form of TSL shader execution. Typically, renderers need to do things more complex than this material
  * since shaders are usually groupped by multiple shader unit templates.
  */
-void initialize_lambert_material() {
-    const auto shader_source = R"(
+bool initialize_lambert_material() {
+    constexpr auto shader_source = R"(
+        // This is simply a passing through shader that pass the data from TSL to the closure lambert.
         shader lambert_shader(out closure bxdf){
-            color  base_color = global_value<base_color>;
-            vector center = global_value<center>;
-            bool   flip_normal = global_value<flip_normal>;
+            color  base_color   = global_value<base_color>;
+            vector center       = global_value<center>;
+            bool   flip_normal  = global_value<flip_normal>;
+
+            // make a lambertian closure
             bxdf = make_closure<lambert>(base_color, center, flip_normal);
         }
     )";
 
+    // Get the instance of TSL system
     auto& shading_system = Tsl_Namespace::ShadingSystem::get_instance();
+
+    // Make a new shading context, instead of making a new context, renders can also cache a few shading context at the beginning.
+    // And reuse them any time they are needed as long as no two threads are accessing the same shading context at the same time.
     auto shading_context = shading_system.make_shading_context();
+    if (!shading_context)
+        return false;
 
+    // Get the first material, which is supposed to be lambert.
     auto& mat = g_materials[(int)MaterialType::MT_Lambert];
-    mat.m_shader_template = shading_context->begin_shader_unit_template("lambert");
 
-    mat.m_shader_template->register_tsl_global(g_tsl_global.m_var_list);
-    mat.m_shader_template->compile_shader_source(shader_source);
-    shading_context->end_shader_unit_template(mat.m_shader_template.get());
+    // Create the shader unit template
+    mat.m_shader_template = shading_context->begin_shader_unit_template("lambert");
+    if (!mat.m_shader_template)
+        return false;
+
+    // Register the TSL global for this shader unit template.
+    auto ret = mat.m_shader_template->register_tsl_global(g_tsl_global.m_var_list);
+    if (!ret)
+        return false;
+
+    // Compile the shader source code.
+    ret = mat.m_shader_template->compile_shader_source(shader_source);
+    if (!ret)
+        return false;
+
+    // Indicating the end of the shader unit template creation process.
+    auto resolved_ret = shading_context->end_shader_unit_template(mat.m_shader_template.get());
+    if (resolved_ret != TSL_Resolving_Status::TSL_Resolving_Succeed)
+        return false;
 
     // make a shader instance
     mat.m_shader_instance = mat.m_shader_template->make_shader_instance();
-    auto ret = mat.m_shader_instance->resolve_shader_instance();
+    if (!mat.m_shader_instance)
+        return false;
+
+    // Resolve the shader instance
+    resolved_ret = mat.m_shader_instance->resolve_shader_instance();
+    if (resolved_ret != TSL_Resolving_Status::TSL_Resolving_Succeed)
+        return false;
 
     // get the raw function pointer
     mat.m_shader_func = (shader_raw_func)mat.m_shader_instance->get_function();
+
+    return true;
 }
 
 // Initialize all materials
