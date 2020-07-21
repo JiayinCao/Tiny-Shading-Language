@@ -29,66 +29,38 @@
  * TSL related logic is not handled here though.
  */
 
-#include <math.h>
-#include <random>
 #include <memory>
 #include <thread>
 #include <algorithm>
 #include <atomic>
+#include "rt_material.h"
+#include "rt_common.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image/stb_image.h"
 
-#define ENABLE_MULTI_THREAD_RAY_TRACING
+// #define ENABLE_MULTI_THREAD_RAY_TRACING
 
-// basic vector data structure. it is a vector of three for multiple purposes, like color, position, vector.
-struct Vec {
-    double x, y, z;
-    Vec(double x_ = 0, double y_ = 0, double z_ = 0) { x = x_; y = y_; z = z_; }
-    Vec operator+(const Vec& b) const { return Vec(x + b.x, y + b.y, z + b.z); }
-    Vec operator-(const Vec& b) const { return Vec(x - b.x, y - b.y, z - b.z); }
-    Vec operator*(double b) const { return Vec(x * b, y * b, z * b); }
-    Vec mult(const Vec& b) const { return Vec(x * b.x, y * b.y, z * b.z); }
-    Vec& norm() { return *this = *this * (1 / sqrt(x * x + y * y + z * z)); }
-    double dot(const Vec& b) const { return x * b.x + y * b.y + z * b.z; } // cross: 
-    Vec operator%(Vec& b) { return Vec(y * b.z - z * b.y, z * b.x - x * b.z, x * b.y - y * b.x); }
-};
-
-// data structure representing a ray
-struct Ray { Vec o, d; Ray(Vec o_, Vec d_) : o(o_), d(d_) {} };
-
-// materialtype, this needs to be refactored with TSL integrated later.
-enum Refl_t { DIFF, SPEC, REFR };  // material types, used in radiance() 
-
-// data structure representing a sphere
-struct Sphere {
-    double rad;       // radius 
-    Vec p, e, c;      // position, emission, color 
-    Refl_t refl;      // reflection type (DIFFuse, SPECular, REFRactive) 
-    Sphere(double rad_, Vec p_, Vec e_, Vec c_, Refl_t refl_) :
-        rad(rad_), p(p_), e(e_), c(c_), refl(refl_) {}
-
-    // ray sphere intersection
-    double intersect(const Ray& r) const { // returns distance, 0 if nohit 
-        Vec op = p - r.o; // Solve t^2*d.d + 2*t*(o-p).d + (o-p).(o-p)-R^2 = 0 
-        double t, eps = 1e-4, b = op.dot(r.d), det = b * b - op.dot(op) + rad * rad;
-        if (det < 0) return 0; else det = sqrt(det);
-        return (t = b - det) > eps ? t : ((t = b + det) > eps ? t : 0);
-    }
-};
-
+#if 1
 // scene description, all surfaces are spheres in this sample, including the wall, which are simply huge spheres.
-Sphere spheres[] = {//Scene: radius, position, emission, color, material 
-  Sphere(1e5, Vec(1e5 + 1,40.8,81.6),   Vec(),          Vec(.75,.25,.25),   DIFF),    //Left 
-  Sphere(1e5, Vec(-1e5 + 99,40.8,81.6), Vec(),          Vec(.25,.25,.75),   DIFF),    //Rght 
-  Sphere(1e5, Vec(50,40.8, 1e5),        Vec(),          Vec(.75,.75,.75),   DIFF),    //Back 
-  Sphere(1e5, Vec(50,40.8,-1e5 + 170),  Vec(),          Vec(),              DIFF),    //Frnt 
-  Sphere(1e5, Vec(50, 1e5, 81.6),       Vec(),          Vec(.75,.75,.75),   DIFF),    //Botm 
-  Sphere(1e5, Vec(50,-1e5 + 81.6,81.6), Vec(),          Vec(.75,.75,.75),   DIFF),    //Top 
-  Sphere(16.5,Vec(27,16.5,47),          Vec(),          Vec(1,1,1) * .999,  SPEC),    //Mirr 
-  Sphere(16.5,Vec(73,16.5,78),          Vec(),          Vec(1,1,1) * .999,  REFR),    //Glas 
-  Sphere(600, Vec(50,681.6 - .27,81.6), Vec(12,12,12),  Vec(),              DIFF)     //Lite 
+Sphere spheres[] = {
+  //Scene: radius, position,                    emission,       color,              material 
+  Sphere(  1e5,    Vec(1e5 + 1,40.8,81.6),      Vec(),          Vec(.75,.25,.25),   DIFF),    //Left 
+  Sphere(  1e5,    Vec(-1e5 + 99,40.8,81.6),    Vec(),          Vec(.25,.25,.75),   DIFF),    //Rght 
+  Sphere(  1e5,    Vec(50, 40.8, 1e5),          Vec(),          Vec(.75,.75,.75),   DIFF),    //Back 
+  Sphere(  1e5,    Vec(50, 40.8,-1e5 + 170),    Vec(),          Vec(),              DIFF),    //Frnt 
+  Sphere(  1e5,    Vec(50, 1e5, 81.6),          Vec(),          Vec(.75,.75,.75),   DIFF),    //Botm 
+  Sphere(  1e5,    Vec(50, 1e5 + 81.6,81.6),    Vec(),          Vec(.75,.75,.75),   DIFF),    //Top 
+  Sphere(  16.5,   Vec(27, 16.5,47),            Vec(),          Vec(1,1,1) * .999,  SPEC),    //Mirr 
+  Sphere(  16.5,   Vec(73, 20.5,78),            Vec(),          Vec(1,1,1) * .999,  REFR),    //Glas 
+  Sphere(  600,    Vec(50, 681.6 - .27,81.6),   Vec(12,12,12),  Vec(),              DIFF)     //Lite 
 };
+#else
+Sphere spheres[] = {//Scene: radius, position, emission, color, material 
+  Sphere(1e5, Vec(50, 1e5, 81.6),       Vec(0.2,0,0.4),          Vec(.75,.75,.75),   DIFF),    //Botm 
+  Sphere(600, Vec(50,681.6 - .27,81.6), Vec(12,12,12),  Vec(),              DIFF)               //Lite 
+};
+#endif
 
 // helper function to make thing easier.
 inline double   clamp(double x) { 
@@ -102,15 +74,10 @@ inline bool     intersect(const Ray& r, double& t, int& id) {
     for (int i = int(n); i--;) if ((d = spheres[i].intersect(r)) && d < t) { t = d; id = i; }
     return t < inf;
 }
-inline float    random_number() {
-    static std::random_device r;
-    static std::default_random_engine e1(r());
-    std::uniform_int_distribution<int> uniform_dist(0, 65535);
-    return (float)uniform_dist(e1) / 65535.f;
-}
 
 // the core of path tracing algorithm
-Vec radiance(const Ray& r, int depth) {
+Vec radiance(Ray r) {
+#if 0
     // get the intersection of the scene with the ray, there is no spatial acceleration data structure.
     // since there are only a few spheres in it, this is a brute-force O(N) algorithm.
     double t; int id = 0;
@@ -135,9 +102,9 @@ Vec radiance(const Ray& r, int depth) {
     }
 
     // surface shading, this is the part needs to be integrated with TSL later.
-    if (obj.refl == DIFF) {                  
+    if (obj.refl == DIFF) {
         // Ideal DIFFUSE reflection 
-        double r1 = 2 * 3.1415926f * random_number(), r2 = random_number(), r2s = sqrt(r2);
+        double r1 = 2.f * PI * random_number(), r2 = random_number(), r2s = sqrt(r2);
         Vec w = nl, u = ((fabs(w.x) > .1 ? Vec(0, 1) : Vec(1)) % w).norm(), v = w % u;
         Vec d = (u * cos(r1) * r2s + v * sin(r1) * r2s + w * sqrt(1 - r2)).norm();
         return obj.e + f.mult(radiance(Ray(x, d), depth));
@@ -159,6 +126,59 @@ Vec radiance(const Ray& r, int depth) {
     return obj.e + f.mult(depth > 2 ? (random_number() < P ?   // Russian roulette 
         radiance(reflRay, depth) * RP : radiance(Ray(x, tdir), depth) * TP) :
         radiance(reflRay, depth) * Re + radiance(Ray(x, tdir), depth) * Tr);
+#endif
+
+    auto depth = 0;
+    auto l = Vec();
+    auto thr = Vec(1.f, 1.f, 1.f);
+    while (true) {
+        // get the intersection of the scene with the ray, there is no spatial acceleration data structure.
+        // since there are only a few spheres in it, this is a brute-force O(N) algorithm.
+        double t; int id = 0;
+        if (!intersect(r, t, id))
+            break;
+
+        // the hit object
+        const Sphere& obj = spheres[id];
+
+        if (id == 5 && depth == 0)
+            int k = 0;
+
+        // accumulate the radiance
+        l = l + thr.mult(obj.e);
+
+        // the position of intersection
+        Vec p = r.o + r.d * t;
+
+        // all materials are lambert, this will be replaced with TSL driven 
+        Lambert lambert(obj.c, obj.p);
+
+        Vec wi;
+        float pdf = 1.0f;
+        const auto bxdf = lambert.sample(p, Vec(-r.d.x, -r.d.y, -r.d.z), wi, pdf);
+
+        if (pdf <= 0.0f)
+            break;
+
+        thr = thr.mult(bxdf.mult(1.0f/pdf));
+
+        // starting from the fifth recursive call, bail if possible
+        ++depth;
+        // this is to prevent stack overflow, it introduces a bit of bias, which is acceptable to me
+        if (depth > 20)
+            break;
+        else if (depth > 5) {
+            const auto p = 0.2f;
+            if (random_number() < p)
+                thr = thr * (1 / p);
+            else
+                break;
+        }
+
+        r.o = p + wi * 0.01f;
+        r.d = wi;
+    }
+    return l;
 }
 
 int rt_main(int samps) {
@@ -168,10 +188,10 @@ int rt_main(int samps) {
 
     // camera position and direction
     auto cam = Ray(Vec(50, 52, 295.6), Vec(0, -0.042612, -1).norm());
-    auto cx = Vec(w * .5135 / h), cy = Vec((cx % cam.d).norm() * .5135);
+    auto cx = Vec(w * .5135 / h, 0.0f, 0.0f), cy = Vec((cx % cam.d).norm() * .5135);
 
     // for each pixel, take a number of samples and resolve them together.
-    auto c = std::make_unique<Vec[]>(total_pixel_cnt);
+    auto c = new Vec[total_pixel_cnt];// std::make_unique<Vec[]>(total_pixel_cnt);
 
 #ifdef ENABLE_MULTI_THREAD_RAY_TRACING
     // the number of physical cores available in CPU
@@ -202,7 +222,7 @@ int rt_main(int samps) {
                                 double r2 = 2.f * random_number(), dy = r2 < 1 ? sqrt(r2) - 1 : 1 - sqrt(2 - r2);
                                 Vec d = cx * (((sx + .5 + dx) / 2 + x) / w - .5) +
                                     cy * (((sy + .5 + dy) / 2 + y) / h - .5) + cam.d;
-                                r = r + radiance(Ray(cam.o + d * 140, d.norm()), 0) * inv_samps;
+                                r = r + radiance(Ray(cam.o + d * 140, d.norm())) * inv_samps;
                             }
                             c[i] = c[i] + Vec(clamp(r.x), clamp(r.y), clamp(r.z)) * 0.25f;
                         }
@@ -214,8 +234,10 @@ int rt_main(int samps) {
     }
 
     // this kind of sychronization is by no means the most performant one, but it does do its job
-    while (pixel_cnt < total_pixel_cnt)
-        fprintf(stderr, "\rRendering (%d spp) %5.2f%%", samps * 4, 100. * pixel_cnt / total_pixel_cnt);
+    while (pixel_cnt < total_pixel_cnt) {
+        int k = pixel_cnt;
+        fprintf(stderr, "\rRendering (%d spp) %5.2f%% %d %d", samps * 4, 100. * pixel_cnt / total_pixel_cnt, k, total_pixel_cnt);
+    }
 #else
     for (int y = 0; y < h; y++) {
         fprintf(stderr, "\rRendering (%d spp) %5.2f%%", samps * 4, 100. * y / (h - 1));
@@ -228,9 +250,9 @@ int rt_main(int samps) {
                         double r2 = 2 * random_number(), dy = r2 < 1 ? sqrt(r2) - 1 : 1 - sqrt(2 - r2);
                         Vec d = cx * (((sx + .5 + dx) / 2 + x) / w - .5) +
                             cy * (((sy + .5 + dy) / 2 + y) / h - .5) + cam.d;
-                        r = r + radiance(Ray(cam.o + d * 140, d.norm()), 0) * inv_samps;
+                        r = r + radiance(Ray(cam.o + d * 140, d.norm())) * inv_samps;
                     }
-                    c[i] = c[i] + Vec(clamp(r.x), clamp(r.y), clamp(r.z)) * 0.25f;
+                    c[i] = c[i] + r * 0.25f;
                 }
             }
         }
