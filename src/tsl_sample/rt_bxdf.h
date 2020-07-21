@@ -19,25 +19,30 @@
 
 #include "rt_common.h"
 
-// bxdf is the basic of surface interaction.
+// Bxdf is the basic of surface interaction.
 class Bxdf {
 public:
-    Bxdf(const Vec center, const bool fn) :sphere_center(center), flip_normal(fn) {}
+    Bxdf(const Vec center, const bool fn) 
+        :sphere_center(center), flip_normal(fn) {}
     virtual ~Bxdf() {}
 
-    // take sample based on bxdf
+    // Take sample based on bxdf. The returned value is the multiplication of cosine
+    // of the angle between sampled direction and normal and its bxdf given the input 
+    // direction and sampled direction.
     virtual Vec sample(const Vec& pos, const Vec& wo, Vec& wi, float& pdf) = 0;
 
 protected:
+    // The way this program converting world space vector to local space is very specific
+    // since all primitives are sphere, I took advantage of the fact and simplified the
+    // transformation.
     const Vec   sphere_center;
 	const bool	flip_normal;
 
-    // helper method to convert vector between world space and local space
+    // Helper method to convert vector between world space and local space
     Vec local_to_world(const Vec& pos, const Vec& vec);
     Vec world_to_local(const Vec& pos, const Vec& vec);
 };
 
-// very standard lambertian brdf model
 class Lambert : public Bxdf{
 public:
     Lambert(const Vec color, const Vec center, const bool fn) 
@@ -52,6 +57,5 @@ class Microfacet : public Bxdf {
 public:
     Microfacet(const Vec center, const bool fn)
         :Bxdf(center, fn) {}
-
     Vec sample(const Vec& pos, const Vec& wo, Vec& wi, float& pdf) override;
 };

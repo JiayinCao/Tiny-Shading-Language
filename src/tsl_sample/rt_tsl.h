@@ -22,7 +22,7 @@
 #include <tsl_args.h>
 #include <tsl_system.h>
 #include <tsl_define.h>
-#include "rt_material.h"
+#include "rt_bxdf.h"
 
 USE_TSL_NAMESPACE
 

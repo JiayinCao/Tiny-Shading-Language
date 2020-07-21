@@ -35,16 +35,27 @@ IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambert, float3, sphere_center)
 IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambert, bool, flip_normal)
 IMPLEMENT_CLOSURE_TYPE_END(ClosureTypeLambert)
 
+// In an ideal world, a sophisticated renderer should have its own memory management system.
+// For example, it could pre-allocate a memory pool and claim memory dynamically during bxdf 
+// allocation. This way it can avoid the performance overhead of page allocation under the hood.
+// In order to stay as simple as possible, the following code does demonstrate a similar idea.
+// However, the big limitation is its memory size, once memory runs out, it will crash.
+// This is fine for this simple program since it has a hard limit on the depth of recursive rays
+// to traverse, meaning there is also a limitation of how much memory it will allocate.
+
+// This is just a random big number that avoids memory running out.
+constexpr int BUF_MEM_SIZE = 16866;
+// The current buffer offset, needs to be reset before at the beginning of evaluating every single pixel.
 static thread_local int  buf_index = 0;
-static thread_local char buf[16866];        // this should be large enough
+// The pre-allocated buffer.
+static thread_local char buf[BUF_MEM_SIZE];
 
 // This is the call back function for handling things like compiling errors and texture loading stuff.
 class ShadingSystemInterfaceSimple : public Tsl_Namespace::ShadingSystemInterface {
 public:
-    // This is by no mean a good example of allocating memory of bxdf in real renderer.
-    // The purpose of this code is simply for testing, not for performance.
+    // Simply fetch some memory from the memory pool
     void* allocate(unsigned int size) const override {
-        assert(buf_index + size < 16866);
+        assert(buf_index + size < BUF_MEM_SIZE);
         void* ret = buf + buf_index;
         buf_index += size;
         return ret;
@@ -65,6 +76,7 @@ public:
     }
 };
 
+// The raw function pointer of all surface shaders.
 using shader_raw_func = void(*)(Tsl_Namespace::ClosureTreeNodeBase**, TslGlobal*);
 
 // This is a very thin layer to wrap TSL related data structures, in a real complex ray tracing algorithm,
@@ -87,6 +99,14 @@ static Material g_materials[MaterialType::Cnt];
 // Although it is possible to have different tsl global registered for different material types, this sample only uses one.
 static TslGlobal g_tsl_global;
 
+// The closure ids
+static ClosureID g_closure_lambert = INVALID_CLOSURE_ID;
+
+/*
+ * The first material, lambert is very simple and straightforward. All of it is driven by one single shader unit template.
+ * It is no the simplest form of TSL shader execution. Typically, renderers need to do things more complex than this material
+ * since shaders are usually groupped by multiple shader unit templates.
+ */
 void initialize_lambert_material() {
     const auto shader_source = R"(
         shader lambert_shader(out closure bxdf){
@@ -115,16 +135,22 @@ void initialize_lambert_material() {
     mat.m_shader_func = (shader_raw_func)mat.m_shader_instance->get_function();
 }
 
+// Initialize all materials
 void initialize_materials() {
     initialize_lambert_material();
 }
 
-ClosureID g_closure_lambert = INVALID_CLOSURE_ID;
-
+// Reset the memory pool, this is a pretty cheap operation.
 void reset_memory_allocator() {
     buf_index = 0;
 }
 
+/*
+ * It does several things during TSL initialization.
+ *   - Register the call back interface so that the ray tracer can handle some call back events like bxdf allocation.
+ *   - Register all closure types used in this program. This needs to happen before shader compliation.
+ *   - Create all materials by compiling its shader and cache the raw function pointer to be used later.
+ */
 void initialize_tsl_system() {
     // get the instance of tsl shading system
     auto& shading_system = Tsl_Namespace::ShadingSystem::get_instance();
@@ -140,6 +166,11 @@ void initialize_tsl_system() {
     initialize_materials();
 }
 
+/*
+ * Get the bxdf based on the sphere object. It basically gets the material based on the material type. With the material
+ * located, it can easily access its resolved raw shader function with its compiled shader. It will then execute the shader
+ * and parse the returned result from TSL shader to populate the data structure to be returned.
+ */
 std::unique_ptr<Bxdf> get_bxdf(const Sphere& obj) {
     // setup tsl global data structure
     TslGlobal tsl_global;

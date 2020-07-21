@@ -26,7 +26,11 @@
  * and this program serves more as a tutorial, clarity is more important than simplicity,
  * the program below is heavily modified by myself with more comment to make things clear.
  *
- * TSL related logic is not handled here though.
+ * Note, although this program demonstrates how to integrate TSL in a ray tracer. The ray
+ * tracing algorithm itself is by no means a perfect one. Quite a few things are done this
+ * way simply because it is easy and straightforward to get it done this way. For example,
+ * there is no multiple importance sampling, random samples taken on a disk is not uniformly
+ * distributed, memory management is no where near its best efficiency, etc.
  */
 
 #include <memory>

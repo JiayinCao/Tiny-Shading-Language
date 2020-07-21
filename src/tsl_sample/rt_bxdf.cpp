@@ -16,44 +16,19 @@
  */
 
 #include <algorithm>
-#include "rt_material.h"
+#include "rt_bxdf.h"
 
 // uniformly sample a point on disk
-void UniformSampleDisk(float u, float v, float& x, float& y) {
-    float r, theta;
-    float su = 2.0f * u - 1.0f;
-    float sv = 2.0f * v - 1.0f;
-    float asu = fabs(su);
-    float asv = fabs(sv);
-
-    if (asu < asv) {
-        r = asv;
-        float factor = (sv > 0.0f) ? -1.0f : 1.0f;
-        theta = factor * su / r + 4.0f + 2.0f * factor;
-    }
-    else if (asv < asu) {
-        r = asu;
-        float factor = (su > 0.0f) ? 1.0f : -1.0f;
-        theta = factor * sv / r - 2.0f * factor + 2.0f;
-        if (theta < 0.0f)
-            theta += 8.0f;
-    }
-    else {
-        x = 0.0f;
-        y = 0.0f;
-        return;
-    }
-
-    theta *= PI / 4.0f;
-
-    x = cos(theta) * r;
-    y = sin(theta) * r;
+void UniformSampleDisk(float& x, float& y) {
+    const float u = random_number(), v = random_number();
+    const float theta = 2.0f * PI * u;
+    const float radius = sqrt(v);
+    x = radius * cos(theta);
+    y = radius * sin(theta);
 }
 
 Vec cross(const Vec& v0, const Vec& v1) {
-    return Vec( v0.y * v1.z - v0.z * v1.y,
-                v0.z * v1.x - v0.x * v1.z,
-                v0.x * v1.y - v0.y * v1.x);
+    return Vec( v0.y * v1.z - v0.z * v1.y, v0.z * v1.x - v0.x * v1.z, v0.x * v1.y - v0.y * v1.x);
 }
 
 void coordinateSystem(const Vec& v0, Vec& v1, Vec& v2) {
@@ -108,8 +83,8 @@ Vec Lambert::sample(const Vec& pos, const Vec& wo, Vec& wi, float& pdf) {
         return Vec();
     }
 
-    float x, z, u = random_number(), v = random_number();
-    UniformSampleDisk(u, v, x, z);
+    float x, z;
+    UniformSampleDisk(x, z);
     float y = sqrt(std::max(0.0f, 1.0f - x * x - z * z));
     const auto local_wi = Vec(x, y, z);
     wi = local_to_world(pos, local_wi);
@@ -119,6 +94,8 @@ Vec Lambert::sample(const Vec& pos, const Vec& wo, Vec& wi, float& pdf) {
     return basecolor * (pdf / PI) ;
 }
 
-Vec sample(const Vec& pos, const Vec& wo, Vec& wi, float& pdf) {
+Vec Microfacet::sample(const Vec& pos, const Vec& wo, Vec& wi, float& pdf) {
+    const auto local_wo = world_to_local(pos, wo);
+
     return Vec();
 }
