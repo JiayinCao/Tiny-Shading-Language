@@ -33,5 +33,5 @@
 int rt_main(int);
 int main(int argc, char* argv[]) {
     const int spp = (argc < 2) ? 4 : std::atoi(argv[1]);
-    return rt_main( ( spp + 3 ) / 4 );
+    return rt_main( spp );
 }

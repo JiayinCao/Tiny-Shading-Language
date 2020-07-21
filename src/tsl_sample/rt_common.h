@@ -47,8 +47,9 @@ struct Sphere {
     double rad;       // radius 
     Vec p, e, c;      // position, emission, color 
     Refl_t refl;      // reflection type (DIFFuse, SPECular, REFRactive) 
-    Sphere(double rad_, Vec p_, Vec e_, Vec c_, Refl_t refl_) :
-        rad(rad_), p(p_), e(e_), c(c_), refl(refl_) {}
+	const bool fn;	  // whether normal is flipped
+    Sphere(double rad_, Vec p_, Vec e_, Vec c_, Refl_t refl_, bool fn) :
+        rad(rad_), p(p_), e(e_), c(c_), refl(refl_), fn(fn) {}
 
     // ray sphere intersection
     double intersect(const Ray& r) const { // returns distance, 0 if nohit 

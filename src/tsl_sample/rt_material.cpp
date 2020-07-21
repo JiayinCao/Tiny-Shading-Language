@@ -69,7 +69,11 @@ void coordinateSystem(const Vec& v0, Vec& v1, Vec& v2) {
 }
 
 Vec Bxdf::local_to_world(const Vec& pos, const Vec& vec) {
-    const Vec n = (pos - sphere_center).norm();
+    auto n = (pos - sphere_center).norm();
+
+	if (flip_normal)
+		n = n * -1.0f;
+
     Vec t, bt;
     coordinateSystem(n, t, bt);
 
@@ -81,10 +85,10 @@ Vec Bxdf::local_to_world(const Vec& pos, const Vec& vec) {
 }
 
 Vec Bxdf::world_to_local(const Vec& pos, const Vec& vec) {
-    const Vec n = (pos - sphere_center).norm();
+    auto n = (pos - sphere_center).norm();
 
-    if (n.y <= -1.0f + 0.001f)
-        int k = 0;
+	if (flip_normal)
+		n = n * -1.0f;
 
     Vec t, bt;
     coordinateSystem(n, t, bt);
@@ -99,8 +103,7 @@ Vec Bxdf::world_to_local(const Vec& pos, const Vec& vec) {
 Vec Lambert::sample(const Vec& pos, const Vec& wo, Vec& wi, float& pdf) {
     const auto local_wo = world_to_local(pos, wo);
 
-    if ( false && local_wo.y >= 0.0f ) 
-    {
+    if ( local_wo.y <= 0.0f ) {
         pdf = 0.0f;
         return Vec();
     }

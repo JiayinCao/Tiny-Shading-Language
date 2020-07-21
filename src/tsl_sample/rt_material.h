@@ -19,10 +19,10 @@
 
 #include "rt_common.h"
 
-// bxdf is the basic of surface interfaction.
+// bxdf is the basic of surface interaction.
 class Bxdf {
 public:
-    Bxdf(const Vec& center) :sphere_center(center) {}
+    Bxdf(const Vec& center, const bool fn) :sphere_center(center), flip_normal(fn) {}
     virtual ~Bxdf() {}
 
     // take sample based on bxdf
@@ -30,6 +30,7 @@ public:
 
 protected:
     const Vec&  sphere_center;
+	const bool	flip_normal;
 
     // helper method to convert vector between world space and local space
     Vec local_to_world(const Vec& pos, const Vec& vec);
@@ -39,8 +40,8 @@ protected:
 // very standard lambertian brdf model
 class Lambert : public Bxdf{
 public:
-    Lambert(const Vec& color, const Vec& center) 
-        :basecolor(color), Bxdf(center) {}
+    Lambert(const Vec& color, const Vec& center, const bool fn) 
+        :basecolor(color), Bxdf(center, fn) {}
     Vec sample(const Vec& pos, const Vec& wo, Vec& wi, float& pdf) override;
 
 private:
