@@ -114,7 +114,7 @@ Vec radiance(Ray r) {
 		if (depth > 10)
 			break;
 
-        r.o = p + wi * 0.0001f;
+        r.o = p + wi * 0.0001;
         r.d = wi;
     }
     return l;
@@ -183,11 +183,14 @@ int rt_main(int samps) {
 
 #else
     for (int y = 0; y < h; y++) {
-        fprintf(stderr, "\rRendering (%d spp) %5.2f%%", samps * 4, 100. * y / (h - 1));
+        fprintf(stderr, "\rRendering (%d spp) %5.2f%%", samps, 100. * y / (h - 1));
         for (unsigned short x = 0; x < w; x++) {
 			auto i = (h - y - 1) * w + x;
 			auto r = Vec();
 			for (int s = 0; s < samps; s++) {
+                // make sure we have memory for allocating bxdf closures
+                reset_memory_allocator();
+
 				double r1 = 2 * random_number(), dx = r1 < 1 ? sqrt(r1) - 1 : 1 - sqrt(2 - r1);
 				double r2 = 2 * random_number(), dy = r2 < 1 ? sqrt(r2) - 1 : 1 - sqrt(2 - r2);
 				Vec d = cx * (((.5 + dx) / 2 + x) / w - .5) +
