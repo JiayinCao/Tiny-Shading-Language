@@ -118,3 +118,7 @@ Vec Lambert::sample(const Vec& pos, const Vec& wo, Vec& wi, float& pdf) {
 
     return basecolor * (pdf / PI) ;
 }
+
+Vec sample(const Vec& pos, const Vec& wo, Vec& wi, float& pdf) {
+    return Vec();
+}

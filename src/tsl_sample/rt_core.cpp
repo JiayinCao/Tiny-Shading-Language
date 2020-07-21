@@ -33,8 +33,8 @@
 #include <thread>
 #include <algorithm>
 #include <atomic>
-#include "rt_material.h"
 #include "rt_common.h"
+#include "rt_tsl.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image/stb_image.h"
@@ -43,16 +43,16 @@
 
 // scene description, all surfaces are spheres in this sample, including the wall, which are simply huge spheres.
 Sphere spheres[] = {
-  //Scene: radius, position,                    emission,       color,              material	flip normal
-  Sphere(  1e5,    Vec(1e5 + 1,40.8,81.6),      Vec(),          Vec(.75,.25,.25),   DIFF,		true),    //Left 
-  Sphere(  1e5,    Vec(-1e5 + 99,40.8,81.6),    Vec(),          Vec(.25,.25,.75),   DIFF,		true),    //Rght 
-  Sphere(  1e5,    Vec(50, 40.8, 1e5),          Vec(),          Vec(.75,.75,.75),   DIFF,		true),    //Back 
-  Sphere(  1e5,    Vec(50, 40.8,-1e5 + 170),    Vec(),          Vec(),              DIFF,		true),    //Frnt 
-  Sphere(  1e5,    Vec(50, 1e5, 81.6),          Vec(),          Vec(.75,.75,.75),   DIFF,		true),    //Botm 
-  Sphere(  1e5,    Vec(50, 1e5 + 81.6,81.6),    Vec(),          Vec(.75,.75,.75),   DIFF,		false),   //Top 
-  Sphere(  16.5,   Vec(27, 16.5,47),            Vec(),          Vec(1,1,1) * .999,  SPEC,		false),   //Mirr 
-  Sphere(  16.5,   Vec(73, 20.5,78),            Vec(),          Vec(1,1,1) * .999,  REFR,		false),   //Glas 
-  Sphere(  600,    Vec(50, 681.6 - .27,81.6),   Vec(12,12,12) * 2.f,  Vec(),              DIFF,		false)    //Lite 
+  //Scene: radius, position,                    emission,       color,              material	                    flip normal
+  Sphere(  1e5,    Vec(1e5 + 1,40.8,81.6),      Vec(),          Vec(.75,.25,.25),   MaterialType::MT_Lambert,		true),    //Left 
+  Sphere(  1e5,    Vec(-1e5 + 99,40.8,81.6),    Vec(),          Vec(.25,.25,.75),   MaterialType::MT_Lambert,		true),    //Rght 
+  Sphere(  1e5,    Vec(50, 40.8, 1e5),          Vec(),          Vec(.75,.75,.75),   MaterialType::MT_Lambert,		true),    //Back 
+  Sphere(  1e5,    Vec(50, 40.8,-1e5 + 170),    Vec(),          Vec(),              MaterialType::MT_Lambert,		true),    //Frnt 
+  Sphere(  1e5,    Vec(50, 1e5, 81.6),          Vec(),          Vec(.75,.75,.75),   MaterialType::MT_Lambert,		true),    //Botm 
+  Sphere(  1e5,    Vec(50, 1e5 + 81.6,81.6),    Vec(),          Vec(.75,.75,.75),   MaterialType::MT_Lambert,		false),   //Top 
+  Sphere(  16.5,   Vec(27, 16.5,47),            Vec(),          Vec(1,1,1) * .999,  MaterialType::MT_Lambert,		false),   //Mirr 
+  Sphere(  16.5,   Vec(73, 20.5,78),            Vec(),          Vec(1,1,1) * .999,  MaterialType::MT_Lambert,		false),   //Glas 
+  Sphere(  600,    Vec(50, 681.6 - .27,81.6),   Vec(12,12,12),  Vec(),              MaterialType::MT_Lambert,		false)    //Lite 
 };
 
 // helper function to make thing easier.
@@ -90,15 +90,15 @@ Vec radiance(Ray r) {
         Vec p = r.o + r.d * t;
 
         // all materials are lambert, this will be replaced with TSL driven 
-        Lambert lambert(obj.c, obj.p, obj.fn);
+        auto bxdf = get_bxdf(obj);
 
 		// importance sampling happens here
         Vec wi;
         float pdf = 1.0f;
-        const auto bxdf = lambert.sample(p, Vec(-r.d.x, -r.d.y, -r.d.z), wi, pdf);
+        const auto ret = bxdf->sample(p, Vec(-r.d.x, -r.d.y, -r.d.z), wi, pdf);
         if (pdf <= 0.0f)
             break;
-        thr = thr.mult(bxdf.mult(1.0f/pdf));
+        thr = thr.mult(ret.mult(1.0f/pdf));
 
         // russian roulette
         ++depth;
@@ -156,6 +156,9 @@ int rt_main(int samps) {
 					auto i = (h - y - 1) * w + x;
 					auto r = Vec();
 					for (int s = 0; s < samps; s++) {
+                        // make sure we have memory for allocating bxdf closures
+                        reset_memory_allocator();
+
 						double r1 = 2 * random_number(), dx = r1 < 1 ? sqrt(r1) - 1 : 1 - sqrt(2 - r1);
 						double r2 = 2 * random_number(), dy = r2 < 1 ? sqrt(r2) - 1 : 1 - sqrt(2 - r2);
 						Vec d = cx * (((.5 + dx) / 2 + x) / w - .5) +

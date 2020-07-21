@@ -19,13 +19,26 @@
 
 #include <random>
 #include <math.h>
+#include <tsl_args.h>
 
 #define PI 3.1415926f
+
+// The type of bxdf available in this ray tracer, there is really no limitation on
+// the number of bxdf that can be registered in a ray tracer program.
+// It is just a few bxdfs here used to demonstrate how TSL could drive the material
+// system.
+enum MaterialType : int {
+    MT_Lambert = 0,
+    MT_Microfacet,
+
+    Cnt
+};
 
 // basic vector data structure. it is a vector of three for multiple purposes, like color, position, vector.
 struct Vec {
     double x, y, z;
     Vec(double x_=0.0) { x = x_; y = x_; z = x_; }
+    Vec(const Tsl_Namespace::float3& v) { x = v.x; y = v.y; z = v.z; }
     Vec(double x_, double y_, double z_) { x = x_; y = y_; z = z_; }
     Vec operator+(const Vec& b) const { return Vec(x + b.x, y + b.y, z + b.z); }
     Vec operator-(const Vec& b) const { return Vec(x - b.x, y - b.y, z - b.z); }
@@ -39,17 +52,14 @@ struct Vec {
 // data structure representing a ray
 struct Ray { Vec o, d; Ray(Vec o_, Vec d_) : o(o_), d(d_) {} };
 
-// materialtype, this needs to be refactored with TSL integrated later.
-enum Refl_t { DIFF, SPEC, REFR };  // material types, used in radiance() 
-
 // data structure representing a sphere
 struct Sphere {
     double rad;       // radius 
     Vec p, e, c;      // position, emission, color 
-    Refl_t refl;      // reflection type (DIFFuse, SPECular, REFRactive) 
+    MaterialType mt;  // material type 
 	const bool fn;	  // whether normal is flipped
-    Sphere(double rad_, Vec p_, Vec e_, Vec c_, Refl_t refl_, bool fn) :
-        rad(rad_), p(p_), e(e_), c(c_), refl(refl_), fn(fn) {}
+    Sphere(double rad_, Vec p_, Vec e_, Vec c_, MaterialType mt_, bool fn) :
+        rad(rad_), p(p_), e(e_), c(c_), mt(mt_), fn(fn) {}
 
     // ray sphere intersection
     double intersect(const Ray& r) const { // returns distance, 0 if nohit 

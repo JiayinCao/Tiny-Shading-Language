@@ -29,9 +29,13 @@
 */
 
 #include <string>
+#include "rt_tsl.h"
 
 int rt_main(int);
 int main(int argc, char* argv[]) {
+    // initialize tsl library
+    initialize_tsl_system();
+
     const int spp = (argc < 2) ? 4 : std::atoi(argv[1]);
     return rt_main( spp );
 }

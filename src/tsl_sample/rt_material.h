@@ -22,14 +22,14 @@
 // bxdf is the basic of surface interaction.
 class Bxdf {
 public:
-    Bxdf(const Vec& center, const bool fn) :sphere_center(center), flip_normal(fn) {}
+    Bxdf(const Vec center, const bool fn) :sphere_center(center), flip_normal(fn) {}
     virtual ~Bxdf() {}
 
     // take sample based on bxdf
     virtual Vec sample(const Vec& pos, const Vec& wo, Vec& wi, float& pdf) = 0;
 
 protected:
-    const Vec&  sphere_center;
+    const Vec   sphere_center;
 	const bool	flip_normal;
 
     // helper method to convert vector between world space and local space
@@ -40,10 +40,18 @@ protected:
 // very standard lambertian brdf model
 class Lambert : public Bxdf{
 public:
-    Lambert(const Vec& color, const Vec& center, const bool fn) 
+    Lambert(const Vec color, const Vec center, const bool fn) 
         :basecolor(color), Bxdf(center, fn) {}
     Vec sample(const Vec& pos, const Vec& wo, Vec& wi, float& pdf) override;
 
 private:
     const Vec basecolor;
+};
+
+class Microfacet : public Bxdf {
+public:
+    Microfacet(const Vec center, const bool fn)
+        :Bxdf(center, fn) {}
+
+    Vec sample(const Vec& pos, const Vec& wo, Vec& wi, float& pdf) override;
 };
