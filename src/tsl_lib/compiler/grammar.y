@@ -209,6 +209,30 @@ GLOBAL_STATEMENT:
     }
     |
     STATEMENT_SHADER_RESOURCE_HANDLE_DEF {
+    }
+    |
+    GLOBAL_STATEMENT_VARIABLES_DECLARATION
+    {
+    };
+
+GLOBAL_STATEMENT_VARIABLES_DECLARATION:
+	TYPE ID ";"
+	{
+        
+	}
+    |
+    TYPE ID "[" EXPRESSION "]" ";"
+    {
+        
+    }
+    |
+    TYPE ID "=" EXPRESSION ";"
+    {
+		
+    }
+    |
+    TYPE ID "[" EXPRESSION "]" "=" ARRAY_INITIALIZER ";"
+    {
     };
 
 STATEMENT_SHADER_RESOURCE_HANDLE_DEF:
@@ -467,6 +491,15 @@ STATEMENT_VARIABLES_DECLARATION:
 		$$ = new AstNode_Statement_VariableDecl(var);
 	}
     |
+    TYPE ID "=" EXPRESSION ";"
+    {
+		const DataType type = $1;
+		AstNode_Expression* init_exp = AstNode::castType<AstNode_Expression>($4);
+		AstNode_SingleVariableDecl* var = new AstNode_SingleVariableDecl($2, type, VariableConfig::NONE, init_exp);
+		
+        $$ = new AstNode_Statement_VariableDecl(var);
+    }
+    |
     TYPE ID "[" EXPRESSION "]" ";"
     {
         const DataType type = $1;
@@ -476,13 +509,30 @@ STATEMENT_VARIABLES_DECLARATION:
         $$ = new AstNode_Statement_VariableDecl(var);
     }
     |
-    TYPE ID "=" EXPRESSION ";"
+    TYPE ID "[" EXPRESSION "]" "=" ARRAY_INITIALIZER ";"
     {
-		const DataType type = $1;
-		AstNode_Expression* init_exp = AstNode::castType<AstNode_Expression>($4);
-		AstNode_SingleVariableDecl* var = new AstNode_SingleVariableDecl($2, type, VariableConfig::NONE, init_exp);
-		
+        const DataType type = $1;
+        AstNode_Expression* cnt = AstNode::castType<AstNode_Expression>($4);
+		AstNode_ArrayDecl* var = new AstNode_ArrayDecl($2, type, cnt);
+
         $$ = new AstNode_Statement_VariableDecl(var);
+    };
+
+ARRAY_INITIALIZER:
+    "{" ARRAY_DATA_OPT "}"
+    {
+    };
+
+ARRAY_DATA_OPT:
+    {
+    }
+    |
+    EXPRESSION_CONST
+    {
+    }
+    |
+    EXPRESSION_CONST "," ARRAY_DATA_OPT
+    {
     };
 
 STATEMENT_CONDITIONAL:

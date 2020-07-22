@@ -19,6 +19,8 @@
 
 TEST(Variables, Full_Test) {
     validate_shader(R"(
+        float k = 0.0f;
+        float global_array[12] = { 12.0f, 3.0f };
         shader func(){
             int k = 0;
             float gg = 0;
@@ -27,6 +29,7 @@ TEST(Variables, Full_Test) {
             int k = 0;
             float gg = 0;
             // CustomData cd;
+            float ka[12] = { 12.0f, 3.0f };
 
             // this is not supported for now
             // CustomData cd = CustomData();
