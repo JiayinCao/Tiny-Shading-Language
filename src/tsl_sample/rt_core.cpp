@@ -55,7 +55,7 @@ Sphere spheres[] = {
   Sphere(  1e5,    Vec(50, 1e5, 81.6),          Vec(),          Vec(.75,.75,.75),   MaterialType::MT_Lambert,		true),    //Botm 
   Sphere(  1e5,    Vec(50, 1e5 + 81.6,81.6),    Vec(),          Vec(.75,.75,.75),   MaterialType::MT_Lambert,		false),   //Top 
   Sphere(  16.5,   Vec(27, 16.5,47),            Vec(),          Vec(1,1,1) * .999,  MaterialType::MT_Lambert,	    false),   //Mirr 
-  Sphere(  16.5,   Vec(73, 20.5,78),            Vec(),          Vec(1,1,1) * .999,  MaterialType::MT_Microfacet,	false),   //Glas 
+  Sphere(  16.5,   Vec(73, 16.5,78),            Vec(),          Vec(1,1,1) * .999,  MaterialType::MT_Microfacet,	false),   //Glas 
   Sphere(  600,    Vec(50, 681.6 - .27,81.6),   Vec(24,24,24),  Vec(),              MaterialType::MT_Lambert,		false)    //Lite 
 };
 
