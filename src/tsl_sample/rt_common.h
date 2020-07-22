@@ -30,8 +30,8 @@
 // It is just a few bxdfs here used to demonstrate how TSL could drive the material
 // system.
 enum MaterialType : int {
-    MT_Lambert = 0,
-    MT_Microfacet,
+    MT_Matt = 0,
+    MT_Gold,
 
     Cnt
 };

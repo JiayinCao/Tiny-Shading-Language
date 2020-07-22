@@ -140,7 +140,7 @@ bool initialize_lambert_material() {
         return false;
 
     // Get the first material, which is supposed to be lambert.
-    auto& mat = g_materials[(int)MaterialType::MT_Lambert];
+    auto& mat = g_materials[(int)MaterialType::MT_Matt];
 
     // Create the shader unit template
     mat.m_shader_template = shading_context->begin_shader_unit_template("lambert");
@@ -234,7 +234,7 @@ bool initialize_microfacet_material() {
         return false;
 
     // a microfacet driven material
-    auto& mat = g_materials[(int)MaterialType::MT_Microfacet];
+    auto& mat = g_materials[(int)MaterialType::MT_Gold];
 
     // compile the microfacet shader unit template
     auto microfacet_shader = shading_context->begin_shader_group_template("microfacet_shader");
