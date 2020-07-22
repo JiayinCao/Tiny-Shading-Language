@@ -121,6 +121,14 @@ Vec radiance(Ray r) {
         r.o = p + wi * 0.0001;
         r.d = wi;
     }
+
+    // This is the last resort to kill fireflies in the image. It is a pretty dirty hack. 
+    // Ideally, I should have fixed all cases that could have caused fireflies from its source.
+    // But again, this is not the focus of the program, I'll pick the low hanging fruit.
+    l.x = std::min(l.x, 10.0);
+    l.y = std::min(l.y, 10.0);
+    l.z = std::min(l.z, 10.0);
+
     return l;
 }
 
