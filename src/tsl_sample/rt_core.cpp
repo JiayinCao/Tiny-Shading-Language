@@ -54,9 +54,9 @@ Sphere spheres[] = {
   Sphere(  1e5,    Vec(50, 40.8,-1e5 + 170),    Vec(),          Vec(),              MaterialType::MT_Lambert,		true),    //Frnt 
   Sphere(  1e5,    Vec(50, 1e5, 81.6),          Vec(),          Vec(.75,.75,.75),   MaterialType::MT_Lambert,		true),    //Botm 
   Sphere(  1e5,    Vec(50, 1e5 + 81.6,81.6),    Vec(),          Vec(.75,.75,.75),   MaterialType::MT_Lambert,		false),   //Top 
-  Sphere(  16.5,   Vec(27, 16.5,47),            Vec(),          Vec(1,1,1) * .999,  MaterialType::MT_Lambert,		false),   //Mirr 
-  Sphere(  16.5,   Vec(73, 20.5,78),            Vec(),          Vec(1,1,1) * .999,  MaterialType::MT_Lambert,		false),   //Glas 
-  Sphere(  600,    Vec(50, 681.6 - .27,81.6),   Vec(12,12,12),  Vec(),              MaterialType::MT_Lambert,		false)    //Lite 
+  Sphere(  16.5,   Vec(27, 16.5,47),            Vec(),          Vec(1,1,1) * .999,  MaterialType::MT_Lambert,	    false),   //Mirr 
+  Sphere(  16.5,   Vec(73, 20.5,78),            Vec(),          Vec(1,1,1) * .999,  MaterialType::MT_Microfacet,	false),   //Glas 
+  Sphere(  600,    Vec(50, 681.6 - .27,81.6),   Vec(24,24,24),  Vec(),              MaterialType::MT_Lambert,		false)    //Lite 
 };
 
 // helper function to make thing easier.
@@ -94,7 +94,7 @@ Vec radiance(Ray r) {
         Vec p = r.o + r.d * t;
 
         // all materials are lambert, this will be replaced with TSL driven 
-        auto bxdf = get_bxdf(obj);
+        auto bxdf = get_bxdf(obj, p);
 
 		// importance sampling happens here
         Vec wi;
@@ -163,10 +163,9 @@ int rt_main(int samps) {
                         // make sure we have memory for allocating bxdf closures
                         reset_memory_allocator();
 
-						double r1 = 2 * random_number(), dx = r1 < 1 ? sqrt(r1) - 1 : 1 - sqrt(2 - r1);
-						double r2 = 2 * random_number(), dy = r2 < 1 ? sqrt(r2) - 1 : 1 - sqrt(2 - r2);
-						Vec d = cx * (((.5 + dx) / 2 + x) / w - .5) +
-							cy * (((.5 + dy) / 2 + y) / h - .5) + cam.d;
+						double r1 = 2.0f * random_number(), dx = r1 < 1.0f ? sqrt(r1) - 1.0f : 1.0f - sqrt(2.0f - r1);
+						double r2 = 2.0f * random_number(), dy = r2 < 1.0f ? sqrt(r2) - 1.0f : 1.0f - sqrt(2.0f - r2);
+						Vec d = cx * (((.5f + dx) / 2.f + x) / w - .5f) + cy * (((.5f + dy) / 2.f + y) / h - .5f) + cam.d;
 						r = r + radiance(Ray(cam.o + d * 140, d.norm())) * inv_samps;
 					}
 					c[i] = r;
@@ -177,10 +176,8 @@ int rt_main(int samps) {
     }
 
     // this kind of synchronization is by no means the most performant one, but it does do its job
-    while (pixel_cnt < total_pixel_cnt) {
-        int k = pixel_cnt;
-        fprintf(stderr, "\rRendering (%d spp) %5.2f%% %d %d", samps, 100. * pixel_cnt / total_pixel_cnt, k, total_pixel_cnt);
-    }
+    while (pixel_cnt < total_pixel_cnt)
+        fprintf(stderr, "\rRendering (%d spp) %5.2f%%", samps, 100. * pixel_cnt / total_pixel_cnt);
 
 	// making sure all threads are done
 	std::for_each(threads.begin(), threads.end(), [](std::thread& thread) { thread.join(); });
@@ -195,10 +192,9 @@ int rt_main(int samps) {
                 // make sure we have memory for allocating bxdf closures
                 reset_memory_allocator();
 
-				double r1 = 2 * random_number(), dx = r1 < 1 ? sqrt(r1) - 1 : 1 - sqrt(2 - r1);
-				double r2 = 2 * random_number(), dy = r2 < 1 ? sqrt(r2) - 1 : 1 - sqrt(2 - r2);
-				Vec d = cx * (((.5 + dx) / 2 + x) / w - .5) +
-					cy * (((.5 + dy) / 2 + y) / h - .5) + cam.d;
+                double r1 = 2.0f * random_number(), dx = r1 < 1.0f ? sqrt(r1) - 1.0f : 1.0f - sqrt(2.0f - r1);
+                double r2 = 2.0f * random_number(), dy = r2 < 1.0f ? sqrt(r2) - 1.0f : 1.0f - sqrt(2.0f - r2);
+                Vec d = cx * (((.5f + dx) / 2.f + x) / w - .5f) + cy * (((.5f + dy) / 2.f + y) / h - .5f) + cam.d;
 				r = r + radiance(Ray(cam.o + d * 140, d.norm())) * inv_samps;
 			}
 			c[i] = r;

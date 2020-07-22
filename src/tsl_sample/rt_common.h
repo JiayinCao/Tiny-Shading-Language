@@ -21,7 +21,9 @@
 #include <math.h>
 #include <tsl_args.h>
 
-#define PI 3.1415926f
+#define PI          3.1415926f
+#define TWO_PI      PI * 2.0f
+#define SQR(x)      ((x)*(x))
 
 // The type of bxdf available in this ray tracer, there is really no limitation on
 // the number of bxdf that can be registered in a ray tracer program.

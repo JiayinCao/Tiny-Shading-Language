@@ -55,7 +55,12 @@ private:
 
 class Microfacet : public Bxdf {
 public:
-    Microfacet(const Vec center, const bool fn)
-        :Bxdf(center, fn) {}
+    Microfacet(const Vec bc, const float r, const Vec center, const bool fn)
+        :Bxdf(center, fn), basecolor(bc), alpha(SQR(std::max(r,(float)1e-3))), alpha2(SQR(alpha)){}
     Vec sample(const Vec& pos, const Vec& wo, Vec& wi, float& pdf) override;
+
+private:
+    const Vec   basecolor;
+    const float alpha;
+    const float alpha2;
 };

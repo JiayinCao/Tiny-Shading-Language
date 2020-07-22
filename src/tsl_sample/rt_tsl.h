@@ -41,13 +41,15 @@ void reset_memory_allocator();
 // In a reasonable complex ray tracing program, one may need to implement a memory pool to allocate bxdf
 // in a much cheapper manner to avoid memory allocation overhead.
 // However, this is not the focus of this program, I chose to live with it.
-std::unique_ptr<Bxdf> get_bxdf(const Sphere& sphere);
+std::unique_ptr<Bxdf> get_bxdf(const Sphere& sphere, const Vec& p);
 
 // tsl global data structure
 DECLARE_TSLGLOBAL_BEGIN(TslGlobal)
-DECLARE_TSLGLOBAL_VAR(float3,   base_color)
-DECLARE_TSLGLOBAL_VAR(float3,   center)
-DECLARE_TSLGLOBAL_VAR(bool,     flip_normal)
+DECLARE_TSLGLOBAL_VAR(float3,   base_color)     // base color of the material
+DECLARE_TSLGLOBAL_VAR(float3,   center)         // center of the sphere in world space
+DECLARE_TSLGLOBAL_VAR(float,    radius)         // radius of the sphere
+DECLARE_TSLGLOBAL_VAR(float3,   position)       // shaded poisition in world space
+DECLARE_TSLGLOBAL_VAR(bool,     flip_normal)    // whether the normal is flipped
 DECLARE_TSLGLOBAL_END()
 
 // closure for lambert type
@@ -56,3 +58,11 @@ DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, float3, base_color)
 DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, float3, sphere_center)
 DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, bool,   flip_normal)
 DECLARE_CLOSURE_TYPE_END(ClosureTypeLambert)
+
+// closure for microfacet type
+DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeMicrofacet, "microfacet")
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float3, base_color)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float, roughness)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float3, sphere_center)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, bool, flip_normal)
+DECLARE_CLOSURE_TYPE_END(ClosureTypeMicrofacet)

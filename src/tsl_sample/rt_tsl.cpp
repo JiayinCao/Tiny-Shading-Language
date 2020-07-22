@@ -26,7 +26,9 @@
 IMPLEMENT_TSLGLOBAL_BEGIN(TslGlobal)
 IMPLEMENT_TSLGLOBAL_VAR(float3, base_color)
 IMPLEMENT_TSLGLOBAL_VAR(float3, center)
-IMPLEMENT_TSLGLOBAL_VAR(bool, flip_normal)
+IMPLEMENT_TSLGLOBAL_VAR(float,  radius)
+IMPLEMENT_TSLGLOBAL_VAR(float3, position)
+IMPLEMENT_TSLGLOBAL_VAR(bool,   flip_normal)
 IMPLEMENT_TSLGLOBAL_END()
 
 IMPLEMENT_CLOSURE_TYPE_BEGIN(ClosureTypeLambert)
@@ -34,6 +36,13 @@ IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambert, float3, base_color)
 IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambert, float3, sphere_center)
 IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambert, bool, flip_normal)
 IMPLEMENT_CLOSURE_TYPE_END(ClosureTypeLambert)
+
+IMPLEMENT_CLOSURE_TYPE_BEGIN(ClosureTypeMicrofacet)
+IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float3, base_color)
+IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float, roughness)
+IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float3, sphere_center)
+IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, bool, flip_normal)
+IMPLEMENT_CLOSURE_TYPE_END(ClosureTypeMicrofacet)
 
 // In an ideal world, a sophisticated renderer should have its own memory management system.
 // For example, it could pre-allocate a memory pool and claim memory dynamically during bxdf 
@@ -100,7 +109,8 @@ static Material g_materials[MaterialType::Cnt];
 static TslGlobal g_tsl_global;
 
 // The closure ids
-static ClosureID g_closure_lambert = INVALID_CLOSURE_ID;
+static ClosureID g_closure_lambert      = INVALID_CLOSURE_ID;
+static ClosureID g_closure_microfacet   = INVALID_CLOSURE_ID;
 
 /*
  * The first material, lambert is very simple and straightforward. All of it is driven by one single shader unit template.
@@ -168,9 +178,138 @@ bool initialize_lambert_material() {
     return true;
 }
 
+/*
+ * In this material, there is something more complex done through TSL. Instead of creating a single shader unit template,
+ * there will be two of the shader unit templates connected together forming a shader group template.
+ * It goes like this,
+ *
+ *   --------------------------------  Shader Group  -------------------------------------
+ *   |                                                                                   |
+ *   |  ------ Base Color Shader ------                ------ Microfacet Shader ------   |
+ *   |  |                             |                |                             |   |
+ *   |  |                         color -------------->base_color              closure   |
+ *   |  |                             |                |                             |   |
+ *   |  -------------------------------                -------------------------------   |
+ *   |                                                                                   |
+ *   -------------------------------------------------------------------------------------
+ *
+ * Instead of having constant properties for the whole material, this material takes advantages of the flexibility offered
+ * by TSL and drives the roughness value based on its position. The higher the point is, the smoother it is. On the contrary,
+ * the lower it is, the rougher it is.
+ */
+bool initialize_microfacet_material() {
+    constexpr auto microfacet_shader_src = R"(
+        float saturate( float x ){
+            return ( x > 1.0f ) ? x : ( ( x < 0.0f ) ? 0.0f : x );
+        }
+
+        // This is simply a passing through shader that pass the data from TSL to the closure lambert.
+        shader microfacet_shader(in color base_color, out closure bxdf){
+            vector center       = global_value<center>;
+            bool   flip_normal  = global_value<flip_normal>;
+            
+            // roughness is driven by position, the higher the point is, the smoother it is.
+            vector position     = global_value<position>;
+            float  radius       = global_value<radius>;
+            float  roughness    = 1.0f - ( position.y - center.y + radius ) / ( 2.0f * radius );
+
+            // make a lambertian closure
+            bxdf = make_closure<microfacet>(base_color, saturate(roughness), center, flip_normal);
+        }
+    )";
+
+    constexpr auto basecolor_shader_src = R"(
+        // https://docs.unrealengine.com/en-US/Engine/Rendering/Materials/PhysicallyBased/index.html
+        shader basecolor_shader(out color basecolor){
+            basecolor = color(1.000f, 0.766f, 0.336f);
+        }
+    )";
+
+    // Get the instance of TSL system
+    auto& shading_system = Tsl_Namespace::ShadingSystem::get_instance();
+
+    // Make a new shading context, instead of making a new context, renders can also cache a few shading context at the beginning.
+    // And reuse them any time they are needed as long as no two threads are accessing the same shading context at the same time.
+    auto shading_context = shading_system.make_shading_context();
+    if (!shading_context)
+        return false;
+
+    // Get the first material, which is supposed to be lambert.
+    auto& mat = g_materials[(int)MaterialType::MT_Microfacet];
+
+    // compile the microfacet shader unit template
+    auto microfacet_shader = shading_context->begin_shader_group_template("microfacet_shader");
+    auto ret = microfacet_shader->register_tsl_global(g_tsl_global.m_var_list);
+    if(!ret)
+        return false;
+    ret = microfacet_shader->compile_shader_source(microfacet_shader_src);
+    if(!ret)
+        return false;
+    auto resolved_ret = shading_context->end_shader_unit_template(microfacet_shader.get());
+    if (resolved_ret != TSL_Resolving_Status::TSL_Resolving_Succeed)
+        return false;
+
+    // compile the baecolor shader unit template
+    auto basecolor_shader = shading_context->begin_shader_group_template("basecolor_shader");
+    ret = basecolor_shader->register_tsl_global(g_tsl_global.m_var_list);
+    if (!ret)
+        return false;
+    ret = basecolor_shader->compile_shader_source(basecolor_shader_src);
+    if (!ret)
+        return false;
+    resolved_ret = shading_context->end_shader_unit_template(basecolor_shader.get());
+    if (resolved_ret != TSL_Resolving_Status::TSL_Resolving_Succeed)
+        return false;
+    
+
+    // Create the shader group template
+    auto shader_group = shading_context->begin_shader_group_template("microfacet shader group");
+    if (!shader_group)
+        return false;
+
+    // Register the TSL global for this shader unit template.
+    ret = shader_group->register_tsl_global(g_tsl_global.m_var_list);
+    if (!ret)
+        return false;
+
+    // Add the two shaders
+    shader_group->add_shader_unit("microfacet", microfacet_shader, true);
+    shader_group->add_shader_unit("basecolor", basecolor_shader);
+
+    // Setup the connection between the two shaders
+    shader_group->connect_shader_units("basecolor", "basecolor", "microfacet", "base_color");
+
+    // Expose the shader argument so that this argument can be accessed from host program
+    shader_group->expose_shader_argument("microfacet", "bxdf");
+
+    // Indicating the end of the shader unit template creation process.
+    resolved_ret = shading_context->end_shader_group_template(shader_group.get());
+    if (resolved_ret != TSL_Resolving_Status::TSL_Resolving_Succeed)
+        return false;
+
+    // Forward the ownership now
+    mat.m_shader_template = std::move(shader_group);
+
+    // Make a shader instance
+    mat.m_shader_instance = mat.m_shader_template->make_shader_instance();
+    if (!mat.m_shader_instance)
+        return false;
+
+    // Resolve the shader instance
+    resolved_ret = mat.m_shader_instance->resolve_shader_instance();
+    if (resolved_ret != TSL_Resolving_Status::TSL_Resolving_Succeed)
+        return false;
+
+    // Get the raw function pointer
+    mat.m_shader_func = (shader_raw_func)mat.m_shader_instance->get_function();
+
+    return true;
+}
+
 // Initialize all materials
 void initialize_materials() {
     initialize_lambert_material();
+    initialize_microfacet_material();
 }
 
 // Reset the memory pool, this is a pretty cheap operation.
@@ -193,7 +332,8 @@ void initialize_tsl_system() {
     shading_system.register_shadingsystem_interface(std::move(ssis));
 
     // register closures
-    g_closure_lambert = ClosureTypeLambert::RegisterClosure();
+    g_closure_lambert       = ClosureTypeLambert::RegisterClosure();
+    g_closure_microfacet    = ClosureTypeMicrofacet::RegisterClosure();
 
     // initialize all materials
     initialize_materials();
@@ -204,16 +344,18 @@ void initialize_tsl_system() {
  * located, it can easily access its resolved raw shader function with its compiled shader. It will then execute the shader
  * and parse the returned result from TSL shader to populate the data structure to be returned.
  */
-std::unique_ptr<Bxdf> get_bxdf(const Sphere& obj) {
+std::unique_ptr<Bxdf> get_bxdf(const Sphere& obj, const Vec& p) {
     // setup tsl global data structure
     TslGlobal tsl_global;
     tsl_global.base_color = make_float3(obj.c.x, obj.c.y, obj.c.z);
     tsl_global.center = make_float3( obj.p.x , obj.p.y, obj.p.z );
     tsl_global.flip_normal = obj.fn;
+    tsl_global.position = make_float3(p.x, p.y, p.z);
+    tsl_global.radius = obj.rad;
 
     // get the material
     const auto& mat = g_materials[obj.mt];
-    if( !mat.m_shader_func )
+    if (!mat.m_shader_func)
         return std::make_unique<Lambert>(Vec(1.0, 0.0, 0.0), obj.p, obj.fn);
 
     // execute tsl shader
@@ -222,8 +364,12 @@ std::unique_ptr<Bxdf> get_bxdf(const Sphere& obj) {
 
     // parse the result
     if (closure->m_id == g_closure_lambert) {
-        const ClosureTypeLambert* lambert_param = (const ClosureTypeLambert*)closure->m_params;
-        return std::make_unique<Lambert>(obj.c, lambert_param->sphere_center, lambert_param->flip_normal);
+        const ClosureTypeLambert* bxdf_param = (const ClosureTypeLambert*)closure->m_params;
+        return std::make_unique<Lambert>(obj.c, bxdf_param->sphere_center, bxdf_param->flip_normal);
+    }
+    else if (closure->m_id == g_closure_microfacet) {
+        const ClosureTypeMicrofacet* bxdf_param = (const ClosureTypeMicrofacet*)closure->m_params;
+        return std::make_unique<Microfacet>(bxdf_param->base_color, bxdf_param->roughness, bxdf_param->sphere_center, bxdf_param->flip_normal);
     }
 
     // unrecognized closure type, it shouldn't reach here at all
