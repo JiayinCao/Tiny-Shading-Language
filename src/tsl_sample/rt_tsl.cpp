@@ -213,8 +213,8 @@ bool initialize_microfacet_material() {
             float  radius       = global_value<radius>;
             float  roughness    = 1.0f - ( position.y - center.y + radius ) / ( 2.0f * radius );
 
-            // make a lambertian closure
-            bxdf = make_closure<microfacet>(base_color, saturate(roughness), center, flip_normal);
+            // make a microfacet closure
+            bxdf = make_closure<microfacet>(base_color, saturate(roughness- 0.2f), center, flip_normal);
         }
     )";
 

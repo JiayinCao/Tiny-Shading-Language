@@ -166,7 +166,7 @@ Vec Microfacet::sample(const Vec& pos, const Vec& wo, Vec& wi, float& pdf) {
     // Anisotropic GGX (Trowbridge-Reitz) distribution formula, pbrt-v3 ( page 539 )
     const auto cos_theta_h_sq = cos_theta2(h);
     if (cos_theta_h_sq <= 0.0f) return 0.f;
-    const auto ggx = alpha2 / (((alpha2 - 1.0f) * cos_theta_h_sq + 1.0f) * PI);
+    const auto ggx = 1.0f / (cos_theta_h_sq + (1.0f - cos_theta_h_sq) / alpha2);
     const auto nov = cos_theta(local_wo);
 
     // evaluate the pdf
