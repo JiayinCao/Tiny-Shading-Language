@@ -203,7 +203,6 @@ bool initialize_microfacet_material() {
             return ( x > 1.0f ) ? x : ( ( x < 0.0f ) ? 0.0f : x );
         }
 
-        // This is simply a passing through shader that pass the data from TSL to the closure lambert.
         shader microfacet_shader(in color base_color, out closure bxdf){
             vector center       = global_value<center>;
             bool   flip_normal  = global_value<flip_normal>;
@@ -234,7 +233,7 @@ bool initialize_microfacet_material() {
     if (!shading_context)
         return false;
 
-    // Get the first material, which is supposed to be lambert.
+    // a microfacet driven material
     auto& mat = g_materials[(int)MaterialType::MT_Microfacet];
 
     // compile the microfacet shader unit template
