@@ -202,6 +202,10 @@ bool initialize_microfacet_material() {
         float saturate( float x ){
             return ( x > 1.0f ) ? x : ( ( x < 0.0f ) ? 0.0f : x );
         }
+        
+        float fabs(float x){
+            return ( x < 0.0f ) ? -x : x;
+        }
 
         shader microfacet_shader(in color base_color, out closure bxdf){
             vector center       = global_value<center>;
@@ -210,10 +214,13 @@ bool initialize_microfacet_material() {
             // roughness is driven by position, the higher the point is, the smoother it is.
             vector position     = global_value<position>;
             float  radius       = global_value<radius>;
-            float  roughness    = 1.0f - ( position.y - center.y + radius ) / ( 2.0f * radius );
+            float  roughness    = ( position.y - center.y + radius ) / ( 2.0f * radius );
+            float delta = fabs(position.x - center.x);
+            if( fabs(position.x - center.x) < 5.f )
+                roughness = 0.0f;
 
             // make a microfacet closure
-            bxdf = make_closure<microfacet>(base_color, saturate(roughness- 0.2f), center, flip_normal);
+            bxdf = make_closure<microfacet>(base_color, saturate(roughness*roughness-0.2f), center, flip_normal);
         }
     )";
 
