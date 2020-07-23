@@ -873,6 +873,23 @@ llvm::Value* AstNode_ArrayDecl::codegen(TSL_Compile_Context& context) const {
 
     context.push_var_symbol(name, alloc_var, m_type);
 
+    // If there is initialize list, initialize it.
+    // The way it is initialized here is terrible, it simply loops through all elements and assign them one by one.
+    if (m_init) {
+        const auto& init_list = m_init->get_init_list();
+        
+        // Ideally, I should check the number of elements in the initialize list and make them match.
+        // But since cnt is dynamically resolved, the number of elements in the array is not decided until run-time.
+        // Maybe I should disallow non-literal array count, it sounds like a reasonable solution.
+        // For now, I will simply loop through everything, risking in out of memory access.
+        auto i = 0;
+        for (auto& var : init_list) {
+            auto index = get_llvm_constant_int(i++, 32, context);
+            auto element = context.builder->CreateGEP(alloc_var, index);
+            context.builder->CreateStore(var->codegen(context), element);
+        }
+    }
+
     return nullptr;
 }
 

@@ -81,6 +81,8 @@ std::shared_ptr<const T>  ast_ptr_from_raw(const AstNode* ptr) {
 // Instantiation with some concrete class that will be used in the compiler.
 #define INSTANTIATION_AST_PTR_FROM_RAW(T) template std::shared_ptr<const T>  ast_ptr_from_raw(const AstNode* ptr);
 
+INSTANTIATION_AST_PTR_FROM_RAW(AstNode_ArrayInitList)
+INSTANTIATION_AST_PTR_FROM_RAW(AstNode_Literal)
 INSTANTIATION_AST_PTR_FROM_RAW(AstNode_Expression)
 INSTANTIATION_AST_PTR_FROM_RAW(AstNode_Lvalue)
 INSTANTIATION_AST_PTR_FROM_RAW(AstNode_Statement)

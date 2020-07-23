@@ -140,7 +140,7 @@
 %type <p> STATEMENT STATEMENTS STATEMENT_RETURN STATEMENT_EXPRESSION_OPT STATEMENT_EXPRESSION STATEMENT_VARIABLES_DECLARATION STATEMENT_CONDITIONAL STATEMENT_LOOP 
 %type <p> STATEMENT_SCOPED STATEMENT_LOOPMOD STATEMENT_STRUCT_MEMBERS_DECLARATION
 %type <p> EXPRESSION_CONST EXPRESSION_BINARY EXPRESSION EXPRESSION_VARIABLE EXPRESSION_FUNCTION_CALL EXPRESSION_TERNARY EXPRESSION_OPT EXPRESSION_SCOPED EXPRESSION_ASSIGN EXPRESSION_UNARY 
-%type <p> EXPRESSION_TYPECAST EXPRESSION_MAKE_CLOSURE EXPRESSION_TEXTURE_SAMPLE EXPRESSION_FLOAT3_CONSTRUCTOR
+%type <p> EXPRESSION_TYPECAST EXPRESSION_MAKE_CLOSURE EXPRESSION_TEXTURE_SAMPLE EXPRESSION_FLOAT3_CONSTRUCTOR ARRAY_DATA_OPT ARRAY_INITIALIZER
 %type <c> OP_UNARY
 %type <t> TYPE
 %type <i> REC_OR_DEC
@@ -513,7 +513,8 @@ STATEMENT_VARIABLES_DECLARATION:
     {
         const DataType type = $1;
         AstNode_Expression* cnt = AstNode::castType<AstNode_Expression>($4);
-		AstNode_ArrayDecl* var = new AstNode_ArrayDecl($2, type, cnt);
+        AstNode_ArrayInitList* init = AstNode::castType<AstNode_ArrayInitList>($7);
+		AstNode_ArrayDecl* var = new AstNode_ArrayDecl($2, type, cnt, init);
 
         $$ = new AstNode_Statement_VariableDecl(var);
     };
@@ -521,18 +522,26 @@ STATEMENT_VARIABLES_DECLARATION:
 ARRAY_INITIALIZER:
     "{" ARRAY_DATA_OPT "}"
     {
+        $$ = $2;
     };
 
 ARRAY_DATA_OPT:
     {
+        $$ = nullptr;
     }
     |
     EXPRESSION_CONST
     {
+        AstNode_ArrayInitList* node = new AstNode_ArrayInitList();
+        AstNode_Literal* var = AstNode::castType<AstNode_Literal>($1);
+        $$ = node->add_var(var);
     }
     |
-    EXPRESSION_CONST "," ARRAY_DATA_OPT
+    ARRAY_DATA_OPT "," EXPRESSION_CONST
     {
+        AstNode_ArrayInitList* node = AstNode::castType<AstNode_ArrayInitList>($1);
+        AstNode_Literal* var = AstNode::castType<AstNode_Literal>($3);
+        $$ = node->add_var(var);
     };
 
 STATEMENT_CONDITIONAL:

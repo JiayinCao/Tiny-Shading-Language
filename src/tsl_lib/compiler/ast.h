@@ -90,7 +90,11 @@ public:
 	virtual bool is_closure(TSL_Compile_Context& context) const { return false; }
 };
 
-class AstNode_Literal_Int : public AstNode_Expression {
+class AstNode_Literal : public AstNode_Expression {
+
+};
+
+class AstNode_Literal_Int : public AstNode_Literal {
 public:
     AstNode_Literal_Int(int val) : m_val(val) {}
 
@@ -100,7 +104,7 @@ private:
     const int m_val;
 };
 
-class AstNode_Literal_Flt : public AstNode_Expression {
+class AstNode_Literal_Flt : public AstNode_Literal {
 public:
     AstNode_Literal_Flt(float val) : m_val(val) {}
 
@@ -110,7 +114,7 @@ private:
     const float m_val;
 };
 
-class AstNode_Literal_Double : public AstNode_Expression {
+class AstNode_Literal_Double : public AstNode_Literal {
 public:
     AstNode_Literal_Double(double val) : m_val(val) {}
 
@@ -120,7 +124,7 @@ private:
     const double m_val;
 };
 
-class AstNode_Literal_Bool: public AstNode_Expression{
+class AstNode_Literal_Bool: public AstNode_Literal {
 public:
     AstNode_Literal_Bool(bool val) : m_val(val) {}
 
@@ -130,7 +134,7 @@ private:
     const bool m_val;
 };
 
-class AstNode_Literal_GlobalValue : public AstNode_Expression {
+class AstNode_Literal_GlobalValue : public AstNode_Literal {
 public:
     AstNode_Literal_GlobalValue(const char* value_name) : m_value_name(value_name) {}
 
@@ -418,11 +422,30 @@ private:
     std::vector<std::shared_ptr<const AstNode_SingleVariableDecl>>  m_vars;
 };
 
+class AstNode_ArrayInitList : public AstNode {
+public:
+    AstNode_ArrayInitList* add_var(AstNode_Literal* var) {
+        if (!var)
+            return this;
+        auto ptr = ast_ptr_from_raw<AstNode_Literal>(var);
+        m_vars.push_back(ptr);
+        return this;
+    }
+
+    const std::vector<std::shared_ptr<const AstNode_Literal>>& get_init_list() const {
+        return m_vars;
+    }
+
+private:
+    std::vector<std::shared_ptr<const AstNode_Literal>> m_vars;
+};
+
 class AstNode_ArrayDecl : public AstNode_VariableDecl {
 public:
-    AstNode_ArrayDecl(const char* name, const DataType type, AstNode_Expression* cnt, const VariableConfig config = VariableConfig::NONE)
+    AstNode_ArrayDecl(const char* name, const DataType type, AstNode_Expression* cnt, AstNode_ArrayInitList* init_list = nullptr, const VariableConfig config = VariableConfig::NONE)
         : m_name(name), m_type(type), m_config(config), 
-          m_cnt(ast_ptr_from_raw<AstNode_Expression>(cnt)) {}
+          m_cnt(ast_ptr_from_raw<AstNode_Expression>(cnt)),
+          m_init(ast_ptr_from_raw< AstNode_ArrayInitList>(init_list)){}
 
     llvm::Value* codegen(TSL_Compile_Context& context) const override;
 
@@ -452,6 +475,7 @@ private:
     const DataType			m_type;
     const VariableConfig	m_config;
     ast_ptr<AstNode_Expression>     m_cnt;
+    ast_ptr<AstNode_ArrayInitList>  m_init;
 };
 
 class AstNode_VariableRef : public AstNode_Lvalue {
