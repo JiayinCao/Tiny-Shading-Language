@@ -228,7 +228,14 @@ GLOBAL_STATEMENT_VARIABLES_DECLARATION:
     |
     TYPE ID "[" EXPRESSION "]" ";"
     {
-        
+        const DataType type = $1;
+        AstNode_Expression* cnt = AstNode::castType<AstNode_Expression>($4);
+		AstNode_GlobalArrayDecl* var = new AstNode_GlobalArrayDecl($2, type, cnt);
+
+        AstNode_Statement_VariableDecl* array_decl = new AstNode_Statement_VariableDecl(var);
+
+        // push the global parameter
+        tsl_compiler->push_global_parameter(array_decl);
     }
     |
     TYPE ID "=" EXPRESSION ";"
@@ -245,6 +252,15 @@ GLOBAL_STATEMENT_VARIABLES_DECLARATION:
     |
     TYPE ID "[" EXPRESSION "]" "=" ARRAY_INITIALIZER ";"
     {
+        const DataType type = $1;
+        AstNode_Expression* cnt = AstNode::castType<AstNode_Expression>($4);
+        AstNode_ArrayInitList* init = AstNode::castType<AstNode_ArrayInitList>($7);
+		AstNode_GlobalArrayDecl* var = new AstNode_GlobalArrayDecl($2, type, cnt, init);
+
+        AstNode_Statement_VariableDecl* array_decl = new AstNode_Statement_VariableDecl(var);
+
+        // push the global parameter
+        tsl_compiler->push_global_parameter(array_decl);
     };
 
 STATEMENT_SHADER_RESOURCE_HANDLE_DEF:

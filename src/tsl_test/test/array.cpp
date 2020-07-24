@@ -32,3 +32,19 @@ TEST(Array, Initializer) {
     func_ptr(&data);
     EXPECT_EQ(5.0f, data);
 }
+
+TEST(Array, GlobalArray) {
+    auto shader_source = R"(
+        float a[2] = { 1.0f, 5.0f };
+        shader function_name(out float var){
+            var = a[1];
+        }
+    )";
+
+    auto ret = compile_shader<void(*)(float*)>(shader_source);
+    auto func_ptr = ret.first;
+
+    float data = 0.0f;
+    func_ptr(&data);
+    EXPECT_EQ(5.0f, data);
+}

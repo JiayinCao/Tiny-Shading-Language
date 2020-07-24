@@ -102,6 +102,8 @@ public:
 
 private:
     const int m_val;
+
+    friend class AstNode_GlobalArrayDecl;
 };
 
 class AstNode_Literal_Flt : public AstNode_Literal {
@@ -112,6 +114,8 @@ public:
 
 private:
     const float m_val;
+
+    friend class AstNode_GlobalArrayDecl;
 };
 
 class AstNode_Literal_Double : public AstNode_Literal {
@@ -475,6 +479,44 @@ public:
 
 private:
     std::vector<std::shared_ptr<const AstNode_Literal>> m_vars;
+};
+
+class AstNode_GlobalArrayDecl : public AstNode_GlobalVariableDecl {
+public:
+    AstNode_GlobalArrayDecl(const char* name, const DataType type, AstNode_Expression* cnt, AstNode_ArrayInitList* init_list = nullptr, const VariableConfig config = VariableConfig::NONE)
+        : m_name(name), m_type(type), m_config(config),
+        m_cnt(ast_ptr_from_raw<AstNode_Expression>(cnt)),
+        m_init(ast_ptr_from_raw< AstNode_ArrayInitList>(init_list)) {}
+
+    llvm::Value* codegen(TSL_Compile_Context& context) const override;
+
+    DataType data_type() const override {
+        return m_type;
+    }
+
+    const char* get_var_name() const override {
+        return m_name.c_str();
+    }
+
+    const AstNode_Expression* get_cnt() const {
+        return m_cnt.get();
+    }
+
+    VariableConfig get_config() const override {
+        return m_config;
+    }
+
+    const AstNode_Expression* get_init() const override {
+        // no support for now
+        return nullptr;
+    }
+
+private:
+    const std::string		m_name;
+    const DataType			m_type;
+    const VariableConfig	m_config;
+    ast_ptr<AstNode_Expression>     m_cnt;
+    ast_ptr<AstNode_ArrayInitList>  m_init;
 };
 
 class AstNode_ArrayDecl : public AstNode_VariableDecl {

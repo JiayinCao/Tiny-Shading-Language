@@ -1788,19 +1788,6 @@ llvm::Value* AstNode_SingleGlobalVariableDecl::codegen(TSL_Compile_Context& cont
         return nullptr;
     }
 
-#if 0
-    // allocate the variable on stack
-    auto alloc_var = context.builder->CreateAlloca(type, nullptr, name);
-
-    // initialize it if necessary
-    if (init) {
-        Value* init_value = init->codegen(context);
-
-        if (init_value)
-            context.builder->CreateStore(init_value, alloc_var);
-    }
-#endif
-
     llvm::Constant* llvm_init = nullptr;
     if (init) {
         auto literal_init = dynamic_cast<const AstNode_Literal*>(init);
@@ -1816,6 +1803,100 @@ llvm::Value* AstNode_SingleGlobalVariableDecl::codegen(TSL_Compile_Context& cont
     auto global_var = new GlobalVariable(*context.module, type, true, GlobalValue::InternalLinkage, llvm_init, name.c_str());
 
     context.push_var_symbol(name, global_var, m_type);
+
+    return nullptr;
+}
+
+llvm::Value* AstNode_GlobalArrayDecl::codegen(TSL_Compile_Context& context) const {
+    auto name = m_name;
+
+    if (nullptr != context.get_var_symbol(name, true)) {
+        emit_error("Redefined variabled named '%s'.", name.c_str());
+        return nullptr;
+    }
+
+    auto type = get_type_from_context(m_type, context);
+    auto cnt = m_cnt->codegen(context);
+
+    if (!is_llvm_integer(cnt)) {
+        emit_error("Invalid type of array size, it has to be an integer.", name.c_str());
+        return nullptr;
+    }
+
+#if 0
+    // allocate the variable on stack
+    auto alloc_var = context.builder->CreateAlloca(type, cnt, name);
+
+    context.push_var_symbol(name, alloc_var, m_type);
+
+    // If there is initialize list, initialize it.
+    // The way it is initialized here is terrible, it simply loops through all elements and assign them one by one.
+    if (m_init) {
+        const auto& init_list = m_init->get_init_list();
+
+        // Ideally, I should check the number of elements in the initialize list and make them match.
+        // But since cnt is dynamically resolved, the number of elements in the array is not decided until run-time.
+        // Maybe I should disallow non-literal array count, it sounds like a reasonable solution.
+        // For now, I will simply loop through everything, risking in out of memory access.
+        auto i = 0;
+        for (auto& var : init_list) {
+            auto index = get_llvm_constant_int(i++, 32, context);
+            auto element = context.builder->CreateGEP(alloc_var, index);
+            context.builder->CreateStore(var->codegen(context), element);
+        }
+    }
+#endif
+
+    auto array_cnt = dynamic_cast<const AstNode_Literal_Int*>(m_cnt.get());
+    if (array_cnt == nullptr) {
+        emit_error("Invalid array count for %s", m_name.c_str());
+        return nullptr;
+    }
+
+    ArrayType* array_type = nullptr;
+    llvm::Constant* llvm_init = nullptr;
+    if (m_init) {
+        const auto& init_list = m_init->get_init_list();
+
+        if (m_type.m_type == DataTypeEnum::INT) {
+            auto i = 0;
+            std::vector<int> vec;
+            for (auto& var : init_list) {
+                if (vec.size() >= array_cnt->m_val) {
+                    emit_warning("Too many elements in the array initializer, the extras will be ignored.");
+                    break;
+                }
+                auto index = get_llvm_constant_int(i++, 32, context);
+                auto literal_var = dynamic_cast<const AstNode_Literal_Int*>(var.get());
+                vec.push_back(literal_var->m_val);
+            }
+            llvm_init = ConstantDataArray::get(*context.context, *(new ArrayRef<int>(vec)));
+            array_type = ArrayType::get(get_int_32_ty(context), array_cnt->m_val);
+
+            GlobalVariable* v = new GlobalVariable(*context.module, array_type, true, GlobalValue::InternalLinkage, llvm_init, m_name.c_str());
+            Value* cast_v = context.builder->CreatePointerCast(v, get_int_32_ptr_ty(context));
+            context.push_var_symbol(name, cast_v, m_type);
+        }
+        else if (m_type.m_type == DataTypeEnum::FLOAT) {
+            auto i = 0;
+            std::vector<float> vec;
+            for (auto& var : init_list) {
+                if (vec.size() >= array_cnt->m_val) {
+                    emit_warning("Too many elements in the array initializer, the extras will be ignored.");
+                    break;
+                }
+                auto index = get_llvm_constant_int(i++, 32, context);
+                auto literal_var = dynamic_cast<const AstNode_Literal_Flt*>(var.get());
+                vec.push_back(literal_var->m_val);
+            }
+            llvm_init = ConstantDataArray::get(*context.context, *(new ArrayRef<float>(vec)));
+            array_type = ArrayType::get(get_float_ty(context), array_cnt->m_val);
+
+            GlobalVariable* v = new GlobalVariable(*context.module, array_type, true, GlobalValue::InternalLinkage, llvm_init, m_name.c_str());
+            Value* cast_v = context.builder->CreatePointerCast(v, get_float_ptr_ty(context));
+            context.push_var_symbol(name, cast_v, m_type);
+        }
+    }
 
     return nullptr;
 }
