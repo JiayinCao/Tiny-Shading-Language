@@ -19,9 +19,9 @@
 
 TEST(Basic, SingleFloatOutput) {
     auto shader_source = R"(
-        float k = 5.0f;
+        int k = 5;
         shader function_name(out float var){
-            var = k;
+            var = (float)k;
         }
     )";
 

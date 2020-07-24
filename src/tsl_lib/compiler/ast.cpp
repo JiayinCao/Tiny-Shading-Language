@@ -1215,8 +1215,31 @@ llvm::Value* AstNode_Unary_Compl::codegen(TSL_Compile_Context& context) const {
 }
 
 llvm::Value* AstNode_TypeCast::codegen(TSL_Compile_Context& context) const {
-    // to be implemented.
     auto value = m_exp->codegen(context);
+
+    const auto target_ty = get_type_from_context(m_target_type, context);
+
+    const auto float_ty = get_float_ty(context);
+    const auto int_32_ty = get_int_32_ty(context);
+    if (value->getType() == float_ty) {
+        if (m_target_type.m_type == DataTypeEnum::INT)
+            return context.builder->CreateFPToSI(value, target_ty);
+        else if(m_target_type.m_type == DataTypeEnum::FLOAT)
+            return value;
+
+        emit_warning("Unsupported casting.");
+
+    }
+    else if (value->getType() == int_32_ty) {
+        if (m_target_type.m_type == DataTypeEnum::INT)
+            return value;
+        else if (m_target_type.m_type == DataTypeEnum::FLOAT)
+            return context.builder->CreateSIToFP(value, target_ty);
+
+        emit_warning("Unsupported casting.");
+    }
+
+    emit_warning("Unsupported casting.");
     return value;
 }
 

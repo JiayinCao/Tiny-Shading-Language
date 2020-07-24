@@ -20,7 +20,7 @@
 TEST(Numbers, Float_Numbers) {
     validate_shader(R"(
         shader func(){
-            float t = 1.0;
+            float t = (float)1;
             t = .0;
             t = 2.;
             t = -43.3e3;
