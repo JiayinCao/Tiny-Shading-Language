@@ -1778,4 +1778,46 @@ llvm::Value* AstNode_Expression_Texture2DSample::codegen(TSL_Compile_Context& co
     return nullptr;
 }
 
+llvm::Value* AstNode_SingleGlobalVariableDecl::codegen(TSL_Compile_Context& context) const {
+    auto name = m_name;
+    auto type = get_type_from_context(m_type, context);
+    auto init = m_init_exp.get();
+
+    if (nullptr != context.get_var_symbol(name, true)) {
+        emit_error("Redefined variabled named '%s'.", name.c_str());
+        return nullptr;
+    }
+
+#if 0
+    // allocate the variable on stack
+    auto alloc_var = context.builder->CreateAlloca(type, nullptr, name);
+
+    // initialize it if necessary
+    if (init) {
+        Value* init_value = init->codegen(context);
+
+        if (init_value)
+            context.builder->CreateStore(init_value, alloc_var);
+    }
+#endif
+
+    llvm::Constant* llvm_init = nullptr;
+    if (init) {
+        auto literal_init = dynamic_cast<const AstNode_Literal*>(init);
+
+        if (nullptr == literal_init)
+            emit_warning("Global variable can only be initialized with a constant variable. The initialization of %s will be ignored.");
+        else {
+            auto llvm_var = literal_init->codegen(context);
+            llvm_init = (llvm::Constant*)(llvm_var);
+        }
+    }
+
+    auto global_var = new GlobalVariable(*context.module, type, true, GlobalValue::InternalLinkage, llvm_init, name.c_str());
+
+    context.push_var_symbol(name, global_var, m_type);
+
+    return nullptr;
+}
+
 TSL_NAMESPACE_END

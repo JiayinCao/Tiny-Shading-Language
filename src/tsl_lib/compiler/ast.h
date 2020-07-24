@@ -365,12 +365,49 @@ public:
 	virtual DataType get_var_type(TSL_Compile_Context& context) const = 0;
 };
 
-class AstNode_VariableDecl : public AstNode, public LLVM_Value {
+class AstNode_Statement : public AstNode, public LLVM_Value {
+};
+
+class AstNode_VariableDecl : public AstNode_Statement {
 public:
     virtual DataType data_type() const = 0;
     virtual const char* get_var_name() const = 0;
     virtual VariableConfig get_config() const = 0;
     virtual const AstNode_Expression* get_init() const = 0;
+};
+
+class AstNode_GlobalVariableDecl : public AstNode_VariableDecl {
+};
+
+class AstNode_SingleGlobalVariableDecl : public AstNode_GlobalVariableDecl {
+public:
+    AstNode_SingleGlobalVariableDecl(const char* name, const DataType type, const VariableConfig config = VariableConfig::NONE, AstNode_Expression* init_exp = nullptr)
+        : m_name(name), m_type(type), m_config(config),
+        m_init_exp(ast_ptr_from_raw<AstNode_Literal>(init_exp)) {}
+
+    llvm::Value* codegen(TSL_Compile_Context& context) const override;
+
+    DataType data_type() const override {
+        return m_type;
+    }
+
+    const char* get_var_name() const override {
+        return m_name.c_str();
+    }
+
+    const AstNode_Expression* get_init() const override {
+        return m_init_exp.get();
+    }
+
+    VariableConfig get_config() const override {
+        return m_config;
+    }
+
+private:
+    const std::string		        m_name;
+    const DataType			        m_type;
+    const VariableConfig	        m_config;
+    ast_ptr<AstNode_Expression>		m_init_exp;
 };
 
 class AstNode_SingleVariableDecl : public AstNode_VariableDecl {
@@ -701,9 +738,6 @@ public:
 
 private:
     ast_ptr<AstNode_Lvalue> m_var;
-};
-
-class AstNode_Statement : public AstNode, public LLVM_Value {
 };
 
 class AstNode_ScoppedStatement : public AstNode_Statement {

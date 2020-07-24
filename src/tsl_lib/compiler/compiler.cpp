@@ -35,7 +35,7 @@
 #include "ast_memory_janitor.h"
 
 // a temporary ugly solution for debugging for now
-// #define DEBUG_OUTPUT
+#define DEBUG_OUTPUT
 
 // a helper macro to hide the details of context resetting
 #define     PROTECT_CONTEXT(name)   ContextWrapper context_wrapper(*this, name);

@@ -218,7 +218,12 @@ GLOBAL_STATEMENT:
 GLOBAL_STATEMENT_VARIABLES_DECLARATION:
 	TYPE ID ";"
 	{
-        
+        const DataType type = $1;
+		AstNode_SingleGlobalVariableDecl* var = new AstNode_SingleGlobalVariableDecl($2, type);
+		AstNode_Statement_VariableDecl* var_decl = new AstNode_Statement_VariableDecl(var);
+
+        // push the global parameter, is it even useful in TSL context??
+        tsl_compiler->push_global_parameter(var_decl);
 	}
     |
     TYPE ID "[" EXPRESSION "]" ";"
@@ -228,7 +233,14 @@ GLOBAL_STATEMENT_VARIABLES_DECLARATION:
     |
     TYPE ID "=" EXPRESSION ";"
     {
+		const DataType type = $1;
+		AstNode_Expression* init_exp = AstNode::castType<AstNode_Expression>($4);
+		AstNode_SingleGlobalVariableDecl* var = new AstNode_SingleGlobalVariableDecl($2, type, VariableConfig::NONE, init_exp);
 		
+        AstNode_Statement_VariableDecl* var_decl = new AstNode_Statement_VariableDecl(var);
+
+        // push the global parameter
+        tsl_compiler->push_global_parameter(var_decl);
     }
     |
     TYPE ID "[" EXPRESSION "]" "=" ARRAY_INITIALIZER ";"
