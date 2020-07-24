@@ -1893,6 +1893,9 @@ llvm::Value* AstNode_GlobalArrayDecl::codegen(TSL_Compile_Context& context) cons
                 auto literal_var = dynamic_cast<const AstNode_Literal_Int*>(var.get());
                 vec.push_back(literal_var->m_val);
             }
+            if (vec.size() < array_cnt->m_val)
+                emit_warning("Not enough element in the array intializer, there will be uninitialized values.");
+
             llvm_init = ConstantDataArray::get(*context.context, *(new ArrayRef<int>(vec)));
             array_type = ArrayType::get(get_int_32_ty(context), array_cnt->m_val);
 
@@ -1912,6 +1915,9 @@ llvm::Value* AstNode_GlobalArrayDecl::codegen(TSL_Compile_Context& context) cons
                 auto literal_var = dynamic_cast<const AstNode_Literal_Flt*>(var.get());
                 vec.push_back(literal_var->m_val);
             }
+            if (vec.size() < array_cnt->m_val)
+                emit_warning("Not enough element in the array intializer, there will be uninitialized values.");
+
             llvm_init = ConstantDataArray::get(*context.context, *(new ArrayRef<float>(vec)));
             array_type = ArrayType::get(get_float_ty(context), array_cnt->m_val);
 

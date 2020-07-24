@@ -345,3 +345,20 @@ TEST(Math, VectorNegate) {
     EXPECT_EQ(v.y, -2.0f);
     EXPECT_EQ(v.z, -1.0f);
 }
+
+TEST(Math, NegAnd) {
+    auto shader_source = R"(
+        shader piecewise_mul( out int data ){
+            data = 255;
+            data &= -2;
+        }
+    )";
+
+    auto ret = compile_shader<void(*)(int*)>(shader_source);
+    auto func_ptr = ret.first;
+
+    int v;
+
+    func_ptr(&v);
+    EXPECT_EQ(v, (-2) & 255);
+}

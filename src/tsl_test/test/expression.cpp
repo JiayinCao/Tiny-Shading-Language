@@ -61,4 +61,24 @@ TEST(Expression, Type_Cast) {
             // float k = (float) 2;
         }
     )");
+
+    auto shader_source = R"(
+        int k = 5;
+        int floor( float x ){
+            return (int)x;
+        }
+        shader function_name(out float var, out int var1){
+            var = (float)k + 0.5f;
+            var1 = floor(var);
+        }
+    )";
+
+    auto ret = compile_shader<void(*)(float*, int*)>(shader_source);
+    auto func_ptr = ret.first;
+
+    float data = 0.0f;
+    int data1 = 0;
+    func_ptr(&data, &data1);
+    EXPECT_EQ(5.5f, data);
+    EXPECT_EQ(5, data1);
 }

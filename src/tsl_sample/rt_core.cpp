@@ -47,16 +47,16 @@
 
 // scene description, all surfaces are spheres in this sample, including the wall, which are simply huge spheres.
 Sphere spheres[] = {
-  //Scene: radius, position,                    emission,       color,              material	                flip normal
-  Sphere(  1e5,    Vec(1e5 + 1,40.8,81.6),      Vec(),          Vec(.75,.25,.25),   MaterialType::MT_Matt,		true),    //Left 
-  Sphere(  1e5,    Vec(-1e5 + 99,40.8,81.6),    Vec(),          Vec(.25,.25,.75),   MaterialType::MT_Matt,		true),    //Rght 
-  Sphere(  1e5,    Vec(50, 40.8, 1e5),          Vec(),          Vec(.75,.75,.75),   MaterialType::MT_Matt,		true),    //Back 
-  Sphere(  1e5,    Vec(50, 40.8,-1e5 + 170),    Vec(),          Vec(),              MaterialType::MT_Matt,		true),    //Frnt 
-  Sphere(  1e5,    Vec(50, 1e5, 81.6),          Vec(),          Vec(.75,.75,.75),   MaterialType::MT_Matt,		true),    //Botm 
-  Sphere(  1e5,    Vec(50, 1e5 + 81.6,81.6),    Vec(),          Vec(.75,.75,.75),   MaterialType::MT_Matt,		false),   //Top 
-  Sphere(  16.5,   Vec(27, 16.5,47),            Vec(),          Vec(1,1,1) * .999,  MaterialType::MT_Matt,	    false),   //Mirr 
-  Sphere(  16.5,   Vec(73, 16.5,78),            Vec(),          Vec(1,1,1) * .999,  MaterialType::MT_Gold,	    false),   //Glas 
-  Sphere(  600,    Vec(50, 681.6 - .27,81.6),   Vec(24,24,24),  Vec(),              MaterialType::MT_Matt,		false)    //Lite 
+  //Scene: radius, position,                    emission,       color,              material	                    flip normal
+  Sphere(  1e5,    Vec(1e5 + 1,40.8,81.6),      Vec(),          Vec(.75,.25,.25),   MaterialType::MT_Matt,		    true),    //Left 
+  Sphere(  1e5,    Vec(-1e5 + 99,40.8,81.6),    Vec(),          Vec(.25,.25,.75),   MaterialType::MT_Matt,		    true),    //Rght 
+  Sphere(  1e5,    Vec(50, 40.8, 1e5),          Vec(),          Vec(.75,.75,.75),   MaterialType::MT_Matt,		    true),    //Back 
+  Sphere(  1e5,    Vec(50, 40.8,-1e5 + 170),    Vec(),          Vec(),              MaterialType::MT_Matt,		    true),    //Frnt 
+  Sphere(  1e5,    Vec(50, 1e5, 81.6),          Vec(),          Vec(.75,.75,.75),   MaterialType::MT_Matt,		    true),    //Botm 
+  Sphere(  1e5,    Vec(50, 1e5 + 81.6,81.6),    Vec(),          Vec(.75,.75,.75),   MaterialType::MT_Matt,		    false),   //Top 
+  Sphere(  16.5,   Vec(27, 16.5,47),            Vec(),          Vec(1,1,1) * .999,  MaterialType::MT_Perlin_Matt,   false),   //Left Sphere 
+  Sphere(  16.5,   Vec(73, 16.5,78),            Vec(),          Vec(1,1,1) * .999,  MaterialType::MT_Gold,	        false),   //Right Sphere
+  Sphere(  600,    Vec(50, 681.6 - .27,81.6),   Vec(24,24,24),  Vec(),              MaterialType::MT_Matt,		    false)    //Lite 
 };
 
 // helper function to make thing easier.

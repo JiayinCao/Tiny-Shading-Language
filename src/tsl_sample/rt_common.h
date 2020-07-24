@@ -30,8 +30,9 @@
 // It is just a few bxdfs here used to demonstrate how TSL could drive the material
 // system.
 enum MaterialType : int {
-    MT_Matt = 0,
-    MT_Gold,
+    MT_Matt = 0,        // matte material
+    MT_Gold,            // gold material
+    MT_Perlin_Matt,     // material with noise
 
     Cnt
 };

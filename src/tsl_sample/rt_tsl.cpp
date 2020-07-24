@@ -17,6 +17,12 @@
 
 /*
  * This file demonstrate all it needs to integrate TSL in this ray tracer.
+ *
+ * NB, this tutorial doesn't cover all features implemented by Tiny Shading Language.
+ * Like it is possible to use closure as an parameter to construct another closure, this kind of
+ * feature can be useful for materials like Coat material. Also, due to the simplicity of the 
+ * ray tracer algorithm, there is no volumetric shader in this tutorial too. However, the
+ * essential of TSL shader programming stays very similar with what this tutorial shows.
  */
 
 #include <assert.h>
@@ -244,7 +250,7 @@ bool initialize_microfacet_material() {
     auto& mat = g_materials[(int)MaterialType::MT_Gold];
 
     // compile the microfacet shader unit template
-    auto microfacet_shader = shading_context->begin_shader_group_template("microfacet_shader");
+    auto microfacet_shader = shading_context->begin_shader_unit_template("microfacet_shader");
     auto ret = microfacet_shader->register_tsl_global(g_tsl_global.m_var_list);
     if(!ret)
         return false;
@@ -256,7 +262,7 @@ bool initialize_microfacet_material() {
         return false;
 
     // compile the baecolor shader unit template
-    auto basecolor_shader = shading_context->begin_shader_group_template("basecolor_shader");
+    auto basecolor_shader = shading_context->begin_shader_unit_template("basecolor_shader");
     ret = basecolor_shader->register_tsl_global(g_tsl_global.m_var_list);
     if (!ret)
         return false;
@@ -312,10 +318,250 @@ bool initialize_microfacet_material() {
     return true;
 }
 
+/*
+ * The last material to demonstrate in this tutorial stress its complexity to a new level. Instead of haveing simple algorithm like 
+ * the above ones, this shader has a whole perlin noise generation algorithm that requires way more instructions to generate.
+ * Also, this shader is groupped in a more complex way because the perlin noise is not only a more complex shader, but also a standalone
+ * shader group template. This material also demonstrate how to recursively use a shader group in another shader group, which matches very
+ * well to modern material editors.
+ *
+ *   --------------------------------  Shader Group  -------------------------------------------
+ *   |                                                                                         |
+ *   |  ----- Perlin Noise Shader Group -----                ------ Microfacet Shader ------   |
+ *   |  |                                   |                |                             |   |
+ *   |  |                               color -------------->base_color              closure   |
+ *   |  |                                   |                |                             |   |
+ *   |  -------------------------------------                -------------------------------   |
+ *   |                                                                                         |
+ *   -------------------------------------------------------------------------------------------
+ *
+ *   ------------ Perlin Noise Shader Group --------------
+ *   |                                                   |
+ *   |  ------- Perlin Noise Shader -------              |
+ *   |  |                                 |              |
+ *   |  |                             noise----->basecolor
+ *   |  |                                 |              |
+ *   |  -----------------------------------              |
+ *   |                                                   |
+ *   -----------------------------------------------------
+ */
+bool initialize_perlin_noise_material() {
+    constexpr auto microfacet_shader_src = R"(
+        shader lambert_shader(in color base_color, out closure bxdf){
+            vector center       = global_value<center>;
+            bool   flip_normal  = global_value<flip_normal>;
+
+            // make a lambert closure
+            bxdf = make_closure<lambert>(base_color, center, flip_normal);
+        }
+    )";
+
+    constexpr auto basecolor_shader_src = R"(
+        int NoisePerm[512] = {
+            151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140,
+            36, 103, 30, 69, 142,
+            // Remainder of the noise permutation table
+            8, 99, 37, 240, 21, 10, 23, 190, 6, 148, 247, 120, 234, 75, 0, 26, 197, 62,
+            94, 252, 219, 203, 117, 35, 11, 32, 57, 177, 33, 88, 237, 149, 56, 87, 174,
+            20, 125, 136, 171, 168, 68, 175, 74, 165, 71, 134, 139, 48, 27, 166, 77,
+            146, 158, 231, 83, 111, 229, 122, 60, 211, 133, 230, 220, 105, 92, 41, 55,
+            46, 245, 40, 244, 102, 143, 54, 65, 25, 63, 161, 1, 216, 80, 73, 209, 76,
+            132, 187, 208, 89, 18, 169, 200, 196, 135, 130, 116, 188, 159, 86, 164, 100,
+            109, 198, 173, 186, 3, 64, 52, 217, 226, 250, 124, 123, 5, 202, 38, 147,
+            118, 126, 255, 82, 85, 212, 207, 206, 59, 227, 47, 16, 58, 17, 182, 189, 28,
+            42, 223, 183, 170, 213, 119, 248, 152, 2, 44, 154, 163, 70, 221, 153, 101,
+            155, 167, 43, 172, 9, 129, 22, 39, 253, 19, 98, 108, 110, 79, 113, 224, 232,
+            178, 185, 112, 104, 218, 246, 97, 228, 251, 34, 242, 193, 238, 210, 144, 12,
+            191, 179, 162, 241, 81, 51, 145, 235, 249, 14, 239, 107, 49, 192, 214, 31,
+            181, 199, 106, 157, 184, 84, 204, 176, 115, 121, 50, 45, 127, 4, 150, 254,
+            138, 236, 205, 93, 222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78, 66,
+            215, 61, 156, 180, 151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194,
+            233, 7, 225, 140, 36, 103, 30, 69, 142, 8, 99, 37, 240, 21, 10, 23, 190, 6,
+            148, 247, 120, 234, 75, 0, 26, 197, 62, 94, 252, 219, 203, 117, 35, 11, 32,
+            57, 177, 33, 88, 237, 149, 56, 87, 174, 20, 125, 136, 171, 168, 68, 175, 74,
+            165, 71, 134, 139, 48, 27, 166, 77, 146, 158, 231, 83, 111, 229, 122, 60,
+            211, 133, 230, 220, 105, 92, 41, 55, 46, 245, 40, 244, 102, 143, 54, 65, 25,
+            63, 161, 1, 216, 80, 73, 209, 76, 132, 187, 208, 89, 18, 169, 200, 196, 135,
+            130, 116, 188, 159, 86, 164, 100, 109, 198, 173, 186, 3, 64, 52, 217, 226,
+            250, 124, 123, 5, 202, 38, 147, 118, 126, 255, 82, 85, 212, 207, 206, 59,
+            227, 47, 16, 58, 17, 182, 189, 28, 42, 223, 183, 170, 213, 119, 248, 152, 2,
+            44, 154, 163, 70, 221, 153, 101, 155, 167, 43, 172, 9, 129, 22, 39, 253, 19,
+            98, 108, 110, 79, 113, 224, 232, 178, 185, 112, 104, 218, 246, 97, 228, 251,
+            34, 242, 193, 238, 210, 144, 12, 191, 179, 162, 241, 81, 51, 145, 235, 249,
+            14, 239, 107, 49, 192, 214, 31, 181, 199, 106, 157, 184, 84, 204, 176, 115,
+            121, 50, 45, 127, 4, 150, 254, 138, 236, 205, 93, 222, 114, 67, 29, 24, 72,
+            243, 141, 128, 195, 78, 66, 215, 61, 156, 180 };
+
+        float NoiseWeight(float t) {
+            float t3 = t * t * t;
+            float t4 = t3 * t;
+            return 6.0f * t4 * t - 15.0f * t4 + 10.0f * t3;
+        }
+
+        float Lerp(float t, float v1, float v2) { 
+            return (1.0f - t) * v1 + t * v2; 
+        }
+
+        float Grad(int x, int y, int z, float dx, float dy, float dz) {
+            int h = NoisePerm[NoisePerm[NoisePerm[x] + y] + z];
+            h &= 15;
+            float u = ( h < 8 || h == 12 || h == 13 ) ? dx : dy;
+            float v = ( h < 4 || h == 12 || h == 13 ) ? dy : dz;
+            return ((h & 1) ? -u : u) + ((h & 2) ? -v : v);
+        }
+        
+        int floor(float x) {
+            return (x < 0.0f) ? (int)x - 1 : (int)x;
+        }
+
+        float Noise(float x, float y, float z) {
+            // Compute noise cell coordinates and offsets
+            int ix = floor(x);
+            int iy = floor(y);
+            int iz = floor(z);
+            float dx = x - (float)ix;
+            float dy = y - (float)iy;
+            float dz = z - (float)iz;
+
+            // Compute gradient weights
+            int NoisePermSize = 256;
+            ix &= NoisePermSize - 1;
+            iy &= NoisePermSize - 1;
+            iz &= NoisePermSize - 1;
+
+            float w000 = Grad(ix, iy, iz, dx, dy, dz);
+            float w100 = Grad(ix + 1, iy, iz, dx - 1.0f, dy, dz);
+            float w010 = Grad(ix, iy + 1, iz, dx, dy - 1.0f, dz);
+            float w110 = Grad(ix + 1, iy + 1, iz, dx - 1.0f, dy - 1.0f, dz);
+            float w001 = Grad(ix, iy, iz + 1, dx, dy, dz - 1.0f);
+            float w101 = Grad(ix + 1, iy, iz + 1, dx - 1.0f, dy, dz - 1.0f);
+            float w011 = Grad(ix, iy + 1, iz + 1, dx, dy - 1.0f, dz - 1.0f);
+            float w111 = Grad(ix + 1, iy + 1, iz + 1, dx - 1.0f, dy - 1.0f, dz - 1.0f);
+
+            // Compute trilinear interpolation of weights
+            float wx = NoiseWeight(dx);
+            float wy = NoiseWeight(dy);
+            float wz = NoiseWeight(dz);
+            float x00 = Lerp(wx, w000, w100);
+            float x10 = Lerp(wx, w010, w110);
+            float x01 = Lerp(wx, w001, w101);
+            float x11 = Lerp(wx, w011, w111);
+            float y0 = Lerp(wy, x00, x10);
+            float y1 = Lerp(wy, x01, x11);
+            return Lerp(wz, y0, y1);
+        }
+
+        shader basecolor_shader(out color noise){
+            vector center       = global_value<center>;
+            vector position     = global_value<position>;
+            vector delta        = position - center;
+
+            float perlin_noise = Noise( delta.x , delta.y , delta.z );
+            noise = color( perlin_noise, perlin_noise, perlin_noise );
+        }
+    )";
+
+    // Get the instance of TSL system
+    auto& shading_system = Tsl_Namespace::ShadingSystem::get_instance();
+
+    // Make a new shading context, instead of making a new context, renders can also cache a few shading context at the beginning.
+    // And reuse them any time they are needed as long as no two threads are accessing the same shading context at the same time.
+    auto shading_context = shading_system.make_shading_context();
+    if (!shading_context)
+        return false;
+
+    // a lambert driven material
+    auto& mat = g_materials[(int)MaterialType::MT_Perlin_Matt];
+
+    // compile the microfacet shader unit template
+    auto lambert_shader = shading_context->begin_shader_unit_template("lambert_shader");
+    auto ret = lambert_shader->register_tsl_global(g_tsl_global.m_var_list);
+    if (!ret)
+        return false;
+    ret = lambert_shader->compile_shader_source(microfacet_shader_src);
+    if (!ret)
+        return false;
+    auto resolved_ret = shading_context->end_shader_unit_template(lambert_shader.get());
+    if (resolved_ret != TSL_Resolving_Status::TSL_Resolving_Succeed)
+        return false;
+
+    // compile the baecolor shader unit template
+    auto perlin_noise_shader = shading_context->begin_shader_unit_template("perlin_noise_shader");
+    ret = perlin_noise_shader->register_tsl_global(g_tsl_global.m_var_list);
+    if (!ret)
+        return false;
+    ret = perlin_noise_shader->compile_shader_source(basecolor_shader_src);
+    if (!ret)
+        return false;
+    resolved_ret = shading_context->end_shader_unit_template(perlin_noise_shader.get());
+    if (resolved_ret != TSL_Resolving_Status::TSL_Resolving_Succeed)
+        return false;
+
+    // create another shader group template to hold the above perlin noise shader
+    auto perlin_noise_shader_group = shading_context->begin_shader_group_template("perlin_noise_shader_group");
+    ret = perlin_noise_shader_group->register_tsl_global(g_tsl_global.m_var_list);
+    if (!ret)
+        return false;
+
+    // add the shader unit template
+    perlin_noise_shader_group->add_shader_unit("perlin_noise_shader", perlin_noise_shader, true);
+
+    // expose the argument
+    perlin_noise_shader_group->expose_shader_argument("perlin_noise_shader", "noise", true, "basecolor");
+
+    resolved_ret = shading_context->end_shader_group_template(perlin_noise_shader_group.get());
+    if (resolved_ret != TSL_Resolving_Status::TSL_Resolving_Succeed)
+        return false;
+
+    // Create the shader group template
+    auto shader_group = shading_context->begin_shader_group_template("perlin noise shader group");
+    if (!shader_group)
+        return false;
+
+    // Register the TSL global for this shader unit template.
+    ret = shader_group->register_tsl_global(g_tsl_global.m_var_list);
+    if (!ret)
+        return false;
+
+    // Add the two shaders
+    shader_group->add_shader_unit("lambert", lambert_shader, true);
+    shader_group->add_shader_unit("perlin_noise_shader", perlin_noise_shader_group);
+
+    // Setup the connection between the two shaders
+    shader_group->connect_shader_units("perlin_noise_shader", "basecolor", "lambert", "base_color");
+
+    // Expose the shader argument so that this argument can be accessed from host program
+    shader_group->expose_shader_argument("lambert", "bxdf");
+
+    // Indicating the end of the shader unit template creation process.
+    resolved_ret = shading_context->end_shader_group_template(shader_group.get());
+    if (resolved_ret != TSL_Resolving_Status::TSL_Resolving_Succeed)
+        return false;
+
+    // Forward the ownership now
+    mat.m_shader_template = std::move(shader_group);
+
+    // Make a shader instance
+    mat.m_shader_instance = mat.m_shader_template->make_shader_instance();
+    if (!mat.m_shader_instance)
+        return false;
+
+    // Resolve the shader instance
+    resolved_ret = mat.m_shader_instance->resolve_shader_instance();
+    if (resolved_ret != TSL_Resolving_Status::TSL_Resolving_Succeed)
+        return false;
+
+    // Get the raw function pointer
+    mat.m_shader_func = (shader_raw_func)mat.m_shader_instance->get_function();
+
+    return true;
+}
+
 // Initialize all materials
 void initialize_materials() {
     initialize_lambert_material();
     initialize_microfacet_material();
+    initialize_perlin_noise_material();
 }
 
 // Reset the memory pool, this is a pretty cheap operation.
@@ -362,7 +608,7 @@ std::unique_ptr<Bxdf> get_bxdf(const Sphere& obj, const Vec& p) {
     // get the material
     const auto& mat = g_materials[obj.mt];
     if (!mat.m_shader_func)
-        return std::make_unique<Lambert>(Vec(1.0, 0.0, 0.0), obj.p, obj.fn);
+        return std::make_unique<Lambert>(Vec(1.0f, 0.0f, 0.0f), obj.p, obj.fn);
 
     // execute tsl shader
     Tsl_Namespace::ClosureTreeNodeBase* closure = nullptr;
@@ -371,7 +617,7 @@ std::unique_ptr<Bxdf> get_bxdf(const Sphere& obj, const Vec& p) {
     // parse the result
     if (closure->m_id == g_closure_lambert) {
         const ClosureTypeLambert* bxdf_param = (const ClosureTypeLambert*)closure->m_params;
-        return std::make_unique<Lambert>(obj.c, bxdf_param->sphere_center, bxdf_param->flip_normal);
+        return std::make_unique<Lambert>(bxdf_param->base_color, bxdf_param->sphere_center, bxdf_param->flip_normal);
     }
     else if (closure->m_id == g_closure_microfacet) {
         const ClosureTypeMicrofacet* bxdf_param = (const ClosureTypeMicrofacet*)closure->m_params;
