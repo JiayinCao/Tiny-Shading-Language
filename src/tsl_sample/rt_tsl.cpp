@@ -450,14 +450,22 @@ bool initialize_perlin_noise_material() {
             float y1 = Lerp(wy, x01, x11);
             return Lerp(wz, y0, y1);
         }
+        
+        color lerp_color( color a, color b, float f ){
+            return f * a + ( 1.0f - f ) * b;
+        }
 
         shader basecolor_shader(out color noise){
             vector center       = global_value<center>;
             vector position     = global_value<position>;
-            vector delta        = position - center;
+            vector delta        = ( position - center ) * 0.5f;
 
-            float perlin_noise = Noise( delta.x , delta.y , delta.z );
-            noise = color( perlin_noise, perlin_noise, perlin_noise );
+            float perlin_noise = 1.0f - Noise( delta.x , delta.y , delta.z );
+            color yellow = color( 1.0f, 1.0f, 0.0f );
+            color blue = color( 0.0f, 0.0f, 1.0f );
+            noise = color(  Lerp( yellow.r , blue.r, perlin_noise ),
+                            Lerp( yellow.g , blue.g, perlin_noise ),
+                            Lerp( yellow.b , blue.b, perlin_noise ) );
         }
     )";
 
