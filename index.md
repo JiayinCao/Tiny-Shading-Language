@@ -53,7 +53,7 @@ This is a very useful feature to help implementing groupping material nodes in m
 
 In order to execute the shader code, it is necessary to create a shader instance given a shader template, regardless whether it is a shader unit template or shader group template. Shader instance is the only shader execution unit in TSL, it caches a resolved raw function pointer for its host program to execute.
 
-What is mentioned above is just a very brief introduction of how TSL works in a ray tracer. It doesn't covers all details in it. However, hopefully this could offer a quick big picture of how it works. In an ideal world, I should have written a language spec for it, but I don't have that much time.
+What is mentioned above is just a very brief introduction of how TSL works in a ray tracer. It doesn't covers all details in it. Hopefully, this could offer a quick big picture of how it works. In an ideal world, I should have written a language spec for it, but I don't have that much time.
 For a more detailed tutorial, please check out the sample code in the source, which does demonstrates all that is needed to integrate TSL in a toy ray tracer.
 Following is the image generated in the sample project,
 ![](https://github.com/JiayinCao/Tiny-Shading-Language/blob/master/gallery/tsl_sample.jpg?raw=true)
@@ -66,6 +66,17 @@ The exact step of building is show below
 - cd tsl
 - make update_dep
 - make
+
+# Note
+TSL is just a project that I did in my spare time in roughly four months, before when I had no experience of how a compiler works.
+The original intention was just to replace OSL's features used in my renderer.
+
+There are quite a few things to be noted
+- It is very possible to crash the compiler
+- Not every illegal way of shader programming will be indicated
+- There are loads of features not well supported in TSL, like 3D texture sampling, mip-mapping
+
+However, it does successfully replaces OSL with its own implementation in my renderer. I hope I have time to polish it in the future, but this will not be my focus in the near future.
 
 # About Author
 
