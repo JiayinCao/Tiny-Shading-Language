@@ -5,6 +5,9 @@ TSL ( Tiny Shading Language ) is my own shading language designed for my offline
 The goal of TSL is to provide shader programming ability to my open source ray tracer project. 
 Although it is specifically designed for my own renderer, this programming language can totally be used in any other CPU based ray tracing project.
 
+Following is the image generated in the sample ray tracing program with TSL integrated in this project
+![](https://github.com/JiayinCao/Tiny-Shading-Language/blob/master/gallery/tsl_sample.jpg?raw=true)
+
 # About Author
 
 My name is Jiayin Cao. I’m currently working at Naughty Dog as a graphics engineer. Prior to joining Naughty Dog, I used to work at Ubisoft Singapore and NVIDIA Shanghai before. My primary interest covers the following areas,
