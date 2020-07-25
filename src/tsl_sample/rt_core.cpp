@@ -138,7 +138,7 @@ int rt_main(int samps) {
     const auto total_pixel_cnt = w * h;
 
     // camera position and direction
-    auto cam = Ray(Vec(50, 52, 295.6), Vec(0, -0.042612, -1).norm());
+    auto cam = Ray(Vec(50, 52, 295.6), Vec(0, -0.042612, -0.95).norm());
     auto cx = Vec(w * .5135 / h, 0.0f, 0.0f), cy = Vec((cx % cam.d).norm() * .5135);
 
     // for each pixel, take a number of samples and resolve them together.
@@ -186,6 +186,9 @@ int rt_main(int samps) {
     // this kind of synchronization is by no means the most performant one, but it does do its job
     while (pixel_cnt < total_pixel_cnt)
         fprintf(stderr, "\rRendering (%d spp) %5.2f%%", samps, 100. * pixel_cnt / total_pixel_cnt);
+
+    // flush the message and change a new line
+    fprintf(stderr, "\rRendering (%d spp) %5.2f%%\n", samps, 100. * pixel_cnt / total_pixel_cnt);
 
 	// making sure all threads are done
 	std::for_each(threads.begin(), threads.end(), [](std::thread& thread) { thread.join(); });
