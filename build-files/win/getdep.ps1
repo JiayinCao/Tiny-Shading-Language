@@ -15,6 +15,8 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
 #>
 
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 powershell Remove-Item -path ./dependencies -recurse -ErrorAction Ignore
 wget https://github.com/lexxmark/winflexbison/releases/download/v2.5.22/win_flex_bison-2.5.22.zip -OutFile dependencies.zip
 Expand-Archive .\dependencies.zip -DestinationPath .\dependencies\flex_bison
