@@ -208,7 +208,7 @@ using ClosureArgList = std::vector<ClosureArg>;
 //    }
 
 #define DECLARE_CLOSURE_TYPE_BEGIN(T, name)     struct T { static const char* get_name() { return name; }
-#define DECLARE_CLOSURE_TYPE_VAR(T,VT,V)        VT V;
+#define DECLARE_CLOSURE_TYPE_VAR(T,VT,V)        Tsl_Namespace::VT V;
 #define DECLARE_CLOSURE_TYPE_END(T)             static ClosureArgList m_closure_args; static ClosureID RegisterClosure(); };
 
 #define IMPLEMENT_CLOSURE_TYPE_BEGIN(T)         ClosureArgList T::m_closure_args({
