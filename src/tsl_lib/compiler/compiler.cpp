@@ -219,9 +219,10 @@ bool TslCompiler::compile(const char* source_code, ShaderUnitTemplate* su) {
                 std::vector<llvm::Type*> arg_types;
                 for (auto& arg : tsl_global) {
                     auto type = get_type_from_context(arg.m_type, compile_context);
-                    // this is a VERY DIRTY hack, I'll try to get back to it once most features are done.
-                    if (!type)
-                        type = get_int_32_ptr_ty(compile_context);
+                    if (!type) {
+                        emit_error("Invalid data type %s.", arg.m_type.c_str());
+                        return false;
+                    }
                     arg_types.push_back(type);
                 }
 
@@ -412,9 +413,10 @@ TSL_Resolving_Status TslCompiler::resolve(ShaderGroupTemplate* sg) {
             std::vector<llvm::Type*> arg_types;
             for (auto& arg : tsl_global) {
                 auto type = get_type_from_context(arg.m_type, compile_context);
-                // this is a VERY DIRTY hack, I'll try to get back to it once most features are done.
-                if (!type)
-                    type = get_int_32_ptr_ty(compile_context);
+                if (!type) {
+                    emit_error("Invalid data type %s.", arg.m_type.c_str());
+                    return TSL_Resolving_Status::Tsl_Resolving_InvalidDataType;
+                }
                 arg_types.push_back(type);
             }
 

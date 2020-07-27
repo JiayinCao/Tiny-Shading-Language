@@ -44,6 +44,7 @@ enum class TSL_DEBUG_LEVEL : unsigned int {
 enum class TSL_Resolving_Status : unsigned int {
     TSL_Resolving_Succeed = 0,
     TSL_Resolving_InvalidInput,                     /*< Input is nullptr. */
+    Tsl_Resolving_InvalidDataType,                  /*< One of the data types is invalid.*/
     TSL_Resolving_ShaderGroupWithoutRoot,           /*< No shader unit defined as root in the input shader group. */
     TSL_Resolving_ShaderGroupWithCycles,            /*< There is cycles detected in the shader group. */
     TSL_Resolving_InvalidShaderGroupTemplate,       /*< Invalid shader group template. */

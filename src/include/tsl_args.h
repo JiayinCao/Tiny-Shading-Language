@@ -38,9 +38,9 @@ TSL_NAMESPACE_BEGIN
 // structure the following way,
 //
 //   DECLARE_TSLGLOBAL_BEGIN(TslGlobal)
-//   DECLARE_TSLGLOBAL_VAR(float3, view_direction)
-//   DECLARE_TSLGLOBAL_VAR(float3, uvw)
-//   DECLARE_TSLGLOBAL_VAR(float, custom_variable)
+//   DECLARE_TSLGLOBAL_VAR(Tsl_float3, view_direction)
+//   DECLARE_TSLGLOBAL_VAR(Tsl_float3, uvw)
+//   DECLARE_TSLGLOBAL_VAR(Tsl_float, custom_variable)
 //   DECLARE_TSLGLOBAL_END()
 //
 // As we can see from the above definition, there is view direction, uvw and another custom variable. The way it
@@ -50,9 +50,9 @@ TSL_NAMESPACE_BEGIN
 // To implement the data structure, it is necessary to define it in a cpp file this way
 //
 //   IMPLEMENT_TSLGLOBAL_BEGIN(TslGlobal)
-//   IMPLEMENT_TSLGLOBAL_VAR(float3, view_direction)
-//   IMPLEMENT_TSLGLOBAL_VAR(float3, uvw)
-//   IMPLEMENT_TSLGLOBAL_VAR(float, custom_variable)
+//   IMPLEMENT_TSLGLOBAL_VAR(Tsl_float3, view_direction)
+//   IMPLEMENT_TSLGLOBAL_VAR(Tsl_float3, uvw)
+//   IMPLEMENT_TSLGLOBAL_VAR(Tsl_float,  custom_variable)
 //   IMPLEMENT_TSLGLOBAL_END()
 //
 // Before each shader execution, it is up to renderers to make sure a proper data structure is passed in through
@@ -78,7 +78,7 @@ struct GlobalVar {
 };
 
 //! @brief  Global var list helps to track the memory layout defined in TSL global.
-struct GlobalVarList{
+struct GlobalVarList {
     std::vector<GlobalVar>  m_var_list;         // a list keeping track of all global variables defined in TSL global.
 
     TSL_INTERFACE GlobalVarList();
@@ -88,10 +88,10 @@ struct GlobalVarList{
 
 #define DECLARE_TSLGLOBAL_BEGIN(T)          struct T {
 #define DECLARE_TSLGLOBAL_VAR(VT,V)         VT V;
-#define DECLARE_TSLGLOBAL_END()             static GlobalVarList m_var_list; static bool shader_unit_register( ShaderUnitTemplate* sut ) { return sut->register_tsl_global( m_var_list ); } };
+#define DECLARE_TSLGLOBAL_END()             static Tsl_Namespace::GlobalVarList m_var_list; static bool shader_unit_register( Tsl_Namespace::ShaderUnitTemplate* sut ) { return sut->register_tsl_global( m_var_list ); } };
 
-#define IMPLEMENT_TSLGLOBAL_BEGIN(T)        GlobalVarList T::m_var_list( std::vector<GlobalVar>({
-#define IMPLEMENT_TSLGLOBAL_VAR(VT,V)       { GlobalVar( #V, #VT ) },
+#define IMPLEMENT_TSLGLOBAL_BEGIN(T)        Tsl_Namespace::GlobalVarList T::m_var_list( std::vector<Tsl_Namespace::GlobalVar>({
+#define IMPLEMENT_TSLGLOBAL_VAR(VT,V)       { Tsl_Namespace::GlobalVar( #V, #VT ) },
 #define IMPLEMENT_TSLGLOBAL_END()           }) );
 
 
@@ -167,8 +167,8 @@ using ClosureArgList = std::vector<ClosureArg>;
 //
 // For example, claiming a lambert closure could goes like this in a header file,
 //    DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeLambert, "lambert")
-//    DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, float3, base_color)
-//    DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, float3, normal)
+//    DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, Tsl_float3, base_color)
+//    DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, Tsl_float3, normal)
 //    DECLARE_CLOSURE_TYPE_END(ClosureTypeLambert)
 //
 // It is clearly shown in the above code that lambert has two different parameters passed, one is the base
@@ -177,8 +177,8 @@ using ClosureArgList = std::vector<ClosureArg>;
 // Of course, apart from defining it, it is also necessary to find a cpp file to implement the structure this
 // way,
 //    IMPLEMENT_CLOSURE_TYPE_BEGIN(ClosureTypeLambert)
-//    IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambert, float3, base_color)
-//    IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambert, float3, normal)
+//    IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambert, Tsl_float3, base_color)
+//    IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambert, Tsl_float3, normal)
 //    IMPLEMENT_CLOSURE_TYPE_END(ClosureTypeLambert)
 //
 // Internally, this will creates a list of ClosureArg so that the compiler knows about the detail of it.
@@ -188,11 +188,11 @@ using ClosureArgList = std::vector<ClosureArg>;
 // layer on top of another brdf that could be any other brdf in the system. In this case, one can simply define
 // the following code to implement it
 //    DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeCoat, "coat")
-//    DECLARE_CLOSURE_TYPE_VAR(ClosureTypeCoat, void*, closure)
-//    DECLARE_CLOSURE_TYPE_VAR(ClosureTypeCoat, float, roughness)
-//    DECLARE_CLOSURE_TYPE_VAR(ClosureTypeCoat, float, ior)
-//    DECLARE_CLOSURE_TYPE_VAR(ClosureTypeCoat, float3, sigma)
-//    DECLARE_CLOSURE_TYPE_VAR(ClosureTypeCoat, float3, normal)
+//    DECLARE_CLOSURE_TYPE_VAR(ClosureTypeCoat, Tsl_closure, closure)
+//    DECLARE_CLOSURE_TYPE_VAR(ClosureTypeCoat, Tsl_float, roughness)
+//    DECLARE_CLOSURE_TYPE_VAR(ClosureTypeCoat, Tsl_float, ior)
+//    DECLARE_CLOSURE_TYPE_VAR(ClosureTypeCoat, Tsl_float3, sigma)
+//    DECLARE_CLOSURE_TYPE_VAR(ClosureTypeCoat, Tsl_float3, normal)
 //    DECLARE_CLOSURE_TYPE_END(ClosureTypeCoat)
 //
 // With the data structure declared in the source code, it is necessary to register it in the TSL shading system
@@ -208,12 +208,12 @@ using ClosureArgList = std::vector<ClosureArg>;
 //    }
 
 #define DECLARE_CLOSURE_TYPE_BEGIN(T, name)     struct T { static const char* get_name() { return name; }
-#define DECLARE_CLOSURE_TYPE_VAR(T,VT,V)        Tsl_Namespace::VT V;
-#define DECLARE_CLOSURE_TYPE_END(T)             static ClosureArgList m_closure_args; static ClosureID RegisterClosure(); };
+#define DECLARE_CLOSURE_TYPE_VAR(T,VT,V)        VT V;
+#define DECLARE_CLOSURE_TYPE_END(T)             static Tsl_Namespace::ClosureArgList m_closure_args; static Tsl_Namespace::ClosureID RegisterClosure(); };
 
-#define IMPLEMENT_CLOSURE_TYPE_BEGIN(T)         ClosureArgList T::m_closure_args({
-#define IMPLEMENT_CLOSURE_TYPE_VAR(T,VT,V)      { ClosureArg( #V, #VT ) },
-#define IMPLEMENT_CLOSURE_TYPE_END(T)           }); ClosureID T::RegisterClosure() { return Tsl_Namespace::ShadingSystem::get_instance().register_closure_type( T::get_name() , m_closure_args , sizeof(T) ); }
+#define IMPLEMENT_CLOSURE_TYPE_BEGIN(T)         Tsl_Namespace::ClosureArgList T::m_closure_args({
+#define IMPLEMENT_CLOSURE_TYPE_VAR(T,VT,V)      { Tsl_Namespace::ClosureArg( #V, #VT ) },
+#define IMPLEMENT_CLOSURE_TYPE_END(T)           }); Tsl_Namespace::ClosureID T::RegisterClosure() { return Tsl_Namespace::ShadingSystem::get_instance().register_closure_type( T::get_name() , m_closure_args , sizeof(T) ); }
 
 // It is very important to make sure the memory layout is as expected, there should be no fancy stuff compiler tries to do for these data structure.
 // Because the same data structure will also be generated from LLVM, which will expect this exact memory layout. If there is miss-match, it will crash.
@@ -309,5 +309,14 @@ inline float dot(const float3& a, const float3& b) {
 inline float3 cross(const float3& a, const float3& b) {
     return make_float3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
 }
+
+// Following are the only options for declaring a variable
+#define Tsl_float3    Tsl_Namespace::float3
+#define Tsl_float     float
+#define Tsl_int       int
+#define Tsl_bool      bool
+#define Tsl_closure   void*
+#define Tsl_double    double
+#define Tsl_resource  void*
 
 TSL_NAMESPACE_END

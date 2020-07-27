@@ -19,11 +19,11 @@
 
 namespace {
     DECLARE_TSLGLOBAL_BEGIN(AnotherTslGlobal)
-    DECLARE_TSLGLOBAL_VAR(float3, basecolor)
+    DECLARE_TSLGLOBAL_VAR(Tsl_float3, basecolor)
     DECLARE_TSLGLOBAL_END()
 
     IMPLEMENT_TSLGLOBAL_BEGIN(AnotherTslGlobal)
-    IMPLEMENT_TSLGLOBAL_VAR(float3, basecolor)
+    IMPLEMENT_TSLGLOBAL_VAR(Tsl_float3, basecolor)
     IMPLEMENT_TSLGLOBAL_END()
 }
 

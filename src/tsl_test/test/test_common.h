@@ -30,38 +30,38 @@
 USE_TSL_NAMESPACE
 
 DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeLambert, "lambert")
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, int, base_color)
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, float, normal)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, Tsl_int, base_color)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, Tsl_float, normal)
 DECLARE_CLOSURE_TYPE_END(ClosureTypeLambert)
 
 DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeMicrofacet, "microfacet")
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float, roughness)
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float, specular)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, Tsl_float, roughness)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, Tsl_float, specular)
 DECLARE_CLOSURE_TYPE_END(ClosureTypeMicrofacet)
 
 DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeRandom0, "random0")
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeRandom0, float3, roughness)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeRandom0, Tsl_float3, roughness)
 DECLARE_CLOSURE_TYPE_END(ClosureTypeRandom0)
 
 DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeLayeredBxdf, "layered_bxdf")
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, float, roughness)
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, float, specular)
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, void*, closure)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, Tsl_float, roughness)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, Tsl_float, specular)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLayeredBxdf, Tsl_closure, closure)
 DECLARE_CLOSURE_TYPE_END(ClosureTypeLayeredBxdf)
 
 DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeBxdfWithDouble, "bxdf_with_double")
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeBxdfWithDouble, double, roughness)
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeBxdfWithDouble, float, specular)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeBxdfWithDouble, Tsl_double, roughness)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeBxdfWithDouble, Tsl_float, specular)
 DECLARE_CLOSURE_TYPE_END(ClosureTypeBxdfWithDouble)
 
 DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeLambertInSORT, "lambert_in_sort")
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambertInSORT, float3, base_color)
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambertInSORT, float3, normal)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambertInSORT, Tsl_float3, base_color)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambertInSORT, Tsl_float3, normal)
 DECLARE_CLOSURE_TYPE_END(ClosureTypeLambertInSORT)
 
 DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeMeasuredBrdf, "measured_brdf")
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMeasuredBrdf, int, signature)
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMeasuredBrdf, void*, custom_data)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMeasuredBrdf, Tsl_int, signature)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMeasuredBrdf, Tsl_resource, custom_data)
 DECLARE_CLOSURE_TYPE_END(ClosureTypeMeasuredBrdf)
 
 extern int g_name_counter;

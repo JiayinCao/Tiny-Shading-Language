@@ -30,24 +30,24 @@
 #include "rt_tsl.h"
 
 IMPLEMENT_TSLGLOBAL_BEGIN(TslGlobal)
-IMPLEMENT_TSLGLOBAL_VAR(float3, base_color)
-IMPLEMENT_TSLGLOBAL_VAR(float3, center)
-IMPLEMENT_TSLGLOBAL_VAR(float,  radius)
-IMPLEMENT_TSLGLOBAL_VAR(float3, position)
-IMPLEMENT_TSLGLOBAL_VAR(bool,   flip_normal)
+IMPLEMENT_TSLGLOBAL_VAR(Tsl_float3, base_color)
+IMPLEMENT_TSLGLOBAL_VAR(Tsl_float3, center)
+IMPLEMENT_TSLGLOBAL_VAR(Tsl_float, radius)
+IMPLEMENT_TSLGLOBAL_VAR(Tsl_float3, position)
+IMPLEMENT_TSLGLOBAL_VAR(Tsl_bool, flip_normal)
 IMPLEMENT_TSLGLOBAL_END()
 
 IMPLEMENT_CLOSURE_TYPE_BEGIN(ClosureTypeLambert)
-IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambert, float3, base_color)
-IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambert, float3, sphere_center)
-IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambert, bool, flip_normal)
+IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambert, Tsl_float3,  base_color)
+IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambert, Tsl_float3,  sphere_center)
+IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeLambert, Tsl_bool,    flip_normal)
 IMPLEMENT_CLOSURE_TYPE_END(ClosureTypeLambert)
 
 IMPLEMENT_CLOSURE_TYPE_BEGIN(ClosureTypeMicrofacet)
-IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float3, base_color)
-IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float, roughness)
-IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float3, sphere_center)
-IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, bool, flip_normal)
+IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, Tsl_float3,   base_color)
+IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, Tsl_float,    roughness)
+IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, Tsl_float3,   sphere_center)
+IMPLEMENT_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, Tsl_bool,     flip_normal)
 IMPLEMENT_CLOSURE_TYPE_END(ClosureTypeMicrofacet)
 
 // In an ideal world, a sophisticated renderer should have its own memory management system.
@@ -99,10 +99,10 @@ using shader_raw_func = void(*)(Tsl_Namespace::ClosureTreeNodeBase**, TslGlobal*
 // it needs to express the properties of the material.
 struct Material {
     // This is the shader unit template
-    std::shared_ptr<ShaderUnitTemplate> m_shader_template;
+    std::shared_ptr<Tsl_Namespace::ShaderUnitTemplate> m_shader_template;
 
     // This is the resolved shader instance, this is the unit of shader execution.
-    std::shared_ptr<ShaderInstance>     m_shader_instance;
+    std::shared_ptr<Tsl_Namespace::ShaderInstance>     m_shader_instance;
 
     // the resolved raw function pointer
     shader_raw_func                     m_shader_func = nullptr;
@@ -115,8 +115,8 @@ static Material g_materials[MaterialType::Cnt];
 static TslGlobal g_tsl_global;
 
 // The closure ids
-static ClosureID g_closure_lambert      = INVALID_CLOSURE_ID;
-static ClosureID g_closure_microfacet   = INVALID_CLOSURE_ID;
+static Tsl_Namespace::ClosureID g_closure_lambert      = Tsl_Namespace::INVALID_CLOSURE_ID;
+static Tsl_Namespace::ClosureID g_closure_microfacet   = Tsl_Namespace::INVALID_CLOSURE_ID;
 
 /*
  * The first material, lambert is very simple and straightforward. All of it is driven by one single shader unit template.
@@ -165,7 +165,7 @@ bool initialize_lambert_material() {
 
     // Indicating the end of the shader unit template creation process.
     auto resolved_ret = shading_context->end_shader_unit_template(mat.m_shader_template.get());
-    if (resolved_ret != TSL_Resolving_Status::TSL_Resolving_Succeed)
+    if (resolved_ret != Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed)
         return false;
 
     // make a shader instance
@@ -175,7 +175,7 @@ bool initialize_lambert_material() {
 
     // Resolve the shader instance
     resolved_ret = mat.m_shader_instance->resolve_shader_instance();
-    if (resolved_ret != TSL_Resolving_Status::TSL_Resolving_Succeed)
+    if (resolved_ret != Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed)
         return false;
 
     // get the raw function pointer
@@ -258,7 +258,7 @@ bool initialize_microfacet_material() {
     if(!ret)
         return false;
     auto resolved_ret = shading_context->end_shader_unit_template(microfacet_shader.get());
-    if (resolved_ret != TSL_Resolving_Status::TSL_Resolving_Succeed)
+    if (resolved_ret != Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed)
         return false;
 
     // compile the baecolor shader unit template
@@ -270,7 +270,7 @@ bool initialize_microfacet_material() {
     if (!ret)
         return false;
     resolved_ret = shading_context->end_shader_unit_template(basecolor_shader.get());
-    if (resolved_ret != TSL_Resolving_Status::TSL_Resolving_Succeed)
+    if (resolved_ret != Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed)
         return false;
     
 
@@ -296,7 +296,7 @@ bool initialize_microfacet_material() {
 
     // Indicating the end of the shader unit template creation process.
     resolved_ret = shading_context->end_shader_group_template(shader_group.get());
-    if (resolved_ret != TSL_Resolving_Status::TSL_Resolving_Succeed)
+    if (resolved_ret != Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed)
         return false;
 
     // Forward the ownership now
@@ -309,7 +309,7 @@ bool initialize_microfacet_material() {
 
     // Resolve the shader instance
     resolved_ret = mat.m_shader_instance->resolve_shader_instance();
-    if (resolved_ret != TSL_Resolving_Status::TSL_Resolving_Succeed)
+    if (resolved_ret != Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed)
         return false;
 
     // Get the raw function pointer
@@ -490,7 +490,7 @@ bool initialize_perlin_noise_material() {
     if (!ret)
         return false;
     auto resolved_ret = shading_context->end_shader_unit_template(lambert_shader.get());
-    if (resolved_ret != TSL_Resolving_Status::TSL_Resolving_Succeed)
+    if (resolved_ret != Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed)
         return false;
 
     // compile the baecolor shader unit template
@@ -502,7 +502,7 @@ bool initialize_perlin_noise_material() {
     if (!ret)
         return false;
     resolved_ret = shading_context->end_shader_unit_template(perlin_noise_shader.get());
-    if (resolved_ret != TSL_Resolving_Status::TSL_Resolving_Succeed)
+    if (resolved_ret != Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed)
         return false;
 
     // create another shader group template to hold the above perlin noise shader
@@ -518,7 +518,7 @@ bool initialize_perlin_noise_material() {
     perlin_noise_shader_group->expose_shader_argument("perlin_noise_shader", "noise", true, "basecolor");
 
     resolved_ret = shading_context->end_shader_group_template(perlin_noise_shader_group.get());
-    if (resolved_ret != TSL_Resolving_Status::TSL_Resolving_Succeed)
+    if (resolved_ret != Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed)
         return false;
 
     // Create the shader group template
@@ -543,7 +543,7 @@ bool initialize_perlin_noise_material() {
 
     // Indicating the end of the shader unit template creation process.
     resolved_ret = shading_context->end_shader_group_template(shader_group.get());
-    if (resolved_ret != TSL_Resolving_Status::TSL_Resolving_Succeed)
+    if (resolved_ret != Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed)
         return false;
 
     // Forward the ownership now
@@ -556,7 +556,7 @@ bool initialize_perlin_noise_material() {
 
     // Resolve the shader instance
     resolved_ret = mat.m_shader_instance->resolve_shader_instance();
-    if (resolved_ret != TSL_Resolving_Status::TSL_Resolving_Succeed)
+    if (resolved_ret != Tsl_Namespace::TSL_Resolving_Status::TSL_Resolving_Succeed)
         return false;
 
     // Get the raw function pointer
@@ -607,10 +607,10 @@ void initialize_tsl_system() {
 std::unique_ptr<Bxdf> get_bxdf(const Sphere& obj, const Vec& p) {
     // setup tsl global data structure
     TslGlobal tsl_global;
-    tsl_global.base_color = make_float3(obj.c.x, obj.c.y, obj.c.z);
-    tsl_global.center = make_float3( obj.p.x , obj.p.y, obj.p.z );
+    tsl_global.base_color = Tsl_Namespace::make_float3(obj.c.x, obj.c.y, obj.c.z);
+    tsl_global.center = Tsl_Namespace::make_float3( obj.p.x , obj.p.y, obj.p.z );
     tsl_global.flip_normal = obj.fn;
-    tsl_global.position = make_float3(p.x, p.y, p.z);
+    tsl_global.position = Tsl_Namespace::make_float3(p.x, p.y, p.z);
     tsl_global.radius = obj.rad;
 
     // get the material

@@ -24,7 +24,7 @@
 #include <tsl_define.h>
 #include "rt_bxdf.h"
 
-USE_TSL_NAMESPACE
+static Tsl_float3 f;
 
 // Initialize tiny shading language system
 // It basically takes the chances to initialize all necessary data structure, like registering callback,
@@ -45,24 +45,24 @@ std::unique_ptr<Bxdf> get_bxdf(const Sphere& sphere, const Vec& p);
 
 // tsl global data structure
 DECLARE_TSLGLOBAL_BEGIN(TslGlobal)
-DECLARE_TSLGLOBAL_VAR(float3,   base_color)     // base color of the material
-DECLARE_TSLGLOBAL_VAR(float3,   center)         // center of the sphere in world space
-DECLARE_TSLGLOBAL_VAR(float,    radius)         // radius of the sphere
-DECLARE_TSLGLOBAL_VAR(float3,   position)       // shaded poisition in world space
-DECLARE_TSLGLOBAL_VAR(bool,     flip_normal)    // whether the normal is flipped
+DECLARE_TSLGLOBAL_VAR(Tsl_float3,   base_color)     // base color of the material
+DECLARE_TSLGLOBAL_VAR(Tsl_float3,   center)         // center of the sphere in world space
+DECLARE_TSLGLOBAL_VAR(Tsl_float,    radius)         // radius of the sphere
+DECLARE_TSLGLOBAL_VAR(Tsl_float3,   position)       // shaded poisition in world space
+DECLARE_TSLGLOBAL_VAR(Tsl_bool,     flip_normal)    // whether the normal is flipped
 DECLARE_TSLGLOBAL_END()
 
 // closure for lambert type
 DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeLambert, "lambert")
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, float3, base_color)
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, float3, sphere_center)
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, bool,   flip_normal)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, Tsl_float3, base_color)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, Tsl_float3, sphere_center)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeLambert, Tsl_bool,   flip_normal)
 DECLARE_CLOSURE_TYPE_END(ClosureTypeLambert)
 
 // closure for microfacet type
 DECLARE_CLOSURE_TYPE_BEGIN(ClosureTypeMicrofacet, "microfacet")
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float3, base_color)
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float, roughness)
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, float3, sphere_center)
-DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, bool, flip_normal)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, Tsl_float3, base_color)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, Tsl_float, roughness)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, Tsl_float3, sphere_center)
+DECLARE_CLOSURE_TYPE_VAR(ClosureTypeMicrofacet, Tsl_bool, flip_normal)
 DECLARE_CLOSURE_TYPE_END(ClosureTypeMicrofacet)

@@ -116,9 +116,10 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureAr
     std::vector<Type*> arg_types;
     for (auto& arg : arg_list) {
         auto type = get_type_from_context(arg.m_type, m_llvm_compiling_context);
-        // this is a VERY DIRTY hack, I'll try to get back to it once most features are done.
-        if (!type)
-            type = get_closure_ty(m_llvm_compiling_context);
+        if (!type) {
+            emit_error("Invalid data type %s.", arg.m_type.c_str());
+            return INVALID_CLOSURE_ID;
+        }
         arg_types.push_back(type);
     }
 
@@ -145,9 +146,10 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureAr
 
         // this obviously won't work for pointer type data, I will fix it later.
         auto var_type = get_type_from_context(arg.m_type, m_llvm_compiling_context);
-        // this is a VERY DIRTY hack, I'll try to get back to it once most features are done.
-        if (!var_type)
-            var_type = get_int_32_ptr_ty(m_llvm_compiling_context);
+        if (!var_type) {
+            emit_error("Invalid data type %s.", arg.m_type.c_str());
+            return INVALID_CLOSURE_ID;
+        }
 
         const auto var_ptr = builder.CreateConstGEP2_32(nullptr, converted_param_table_ptr, 0, i);
         builder.CreateStore(function->getArg(i), var_ptr);
@@ -194,10 +196,11 @@ llvm::Function* GlobalModule::declare_closure_function(const std::string& name, 
 
     std::vector<Type*> arg_types;
     for (auto& arg : it->second.m_var_list) {
-        // this is a VERY DIRTY hack, I'll try to get back to it once most features are done.
         auto var_type = get_type_from_context(arg.m_type, context);
-        if (!var_type)
-            var_type = get_closure_ty(context);
+        if (!var_type) {
+            emit_error("Invalid data type %s.", arg.m_type.c_str());
+            return nullptr;
+        }
 
         arg_types.push_back(var_type);
     }

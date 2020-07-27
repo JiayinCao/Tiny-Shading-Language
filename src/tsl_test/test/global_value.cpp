@@ -19,13 +19,13 @@
 
 namespace {
     DECLARE_TSLGLOBAL_BEGIN(TslGlobal)
-    DECLARE_TSLGLOBAL_VAR(float, intensity)
-    DECLARE_TSLGLOBAL_VAR(float3, diffuse)
+    DECLARE_TSLGLOBAL_VAR(Tsl_float, intensity)
+    DECLARE_TSLGLOBAL_VAR(Tsl_float3, diffuse)
     DECLARE_TSLGLOBAL_END()
 
     IMPLEMENT_TSLGLOBAL_BEGIN(TslGlobal)
-    IMPLEMENT_TSLGLOBAL_VAR(float, intensity)
-    IMPLEMENT_TSLGLOBAL_VAR(float3, diffuse)
+    IMPLEMENT_TSLGLOBAL_VAR(Tsl_float, intensity)
+    IMPLEMENT_TSLGLOBAL_VAR(Tsl_float3, diffuse)
     IMPLEMENT_TSLGLOBAL_END()
 }
 

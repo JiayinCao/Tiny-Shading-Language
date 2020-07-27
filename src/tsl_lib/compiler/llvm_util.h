@@ -94,19 +94,23 @@ inline llvm::Type*          get_type_from_context(const Tsl_Namespace::DataType 
 }
 
 inline llvm::Type* get_type_from_context(const std::string& type, Tsl_Namespace::TSL_Compile_Context& context) {
-    if (type == "int")
+    if (type == "Tsl_int")
         return get_int_32_ty(context);
-    else if (type == "float")
+    else if (type == "Tsl_float")
         return get_float_ty(context);
-    else if (type == "float3")
+    else if (type == "Tsl_float3")
         return context.m_structure_type_maps["float3"].m_llvm_type;
-    else if( type == "double" )
+    else if( type == "Tsl_double" )
         return get_double_ty(context);
-    else if( type == "matrix" )
+    else if( type == "Tsl_matrix" ) // not well supported for now
         return get_float_ptr_ty(context);
-    else if( type == "void" )
+    else if( type == "Tsl_closure" )
+        return get_int_32_ptr_ty(context);
+    else if( type == "Tsl_resource" )
+        return get_int_32_ptr_ty(context);
+    else if (type == "void")
         return get_void_ty(context);
-    else if( type == "bool" )
+    else if( type == "Tsl_bool" )
         return get_int_1_ty(context);
     return nullptr;
 }
