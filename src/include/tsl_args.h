@@ -25,6 +25,25 @@
 
 TSL_NAMESPACE_BEGIN
 
+// helper macro to detect if a type is valid
+#define VERITY_TYPE(s)  std::string_view(s) == "Tsl_float3" || \
+                        std::string_view(s) == "Tsl_float" || \
+                        std::string_view(s) == "Tsl_int" || \
+                        std::string_view(s) == "Tsl_bool" || \
+                        std::string_view(s) == "Tsl_double" || \
+                        std::string_view(s) == "Tsl_closure" || \
+                        std::string_view(s) == "Tsl_resource"
+#define CHECK_TSL_TYPE(x)   static_assert(VERITY_TYPE(x), "Invalid argument type " x ". Please choose one from Tsl_float3, Tsl_float, Tsl_int, Tsl_bool, Tsl_double, Tsl_closure, Tsl_resource.");
+
+// Following are the only options for declaring a variable
+#define Tsl_float3    Tsl_Namespace::float3
+#define Tsl_float     float
+#define Tsl_int       int
+#define Tsl_bool      bool
+#define Tsl_closure   void*
+#define Tsl_double    double
+#define Tsl_resource  void*
+
 // -----------------------------------------------------------------------------------------------------------
 // TSL global variable declaration.
 // -----------------------------------------------------------------------------------------------------------
@@ -86,12 +105,12 @@ struct GlobalVarList {
     TSL_INTERFACE GlobalVarList(const GlobalVarList&);
 };
 
-#define DECLARE_TSLGLOBAL_BEGIN(T)          struct T {
-#define DECLARE_TSLGLOBAL_VAR(VT,V)         VT V;
-#define DECLARE_TSLGLOBAL_END()             static Tsl_Namespace::GlobalVarList m_var_list; static bool shader_unit_register( Tsl_Namespace::ShaderUnitTemplate* sut ) { return sut->register_tsl_global( m_var_list ); } };
+#define DECLARE_TSLGLOBAL_BEGIN(T)          struct T { static T make_instance() { return T(); }
+#define DECLARE_TSLGLOBAL_VAR(VT,V)         VT V; CHECK_TSL_TYPE(#VT)
+#define DECLARE_TSLGLOBAL_END()             static Tsl_Namespace::GlobalVarList m_var_list; static bool shader_unit_register( Tsl_Namespace::ShaderUnitTemplate* sut ) { return sut->register_tsl_global( m_var_list );}};
 
 #define IMPLEMENT_TSLGLOBAL_BEGIN(T)        Tsl_Namespace::GlobalVarList T::m_var_list( std::vector<Tsl_Namespace::GlobalVar>({
-#define IMPLEMENT_TSLGLOBAL_VAR(VT,V)       { Tsl_Namespace::GlobalVar( #V, #VT ) },
+#define IMPLEMENT_TSLGLOBAL_VAR(VT,V)       { Tsl_Namespace::GlobalVar( #V, #VT ) }, 
 #define IMPLEMENT_TSLGLOBAL_END()           }) );
 
 
@@ -208,7 +227,7 @@ using ClosureArgList = std::vector<ClosureArg>;
 //    }
 
 #define DECLARE_CLOSURE_TYPE_BEGIN(T, name)     struct T { static const char* get_name() { return name; }
-#define DECLARE_CLOSURE_TYPE_VAR(T,VT,V)        VT V;
+#define DECLARE_CLOSURE_TYPE_VAR(T,VT,V)        VT V; CHECK_TSL_TYPE(#VT)
 #define DECLARE_CLOSURE_TYPE_END(T)             static Tsl_Namespace::ClosureArgList m_closure_args; static Tsl_Namespace::ClosureID RegisterClosure(); };
 
 #define IMPLEMENT_CLOSURE_TYPE_BEGIN(T)         Tsl_Namespace::ClosureArgList T::m_closure_args({
@@ -309,14 +328,5 @@ inline float dot(const float3& a, const float3& b) {
 inline float3 cross(const float3& a, const float3& b) {
     return make_float3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
 }
-
-// Following are the only options for declaring a variable
-#define Tsl_float3    Tsl_Namespace::float3
-#define Tsl_float     float
-#define Tsl_int       int
-#define Tsl_bool      bool
-#define Tsl_closure   void*
-#define Tsl_double    double
-#define Tsl_resource  void*
 
 TSL_NAMESPACE_END

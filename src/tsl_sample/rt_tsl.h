@@ -24,8 +24,6 @@
 #include <tsl_define.h>
 #include "rt_bxdf.h"
 
-static Tsl_float3 f;
-
 // Initialize tiny shading language system
 // It basically takes the chances to initialize all necessary data structure, like registering callback,
 // closure type, tsl global data structure.
