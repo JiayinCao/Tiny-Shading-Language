@@ -1846,30 +1846,6 @@ llvm::Value* AstNode_GlobalArrayDecl::codegen(TSL_Compile_Context& context) cons
         return nullptr;
     }
 
-#if 0
-    // allocate the variable on stack
-    auto alloc_var = context.builder->CreateAlloca(type, cnt, name);
-
-    context.push_var_symbol(name, alloc_var, m_type);
-
-    // If there is initialize list, initialize it.
-    // The way it is initialized here is terrible, it simply loops through all elements and assign them one by one.
-    if (m_init) {
-        const auto& init_list = m_init->get_init_list();
-
-        // Ideally, I should check the number of elements in the initialize list and make them match.
-        // But since cnt is dynamically resolved, the number of elements in the array is not decided until run-time.
-        // Maybe I should disallow non-literal array count, it sounds like a reasonable solution.
-        // For now, I will simply loop through everything, risking in out of memory access.
-        auto i = 0;
-        for (auto& var : init_list) {
-            auto index = get_llvm_constant_int(i++, 32, context);
-            auto element = context.builder->CreateGEP(alloc_var, index);
-            context.builder->CreateStore(var->codegen(context), element);
-        }
-    }
-#endif
-
     auto array_cnt = dynamic_cast<const AstNode_Literal_Int*>(m_cnt.get());
     if (array_cnt == nullptr) {
         emit_error("Invalid array count for %s", m_name.c_str());
@@ -1893,8 +1869,8 @@ llvm::Value* AstNode_GlobalArrayDecl::codegen(TSL_Compile_Context& context) cons
                 auto literal_var = dynamic_cast<const AstNode_Literal_Int*>(var.get());
                 vec.push_back(literal_var->m_val);
             }
-            if (vec.size() < array_cnt->m_val)
-                emit_warning("Not enough element in the array intializer, there will be uninitialized values.");
+            while (vec.size() < array_cnt->m_val)
+                vec.push_back(0);
 
             llvm_init = ConstantDataArray::get(*context.context, *(new ArrayRef<int>(vec)));
             array_type = ArrayType::get(get_int_32_ty(context), array_cnt->m_val);
@@ -1915,8 +1891,8 @@ llvm::Value* AstNode_GlobalArrayDecl::codegen(TSL_Compile_Context& context) cons
                 auto literal_var = dynamic_cast<const AstNode_Literal_Flt*>(var.get());
                 vec.push_back(literal_var->m_val);
             }
-            if (vec.size() < array_cnt->m_val)
-                emit_warning("Not enough element in the array intializer, there will be uninitialized values.");
+            while (vec.size() < array_cnt->m_val)
+                vec.push_back(0.0f);
 
             llvm_init = ConstantDataArray::get(*context.context, *(new ArrayRef<float>(vec)));
             array_type = ArrayType::get(get_float_ty(context), array_cnt->m_val);
