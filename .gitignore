@@ -5,6 +5,6 @@ proj_release/
 proj_debug/
 generated_src/
 *.DS_Store
-src/include/tslversion.h
+src/include/tsl_version.h
 tsl/
 build-files/cmake/tsl-config.cmake
