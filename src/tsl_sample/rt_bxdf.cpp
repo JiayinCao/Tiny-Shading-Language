@@ -132,9 +132,9 @@ Vec Lambert::sample(const Vec& pos, const Vec& wo, Vec& wi, float& pdf) {
     const auto local_wi = Vec(x, y, z);
     wi = local_to_world(pos, local_wi);
     
-    pdf = fabs(local_wi.y);
+    pdf = fabs(local_wi.y) / PI;
 
-    return basecolor * (pdf / PI) ;
+    return basecolor * (fabs(local_wi.y) / PI) ;
 }
 
 Vec Microfacet::sample(const Vec& pos, const Vec& wo, Vec& wi, float& pdf) {
