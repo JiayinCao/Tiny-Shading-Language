@@ -60,6 +60,12 @@ if "%BUILD_RELEASE%" == "1" (
 	cd proj_release
 	cmake -A x64 ..
 	msbuild /p:Configuration=Release TSL.sln
+
+    :: catch msbuild error
+	if ERRORLEVEL 1 ( 
+		goto BUILD_ERR
+	)
+
 	cd ..
 )
 
@@ -70,6 +76,12 @@ if "%BUILD_DEBUG%" == "1" (
 	cd proj_debug
 	cmake -A x64 ..
 	msbuild /p:Configuration=Debug TSL.sln
+
+    :: catch msbuild error
+	if ERRORLEVEL 1 ( 
+		goto BUILD_ERR
+	)
+
 	cd ..
 )
 
@@ -118,3 +130,6 @@ if "%INSTALL%" == "1" (
 )
 
 :EOF
+exit /b 0
+:BUILD_ERR
+exit /b 1
