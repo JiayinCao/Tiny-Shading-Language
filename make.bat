@@ -19,11 +19,68 @@
 set TSL_DIR=%~dp0
 
 rem reset all variables first
-call "%TSL_DIR%\build-files\win\reset_variables.cmd"
+set CLEAN=
+set BUILD_RELEASE=
+set BUILD_DEBUG=
+set GENERATE_PROJ=
+set UPDATE_DEP=
+set FORCE_UPDATE_DEP=
+set CLEAN_DEP=
+set UPDATE=
+set GENERATE_SRC=
+set UNIT_TEST=
+set FULL=
+set INSTALL=
 
 rem parse arguments
-call "%TSL_DIR%\build-files\win\parse_arguments.cmd" %*
-if errorlevel 1 goto EOF
+:argv_loop
+if NOT "%1" == "" (
+    if "%1" == "clean" (
+        set CLEAN=1
+        goto EOF
+    )else if "%1" == "update" (
+        set UPDATE=1
+        goto EOF
+    )else if "%1" == "clean_dep" (
+        set CLEAN_DEP=1
+        goto EOF
+    )else if "%1" == "update_dep" (
+		set UPDATE_DEP=1
+		goto EOF
+	)else if "%1" == "force_update_dep" (
+		set FORCE_UPDATE_DEP=1
+		goto EOF
+    )else if "%1" == "generate_src" (
+        set GENERATE_SRC=1
+        goto EOF
+    )else if "%1" == "generate_proj" (
+        set GENERATE_PROJ=1
+        goto EOF
+    )else if "%1" == "release" (
+        set BUILD_RELEASE=1
+        goto EOF
+    )else if "%1" == "debug" (
+        set BUILD_DEBUG=1
+        goto EOF
+    )else if "%1" == "test" (
+        set UNIT_TEST=1
+        goto EOF
+    )else if "%1" == "full" (
+        set FULL=1
+        goto EOF
+	)else if "%1" == "install" (
+		set INSTALL=1
+		goto EOF
+    )else (
+        echo Unrecognized Command
+        goto EOF
+    )
+)else if "%1" == "" (
+    set BUILD_RELEASE=1
+    goto EOF
+)
+
+:EOF
 
 if "%CLEAN%" == "1" (
 	echo [33mCleaning all temporary file[0m
@@ -43,7 +100,13 @@ if "%CLEAN_DEP%" == "1" (
 
 if "%UPDATE_DEP%" == "1" (
 	echo [33mDownloading dependencies[0m
-	powershell .\build-files\win\getdep.ps1
+	py .\scripts\get_dependencies.py
+	goto EOF
+)
+
+if "%FORCE_UPDATE_DEP%" == "1" (
+	echo [33mDownloading dependencies[0m
+	py .\scripts\get_dependencies.py TRUE
 	goto EOF
 )
 
@@ -55,6 +118,8 @@ if "%UPDATE%" == "1" (
 
 if "%BUILD_RELEASE%" == "1" (
 	echo [33mBuilding release[0m
+
+	py .\scripts\get_dependencies.py
 
 	powershell New-Item -Force -ItemType directory -Path proj_release
 	cd proj_release
@@ -72,6 +137,8 @@ if "%BUILD_RELEASE%" == "1" (
 if "%BUILD_DEBUG%" == "1" (
 	echo [33mBuilding debug[0m
 
+	py .\scripts\get_dependencies.py
+	
 	powershell New-Item -Force -ItemType directory -Path proj_debug
 	cd proj_debug
 	cmake -A x64 ..
