@@ -10,6 +10,11 @@ jobs:
       uses: actions/checkout@v1
     - name: Setup MSBuild.exe
       uses: warrenbuckley/Setup-MSBuild@v1
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+        architecture: 'x64'
     - name: Get Cache Directory
       id: cache-dir
       run: |
@@ -20,7 +25,7 @@ jobs:
       id: cache-dep
       with:
         path: ${{ steps.cache-dir.outputs.dir }}/dependencies
-        key: Windows-dep-ver-3
+        key: Windows-dep-ver-4
     - name: Install Dependencies
       if: steps.cache-dep.outputs.cache-hit != 'true'
       run: make update_dep
@@ -43,6 +48,11 @@ jobs:
       run: |
            brew install flex
            brew install bison
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+            python-version: '3.x'
+            architecture: 'x64'
     - name: Get Cache Directory
       id: cache-dir
       run: |
@@ -52,7 +62,7 @@ jobs:
       id: cache-dep
       with:
         path: ${{ steps.cache-dir.outputs.dir }}/dependencies
-        key: MacOS-dep-ver-3
+        key: MacOS-dep-ver-4
     - name: Install Dependencies
       if: steps.cache-dep.outputs.cache-hit != 'true'
       run: make update_dep
@@ -79,6 +89,11 @@ jobs:
       run: |
            sudo apt-get install flex
            sudo apt-get install bison
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+            python-version: '3.x'
+            architecture: 'x64'
     - name: Get Cache Directory
       id: cache-dir
       run: |
@@ -88,7 +103,7 @@ jobs:
       id: cache-dep
       with:
         path: ${{ steps.cache-dir.outputs.dir }}/dependencies
-        key: Ubuntu-Focal-dep-ver-3
+        key: Ubuntu-Focal-dep-ver-4
     - name: Install Dependencies
       if: steps.cache-dep.outputs.cache-hit != 'true'
       run: make update_dep
@@ -107,6 +122,11 @@ jobs:
       run: |
            sudo apt-get install flex
            sudo apt-get install bison
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+            python-version: '3.x'
+            architecture: 'x64'
     - name: Get Cache Directory
       id: cache-dir
       run: |
@@ -116,7 +136,7 @@ jobs:
       id: cache-dep
       with:
         path: ${{ steps.cache-dir.outputs.dir }}/dependencies
-        key: Ubuntu-Binoic-dep-ver-3
+        key: Ubuntu-Binoic-dep-ver-4
     - name: Install Dependencies
       if: steps.cache-dep.outputs.cache-hit != 'true'
       run: make update_dep
@@ -143,6 +163,11 @@ jobs:
            sudo update-alternatives --config gcc
            gcc --version
            g++ --version
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+            python-version: '3.x'
+            architecture: 'x64'
     - name: Get Cache Directory
       id: cache-dir
       run: |
@@ -152,7 +177,7 @@ jobs:
       id: cache-dep
       with:
         path: ${{ steps.cache-dir.outputs.dir }}/dependencies
-        key: Ubuntu-Xenial-dep-ver-3
+        key: Ubuntu-Xenial-dep-ver-4
     - name: Install Dependencies
       if: steps.cache-dep.outputs.cache-hit != 'true'
       run: make update_dep

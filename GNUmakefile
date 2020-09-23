@@ -17,33 +17,6 @@
 
 MAKEFLAGS += --silent
 
-# Operating system name, it could be Darwin or Linux
-OS             := $(shell uname -s | tr A-Z a-z)
-
-# Mac OS
-ifeq ($(OS), darwin)
-	UPDATE_DEP_COMMAND = sh ./build-files/mac/getdep.sh
-endif
-
-# Ubuntu
-ifeq ($(OS), linux)
-	UPDATE_DEP_COMMAND = sh ./build-files/ubuntu/getdep.sh
-
-	# It looks like the library built on one verion of Ubuntu can be shared across multiple
-	# Then there is no need to separate the download anymore.
-
-	# Different Ubuntu have different version of libraries, we need to tell which version it is.
-	# I have only built dependencies for Ubuntu Xenial and Bionic. In order to build other versions,
-	# it is necessary to build the library first.
-	#OS_VERS:=$(shell lsb_release -a 2>/dev/null | grep Description | awk '{ print $$2 "-" $$3 }')
-	#ifeq ($(findstring Ubuntu-16,$(OS_VERS)),Ubuntu-16)
-	#	UPDATE_DEP_COMMAND = sh ./build-files/ubuntu/getdep_xenial.sh
-	#endif
-	#ifeq ($(findstring Ubuntu-18,$(OS_VERS)),Ubuntu-18)
-	#	UPDATE_DEP_COMMAND = sh ./build-files/ubuntu/getdep_bionic.sh
-	#endif
-endif
-
 YELLOW=`tput setaf 3`
 NOCOLOR=`tput sgr0`
 
@@ -87,7 +60,11 @@ test:
 
 update_dep:
 	echo ${YELLOW}Downloading dependencies ${NOCOLOR}
-	$(UPDATE_DEP_COMMAND)
+	python3 ./scripts/get_dependencies.py
+
+force_update_dep:
+	echo ${YELLOW}Downloading dependencies ${NOCOLOR}
+	python3 ./scripts/get_dependencies.py TRUE
 
 install:
 	echo ${YELLOW}Build and install TSL${NOCOLOR}
