@@ -34,7 +34,7 @@ if len(sys.argv) > 1:
         forcing_sync = sys.argv[0]
 
 # dependencies folder
-dep_dir = 'Dependencies'
+dep_dir = 'dependencies'
 
 # whether to sync dependencies
 sync_dep = False
@@ -60,7 +60,7 @@ else:
         sync_dep = True
     else:
         print('Dependencies are up to date, no need to sync.')
-    
+
 # sync a dependency from server
 def sync_dep_utility( name, url, target ):
     print( 'Syncing ' + name )
@@ -81,7 +81,12 @@ if sync_dep:
     # flex and bison is only needed on Windows
     if sys.platform == 'win32':
         # sync flex and bison
-        sync_dep_utility('flex and bison', 'https://github.com/lexxmark/winflexbison/releases/download/v2.5.22/win_flex_bison-2.5.22.zip', 'dependencies/flex_bison')
+        sync_dep_utility('flex and bison', 'https://github.com/lexxmark/winflexbison/releases/download/v2.5.22/win_flex_bison-2.5.22.zip', dep_dir + '/flex_bison')
 
     # sync llvm
-    sync_dep_utility('llvm', 'http://45.63.123.194/tsl_dependencies/win/llvm.zip', 'dependencies')
+    if sys.platform == 'win32':
+        sync_dep_utility('llvm', 'http://45.63.123.194/tsl_dependencies/win/llvm.zip', dep_dir)
+    elif sys.platform == "linux" or sys.platform == "linux2":
+        sync_dep_utility('llvm', 'http://45.63.123.194/tsl_dependencies/linux/llvm_xenial.zip', dep_dir)
+    elif sys.platform == 'darwin':
+        sync_dep_utility('llvm', 'http://45.63.123.194/tsl_dependencies/mac/llvm.zip', dep_dir)

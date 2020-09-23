@@ -47,10 +47,12 @@ generate_src:
 
 release:
 	echo ${YELLOW}Building release${NOCOLOR}
+	python3 ./scripts/get_dependencies.py
 	rm -rf proj_release;mkdir proj_release;cd proj_release;cmake -DCMAKE_BUILD_TYPE=Release ..;make -j 4;cd ..;
 
 debug:
 	echo ${YELLOW}Building debug${NOCOLOR}
+	python3 ./scripts/get_dependencies.py
 	rm -rf proj_debug;mkdir proj_debug;cd proj_debug;cmake -DCMAKE_BUILD_TYPE=Debug ..;make -j 4;cd ..;
 
 test:
