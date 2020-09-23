@@ -87,6 +87,6 @@ if sync_dep:
     if sys.platform == 'win32':
         sync_dep_utility('llvm', 'http://45.63.123.194/tsl_dependencies/win/llvm.zip', dep_dir)
     elif sys.platform == "linux" or sys.platform == "linux2":
-        sync_dep_utility('llvm', 'http://45.63.123.194/tsl_dependencies/linux/llvm_xenial.zip', dep_dir)
+        sync_dep_utility('llvm', 'http://45.63.123.194/tsl_dependencies/linux/llvm.zip', dep_dir)
     elif sys.platform == 'darwin':
         sync_dep_utility('llvm', 'http://45.63.123.194/tsl_dependencies/mac/llvm.zip', dep_dir)
