@@ -61,12 +61,11 @@ Following is the image generated in the sample project,
 Apart from the sample code, my other project [SORT](http://sort-renderer.com/) has a way more practical integration solution in a ray tracer. It has more features used in it comparing with the sample code.
 
 # Build TSL
-Building TSL is fairly easy and straight forward. Before building, it is necessary to make sure C++ 17 is supported in your compiler.
+Building TSL is fairly easy and straight forward. Before building, it is necessary to make sure C++ 17 is supported in your compiler. Also, [pyton 3.x](https://www.python.org/downloads/) is needed.
 
 The exact step of building is show below
 - git clone https://github.com/JiayinCao/Tiny-Shading-Language.git tsl
 - cd tsl
-- make update_dep
 - make
 
 # Note
