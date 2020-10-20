@@ -94,4 +94,4 @@ To those who wants to connect, for whatever reason, please contact me through th
 - [**Linkedin**](https://www.linkedin.com/in/caojiayin/)
 - [**Twitter**](https://twitter.com/Jiayin_Cao)
 - [**Email**](mailto:caojiayin1985@gmail.com)
-- [**Tech Blog**](https://agraphicsguy.wordpress.com/)
+- [**Tech Blog**](https://agraphicsguynotes.com/)
