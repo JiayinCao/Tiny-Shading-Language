@@ -56,10 +56,19 @@ source_group( "flex and bison" FILES ${flex_bison} )
 set(generated_src ${TSL_SOURCE_DIR}/generated_src/compiled_lex.cpp ${TSL_SOURCE_DIR}/generated_src/compiled_grammar.cpp ${TSL_SOURCE_DIR}/generated_src/compiled_grammar.hpp)
 
 # add executable, this will be converted to a library in the future
-add_library(TSL_Lib SHARED ${all_files} ${generated_src} ${flex_bison})
-add_custom_command( OUTPUT ${generated_src}
-                    COMMAND make generate_src
-                    WORKING_DIRECTORY ${TSL_SOURCE_DIR})
+if (TSL_PLATFORM_WIN)
+    # that 'call' command is purely to avoid the VS 2019 warning, below is a link for further disscussion of the problem
+    # https://gitlab.kitware.com/cmake/cmake/-/issues/19737
+    add_library(TSL_Lib SHARED ${all_files} ${generated_src} ${flex_bison})
+    add_custom_command( OUTPUT ${generated_src}
+                        COMMAND call; make generate_src
+                        WORKING_DIRECTORY ${TSL_SOURCE_DIR})
+else()
+    add_library(TSL_Lib SHARED ${all_files} ${generated_src} ${flex_bison})
+    add_custom_command( OUTPUT ${generated_src}
+                        COMMAND make generate_src
+                        WORKING_DIRECTORY ${TSL_SOURCE_DIR})
+endif()
 
 # Separate folder for the generated files
 source_group( "generated src" FILES ${generated_src} )
