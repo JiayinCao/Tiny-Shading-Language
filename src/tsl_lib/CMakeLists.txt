@@ -97,7 +97,7 @@ if (TSL_PLATFORM_WIN)
 endif()
 
 # specify the llvm library to link
-llvm_map_components_to_libnames(llvm_libs Core ExecutionEngine Interpreter MC MCJIT Support nativecodegen)
+llvm_map_components_to_libnames(llvm_libs MCJIT nativecodegen)
 
 # link llvm libaries
 target_link_libraries(TSL_Lib ${llvm_libs})
