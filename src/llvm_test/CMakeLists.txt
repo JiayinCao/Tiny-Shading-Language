@@ -22,10 +22,11 @@ file(GLOB_RECURSE project_cs *.c)
 file(GLOB_RECURSE project_ccs *.cc)
 
 # group all categories of files into one macro
-set(all_files ${project_headers} ${project_cpps} ${project_cs} ${project_ccs} ${gtest_files})
+set(all_project_files ${project_headers} ${project_cpps} ${project_cs} ${project_ccs})
+set(all_files ${all_project_files} ${gtest_files})
 
 # give each file a proper folder based on its path
-source_group_by_dir(all_files)
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${all_project_files})
 
 # a separate folder for files outside this folder
 source_group( "google test" FILES ${gtest_files} )

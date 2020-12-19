@@ -15,7 +15,7 @@
 #   this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
 #
 
-cmake_minimum_required (VERSION 3.7)
+cmake_minimum_required (VERSION 3.8)
 
 # somehow using the default policy of 3.7 will crash the unit tests, I have no time looking into it for now
 cmake_policy(VERSION 3.1)
@@ -88,21 +88,6 @@ find_package(GTEST REQUIRED CONFIG)
 
 # this is all include files of TSL core library
 file(GLOB_RECURSE tsl_include src/include/*.h)
-
-# a common utility helper macro to group files
-macro(source_group_by_dir source_files)
-    set(sgbd_cur_dir ${CMAKE_CURRENT_SOURCE_DIR})
-    foreach(sgbd_file ${${source_files}})
-        string(REGEX REPLACE ${sgbd_cur_dir}/\(.*\) \\1 sgbd_fpath ${sgbd_file})
-        string(REGEX REPLACE "\(.*\)/.*" \\1 sgbd_group_name ${sgbd_fpath})
-        string(COMPARE EQUAL ${sgbd_fpath} ${sgbd_group_name} sgbd_nogroup)
-        string(REPLACE "/" "\\" sgbd_group_name ${sgbd_group_name})
-        if(sgbd_nogroup)
-            set(sgbd_group_name "\\")
-        endif(sgbd_nogroup)
-        source_group(${sgbd_group_name} FILES ${sgbd_file})
-    endforeach(sgbd_file)
-endmacro(source_group_by_dir)
 
 # make sure there is a seperate macro for debug build
 set( CMAKE_CXX_FLAGS_DEBUG           "${CMAKE_CXX_FLAGS_DEBUG} -DTSL_DEBUG")
