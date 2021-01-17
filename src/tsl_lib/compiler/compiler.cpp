@@ -15,7 +15,6 @@
     this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-#include <emmintrin.h>
 #include <thread>
 #include <atomic>
 #include <memory>
@@ -26,6 +25,7 @@
 #include <llvm/Transforms/Scalar/GVN.h>
 #include <llvm/Transforms/Scalar.h>
 #include <llvm/ExecutionEngine/MCJIT.h>
+#include "internal_define.h"
 #include "compiler.h"
 #include "ast.h"
 #include "tsl_system.h"
@@ -33,6 +33,10 @@
 #include "llvm_util.h"
 #include "system/impl.h"
 #include "ast_memory_janitor.h"
+
+#if defined(TSL_X64_TARGET)
+#include <emmintrin.h>
+#endif
 
 // a temporary ugly solution for debugging for now
 // #define DEBUG_OUTPUT
@@ -67,7 +71,9 @@ public:
             // they consume CPU cycles all the time. This instruction could allow delaying CPU instructions for a few cycles in
             // some cases to allow other threads to take ownership of hardware resources.
             // https://software.intel.com/en-us/comment/1134767
+#if defined(TSL_X64_TARGET)            
             _mm_pause();
+#endif
         }
     }
     void unlock() {
@@ -311,7 +317,11 @@ TSL_Resolving_Status TslCompiler::resolve(ShaderInstance* si) {
 #endif
 
     // get the function pointer through execution engine
+#ifdef TSL_ON_ARM_MAC
+    shader_instance_data->m_execution_engine = std::unique_ptr<llvm::ExecutionEngine>(llvm::EngineBuilder(std::move(cloned_module)).setMArch("arm64").create());
+#else
     shader_instance_data->m_execution_engine = std::unique_ptr<llvm::ExecutionEngine>(llvm::EngineBuilder(std::move(cloned_module)).create());
+#endif
 
     // setup data layout
     // cloned_module->setDataLayout(shader_instance_data->m_execution_engine->getTargetMachine()->createDataLayout());

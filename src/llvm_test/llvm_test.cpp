@@ -35,6 +35,12 @@
 
 using namespace llvm;
 
+// This is not an ideal definition since strictly speaking, there could be arm based Windows.
+// But I'm not testing it on ARM windows for now, leaving it this way.
+#if __aarch64__
+    #define TSL_ON_ARM_MAC
+#endif
+
 // The purpose of these unit tests is to make sure the LLVM version that it is used to compile TSL supports the basic
 // feature needed to implement TSL properly.
 
@@ -45,6 +51,14 @@ using namespace llvm;
 #endif
 
 namespace {
+	ExecutionEngine* CreateExecuteEngine(std::unique_ptr<llvm::Module>& module){
+#if defined(TSL_ON_ARM_MAC)
+		return llvm::EngineBuilder(std::move(module)).setMArch("arm64").create();
+#else
+		return llvm::EngineBuilder(std::move(module)).create();
+#endif
+	}
+
 	class LLVM : public testing::Test {
 	public:
 		LLVM() {
@@ -59,7 +73,7 @@ namespace {
 
 		ExecutionEngine* get_execution_engine() {
 			if (nullptr == execute_engine)
-				execute_engine = std::unique_ptr<ExecutionEngine>(llvm::EngineBuilder(std::move(module)).create());
+				execute_engine = std::unique_ptr<ExecutionEngine>(CreateExecuteEngine(module));
 			return execute_engine.get();
 		}
 
@@ -749,7 +763,7 @@ TEST_F(LLVM, Cross_Context) {
 			builder.CreateRet(val);
 			
 			// call 'another_function', expect 123 to be returned.
-			std::unique_ptr<llvm::ExecutionEngine> execute_engine = std::unique_ptr<ExecutionEngine>(llvm::EngineBuilder(std::move(module)).create());
+			std::unique_ptr<llvm::ExecutionEngine> execute_engine = std::unique_ptr<ExecutionEngine>(CreateExecuteEngine(module));
 			execute_engine->addModule(CloneModule(*module0));
 
 			const auto shader_func = (float(*)())execute_engine->getFunctionAddress("another_function");
@@ -831,7 +845,7 @@ TEST_F(LLVM, Multi_Thread_Compiling) {
 		}
 
 		// call the function compiled by llvm
-		std::unique_ptr<llvm::ExecutionEngine> execute_engine = std::unique_ptr<ExecutionEngine>(llvm::EngineBuilder(std::move(module)).create());
+		std::unique_ptr<llvm::ExecutionEngine> execute_engine = std::unique_ptr<ExecutionEngine>(CreateExecuteEngine(module));
 		const auto shader_func = (void(*)(float*, float*))execute_engine->getFunctionAddress("outter_function");
 
 		float local_value0 = 10.0f, local_value1 = 20.0f;
@@ -890,7 +904,7 @@ TEST_F(LLVM, DISABLED_Multi_Thread_Execution) {
 		builder.CreateRet(value);
 	}
 
-	std::unique_ptr<llvm::ExecutionEngine> execute_engine = std::unique_ptr<ExecutionEngine>(llvm::EngineBuilder(std::move(module)).create());
+	std::unique_ptr<llvm::ExecutionEngine> execute_engine = std::unique_ptr<ExecutionEngine>(CreateExecuteEngine(module));
 
 	const auto set_constant = (void(*)(float*))execute_engine->getFunctionAddress("set_global_input");
 	const auto shader = (float(*)())execute_engine->getFunctionAddress("shader_function");
@@ -951,7 +965,7 @@ TEST_F(LLVM, DISABLED_LTS_GlobalVariable) {
     IRBuilder<> builder(bb);
     builder.CreateRet(builder.CreateLoad(bsp));
 
-    auto TheExecutionEngine = std::unique_ptr<ExecutionEngine>(llvm::EngineBuilder(std::move(module)).create());
+    auto TheExecutionEngine = std::unique_ptr<ExecutionEngine>(CreateExecuteEngine(module));
     const auto shader = (int(*)())TheExecutionEngine->getFunctionAddress("main");
     
     EXPECT_EQ(shader(), -1);

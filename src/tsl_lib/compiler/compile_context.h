@@ -24,6 +24,7 @@
 #include <llvm/IR/Function.h>
 #include <string>
 #include <vector>
+#include <stack>
 #include <unordered_map>
 #include "tsl_version.h"
 #include "tsl_system.h"

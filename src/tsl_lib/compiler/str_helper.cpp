@@ -20,8 +20,12 @@
 #include <atomic>
 #include <mutex>
 #include <unordered_set>
-#include <emmintrin.h>
+#include "internal_define.h"
 #include "str_helper.h"
+
+#if defined(TSL_X64_TARGET)
+#include <emmintrin.h>
+#endif
 
 TSL_NAMESPACE_BEGIN
 
@@ -39,7 +43,9 @@ public:
             // they consume CPU cycles all the time. This instruction could allow delaying CPU instructions for a few cycles in
             // some cases to allow other threads to take ownership of hardware resources.
             // https://software.intel.com/en-us/comment/1134767
+#if defined(TSL_X64_TARGET)
             _mm_pause();
+#endif
         }
     }
     void unlock() {
