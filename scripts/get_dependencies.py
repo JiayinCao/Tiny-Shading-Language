@@ -66,27 +66,53 @@ def sync_dep_utility( name, url, target ):
     print( 'Syncing ' + name )
 
     # sync file
-    zip_file_name = 'tmp.zip'
-    urllib.request.urlretrieve(url, zip_file_name)
+    dummy_folder = 'dummy/'
+
+    # check if the folder already exists, if it does, remove it
+    if os.path.isdir(dummy_folder):
+        shutil.rmtree(dummy_folder)
+    # make the dir
+    os.makedirs(dummy_folder)
+
+    # sync the file
+    index_file_name = dummy_folder + 'index.txt'
+    urllib.request.urlretrieve(url + 'files.txt', index_file_name)
+
+    # Using readlines() 
+    index_file = open(index_file_name, 'r') 
+    Lines = index_file.readlines() 
+  
+    # sync all files down
+    for index, line in enumerate(Lines, start=1):
+        zip_file_name = line.rstrip()
+        file_name = dummy_folder + zip_file_name
+        print( "zip file: " + file_name )
+        urllib.request.urlretrieve(url + zip_file_name, file_name)
 
     # uncompress the zip file and make sure it is in the Dependencies folder
-    with zipfile.ZipFile(zip_file_name,"r") as zip_ref:
-        zip_ref.extractall(target)
+    for line in Lines:
+        zip_file_name = dummy_folder + line.rstrip()
+        with zipfile.ZipFile(zip_file_name,"r") as zip_ref:
+            print( "extracing file: " + zip_file_name)
+            zip_ref.extractall(target)
+
+    # close the file
+    index_file.close()
 
     # delete the temporary file
-    os.remove(zip_file_name)
+    shutil.rmtree(dummy_folder)
 
 # sync dependencies if needed
 if sync_dep:
     # flex and bison is only needed on Windows
     if sys.platform == 'win32':
-        # sync flex and bison
-        sync_dep_utility('flex and bison', 'https://github.com/lexxmark/winflexbison/releases/download/v2.5.22/win_flex_bison-2.5.22.zip', dep_dir + '/flex_bison')
+        #sync flex and bison
+        sync_dep_utility('flex and bison', 'https://raw.githubusercontent.com/JiayinCao/Tiny-Shading-Language/dependencies/flex_bison/win/x86_64/', dep_dir + '/flex_bison')
 
     # sync llvm
     if sys.platform == 'win32':
-        sync_dep_utility('llvm', 'http://45.63.123.194/tsl_dependencies/win/llvm.zip', dep_dir)
+        sync_dep_utility('llvm', 'https://raw.githubusercontent.com/JiayinCao/Tiny-Shading-Language/dependencies/llvm_10_0_0/win/x86_64/', dep_dir)
     elif sys.platform == "linux" or sys.platform == "linux2":
-        sync_dep_utility('llvm', 'http://45.63.123.194/tsl_dependencies/linux/llvm.zip', dep_dir)
+        sync_dep_utility('llvm', 'https://raw.githubusercontent.com/JiayinCao/Tiny-Shading-Language/dependencies/llvm_10_0_0/linux/x86_64/', dep_dir)
     elif sys.platform == 'darwin':
-        sync_dep_utility('llvm', 'http://45.63.123.194/tsl_dependencies/mac/llvm.zip', dep_dir)
+        sync_dep_utility('llvm', 'https://raw.githubusercontent.com/JiayinCao/Tiny-Shading-Language/dependencies/llvm_10_0_0/mac/x86_64/', dep_dir)
