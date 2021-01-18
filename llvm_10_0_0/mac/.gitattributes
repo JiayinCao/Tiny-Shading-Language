@@ -1,2 +1,0 @@
-llvm.zip filter=lfs diff=lfs merge=lfs -text
-llvm_aarch64.zip filter=lfs diff=lfs merge=lfs -text
