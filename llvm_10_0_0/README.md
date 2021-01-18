@@ -21,4 +21,8 @@ cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="~" -DLLVM_TARGET_ARCH="AArch64
 
 ## Build X86_64 Version
 
-To be done
+The process is very similar with the above steps, except there is a different CMake line
+```
+cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="~" -DLLVM_TARGET_ARCH="host" -DLLVM_TARGETS_TO_BUILD="X86" -DLLVM_BUILD_EXAMPLES=OFF ../llvm -DCMAKE_BUILD_TYPE=Release
+```
+Please notice that instead of specifying a target arch, we can rely on 'host' to find the target of the buildig machine.
