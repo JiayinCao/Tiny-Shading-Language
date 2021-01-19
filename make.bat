@@ -31,6 +31,7 @@ set GENERATE_SRC=
 set UNIT_TEST=
 set FULL=
 set INSTALL=
+set RESOLVED_INSTALL_PATH="./tsl"
 
 rem parse arguments
 :argv_loop
@@ -70,6 +71,9 @@ if NOT "%1" == "" (
         goto EOF
 	)else if "%1" == "install" (
 		set INSTALL=1
+		if "%2" == "INSTALL_PATH" (
+			set RESOLVED_INSTALL_PATH=%3
+		)
 		goto EOF
     )else (
         echo Unrecognized Command
@@ -186,16 +190,9 @@ if "%FULL%" == "1" (
 
 if "%INSTALL%" == "1" (
 	echo [33mBuild and install TSL[0m
-	py .\scripts\get_dependencies.py
-
-	powershell New-Item -Force -ItemType directory -Path _out
-	cd _out
-	cmake -DBUILD_TSL_LIB_ONLY=ON -A x64 ..
-	msbuild /p:Configuration=Release TSL.sln
-	cd ..
-    if exist ./tsl rm -r ./tsl
-    mkdir ../tsl
-	cmake -DCMAKE_INSTALL_PREFIX=../tsl/ -P ./_out/cmake_install.cmake
+	echo Install Path: %RESOLVED_INSTALL_PATH%
+	make
+	cmake -DCMAKE_INSTALL_PREFIX=%RESOLVED_INSTALL_PATH% -P ./_out/cmake_install.cmake
 )
 
 :EOF
