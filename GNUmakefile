@@ -68,7 +68,9 @@ force_update_dep:
 	echo ${YELLOW}Downloading dependencies ${NOCOLOR}
 	python3 ./scripts/get_dependencies.py TRUE
 
+INSTALL_PATH ?= "./tsl"
 install:
 	echo ${YELLOW}Build and install TSL${NOCOLOR}
+	echo "Install path:" $(INSTALL_PATH)
 	make release
-	cmake -DCMAKE_INSTALL_PREFIX=../tsl/ -P ./proj_release/cmake_install.cmake
+	cmake -DCMAKE_INSTALL_PREFIX=$(INSTALL_PATH) -P ./proj_release/cmake_install.cmake
