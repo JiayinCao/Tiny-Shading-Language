@@ -192,7 +192,7 @@ if "%INSTALL%" == "1" (
 	echo [33mBuild and install TSL[0m
 	echo Install Path: %RESOLVED_INSTALL_PATH%
 	make
-	cmake -DCMAKE_INSTALL_PREFIX=%RESOLVED_INSTALL_PATH% -P ./_out/cmake_install.cmake
+	cmake -DCMAKE_INSTALL_PREFIX=%RESOLVED_INSTALL_PATH% -P ./proj_release/cmake_install.cmake
 )
 
 :EOF
