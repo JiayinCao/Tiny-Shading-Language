@@ -50,6 +50,34 @@ TEST(GlobalValue, AccessData) {
     EXPECT_EQ(123.0f, data);
 }
 
+TEST(GlobalValue, SimpleMakeClosure) {
+    auto shader_source = R"(
+        closure get_diffuse(){
+            return make_closure<lambert>( 111, global_value<intensity> );
+        }
+        shader function_name(out float var){
+            var = get_diffuse();
+        }
+    )";
+
+    TslGlobal tsl_global;
+    tsl_global.intensity = 123.0f;
+    TslGlobal* ptr_tsl_global = &tsl_global;
+
+    auto ret = compile_shader<void(*)(ClosureTreeNodeBase**, TslGlobal*), TslGlobal>(shader_source);
+    auto func_ptr = ret.first;
+
+    ClosureTreeNodeBase* closure = nullptr;
+    float data = 0.0f;
+    func_ptr(&closure, ptr_tsl_global);
+    EXPECT_NE(closure, (ClosureTreeNodeBase*)nullptr);
+    EXPECT_EQ(closure->m_id, g_lambert_closure_id);
+
+    ClosureTypeLambert* lambert_param = (ClosureTypeLambert*)closure->m_params;
+    EXPECT_EQ(lambert_param->normal, tsl_global.intensity);
+    EXPECT_EQ(lambert_param->base_color, 111);
+}
+
 TEST(GlobalValue, GlobalValueAsDefaultValueForArgument) {
     // register tsl global
     TslGlobal tsl_global;

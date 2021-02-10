@@ -288,6 +288,10 @@ llvm::Value* AstNode_Binary_Add::codegen(TSL_Compile_Context& context) const {
 
     // allocate the tree data structure
     std::vector<llvm::Value*> args = { ConstantInt::get(*context.context, APInt(32, sizeof(ClosureTreeNodeAdd))) };
+    if (context.tsl_global_value)
+        args.push_back(context.tsl_global_value);
+    else
+        args.push_back(ConstantPointerNull::get(PointerType::get(get_int_32_ptr_ty(context), 0)));
     auto closure_tree_node_ptr = builder.CreateCall(malloc_function, args);
     auto converted_closure_tree_node_ptr = builder.CreatePointerCast(closure_tree_node_ptr, closure_tree_node_ptr_type);
 
@@ -499,6 +503,11 @@ llvm::Value* AstNode_Binary_Multi::codegen(TSL_Compile_Context& context) const {
 
 	// allocate the tree data structure
 	std::vector<llvm::Value*> args = { ConstantInt::get(*context.context, APInt(32, sizeof(ClosureTreeNodeMul))) };
+    if (context.tsl_global_value)
+        args.push_back(context.tsl_global_value);
+    else
+        args.push_back(ConstantPointerNull::get(PointerType::get(get_int_32_ptr_ty(context), 0)));
+
 	auto closure_tree_node_ptr = builder.CreateCall(malloc_function, args);
 	auto converted_closure_tree_node_ptr = builder.CreatePointerCast(closure_tree_node_ptr, closure_tree_node_ptr_type);
 
@@ -1259,6 +1268,10 @@ llvm::Value* AstNode_Expression_MakeClosure::codegen(TSL_Compile_Context& contex
         for (const auto& arg : m_args->get_arg_list())
             args_llvm.push_back(arg->codegen(context));
     }
+    if (context.tsl_global_value)
+        args_llvm.push_back(context.tsl_global_value);
+    else
+        args_llvm.push_back(ConstantPointerNull::get(PointerType::get(get_int_32_ptr_ty(context), 0)));
 
     return context.builder->CreateCall(function, args_llvm);
 }

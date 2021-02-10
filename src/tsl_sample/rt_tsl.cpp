@@ -69,7 +69,7 @@ static thread_local char buf[BUF_MEM_SIZE];
 class ShadingSystemInterfaceSimple : public Tsl_Namespace::ShadingSystemInterface {
 public:
     // Simply fetch some memory from the memory pool
-    void* allocate(unsigned int size) const override {
+    void* allocate(unsigned int size, void* tsl_global) const override {
         assert(buf_index + size < BUF_MEM_SIZE);
         void* ret = buf + buf_index;
         buf_index += size;

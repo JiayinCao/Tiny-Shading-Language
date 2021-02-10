@@ -73,7 +73,7 @@ public:
     //! There are things to be noticed in this interface.
     //!  - Shaders are not responsible to release the memory allocator allocates, it is up to the renderer to do so.
     //!  - This implementation has to be thread safe.
-    virtual void*   allocate(unsigned int size) const = 0;
+    virtual void*   allocate(unsigned int size, void* tsl_global) const = 0;
 
     //! @brief  This will be automatically called when there is error during shader compilation.
     //!

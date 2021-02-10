@@ -168,7 +168,7 @@ struct ShadingContext_Impl {
 };
 
 //! @brief  Allocate memory in shader.
-void* allocate_memory(const unsigned size);
+void* allocate_memory(const unsigned size, void* ptr);
 
 //! @brief  Output error during shader compilation.
 void  emit_error(const char* error, ...);
