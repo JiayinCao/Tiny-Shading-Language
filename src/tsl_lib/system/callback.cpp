@@ -30,8 +30,8 @@ using generic_ptr = int*;
 
 extern "C" {
     // allocate memory inside shaders
-    DLLEXPORT int* TSL_MALLOC(int size, void* ptr) {
-        return (int*)allocate_memory(size, ptr);
+    DLLEXPORT int* TSL_MALLOC(int size, generic_ptr ptr) {
+        return (int*)allocate_memory(size, (void*)ptr);
     }
 
     // 2D texture sample
