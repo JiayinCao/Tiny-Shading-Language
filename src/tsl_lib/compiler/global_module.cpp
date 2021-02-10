@@ -139,8 +139,12 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureAr
     // get the function to allocate memory
     auto malloc_function = m_llvm_compiling_context.m_func_symbols["TSL_MALLOC"].first;
 
+    std::vector<llvm::Value*> args0 = { ConstantInt::get(*m_llvm_compiling_context.context, APInt(32, sizeof(ClosureTreeNodeMul))) };
+    auto tsl_global_ptr = function->getArg(arg_list.size());
+    args0.push_back(tsl_global_ptr);
+
     // allocate a structure for keeping parameters
-    const auto param_table_ptr = builder.CreateCall(malloc_function, { ConstantInt::get(m_llvm_context, APInt(32, structure_size)) }, "TSL_MALLOC");
+    const auto param_table_ptr = builder.CreateCall(malloc_function, args0, "TSL_MALLOC");
     const auto converted_param_table_ptr = builder.CreatePointerCast(param_table_ptr, closure_param_type->getPointerTo());
 
 	// copy all variables in this parameter table
@@ -158,8 +162,11 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureAr
         builder.CreateStore(function->getArg(i), var_ptr);
     }
     
+    std::vector<llvm::Value*> args1 = { ConstantInt::get(*m_llvm_compiling_context.context, APInt(32, sizeof(ClosureTreeNodeMul))) };
+    args1.push_back(tsl_global_ptr);
+
     // allocate closure tree node
-    auto closure_tree_node_ptr = builder.CreateCall(malloc_function, { ConstantInt::get(m_llvm_context, APInt(32, sizeof(ClosureTreeNodeBase))) });
+    auto closure_tree_node_ptr = builder.CreateCall(malloc_function, args1);
     auto converted_closure_tree_node_ptr = builder.CreatePointerCast(closure_tree_node_ptr, m_closure_base_type->getPointerTo());
 
 	// setup closure id
