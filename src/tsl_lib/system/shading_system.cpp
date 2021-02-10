@@ -58,9 +58,9 @@ void ShadingSystem::register_shadingsystem_interface(std::unique_ptr<ShadingSyst
     g_shading_system_impl->m_callback = std::move(ssi);
 }
 
-void* allocate_memory(const unsigned size, void* ptr) {
+void* allocate_memory(const unsigned size) {
     const auto callback = g_shading_system_impl->m_callback.get();
-    return callback ? callback->allocate(size, ptr) : nullptr;
+    return callback ? callback->allocate(size) : nullptr;
 }
 
 void  emit_error(const char* format, ...) {

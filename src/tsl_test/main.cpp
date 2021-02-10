@@ -34,14 +34,11 @@
 #include "tsl_system.h"
 #include "test/test_common.h"
 
-// this is fairly ugly, but this is just unit test, I can live with it.
-extern void* ptr;
-
 class ShadingSystemInterfaceSimple : public Tsl_Namespace::ShadingSystemInterface {
 public:
     // This is by no mean a good example of allocating memory of bxdf in real renderer.
     // The purpose of this code is simply for testing, not for performance.
-    void* allocate(unsigned int size, void* tsl_global) const override {
+    void* allocate(unsigned int size) const override {
         m_memory_holder.push_back(std::move(std::make_unique<char[]>(size)));
         return m_memory_holder.back().get();
     }

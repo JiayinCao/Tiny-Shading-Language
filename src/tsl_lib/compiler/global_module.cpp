@@ -123,9 +123,6 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureAr
         arg_types.push_back(type);
     }
 
-    // always append a tsl global pointer here in case it is needed
-    arg_types.push_back(get_int_32_ptr_ty(m_llvm_compiling_context));
-
     // return type is always int* to avoid debugging error
     auto ret_type = get_closure_ty(m_llvm_compiling_context);
 
@@ -234,7 +231,7 @@ void GlobalModule::declare_global_module(TSL_Compile_Context& context){
     context.m_structure_type_maps["float3"] = float3_meta_data;
 
     // malloc function
-    Function* malloc_function = Function::Create(FunctionType::get(get_int_32_ptr_ty(context), { get_int_32_ty(context), get_int_32_ptr_ty(context) }, false), Function::ExternalLinkage, "TSL_MALLOC", context.module);
+    Function* malloc_function = Function::Create(FunctionType::get(get_int_32_ptr_ty(context), { get_int_32_ty(context) }, false), Function::ExternalLinkage, "TSL_MALLOC", context.module);
 	context.m_func_symbols["TSL_MALLOC"] = std::make_pair(malloc_function, nullptr);
 
     // texture 2d sampling
