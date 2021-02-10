@@ -31,8 +31,11 @@ namespace {
 
 TEST(GlobalValue, AccessData) {
     auto shader_source = R"(
+        float get_diffuse(){
+            return global_value<intensity>;
+        }
         shader function_name(out float var){
-            var = global_value<intensity>;
+            var = get_diffuse();
         }
     )";
 

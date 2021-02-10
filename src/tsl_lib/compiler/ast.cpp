@@ -55,7 +55,7 @@ llvm::Function* AstNode_FunctionPrototype::codegen( TSL_Compile_Context& context
 	}
 
     // the last argument is always tsl_global
-    if(context.tsl_global_ty && m_is_shader)
+    if(context.tsl_global_ty)
         llvm_args.push_back(context.tsl_global_ty->getPointerTo());
 
 	// parse return types
@@ -1303,6 +1303,9 @@ llvm::Value* AstNode_FunctionCall::codegen(TSL_Compile_Context& context) const {
             return nullptr;
         }
     }
+
+    if(context.tsl_global_value)
+        args_llvm.push_back(context.tsl_global_value);
 
     return context.builder->CreateCall(it->second.first, args_llvm);
 }
