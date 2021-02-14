@@ -62,7 +62,7 @@ jobs:
       id: cache-dep
       with:
         path: ${{ steps.cache-dir.outputs.dir }}/dependencies
-        key: MacOS-dep-ver-6
+        key: MacOS-Intel-dep-ver-6
     - name: Install Dependencies
       if: steps.cache-dep.outputs.cache-hit != 'true'
       run: make update_dep
@@ -78,6 +78,14 @@ jobs:
            source ~/.bash_profile
            bison -V
            make debug
+    - name: Verify Build
+      run: |
+           file ./bin/tsl_test_r
+           file ./bin/llvm_test_r
+           file ./bin/tsl_sample_r
+           file ./bin/tsl_test_d
+           file ./bin/llvm_test_d
+           file ./bin/tsl_sample_d
     - name: Unit test
       run: make test
   MacOs_Apple_Silicon:
@@ -103,7 +111,7 @@ jobs:
       id: cache-dep
       with:
         path: ${{ steps.cache-dir.outputs.dir }}/dependencies
-        key: MacOS-dep-ver-6
+        key: MacOS-Apple-Silicon-dep-ver-6
     - name: Install Dependencies
       if: steps.cache-dep.outputs.cache-hit != 'true'
       run: make update_dep
@@ -119,6 +127,14 @@ jobs:
            source ~/.bash_profile
            bison -V
            make debug ARCH=arm64
+    - name: Verify Build
+      run: |
+           file ./bin/tsl_test_r
+           file ./bin/llvm_test_r
+           file ./bin/tsl_sample_r
+           file ./bin/tsl_test_d
+           file ./bin/llvm_test_d
+           file ./bin/tsl_sample_d
   Ubuntu_20_04:
     runs-on: ubuntu-20.04
     steps:
@@ -150,6 +166,14 @@ jobs:
       run: make
     - name: Build Debug Version
       run: make debug
+    - name: Verify Build
+      run: |
+           file ./bin/tsl_test_r
+           file ./bin/llvm_test_r
+           file ./bin/tsl_sample_r
+           file ./bin/tsl_test_d
+           file ./bin/llvm_test_d
+           file ./bin/tsl_sample_d
     - name: Unit test
       run: make test
   Ubuntu_18_04:
@@ -183,6 +207,14 @@ jobs:
       run: make
     - name: Build Debug Version
       run: make debug
+    - name: Verify Build
+      run: |
+           file ./bin/tsl_test_r
+           file ./bin/llvm_test_r
+           file ./bin/tsl_sample_r
+           file ./bin/tsl_test_d
+           file ./bin/llvm_test_d
+           file ./bin/tsl_sample_d
     - name: Unit test
       run: make test
   Ubuntu_16_04:
@@ -234,5 +266,13 @@ jobs:
            cmake -DCMAKE_BUILD_TYPE=Release CC=gcc-7 CXX=g++-7 ..
            make -j 4
            cd ..
+    - name: Verify Build
+      run: |
+           file ./bin/tsl_test_r
+           file ./bin/llvm_test_r
+           file ./bin/tsl_sample_r
+           file ./bin/tsl_test_d
+           file ./bin/llvm_test_d
+           file ./bin/tsl_sample_d
     - name: Unit test
       run: make test
