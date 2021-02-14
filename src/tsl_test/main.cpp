@@ -34,6 +34,10 @@
 #include "tsl_system.h"
 #include "test/test_common.h"
 
+#ifdef TSL_DEBUG
+#error this is on purpose
+#endif
+
 class ShadingSystemInterfaceSimple : public Tsl_Namespace::ShadingSystemInterface {
 public:
     // This is by no mean a good example of allocating memory of bxdf in real renderer.

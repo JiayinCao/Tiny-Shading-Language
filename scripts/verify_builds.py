@@ -15,9 +15,23 @@
 #   this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
 #
 
+import sys
+import os
+
+files_to_verify = ("./bin/tsl_test_r", "./bin/tsl_test_d", "./bin/llvm_test_r", 
+                   "./bin/llvm_test_d", "./bin/tsl_sample_r", "./bin/tsl_sample_d")
 def main():
-    # purposely try to break the build for now
-    return 1
+    missing_build = False
+
+    for file in files_to_verify:
+        if os.path.exists(file) is False:
+            missing_build = True
+            print('Missing build ' + file)
+        else:
+            os.system('file ' + file)
+
+    if missing_build:
+        sys.exit(1)
 
 if __name__=="__main__": 
     main()

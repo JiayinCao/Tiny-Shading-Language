@@ -80,12 +80,7 @@ jobs:
            make debug ARCH=x86_64
     - name: Verify Build
       run: |
-           file ./bin/tsl_test_r
-           file ./bin/llvm_test_r
-           file ./bin/tsl_sample_r
-           file ./bin/tsl_test_d
-           file ./bin/llvm_test_d
-           file ./bin/tsl_sample_d
+           make verify_builds
     - name: Unit test
       run: make test
   MacOs_Apple_Silicon:
@@ -129,12 +124,7 @@ jobs:
            make debug ARCH=arm64
     - name: Verify Build
       run: |
-           file ./bin/tsl_test_r
-           file ./bin/llvm_test_r
-           file ./bin/tsl_sample_r
-           file ./bin/tsl_test_d
-           file ./bin/llvm_test_d
-           file ./bin/tsl_sample_d
+           make verify_builds
   Ubuntu_20_04:
     runs-on: ubuntu-20.04
     steps:
@@ -168,12 +158,6 @@ jobs:
       run: make debug
     - name: Verify Build
       run: |
-           file ./bin/tsl_test_r
-           file ./bin/llvm_test_r
-           file ./bin/tsl_sample_r
-           file ./bin/tsl_test_d
-           file ./bin/llvm_test_d
-           file ./bin/tsl_sample_d
            make verify_builds
     - name: Unit test
       run: make test
@@ -210,12 +194,7 @@ jobs:
       run: make debug
     - name: Verify Build
       run: |
-           file ./bin/tsl_test_r
-           file ./bin/llvm_test_r
-           file ./bin/tsl_sample_r
-           file ./bin/tsl_test_d
-           file ./bin/llvm_test_d
-           file ./bin/tsl_sample_d
+           make verify_builds
     - name: Unit test
       run: make test
   Ubuntu_16_04:
@@ -269,11 +248,6 @@ jobs:
            cd ..
     - name: Verify Build
       run: |
-           file ./bin/tsl_test_r
-           file ./bin/llvm_test_r
-           file ./bin/tsl_sample_r
-           file ./bin/tsl_test_d
-           file ./bin/llvm_test_d
-           file ./bin/tsl_sample_d
+           make verify_builds
     - name: Unit test
       run: make test
