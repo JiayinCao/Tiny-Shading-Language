@@ -62,22 +62,22 @@ jobs:
       id: cache-dep
       with:
         path: ${{ steps.cache-dir.outputs.dir }}/dependencies
-        key: MacOS-Intel-dep-ver-6
+        key: MacOS-Intel-dep-ver-7
     - name: Install Dependencies
       if: steps.cache-dep.outputs.cache-hit != 'true'
-      run: make update_dep
+      run: make update_dep ARCH=x86_64
     - name: Build Release Version
       run: |
            echo 'export PATH="/usr/local/opt/bison/bin:$PATH"' >> ~/.bash_profile
            source ~/.bash_profile
            bison -V
-           make
+           make  ARCH=x86_64
     - name: Build Debug Version
       run: |
            echo 'export PATH="/usr/local/opt/bison/bin:$PATH"' >> ~/.bash_profile
            source ~/.bash_profile
            bison -V
-           make debug
+           make debug ARCH=x86_64
     - name: Verify Build
       run: |
            file ./bin/tsl_test_r
@@ -111,10 +111,10 @@ jobs:
       id: cache-dep
       with:
         path: ${{ steps.cache-dir.outputs.dir }}/dependencies
-        key: MacOS-Apple-Silicon-dep-ver-6
+        key: MacOS-Apple-Silicon-dep-ver-7
     - name: Install Dependencies
       if: steps.cache-dep.outputs.cache-hit != 'true'
-      run: make update_dep
+      run: make update_dep ARCH=arm64
     - name: Build Release Version
       run: |
            echo 'export PATH="/usr/local/opt/bison/bin:$PATH"' >> ~/.bash_profile
