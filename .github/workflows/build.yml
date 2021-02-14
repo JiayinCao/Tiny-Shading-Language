@@ -236,19 +236,9 @@ jobs:
       if: steps.cache-dep.outputs.cache-hit != 'true'
       run: make update_dep
     - name: Build Release Version
-      run: |
-           mkdir proj_release
-           cd proj_release
-           cmake -DCMAKE_BUILD_TYPE=Release CC=gcc-7 CXX=g++-7 ..
-           make -j 4
-           cd ..
+      run: make
     - name: Build Debug Version
-      run: |
-           mkdir proj_debug
-           cd proj_debug
-           cmake -DCMAKE_BUILD_TYPE=Release CC=gcc-7 CXX=g++-7 ..
-           make -j 4
-           cd ..
+      run: make debug
     - name: Verify Build
       run: |
            make verify_builds
