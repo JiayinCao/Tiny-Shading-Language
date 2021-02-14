@@ -31,6 +31,7 @@ set GENERATE_SRC=
 set UNIT_TEST=
 set FULL=
 set INSTALL=
+set VERIFY_BUILDS=
 set RESOLVED_INSTALL_PATH="./tsl"
 
 rem parse arguments
@@ -75,6 +76,8 @@ if NOT "%1" == "" (
 			set RESOLVED_INSTALL_PATH=%3
 		)
 		goto EOF
+    )else if "%1" == "verify_builds" (
+        set VERIFY_BUILDS=1
     )else (
         echo Unrecognized Command
         goto EOF
@@ -193,6 +196,11 @@ if "%INSTALL%" == "1" (
 	echo Install Path: %RESOLVED_INSTALL_PATH%
 	make
 	cmake -DCMAKE_INSTALL_PREFIX=%RESOLVED_INSTALL_PATH% -P ./proj_release/cmake_install.cmake
+)
+
+if "%VERIFY_BUILDS%" == "1" (
+	echo [33mVerifying builds[0m
+	py .\scripts\verify_builds.py
 )
 
 :EOF

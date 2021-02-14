@@ -20,6 +20,11 @@ import os
 
 files_to_verify = ("./bin/tsl_test_r", "./bin/tsl_test_d", "./bin/llvm_test_r", 
                    "./bin/llvm_test_d", "./bin/tsl_sample_r", "./bin/tsl_sample_d")
+
+if sys.platform == 'win32':
+    files_to_verify = ("./bin/tsl_test_r.exe", "./bin/tsl_test_d.exe", "./bin/llvm_test_r.exe", 
+                       "./bin/llvm_test_d.exe", "./bin/tsl_sample_r.exe", "./bin/tsl_sample_d.exe")
+
 def main():
     missing_build = False
 

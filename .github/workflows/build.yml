@@ -36,6 +36,9 @@ jobs:
     - name: Build Debug Version
       run: make debug
       shell: cmd
+    - name: Verify Build
+      run: |
+           make verify_builds
     - name: Unit test
       run: make test
       shell: cmd
