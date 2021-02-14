@@ -57,6 +57,15 @@ set (TSL_LIBRARY_VERSION_MAJOR 1)
 set (TSL_LIBRARY_VERSION_MINOR 0)
 set (TSL_LIBRARY_VERSION_PATCH 1)
 
+# if we are building on MacOS, indicate which version Mac it is building on
+if (TSL_PLATFORM_MAC)
+    if (CMAKE_OSX_ARCHITECTURES STREQUAL "x86_64")
+        message( "Building on Intel Mac")
+    else()
+        message( "Building on Apple Silicon Mac")
+    endif()
+endif(TSL_PLATFORM_MAC)
+
 # create TSL solution
 project (TSL)
 

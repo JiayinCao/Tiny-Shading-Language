@@ -26,6 +26,7 @@ import subprocess
 
 # whether to force syncing
 forcing_sync = False
+arch = 'x86_64'
 
 if len(sys.argv) > 1:
     # output a message indicating this is a force syncing
@@ -33,6 +34,10 @@ if len(sys.argv) > 1:
 
     if sys.argv[1] == 'TRUE':
         forcing_sync = sys.argv[0]
+
+    if len(sys.argv) > 2:
+        if sys.argv[2] == 'arm64':
+            arch = sys.argv[2]
 
 # dependencies folder
 dep_dir = 'dependencies'
@@ -116,13 +121,10 @@ if sync_dep:
     elif sys.platform == "linux" or sys.platform == "linux2":
         sync_dep_utility('llvm', 'https://raw.githubusercontent.com/JiayinCao/Tiny-Shading-Language/dependencies/llvm_10_0_0/linux/x86_64/', dep_dir)
     elif sys.platform == 'darwin':
-        # check if it is running on M1 chip
-        decoded_str = subprocess.check_output(['sh', './scripts/detect_apple_silicon.sh'])
-        str = decoded_str.decode('utf-8').rstrip()
-        if str == 'Apple Silicon':
+        if arch == 'arm64':
             print('Sycning arm version llvm...')
             sync_dep_utility('llvm', 'https://raw.githubusercontent.com/JiayinCao/Tiny-Shading-Language/dependencies/llvm_10_0_0/mac/arm64/', dep_dir)
-        elif str == 'x86_64':
+        elif arch == 'x86_64':
             print('Syncing x86_64 version llvm...')
             sync_dep_utility('llvm', 'https://raw.githubusercontent.com/JiayinCao/Tiny-Shading-Language/dependencies/llvm_10_0_0/mac/x86_64/', dep_dir)
         else:

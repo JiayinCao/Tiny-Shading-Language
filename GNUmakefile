@@ -20,6 +20,11 @@ MAKEFLAGS += --silent
 YELLOW=`tput setaf 3`
 NOCOLOR=`tput sgr0`
 
+# detect the current arch, by default it is what the current platform is.
+# this can be overwritten like this so that we can do cross compiling
+#   make release ARCH=arm64
+ARCH ?= $(shell uname -m)
+
 all:
 	make release
 
@@ -47,13 +52,13 @@ generate_src:
 
 release:
 	echo ${YELLOW}Building release${NOCOLOR}
-	python3 ./scripts/get_dependencies.py
-	rm -rf proj_release;mkdir proj_release;cd proj_release;cmake -DCMAKE_BUILD_TYPE=Release ..;make -j 4;cd ..;
+	make update_dep
+	rm -rf proj_release;mkdir proj_release;cd proj_release;cmake -DCMAKE_OSX_ARCHITECTURES=${ARCH} -DCMAKE_BUILD_TYPE=Release ..;make -j 4;cd ..;
 
 debug:
 	echo ${YELLOW}Building debug${NOCOLOR}
-	python3 ./scripts/get_dependencies.py
-	rm -rf proj_debug;mkdir proj_debug;cd proj_debug;cmake -DCMAKE_BUILD_TYPE=Debug ..;make -j 4;cd ..;
+	make update_dep
+	rm -rf proj_debug;mkdir proj_debug;cd proj_debug;cmake -DCMAKE_OSX_ARCHITECTURES=${ARCH} -DCMAKE_BUILD_TYPE=Debug ..;make -j 4;cd ..;
 
 test:
 	echo ${YELLOW}Running unit tests${NOCOLOR}
@@ -62,15 +67,15 @@ test:
 
 update_dep:
 	echo ${YELLOW}Downloading dependencies ${NOCOLOR}
-	python3 ./scripts/get_dependencies.py
+	python3 ./scripts/get_dependencies.py FALSE ${ARCH}
 
 force_update_dep:
 	echo ${YELLOW}Downloading dependencies ${NOCOLOR}
-	python3 ./scripts/get_dependencies.py TRUE
+	python3 ./scripts/get_dependencies.py TRUE ${ARCH}
 
 INSTALL_PATH ?= "./tsl"
 install:
 	echo ${YELLOW}Build and install TSL${NOCOLOR}
 	echo "Install path:" $(INSTALL_PATH)
 	make release
-	cmake -DCMAKE_INSTALL_PREFIX=$(INSTALL_PATH) -P ./proj_release/cmake_install.cmake
+	cmake  -DCMAKE_OSX_ARCHITECTURES=${ARCH} -DCMAKE_INSTALL_PREFIX=$(INSTALL_PATH) -P ./proj_release/cmake_install.cmake
