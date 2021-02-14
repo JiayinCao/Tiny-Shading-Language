@@ -73,6 +73,10 @@ force_update_dep:
 	echo ${YELLOW}Downloading dependencies ${NOCOLOR}
 	python3 ./scripts/get_dependencies.py TRUE ${ARCH}
 
+verify_builds:
+	echo ${YELLOW}Verifying builds ${NOCOLOR} 
+	python3 ./scripts/verify_builds.py
+
 INSTALL_PATH ?= "./tsl"
 install:
 	echo ${YELLOW}Build and install TSL${NOCOLOR}
