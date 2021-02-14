@@ -39,7 +39,7 @@ jobs:
     - name: Unit test
       run: make test
       shell: cmd
-  Macos:
+  MacOs(Intel):
     runs-on: macOS-latest
     steps:
     - name: Checking Out Source Code
@@ -80,6 +80,45 @@ jobs:
            make debug
     - name: Unit test
       run: make test
+  MacOs(Apple Silicon):
+    runs-on: macOS-latest
+    steps:
+    - name: Checking Out Source Code
+      uses: actions/checkout@v1
+    - name: Configure Environment
+      run: |
+           brew install flex
+           brew install bison
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+            python-version: '3.x'
+            architecture: 'x64'
+    - name: Get Cache Directory
+      id: cache-dir
+      run: |
+           echo "::set-output name=dir::$(pwd)"
+    - name: Load Dependencies from Cache
+      uses: actions/cache@v1
+      id: cache-dep
+      with:
+        path: ${{ steps.cache-dir.outputs.dir }}/dependencies
+        key: MacOS-dep-ver-6
+    - name: Install Dependencies
+      if: steps.cache-dep.outputs.cache-hit != 'true'
+      run: make update_dep
+    - name: Build Release Version
+      run: |
+           echo 'export PATH="/usr/local/opt/bison/bin:$PATH"' >> ~/.bash_profile
+           source ~/.bash_profile
+           bison -V
+           make ARCH=arm64
+    - name: Build Debug Version
+      run: |
+           echo 'export PATH="/usr/local/opt/bison/bin:$PATH"' >> ~/.bash_profile
+           source ~/.bash_profile
+           bison -V
+           make debug ARCH=arm64
   Ubuntu_20_04:
     runs-on: ubuntu-20.04
     steps:
