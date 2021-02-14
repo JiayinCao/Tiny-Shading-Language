@@ -39,7 +39,7 @@ jobs:
     - name: Unit test
       run: make test
       shell: cmd
-  MacOs(Intel):
+  MacOs_Intel:
     runs-on: macOS-latest
     steps:
     - name: Checking Out Source Code
@@ -80,7 +80,7 @@ jobs:
            make debug
     - name: Unit test
       run: make test
-  MacOs(Apple Silicon):
+  MacOs_Apple_Silicon:
     runs-on: macOS-latest
     steps:
     - name: Checking Out Source Code
