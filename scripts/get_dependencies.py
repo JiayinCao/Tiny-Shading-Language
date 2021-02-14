@@ -33,7 +33,7 @@ if len(sys.argv) > 1:
     print( 'Force syncing dependencies.' )
 
     if sys.argv[1] == 'TRUE':
-        forcing_sync = sys.argv[0]
+        forcing_sync = sys.argv[1]
 
     if len(sys.argv) > 2:
         if sys.argv[2] == 'arm64':
