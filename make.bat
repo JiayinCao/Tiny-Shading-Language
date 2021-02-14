@@ -78,6 +78,7 @@ if NOT "%1" == "" (
 		goto EOF
     )else if "%1" == "verify_builds" (
         set VERIFY_BUILDS=1
+        goto EOF
     )else (
         echo Unrecognized Command
         goto EOF
