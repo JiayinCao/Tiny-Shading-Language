@@ -35,12 +35,12 @@ using ast_ptr = const std::shared_ptr<const T>;
 
 class LLVM_Value{
 public:
-	virtual llvm::Value* codegen( Tsl_Namespace::TSL_Compile_Context& context ) const = 0;
+    virtual llvm::Value* codegen( Tsl_Namespace::TSL_Compile_Context& context ) const = 0;
 };
 
 class LLVM_Function{
 public:
-	virtual llvm::Function* codegen( TSL_Compile_Context& context ) const = 0;
+    virtual llvm::Function* codegen( TSL_Compile_Context& context ) const = 0;
 };
 
 //! @brief  Base class of ast node
@@ -87,7 +87,7 @@ public:
 
 class AstNode_Expression : public AstNode, public LLVM_Value {
 public:
-	virtual bool is_closure(TSL_Compile_Context& context) const { return false; }
+    virtual bool is_closure(TSL_Compile_Context& context) const { return false; }
 };
 
 class AstNode_Literal : public AstNode_Expression {
@@ -336,9 +336,9 @@ public:
 
     llvm::Value* codegen(TSL_Compile_Context& context) const override;
 
-	bool is_closure(TSL_Compile_Context& context) const override {
-		return true;
-	}
+    bool is_closure(TSL_Compile_Context& context) const override {
+        return true;
+    }
 
 private:
     const std::string m_name;
@@ -366,7 +366,7 @@ public:
         return nullptr;
     }
 
-	virtual DataType get_var_type(TSL_Compile_Context& context) const = 0;
+    virtual DataType get_var_type(TSL_Compile_Context& context) const = 0;
 };
 
 class AstNode_Statement : public AstNode, public LLVM_Value {
@@ -408,10 +408,10 @@ public:
     }
 
 private:
-    const std::string		        m_name;
-    const DataType			        m_type;
-    const VariableConfig	        m_config;
-    ast_ptr<AstNode_Expression>		m_init_exp;
+    const std::string                m_name;
+    const DataType                    m_type;
+    const VariableConfig            m_config;
+    ast_ptr<AstNode_Expression>        m_init_exp;
 };
 
 class AstNode_SingleVariableDecl : public AstNode_VariableDecl {
@@ -422,13 +422,13 @@ public:
 
     llvm::Value* codegen(TSL_Compile_Context& context) const override;
 
-	DataType data_type() const override{
-		return m_type;
-	}
+    DataType data_type() const override{
+        return m_type;
+    }
 
-	const char* get_var_name() const override{
-		return m_name.c_str();
-	}
+    const char* get_var_name() const override{
+        return m_name.c_str();
+    }
 
     const AstNode_Expression* get_init() const override{
         return m_init_exp.get();
@@ -439,10 +439,10 @@ public:
     }
     
 private:
-	const std::string		m_name;
-	const DataType			m_type;
-	const VariableConfig	m_config;
-    ast_ptr<AstNode_Expression>		m_init_exp;
+    const std::string        m_name;
+    const DataType            m_type;
+    const VariableConfig    m_config;
+    ast_ptr<AstNode_Expression>        m_init_exp;
 };
 
 class AstNode_MultiVariableDecl : public AstNode {
@@ -512,9 +512,9 @@ public:
     }
 
 private:
-    const std::string		m_name;
-    const DataType			m_type;
-    const VariableConfig	m_config;
+    const std::string        m_name;
+    const DataType            m_type;
+    const VariableConfig    m_config;
     ast_ptr<AstNode_Expression>     m_cnt;
     ast_ptr<AstNode_ArrayInitList>  m_init;
 };
@@ -550,9 +550,9 @@ public:
     }
 
 private:
-    const std::string		m_name;
-    const DataType			m_type;
-    const VariableConfig	m_config;
+    const std::string        m_name;
+    const DataType            m_type;
+    const VariableConfig    m_config;
     ast_ptr<AstNode_Expression>     m_cnt;
     ast_ptr<AstNode_ArrayInitList>  m_init;
 };
@@ -565,12 +565,12 @@ public:
 
     llvm::Value* get_value_address(TSL_Compile_Context& context) const override;
 
-	DataType get_var_type(TSL_Compile_Context& context) const override;
+    DataType get_var_type(TSL_Compile_Context& context) const override;
 
     bool is_closure(TSL_Compile_Context& context) const override;
 
 private:
-	const std::string	m_name;
+    const std::string    m_name;
 };
 
 class AstNode_ArrayAccess : public AstNode_Lvalue {
@@ -583,7 +583,7 @@ public:
 
     llvm::Value* get_value_address(TSL_Compile_Context& context) const override;
 
-	DataType get_var_type(TSL_Compile_Context& context) const override;
+    DataType get_var_type(TSL_Compile_Context& context) const override;
 
 private:
     ast_ptr<AstNode_Lvalue>     m_var;
@@ -686,7 +686,7 @@ public:
     AstNode_Unary_Pos(AstNode_Expression* exp) : 
         m_exp(ast_ptr_from_raw<AstNode_Expression>(exp)) {}
 
-	llvm::Value* codegen(TSL_Compile_Context& context) const override;
+    llvm::Value* codegen(TSL_Compile_Context& context) const override;
 
 private:
     ast_ptr<AstNode_Expression> m_exp;
@@ -697,7 +697,7 @@ public:
     AstNode_Unary_Neg(AstNode_Expression* exp) :
         m_exp(ast_ptr_from_raw<AstNode_Expression>(exp)) {}
 
-	llvm::Value* codegen(TSL_Compile_Context& context) const override;
+    llvm::Value* codegen(TSL_Compile_Context& context) const override;
 
 private:
     ast_ptr<AstNode_Expression> m_exp;
@@ -727,7 +727,7 @@ private:
 
 class AstNode_TypeCast : public AstNode_Expression {
 public:
-	AstNode_TypeCast(AstNode_Expression* exp, DataType type) : 
+    AstNode_TypeCast(AstNode_Expression* exp, DataType type) : 
         m_exp(ast_ptr_from_raw<AstNode_Expression>(exp)),
         m_target_type(type) {}
 
@@ -735,12 +735,12 @@ public:
 
 private:
     ast_ptr<AstNode_Expression> m_exp;
-	const DataType			    m_target_type;
+    const DataType                m_target_type;
 };
 
 class AstNode_Expression_PostInc : public AstNode_Expression {
 public:
-	AstNode_Expression_PostInc(AstNode_Lvalue* var) : 
+    AstNode_Expression_PostInc(AstNode_Lvalue* var) : 
         m_var(ast_ptr_from_raw<AstNode_Lvalue>(var)) {}
 
     llvm::Value* codegen(TSL_Compile_Context& context) const override;
@@ -751,7 +751,7 @@ private:
 
 class AstNode_Expression_PostDec : public AstNode_Expression {
 public:
-	AstNode_Expression_PostDec(AstNode_Lvalue* var):
+    AstNode_Expression_PostDec(AstNode_Lvalue* var):
         m_var(ast_ptr_from_raw<AstNode_Lvalue>(var)) {}
 
     llvm::Value* codegen(TSL_Compile_Context& context) const override;
@@ -762,7 +762,7 @@ private:
 
 class AstNode_Expression_PreInc : public AstNode_Expression {
 public:
-	AstNode_Expression_PreInc(AstNode_Lvalue* var) : 
+    AstNode_Expression_PreInc(AstNode_Lvalue* var) : 
         m_var(ast_ptr_from_raw<AstNode_Lvalue>(var)) {}
 
     llvm::Value* codegen(TSL_Compile_Context& context) const override;
@@ -773,7 +773,7 @@ private:
 
 class AstNode_Expression_PreDec : public AstNode_Expression {
 public:
-	AstNode_Expression_PreDec(AstNode_Lvalue* var) : 
+    AstNode_Expression_PreDec(AstNode_Lvalue* var) : 
         m_var(ast_ptr_from_raw<AstNode_Lvalue>(var)) {}
 
     llvm::Value* codegen(TSL_Compile_Context& context) const override;
@@ -817,7 +817,7 @@ public:
 
 class AstNode_Statement_Return : public AstNode_Statement {
 public:
-	AstNode_Statement_Return(AstNode_Expression* expression) : 
+    AstNode_Statement_Return(AstNode_Expression* expression) : 
         m_expression(ast_ptr_from_raw<AstNode_Expression>(expression)) {}
         
     llvm::Value* codegen(TSL_Compile_Context& context) const override;
@@ -828,10 +828,10 @@ private:
 
 class AstNode_Statement_Expression : public AstNode_Statement {
 public:
-	AstNode_Statement_Expression(AstNode_Expression* expression) :
+    AstNode_Statement_Expression(AstNode_Expression* expression) :
         m_expression(ast_ptr_from_raw<AstNode_Expression>(expression)) {}
 
-	llvm::Value* codegen(TSL_Compile_Context& context) const override;
+    llvm::Value* codegen(TSL_Compile_Context& context) const override;
 
 private:
     ast_ptr<AstNode_Expression> m_expression;
@@ -839,31 +839,31 @@ private:
 
 class AstNode_Statement_Condition : public AstNode_Statement {
 public:
-	AstNode_Statement_Condition(AstNode_Expression* cond, AstNode_Statement* true_statements , AstNode_Statement* false_statements = nullptr) 
-		: m_condition(ast_ptr_from_raw<AstNode_Expression>(cond)), 
+    AstNode_Statement_Condition(AstNode_Expression* cond, AstNode_Statement* true_statements , AstNode_Statement* false_statements = nullptr) 
+        : m_condition(ast_ptr_from_raw<AstNode_Expression>(cond)), 
           m_true_statements(ast_ptr_from_raw<AstNode_Statement>(true_statements)),
           m_false_statements(ast_ptr_from_raw<AstNode_Statement>(false_statements)) {}
 
     llvm::Value* codegen(TSL_Compile_Context& context) const override;
 
 private:
-    ast_ptr<AstNode_Expression>	m_condition;
-    ast_ptr<AstNode_Statement>	m_true_statements;
-    ast_ptr<AstNode_Statement>	m_false_statements;
+    ast_ptr<AstNode_Expression>    m_condition;
+    ast_ptr<AstNode_Statement>    m_true_statements;
+    ast_ptr<AstNode_Statement>    m_false_statements;
 };
 
 class AstNode_Statement_VariableDecl: public AstNode_Statement {
 public:
-	AstNode_Statement_VariableDecl(AstNode_VariableDecl* var_decls) :
+    AstNode_Statement_VariableDecl(AstNode_VariableDecl* var_decls) :
         m_var_decls(ast_ptr_from_raw<AstNode_VariableDecl>(var_decls)) {}
 
     llvm::Value* codegen(TSL_Compile_Context& context) const override;
 
-	const AstNode_VariableDecl* get_variable_decl() const {
-		return m_var_decls.get();
-	}
+    const AstNode_VariableDecl* get_variable_decl() const {
+        return m_var_decls.get();
+    }
 private:
-	ast_ptr<AstNode_VariableDecl> m_var_decls;
+    ast_ptr<AstNode_VariableDecl> m_var_decls;
 };
 
 class AstNode_Statement_StructMemberDecls : public AstNode {
@@ -884,19 +884,19 @@ private:
 
 class AstNode_Statement_Loop : public AstNode_Statement {
 public:
-	AstNode_Statement_Loop(AstNode_Expression* cond, AstNode_Statement* statements): 
+    AstNode_Statement_Loop(AstNode_Expression* cond, AstNode_Statement* statements): 
         m_condition(ast_ptr_from_raw<AstNode_Expression>(cond)), 
         m_statements(ast_ptr_from_raw<AstNode_Statement>(statements)) {}
 
 protected:
-    ast_ptr<AstNode_Expression>	    m_condition;
-    ast_ptr<AstNode_Statement>	    m_statements;
+    ast_ptr<AstNode_Expression>        m_condition;
+    ast_ptr<AstNode_Statement>        m_statements;
 };
 
 class AstNode_Statement_Loop_For : public AstNode_Statement_Loop {
 public:
-	AstNode_Statement_Loop_For(AstNode_Statement* init_exp, AstNode_Expression* cond_exp, AstNode_Expression* iter_exp, AstNode_Statement* statements):
-		AstNode_Statement_Loop(cond_exp, statements), 
+    AstNode_Statement_Loop_For(AstNode_Statement* init_exp, AstNode_Expression* cond_exp, AstNode_Expression* iter_exp, AstNode_Statement* statements):
+        AstNode_Statement_Loop(cond_exp, statements), 
         m_init_exp(ast_ptr_from_raw<AstNode_Statement>(init_exp)),
         m_iter_exp(ast_ptr_from_raw<AstNode_Expression>(iter_exp)){}
 
@@ -909,39 +909,39 @@ private:
 
 class AstNode_Statement_Loop_While : public AstNode_Statement_Loop {
 public:
-	AstNode_Statement_Loop_While(AstNode_Expression* cond, AstNode_Statement* statements):AstNode_Statement_Loop(cond,statements){}
+    AstNode_Statement_Loop_While(AstNode_Expression* cond, AstNode_Statement* statements):AstNode_Statement_Loop(cond,statements){}
 
     llvm::Value* codegen(TSL_Compile_Context& context) const override;
 };
 
 class AstNode_Statement_Loop_DoWhile : public AstNode_Statement_Loop {
 public:
-	AstNode_Statement_Loop_DoWhile(AstNode_Expression* cond, AstNode_Statement* statements):AstNode_Statement_Loop(cond,statements){}
+    AstNode_Statement_Loop_DoWhile(AstNode_Expression* cond, AstNode_Statement* statements):AstNode_Statement_Loop(cond,statements){}
 
     llvm::Value* codegen(TSL_Compile_Context& context) const override;
 };
 
 class AstNode_FunctionBody : public AstNode, LLVM_Value {
 public:
-	AstNode_FunctionBody(AstNode_Statement* statements) : 
+    AstNode_FunctionBody(AstNode_Statement* statements) : 
         m_statements(ast_ptr_from_raw<AstNode_Statement>(statements)) {}
 
-	llvm::Value* codegen( TSL_Compile_Context& context ) const override;
+    llvm::Value* codegen( TSL_Compile_Context& context ) const override;
 
 private:
-    ast_ptr<AstNode_Statement>	m_statements;
+    ast_ptr<AstNode_Statement>    m_statements;
 
     friend class AstNode_FunctionPrototype;
 };
 
 class AstNode_FunctionPrototype : public AstNode, LLVM_Function {
 public:
-	AstNode_FunctionPrototype(const char* func_name, AstNode_MultiVariableDecl* variables, AstNode_FunctionBody* body, bool is_shader = false, DataType type = { DataTypeEnum::VOID , nullptr } )
-		                     :m_name(func_name), m_is_shader(is_shader), m_return_type(type),
+    AstNode_FunctionPrototype(const char* func_name, AstNode_MultiVariableDecl* variables, AstNode_FunctionBody* body, bool is_shader = false, DataType type = { DataTypeEnum::VOID , nullptr } )
+                             :m_name(func_name), m_is_shader(is_shader), m_return_type(type),
                               m_variables(ast_ptr_from_raw<AstNode_MultiVariableDecl>(variables)),
                               m_body(ast_ptr_from_raw<AstNode_FunctionBody>(body)){}
 
-	llvm::Function* codegen( TSL_Compile_Context& context ) const override;
+    llvm::Function* codegen( TSL_Compile_Context& context ) const override;
 
     const std::string& get_function_name() const{
         return m_name;
@@ -950,11 +950,11 @@ public:
     void parse_shader_parameters(std::vector< ExposedArgDescriptor>& params) const;
 
 private:
-	const std::string	m_name;
+    const std::string    m_name;
     const bool          m_is_shader;
-    const DataType		m_return_type;
+    const DataType        m_return_type;
 
-    ast_ptr<AstNode_MultiVariableDecl>	m_variables;
+    ast_ptr<AstNode_MultiVariableDecl>    m_variables;
     ast_ptr<AstNode_FunctionBody>       m_body;
 
     friend class AstNode_FunctionCall;
@@ -962,31 +962,31 @@ private:
 
 class AstNode_StructDeclaration : public AstNode, LLVM_Value {
 public:
-	AstNode_StructDeclaration(const char* struct_name, AstNode_Statement_StructMemberDecls* members ) :
+    AstNode_StructDeclaration(const char* struct_name, AstNode_Statement_StructMemberDecls* members ) :
         m_name(struct_name), 
         m_members(ast_ptr_from_raw<AstNode_Statement_StructMemberDecls>(members)) {}
 
-	llvm::Value* codegen(TSL_Compile_Context& context) const override;
+    llvm::Value* codegen(TSL_Compile_Context& context) const override;
 
 private:
-	const std::string m_name;
-    ast_ptr<AstNode_Statement_StructMemberDecls>	m_members;
+    const std::string m_name;
+    ast_ptr<AstNode_Statement_StructMemberDecls>    m_members;
 };
 
 class AstNode_StructMemberRef : public AstNode_Lvalue {
 public:
-	AstNode_StructMemberRef( AstNode_Lvalue* var , const char* member_name ) : 
+    AstNode_StructMemberRef( AstNode_Lvalue* var , const char* member_name ) : 
         m_var(ast_ptr_from_raw<AstNode_Lvalue>(var)),
         m_member(member_name) {}
 
-	llvm::Value* codegen(TSL_Compile_Context& context) const override;
-	llvm::Value* get_value_address(TSL_Compile_Context& context) const override;
+    llvm::Value* codegen(TSL_Compile_Context& context) const override;
+    llvm::Value* get_value_address(TSL_Compile_Context& context) const override;
 
-	DataType get_var_type(TSL_Compile_Context& context) const override;
+    DataType get_var_type(TSL_Compile_Context& context) const override;
 
 private:
-    const std::string	m_member;
-    ast_ptr<AstNode_Lvalue>		m_var;
+    const std::string    m_member;
+    ast_ptr<AstNode_Lvalue>        m_var;
 };
 
 class AstNode_Statement_TextureDeclaration : public AstNode_Statement {

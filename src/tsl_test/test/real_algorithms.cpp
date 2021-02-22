@@ -45,7 +45,7 @@ TEST(Practical, Factorial) {
         }
 
         shader main(int arg0 = 0, out int arg2 = 5){
-			arg2 = factorial( arg0 );
+            arg2 = factorial( arg0 );
         }
     )";
 
@@ -71,7 +71,7 @@ TEST(Practical, Fibonacci) {
         }
         
         shader main(int arg0, out int arg2){
-			arg2 = fibonacci( arg0 );
+            arg2 = fibonacci( arg0 );
         }
     )";
 

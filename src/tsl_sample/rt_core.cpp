@@ -47,16 +47,16 @@
 
 // scene description, all surfaces are spheres in this sample, including the wall, which are simply huge spheres.
 Sphere spheres[] = {
-  //Scene: radius, position,                    emission,       color,              material	                    flip normal
-  Sphere(  1e5,    Vec(1e5 + 1,40.8,81.6),      Vec(),          Vec(.75,.25,.25),   MaterialType::MT_Matt,		    true),    //Left 
-  Sphere(  1e5,    Vec(-1e5 + 99,40.8,81.6),    Vec(),          Vec(.25,.25,.75),   MaterialType::MT_Matt,		    true),    //Rght 
-  Sphere(  1e5,    Vec(50, 40.8, 1e5),          Vec(),          Vec(.75,.75,.75),   MaterialType::MT_Matt,		    true),    //Back 
-  Sphere(  1e5,    Vec(50, 40.8,-1e5 + 170),    Vec(),          Vec(),              MaterialType::MT_Matt,		    true),    //Frnt 
-  Sphere(  1e5,    Vec(50, 1e5, 81.6),          Vec(),          Vec(.75,.75,.75),   MaterialType::MT_Matt,		    true),    //Botm 
-  Sphere(  1e5,    Vec(50, 1e5 + 81.6,81.6),    Vec(),          Vec(.75,.75,.75),   MaterialType::MT_Matt,		    false),   //Top 
+  //Scene: radius, position,                    emission,       color,              material                        flip normal
+  Sphere(  1e5,    Vec(1e5 + 1,40.8,81.6),      Vec(),          Vec(.75,.25,.25),   MaterialType::MT_Matt,            true),    //Left 
+  Sphere(  1e5,    Vec(-1e5 + 99,40.8,81.6),    Vec(),          Vec(.25,.25,.75),   MaterialType::MT_Matt,            true),    //Rght 
+  Sphere(  1e5,    Vec(50, 40.8, 1e5),          Vec(),          Vec(.75,.75,.75),   MaterialType::MT_Matt,            true),    //Back 
+  Sphere(  1e5,    Vec(50, 40.8,-1e5 + 170),    Vec(),          Vec(),              MaterialType::MT_Matt,            true),    //Frnt 
+  Sphere(  1e5,    Vec(50, 1e5, 81.6),          Vec(),          Vec(.75,.75,.75),   MaterialType::MT_Matt,            true),    //Botm 
+  Sphere(  1e5,    Vec(50, 1e5 + 81.6,81.6),    Vec(),          Vec(.75,.75,.75),   MaterialType::MT_Matt,            false),   //Top 
   Sphere(  16.5,   Vec(27, 16.5,47),            Vec(),          Vec(1,1,1) * .999,  MaterialType::MT_Perlin_Matt,   false),   //Left Sphere 
-  Sphere(  16.5,   Vec(73, 16.5,78),            Vec(),          Vec(1,1,1) * .999,  MaterialType::MT_Gold,	        false),   //Right Sphere
-  Sphere(  600,    Vec(50, 681.6 - .27,81.6),   Vec(24,24,24),  Vec(),              MaterialType::MT_Matt,		    false)    //Lite 
+  Sphere(  16.5,   Vec(73, 16.5,78),            Vec(),          Vec(1,1,1) * .999,  MaterialType::MT_Gold,            false),   //Right Sphere
+  Sphere(  600,    Vec(50, 681.6 - .27,81.6),   Vec(24,24,24),  Vec(),              MaterialType::MT_Matt,            false)    //Lite 
 };
 
 // helper function to make thing easier.
@@ -96,7 +96,7 @@ Vec radiance(Ray r) {
         // all materials are lambert, this will be replaced with TSL driven 
         auto bxdf = get_bxdf(obj, p);
 
-		// importance sampling happens here
+        // importance sampling happens here
         Vec wi;
         float pdf = 1.0f;
         const auto ret = bxdf->sample(p, Vec(-r.d.x, -r.d.y, -r.d.z), wi, pdf);
@@ -114,9 +114,9 @@ Vec radiance(Ray r) {
                 break;
         }
 
-		// this adds a bit of bias, but I'm fine with it
-		if (depth > 10)
-			break;
+        // this adds a bit of bias, but I'm fine with it
+        if (depth > 10)
+            break;
 
         r.o = p + wi * 0.0001;
         r.d = wi;
@@ -165,18 +165,18 @@ int rt_main(int samps) {
         threads[b] = std::thread([&](unsigned batch_offset, unsigned batch_max) {
             for (auto y = batch_offset; y < batch_max; ++y) {
                 for (unsigned short x = 0; x < w; x++) {
-					auto i = (h - y - 1) * w + x;
-					auto r = Vec();
-					for (int s = 0; s < samps; s++) {
+                    auto i = (h - y - 1) * w + x;
+                    auto r = Vec();
+                    for (int s = 0; s < samps; s++) {
                         // make sure we have memory for allocating bxdf closures
                         reset_memory_allocator();
 
-						double r1 = 2.0f * random_number(), dx = r1 < 1.0f ? sqrt(r1) - 1.0f : 1.0f - sqrt(2.0f - r1);
-						double r2 = 2.0f * random_number(), dy = r2 < 1.0f ? sqrt(r2) - 1.0f : 1.0f - sqrt(2.0f - r2);
-						Vec d = cx * (((.5f + dx) / 2.f + x) / w - .5f) + cy * (((.5f + dy) / 2.f + y) / h - .5f) + cam.d;
-						r = r + radiance(Ray(cam.o + d * 140, d.norm())) * inv_samps;
-					}
-					c[i] = r;
+                        double r1 = 2.0f * random_number(), dx = r1 < 1.0f ? sqrt(r1) - 1.0f : 1.0f - sqrt(2.0f - r1);
+                        double r2 = 2.0f * random_number(), dy = r2 < 1.0f ? sqrt(r2) - 1.0f : 1.0f - sqrt(2.0f - r2);
+                        Vec d = cx * (((.5f + dx) / 2.f + x) / w - .5f) + cy * (((.5f + dy) / 2.f + y) / h - .5f) + cam.d;
+                        r = r + radiance(Ray(cam.o + d * 140, d.norm())) * inv_samps;
+                    }
+                    c[i] = r;
                     ++pixel_cnt;
                 }
             }
@@ -190,25 +190,25 @@ int rt_main(int samps) {
     // flush the message and change a new line
     fprintf(stderr, "\rRendering (%d spp) %5.2f%%\n", samps, 100. * pixel_cnt / total_pixel_cnt);
 
-	// making sure all threads are done
-	std::for_each(threads.begin(), threads.end(), [](std::thread& thread) { thread.join(); });
+    // making sure all threads are done
+    std::for_each(threads.begin(), threads.end(), [](std::thread& thread) { thread.join(); });
 
 #else
     for (int y = 0; y < h; y++) {
         fprintf(stderr, "\rRendering (%d spp) %5.2f%%", samps, 100. * y / (h - 1));
         for (unsigned short x = 0; x < w; x++) {
-			auto i = (h - y - 1) * w + x;
-			auto r = Vec();
-			for (int s = 0; s < samps; s++) {
+            auto i = (h - y - 1) * w + x;
+            auto r = Vec();
+            for (int s = 0; s < samps; s++) {
                 // make sure we have memory for allocating bxdf closures
                 reset_memory_allocator();
 
                 double r1 = 2.0f * random_number(), dx = r1 < 1.0f ? sqrt(r1) - 1.0f : 1.0f - sqrt(2.0f - r1);
                 double r2 = 2.0f * random_number(), dy = r2 < 1.0f ? sqrt(r2) - 1.0f : 1.0f - sqrt(2.0f - r2);
                 Vec d = cx * (((.5f + dx) / 2.f + x) / w - .5f) + cy * (((.5f + dy) / 2.f + y) / h - .5f) + cam.d;
-				r = r + radiance(Ray(cam.o + d * 140, d.norm())) * inv_samps;
-			}
-			c[i] = r;
+                r = r + radiance(Ray(cam.o + d * 140, d.norm())) * inv_samps;
+            }
+            c[i] = r;
         }
     }
 #endif

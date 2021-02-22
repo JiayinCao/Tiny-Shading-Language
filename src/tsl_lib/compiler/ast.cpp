@@ -46,49 +46,49 @@ llvm::Function* AstNode_FunctionPrototype::codegen( TSL_Compile_Context& context
     // clear the symbol maps, no global var for now
     context.push_var_symbol_layer();
 
-	// parse argument types
-	std::vector<llvm::Type*>	llvm_args;
-	int i = 0;
-	for( auto& arg : args ){
+    // parse argument types
+    std::vector<llvm::Type*>    llvm_args;
+    int i = 0;
+    for( auto& arg : args ){
         auto raw_type = get_type_from_context(arg->data_type(), context);
         llvm_args.push_back((arg->get_config() & VariableConfig::OUTPUT) ? raw_type->getPointerTo() : raw_type);
-	}
+    }
 
     // the last argument is always tsl_global
     if(context.tsl_global_ty)
         llvm_args.push_back(context.tsl_global_ty->getPointerTo());
 
-	// parse return types
-	auto return_type = get_type_from_context(m_return_type , context);
+    // parse return types
+    auto return_type = get_type_from_context(m_return_type , context);
 
-	// declare the function prototype
-	llvm::FunctionType *function_type = llvm::FunctionType::get(return_type, llvm_args, false);
+    // declare the function prototype
+    llvm::FunctionType *function_type = llvm::FunctionType::get(return_type, llvm_args, false);
 
-	if( !function_type )
-		return nullptr;
+    if( !function_type )
+        return nullptr;
 
-	// create the function prototype
+    // create the function prototype
     const auto link_type = ( m_is_shader || ( m_body == nullptr ) )? llvm::Function::ExternalLinkage : llvm::Function::InternalLinkage;
-	llvm::Function* function = llvm::Function::Create(function_type, link_type, m_name, context.module);
+    llvm::Function* function = llvm::Function::Create(function_type, link_type, m_name, context.module);
 
-	// For debugging purposes, set the name of all arguments
+    // For debugging purposes, set the name of all arguments
     i = 0;
-	for (auto &arg : function->args()) {
+    for (auto &arg : function->args()) {
         if (i >= args.size()) {
             arg.setName("tsl_global");
             context.tsl_global_value = &arg;
             break;
         }
-		arg.setName(args[i]->get_var_name());
+        arg.setName(args[i]->get_var_name());
         ++i;
-	}
+    }
 
     context.m_func_symbols[m_name] = std::make_pair(function, this);
 
     if( m_body ){
         // create a separate code block
-	    llvm::BasicBlock *BB = llvm::BasicBlock::Create(*context.context, "entry", function);
-	    context.builder->SetInsertPoint(BB);
+        llvm::BasicBlock *BB = llvm::BasicBlock::Create(*context.context, "entry", function);
+        context.builder->SetInsertPoint(BB);
 
         // push the argument into the symbol table first
         int i = 0;
@@ -126,7 +126,7 @@ llvm::Function* AstNode_FunctionPrototype::codegen( TSL_Compile_Context& context
 
     context.pop_var_symbol_layer();
 
-	return function;
+    return function;
 }
 
 void AstNode_FunctionPrototype::parse_shader_parameters(std::vector<ExposedArgDescriptor>& params) const {
@@ -147,7 +147,7 @@ void AstNode_FunctionPrototype::parse_shader_parameters(std::vector<ExposedArgDe
 }
 
 llvm::Value* AstNode_FunctionBody::codegen( TSL_Compile_Context& context ) const{    
-	return nullptr;
+    return nullptr;
 }
 
 llvm::Value* AstNode_Literal_Int::codegen(TSL_Compile_Context& context) const {
@@ -479,44 +479,44 @@ llvm::Value* AstNode_Binary_Multi::codegen(TSL_Compile_Context& context) const {
         return get_llvm_mul(left, right, context);
     }
 
-	// this must be a closure multiplied by a regular expression
-	if(m_left->is_closure(context) && m_right->is_closure(context)){
+    // this must be a closure multiplied by a regular expression
+    if(m_left->is_closure(context) && m_right->is_closure(context)){
         emit_error("Closure color can't muliply with each other.");
-		return nullptr;
-	}
+        return nullptr;
+    }
 
-	auto closure = m_left->is_closure(context) ? left : right;
-	auto weight = m_left->is_closure(context) ? right : left;
+    auto closure = m_left->is_closure(context) ? left : right;
+    auto weight = m_left->is_closure(context) ? right : left;
 
-	auto malloc_function = context.m_func_symbols["TSL_MALLOC"].first;
-	if( !malloc_function ){
-		// this should not happen at all
-		return nullptr;
-	}
+    auto malloc_function = context.m_func_symbols["TSL_MALLOC"].first;
+    if( !malloc_function ){
+        // this should not happen at all
+        return nullptr;
+    }
 
-	const auto closure_tree_node_type = context.m_structure_type_maps["closure_mul"].m_llvm_type;
-	const auto closure_tree_node_ptr_type = closure_tree_node_type->getPointerTo();
+    const auto closure_tree_node_type = context.m_structure_type_maps["closure_mul"].m_llvm_type;
+    const auto closure_tree_node_ptr_type = closure_tree_node_type->getPointerTo();
 
-	// allocate the tree data structure
-	std::vector<llvm::Value*> args = { ConstantInt::get(*context.context, APInt(32, sizeof(ClosureTreeNodeMul))) };
-	auto closure_tree_node_ptr = builder.CreateCall(malloc_function, args);
-	auto converted_closure_tree_node_ptr = builder.CreatePointerCast(closure_tree_node_ptr, closure_tree_node_ptr_type);
+    // allocate the tree data structure
+    std::vector<llvm::Value*> args = { ConstantInt::get(*context.context, APInt(32, sizeof(ClosureTreeNodeMul))) };
+    auto closure_tree_node_ptr = builder.CreateCall(malloc_function, args);
+    auto converted_closure_tree_node_ptr = builder.CreatePointerCast(closure_tree_node_ptr, closure_tree_node_ptr_type);
 
-	// setup closure id
-	auto node_mul_id = get_llvm_constant_int(CLOSURE_MUL, 32, context);
-	auto gep0 = builder.CreateConstGEP2_32(nullptr, converted_closure_tree_node_ptr, 0, 0);
-	auto dst_closure_id_ptr = builder.CreatePointerCast(gep0, get_int_32_ptr_ty(context));
-	builder.CreateStore(node_mul_id, dst_closure_id_ptr);
+    // setup closure id
+    auto node_mul_id = get_llvm_constant_int(CLOSURE_MUL, 32, context);
+    auto gep0 = builder.CreateConstGEP2_32(nullptr, converted_closure_tree_node_ptr, 0, 0);
+    auto dst_closure_id_ptr = builder.CreatePointerCast(gep0, get_int_32_ptr_ty(context));
+    builder.CreateStore(node_mul_id, dst_closure_id_ptr);
 
-	// assign the closure parameter pointer
-	auto gep1 = builder.CreateConstGEP2_32(nullptr, converted_closure_tree_node_ptr, 0, 2);
-	auto weight_ptr = builder.CreatePointerCast(gep1, get_float_ptr_ty(context));
-	builder.CreateStore(weight, weight_ptr);
+    // assign the closure parameter pointer
+    auto gep1 = builder.CreateConstGEP2_32(nullptr, converted_closure_tree_node_ptr, 0, 2);
+    auto weight_ptr = builder.CreatePointerCast(gep1, get_float_ptr_ty(context));
+    builder.CreateStore(weight, weight_ptr);
 
-	// copy the pointer
-	auto gep2 = builder.CreateConstGEP2_32(nullptr, converted_closure_tree_node_ptr, 0, 3);
-	auto closure_ptr = builder.CreatePointerCast(gep2, closure->getType()->getPointerTo());
-	builder.CreateStore(closure, closure_ptr);
+    // copy the pointer
+    auto gep2 = builder.CreateConstGEP2_32(nullptr, converted_closure_tree_node_ptr, 0, 3);
+    auto closure_ptr = builder.CreatePointerCast(gep2, closure->getType()->getPointerTo());
+    builder.CreateStore(closure, closure_ptr);
 
     const auto final_type = get_closure_ty(context);
     auto converted_ret = builder.CreatePointerCast(converted_closure_tree_node_ptr, final_type);
@@ -794,7 +794,7 @@ bool AstNode_VariableRef::is_closure(TSL_Compile_Context& context) const {
 }
 
 DataType AstNode_VariableRef::get_var_type(TSL_Compile_Context& context) const {
-	return context.get_var_type(m_name);
+    return context.get_var_type(m_name);
 }
 
 llvm::Value* AstNode_ArrayAccess::codegen(TSL_Compile_Context& context) const {
@@ -823,7 +823,7 @@ llvm::Value* AstNode_ArrayAccess::get_value_address(TSL_Compile_Context& context
 }
 
 DataType AstNode_ArrayAccess::get_var_type(TSL_Compile_Context& context) const {
-	return m_var->get_var_type(context);
+    return m_var->get_var_type(context);
 }
 
 llvm::Value* AstNode_SingleVariableDecl::codegen(TSL_Compile_Context& context) const {
@@ -1082,7 +1082,7 @@ llvm::Value* AstNode_ExpAssign_ShrEq::codegen(TSL_Compile_Context& context) cons
 }
 
 llvm::Value* AstNode_Statement_Expression::codegen(TSL_Compile_Context& context) const{
-	return m_expression->codegen(context);
+    return m_expression->codegen(context);
 }
 
 llvm::Value* AstNode_Expression_PreInc::codegen(TSL_Compile_Context& context) const{
@@ -1150,21 +1150,21 @@ llvm::Value* AstNode_Expression_PostDec::codegen(TSL_Compile_Context& context) c
 }
 
 llvm::Value* AstNode_Unary_Pos::codegen(TSL_Compile_Context& context) const {
-	return m_exp->codegen(context);
+    return m_exp->codegen(context);
 }
 
 llvm::Value* AstNode_Unary_Neg::codegen(TSL_Compile_Context& context) const{
     auto& builder = *context.builder;
 
-	auto operand = m_exp->codegen(context);
+    auto operand = m_exp->codegen(context);
     if (!operand)
         return nullptr;
 
     auto operand_type = operand->getType();
-	if (operand_type == get_float_ty(context))
-		return builder.CreateFNeg(operand);
-	else if (operand_type == get_int_32_ty(context))
-		return builder.CreateNeg(operand);
+    if (operand_type == get_float_ty(context))
+        return builder.CreateFNeg(operand);
+    else if (operand_type == get_int_32_ty(context))
+        return builder.CreateNeg(operand);
     else {
         auto it = context.m_structure_type_maps.find("float3");
         auto float3_struct_ty = it->second.m_llvm_type;
@@ -1188,7 +1188,7 @@ llvm::Value* AstNode_Unary_Neg::codegen(TSL_Compile_Context& context) const{
         }
     }
 
-	return nullptr;
+    return nullptr;
 }
 
 llvm::Value* AstNode_Unary_Not::codegen(TSL_Compile_Context& context) const {
@@ -1602,29 +1602,29 @@ llvm::Value* AstNode_Statement_Continue::codegen(TSL_Compile_Context& context) c
 }
 
 llvm::Value* AstNode_StructDeclaration::codegen(TSL_Compile_Context& context) const {
-	if( context.m_structure_type_maps.count(m_name) )
-		return nullptr;
+    if( context.m_structure_type_maps.count(m_name) )
+        return nullptr;
 
-	std::vector<llvm::Type*> member_types;
+    std::vector<llvm::Type*> member_types;
 
-	if(m_members){
-		const auto& members = m_members->get_member_list();
+    if(m_members){
+        const auto& members = m_members->get_member_list();
 
-		for( const auto& member : members ){
+        for( const auto& member : members ){
             const auto decl = member->get_variable_decl();
-			const auto type = decl->data_type();
-			auto llvm_type = get_type_from_context(type, context);
-			member_types.push_back(llvm_type);
-		}
-	}
-	auto structure_type = StructType::create(member_types, m_name);
+            const auto type = decl->data_type();
+            auto llvm_type = get_type_from_context(type, context);
+            member_types.push_back(llvm_type);
+        }
+    }
+    auto structure_type = StructType::create(member_types, m_name);
 
-	auto& item = context.m_structure_type_maps[m_name];
-	item.m_llvm_type = structure_type;
+    auto& item = context.m_structure_type_maps[m_name];
+    item.m_llvm_type = structure_type;
 
     bool type_pushed = false;
-	int i = 0;
-	if (m_members) {
+    int i = 0;
+    if (m_members) {
         const auto& members = m_members->get_member_list();
 
         for (const auto& member : members) {
@@ -1635,66 +1635,66 @@ llvm::Value* AstNode_StructDeclaration::codegen(TSL_Compile_Context& context) co
             item.m_member_types[name] = std::make_pair(i++, type);
             type_pushed = true;
         }
-	}
+    }
 
-	return nullptr;
+    return nullptr;
 }
 
 llvm::Value* AstNode_StructMemberRef::codegen(TSL_Compile_Context& context) const{
-	auto value_ptr = get_value_address(context);
-	return context.builder->CreateLoad(value_ptr);
+    auto value_ptr = get_value_address(context);
+    return context.builder->CreateLoad(value_ptr);
 }
 
 llvm::Value* AstNode_StructMemberRef::get_value_address(TSL_Compile_Context& context) const{
-	const auto var_type = m_var->get_var_type(context);
+    const auto var_type = m_var->get_var_type(context);
 
-	if( !context.m_structure_type_maps.count(var_type.m_structure_name) ){
+    if( !context.m_structure_type_maps.count(var_type.m_structure_name) ){
         emit_error("Undefined struct '%s'.", var_type.m_structure_name);
-		return nullptr;
-	}
+        return nullptr;
+    }
 
-	const auto var_value_ptr = m_var->get_value_address(context);
-	if( !var_value_ptr )
-		return nullptr;
+    const auto var_value_ptr = m_var->get_value_address(context);
+    if( !var_value_ptr )
+        return nullptr;
 
-	// access the member meta data
-	auto& data_type = context.m_structure_type_maps[var_type.m_structure_name];
+    // access the member meta data
+    auto& data_type = context.m_structure_type_maps[var_type.m_structure_name];
 
-	// get the member offset
-	auto it = data_type.m_member_types.find(m_member);
-	if( it == data_type.m_member_types.end() ){
+    // get the member offset
+    auto it = data_type.m_member_types.find(m_member);
+    if( it == data_type.m_member_types.end() ){
         emit_error("Undefined member variable '%s' in struct '%s'.", m_member.c_str(), var_type.m_structure_name);
-		return nullptr;
-	}
+        return nullptr;
+    }
 
-	// get the member address
-	auto member_value_ptr = context.builder->CreateConstGEP2_32(nullptr, var_value_ptr, 0, it->second.first);
-	return  member_value_ptr;
+    // get the member address
+    auto member_value_ptr = context.builder->CreateConstGEP2_32(nullptr, var_value_ptr, 0, it->second.first);
+    return  member_value_ptr;
 }
 
 DataType AstNode_StructMemberRef::get_var_type(TSL_Compile_Context& context) const{
-	const auto var_type = m_var->get_var_type(context);
+    const auto var_type = m_var->get_var_type(context);
 
-	if (!context.m_structure_type_maps.count(var_type.m_structure_name)) {
+    if (!context.m_structure_type_maps.count(var_type.m_structure_name)) {
         emit_error("Undefined struct '%s'.", var_type.m_structure_name);
-		return DataType();
-	}
+        return DataType();
+    }
 
-	const auto var_value_ptr = m_var->get_value_address(context);
-	if (!var_value_ptr) 
-		return DataType();
+    const auto var_value_ptr = m_var->get_value_address(context);
+    if (!var_value_ptr) 
+        return DataType();
 
-	// access the member meta data
-	auto& data_type = context.m_structure_type_maps[var_type.m_structure_name];
+    // access the member meta data
+    auto& data_type = context.m_structure_type_maps[var_type.m_structure_name];
 
-	// get the member offset
-	auto it = data_type.m_member_types.find(m_member);
-	if (it == data_type.m_member_types.end()) {
+    // get the member offset
+    auto it = data_type.m_member_types.find(m_member);
+    if (it == data_type.m_member_types.end()) {
         emit_error("Undefined member variable '%s' in struct '%s'.", m_member.c_str(), var_type.m_structure_name);
-		return DataType();
-	}
+        return DataType();
+    }
 
-	return it->second.second;
+    return it->second.second;
 }
 
 llvm::Value* AstNode_Statement_TextureDeclaration::codegen(TSL_Compile_Context& context) const {

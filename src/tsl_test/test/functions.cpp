@@ -118,7 +118,7 @@ TEST(Functions, Shader_Single_Argument_With_Metadata_and_Default ) {
 TEST(Functions, Shader_Multi_Arguments_With_Metadata_and_Default ) {
     validate_shader(R"(
         shader shader_func( float arg0 = 0.0 <<< >>>,
-                            int	  arg1 = 0  <<< >>> ,
+                            int      arg1 = 0  <<< >>> ,
                             int   arg2 = 2  <<<>>> ,
                             int   arg3 = 1  ){
         }
@@ -190,11 +190,11 @@ TEST(Functions, Function_As_Argument ) {
 }
 
 TEST(Functions, Config_Decorator ) {
-	validate_shader(R"(
+    validate_shader(R"(
         shader main( int arg0 = 232 ,
-				     const int arg1 = 2,
-					 in const float arg2 = 3.0,
-					 // const in matrix mat,
+                     const int arg1 = 2,
+                     in const float arg2 = 3.0,
+                     // const in matrix mat,
                      in float input_arg = 0.2 <<< >>> ,
                      out int last_arg = 2.0 <<< >>> ){
             arg2 = input_arg + 2.0;
@@ -205,14 +205,14 @@ TEST(Functions, Config_Decorator ) {
 }
 
 TEST(Functions, Simple_Test) {
-	validate_shader(R"(
+    validate_shader(R"(
         shader main( out float arg2 ){
-			int k = 0;
-			
-			while( k < 100 )
-			{
+            int k = 0;
+            
+            while( k < 100 )
+            {
                 k = k + 1;
-			}
+            }
 
             arg2 = k == 100 ? 122.0 : 22.0;
         }
@@ -226,7 +226,7 @@ TEST(Functions, Single_Return) {
                     int arg2 = 3,
                     int arg3 = 4,
                     int arg4 = 5){
-			 int a = ( ( arg0 + arg1 ) * arg2 + arg3 / arg4 ) & arg0;
+             int a = ( ( arg0 + arg1 ) * arg2 + arg3 / arg4 ) & arg0;
              return;
         }
     )");
@@ -240,7 +240,7 @@ TEST(Functions, Call_AnotherFunction) {
 
         shader main(int arg0 = 0,
                     out int arg2 = 5){
-			arg2 = helper_func( arg0 );
+            arg2 = helper_func( arg0 );
         }
     )");
 }

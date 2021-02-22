@@ -84,25 +84,25 @@ public:
     //! @param  node             Push a function node in the compiler.
     void        push_function(AstNode_FunctionPrototype* node, bool is_shader = false);
 
-    //! @brief	Push structure declaration.
+    //! @brief    Push structure declaration.
     //!
-    //! @param	node			Push a structure declaration.
-    void	    push_structure_declaration(AstNode_StructDeclaration* structure);
+    //! @param    node            Push a structure declaration.
+    void        push_structure_declaration(AstNode_StructDeclaration* structure);
 
     //! @brief  Push global parameter
     //!
     //! @param  statement       This statement should be purely variable declaration.
     void        push_global_parameter(const AstNode_Statement* statement);
 
-    //! @brief	Parameter type cache.
+    //! @brief    Parameter type cache.
     //!
-    //! @param	type			Type of the parameter to be parsed.
-    void	    cache_next_data_type(const DataType& type) {
+    //! @param    type            Type of the parameter to be parsed.
+    void        cache_next_data_type(const DataType& type) {
         m_type_cache = type;
     }
 
-    //! @brief	Acquire the cached data type.
-    DataType	data_type_cache() const {
+    //! @brief    Acquire the cached data type.
+    DataType    data_type_cache() const {
         return m_type_cache;
     }
 
@@ -129,12 +129,12 @@ private:
     // global functions defined in this module
     std::vector<std::shared_ptr<const AstNode_FunctionPrototype>>   m_functions;
     // global structure declaration in this module, maybe I should merge it with the above one
-    std::vector<std::shared_ptr<const AstNode_StructDeclaration>>	m_structures;
+    std::vector<std::shared_ptr<const AstNode_StructDeclaration>>    m_structures;
     // global variables defined in this module
     std::vector<std::shared_ptr<const AstNode_Statement>>           m_global_var;
 
     // data type cache
-    DataType	m_type_cache = { DataTypeEnum::VOID , nullptr };
+    DataType    m_type_cache = { DataTypeEnum::VOID , nullptr };
 
     // local llvm context
     llvm::LLVMContext   m_llvm_context;
@@ -147,7 +147,7 @@ private:
 
     // a string holder, this is purely to workaround bison limitation because DateType can't be non-POD.
     // an extra perk of doing this is to make DataType much cheaper.
-    std::unordered_set<std::string>	m_string_container;
+    std::unordered_set<std::string>    m_string_container;
 
     // this data structure keeps track of used values to bridge shader units
     using VarMapping = std::unordered_map<std::string, std::unordered_map<std::string, llvm::Value*>>;

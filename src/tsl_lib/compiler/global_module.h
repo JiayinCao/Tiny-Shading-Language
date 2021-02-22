@@ -64,8 +64,8 @@ public:
     // get declaration
     llvm::Function* declare_closure_function(const std::string& name, TSL_Compile_Context& context);
 
-	// declare global function
-	void			declare_global_module(TSL_Compile_Context& context);
+    // declare global function
+    void            declare_global_module(TSL_Compile_Context& context);
 
 private:
     /**< a container holding all closures ids. */
@@ -79,8 +79,8 @@ private:
     std::unique_ptr<llvm::Module>                   m_module;
     std::unordered_map<std::string, llvm::Type*>    m_typing_maps;
 
-	/**< The type of base closure node. */
-	const llvm::Type*   m_closure_base_type = nullptr;
+    /**< The type of base closure node. */
+    const llvm::Type*   m_closure_base_type = nullptr;
 
     Tsl_Namespace::TSL_Compile_Context m_llvm_compiling_context;
 };

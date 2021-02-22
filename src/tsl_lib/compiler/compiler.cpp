@@ -142,10 +142,10 @@ void TslCompiler::push_function(AstNode_FunctionPrototype* node, const bool is_s
 
 void TslCompiler::push_structure_declaration(AstNode_StructDeclaration* structure) {
     auto ptr = ast_ptr_from_raw<AstNode_StructDeclaration>(structure);
-	m_structures.push_back(ptr);
+    m_structures.push_back(ptr);
 
 #ifdef DEBUG_OUTPUT
-	// structure->print();
+    // structure->print();
 #endif
 }
 
@@ -183,7 +183,7 @@ bool TslCompiler::compile(const char* source_code, ShaderUnitTemplate* su) {
     yylex_destroy(m_scanner);
 
     if( parsing_result != 0 )
-		return false;
+        return false;
 
     auto su_pvt = su->m_shader_unit_template_impl;
 
@@ -191,23 +191,23 @@ bool TslCompiler::compile(const char* source_code, ShaderUnitTemplate* su) {
     // another module is cloned from this one.
     su_pvt->m_module = std::make_unique<llvm::Module>(su->get_name(), m_llvm_context);
     auto module = su_pvt->m_module.get();
-	if(!module)
-		return false;
+    if(!module)
+        return false;
 
-	// if there is a legit shader defined, generate LLVM IR
-	if(m_ast_root){
-		llvm::IRBuilder<> builder(m_llvm_context);
+    // if there is a legit shader defined, generate LLVM IR
+    if(m_ast_root){
+        llvm::IRBuilder<> builder(m_llvm_context);
 
-		TSL_Compile_Context compile_context;
-		compile_context.context = &m_llvm_context;
-		compile_context.module = module;
-		compile_context.builder = &builder;
+        TSL_Compile_Context compile_context;
+        compile_context.context = &m_llvm_context;
+        compile_context.module = module;
+        compile_context.builder = &builder;
         compile_context.m_shader_resource_table = &su_pvt->m_shader_resource_table;
         compile_context.tsl_global_mapping = !su_pvt->m_tsl_global.m_var_list.empty() ? &su_pvt->m_tsl_global : nullptr;
 
         // declare tsl global
         m_global_module.declare_closure_tree_types(m_llvm_context, &compile_context.m_structure_type_maps);
-		m_global_module.declare_global_module(compile_context);
+        m_global_module.declare_global_module(compile_context);
         for (auto& closure : m_closures_in_shader) {
             // declare the function first.
             auto function = m_global_module.declare_closure_function(closure, compile_context);
@@ -241,16 +241,16 @@ bool TslCompiler::compile(const char* source_code, ShaderUnitTemplate* su) {
         for (auto& global_var : m_global_var)
             global_var->codegen(compile_context);
 
-		// generate all data structures first
-		for( auto& structure : m_structures )
-			structure->codegen(compile_context);
+        // generate all data structures first
+        for( auto& structure : m_structures )
+            structure->codegen(compile_context);
 
         // code gen for all functions
         for( auto& function : m_functions )
             function->codegen(compile_context);
 
-		// generate code for the shader in this module
-		su_pvt->m_llvm_function = m_ast_root->codegen(compile_context);
+        // generate code for the shader in this module
+        su_pvt->m_llvm_function = m_ast_root->codegen(compile_context);
 
         // there is usually just one global module as dependent in all shader unit.
         su_pvt->m_dependencies.insert(m_global_module.get_closure_module());
@@ -267,7 +267,7 @@ bool TslCompiler::compile(const char* source_code, ShaderUnitTemplate* su) {
             return false;
     }
 
-	return true;
+    return true;
 }
 
 TSL_Resolving_Status TslCompiler::resolve(ShaderInstance* si) {
@@ -463,7 +463,7 @@ TSL_Resolving_Status TslCompiler::resolve(ShaderGroupTemplate* sg) {
             const auto& params = shader_unit->m_shader_unit_template_impl->m_exposed_args;
 
             // parse argument types
-            std::vector<llvm::Type*>	args(params.size());
+            std::vector<llvm::Type*>    args(params.size());
             for (int i = 0; i < args.size(); ++i) {
                 const auto& variable = params[i];
                 const auto raw_type = llvm_type_from_arg_type(variable.m_type, compile_context);
@@ -502,7 +502,7 @@ TSL_Resolving_Status TslCompiler::resolve(ShaderGroupTemplate* sg) {
 
     // parse argument types
     const auto& args = sg_impl->m_exposed_args;
-    std::vector<llvm::Type*>	llvm_arg_types(args.size());
+    std::vector<llvm::Type*>    llvm_arg_types(args.size());
     for (auto i = 0; i < args.size(); ++i) {
         auto raw_type = llvm_type_from_arg_type(args[i].m_type, compile_context);
         if (args[i].m_is_output)

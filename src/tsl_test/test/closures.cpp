@@ -37,7 +37,7 @@ TEST(Closure, ClosureMake) {
 
     auto lambert_param = (ClosureTypeLambert*)root->m_params;
     EXPECT_VALID_RAW_PTR(root);
-	EXPECT_EQ(root->m_id, g_lambert_closure_id);
+    EXPECT_EQ(root->m_id, g_lambert_closure_id);
     EXPECT_VALID_RAW_PTR(root->m_params);
     EXPECT_EQ(lambert_param->base_color, 11);
     EXPECT_EQ(lambert_param->normal, 2.0f);
@@ -112,19 +112,19 @@ TEST(Closure, ClosureMul) {
 }
 
 TEST(Closure, ClosureAdd) {
-	auto shader_source = R"(
+    auto shader_source = R"(
         shader closure_add(out closure o0){
             o0 = make_closure<lambert>( 13 , 4.0 ) + make_closure<microfacet>( 123.0 , 5.0 );
         }
     )";
 
-	Tsl_Namespace::ClosureTreeNodeAdd* root = nullptr;
-	auto ret = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeAdd**)>(shader_source);
+    Tsl_Namespace::ClosureTreeNodeAdd* root = nullptr;
+    auto ret = compile_shader<void(*)(Tsl_Namespace::ClosureTreeNodeAdd**)>(shader_source);
     auto func_ptr = ret.first;
-	func_ptr(&root);
+    func_ptr(&root);
 
     EXPECT_VALID_RAW_PTR(root);
-	EXPECT_EQ(root->m_id, CLOSURE_ADD);
+    EXPECT_EQ(root->m_id, CLOSURE_ADD);
     EXPECT_VALID_RAW_PTR(root->m_closure0);
     EXPECT_EQ(root->m_closure0->m_id, g_lambert_closure_id);
     EXPECT_VALID_RAW_PTR(root->m_closure0->m_params);

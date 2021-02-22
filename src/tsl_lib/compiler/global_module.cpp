@@ -57,7 +57,7 @@ bool GlobalModule::init() {
 }
 
 void GlobalModule::declare_closure_tree_types(llvm::LLVMContext& context, Struct_Symbol_Table* mapping) {
-	// N.B, this function implementation will be 'externally' defined in std.tsl
+    // N.B, this function implementation will be 'externally' defined in std.tsl
 
     // ClosureTreeNodeBase, it has to have this 4 bytes memory padding in it so that the size is 8, otherwise, it will crash the system.
     const auto closure_tree_node_base = "closure_base";
@@ -65,17 +65,17 @@ void GlobalModule::declare_closure_tree_types(llvm::LLVMContext& context, Struct
         Type::getInt32Ty(context),       /* m_id */
         Type::getInt32PtrTy(context)     /* m_params */
     };
-	auto closure_tree_node_base_ty = StructType::create(args_base, closure_tree_node_base);
+    auto closure_tree_node_base_ty = StructType::create(args_base, closure_tree_node_base);
 
     // ClosureTreeNodeMul
-	const auto closure_tree_node_mul = "closure_mul";
-	const std::vector<Type*> args_mul = {
-		Type::getInt32Ty(context),       /* m_id */
-		Type::getInt32PtrTy(context),    /* m_params */
-		Type::getFloatTy(context),		 /* m_weight */
-		Type::getInt32PtrTy(context)	 /* m_closure */
-	};
-	auto closure_tree_node_mul_ty = StructType::create(args_mul, closure_tree_node_mul);
+    const auto closure_tree_node_mul = "closure_mul";
+    const std::vector<Type*> args_mul = {
+        Type::getInt32Ty(context),       /* m_id */
+        Type::getInt32PtrTy(context),    /* m_params */
+        Type::getFloatTy(context),         /* m_weight */
+        Type::getInt32PtrTy(context)     /* m_closure */
+    };
+    auto closure_tree_node_mul_ty = StructType::create(args_mul, closure_tree_node_mul);
 
     // ClosureTreeNodeMul
     const auto closure_tree_node_add = "closure_add";
@@ -83,18 +83,18 @@ void GlobalModule::declare_closure_tree_types(llvm::LLVMContext& context, Struct
         Type::getInt32Ty(context),       /* m_id */
         Type::getInt32PtrTy(context),    /* m_params */
         Type::getInt32PtrTy(context),    /* m_closure0 */
-        Type::getInt32PtrTy(context)	 /* m_closure1 */
+        Type::getInt32PtrTy(context)     /* m_closure1 */
     };
     auto closure_tree_node_add_ty = StructType::create(args_add, closure_tree_node_add);
 
-	// keep track of the allocated type
-	if (!mapping) {
-		m_closure_base_type = StructType::create(args_base, closure_tree_node_base);
-	} else {
-		(*mapping)["closure_base"].m_llvm_type = closure_tree_node_base_ty;
-		(*mapping)["closure_mul"].m_llvm_type = closure_tree_node_mul_ty;
-		(*mapping)["closure_add"].m_llvm_type = closure_tree_node_add_ty;
-	}
+    // keep track of the allocated type
+    if (!mapping) {
+        m_closure_base_type = StructType::create(args_base, closure_tree_node_base);
+    } else {
+        (*mapping)["closure_base"].m_llvm_type = closure_tree_node_base_ty;
+        (*mapping)["closure_mul"].m_llvm_type = closure_tree_node_mul_ty;
+        (*mapping)["closure_add"].m_llvm_type = closure_tree_node_add_ty;
+    }
 }
 
 llvm::Module* GlobalModule::get_closure_module() {
@@ -104,15 +104,15 @@ llvm::Module* GlobalModule::get_closure_module() {
 ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureArgList& arg_list, int structure_size) {
     std::lock_guard<std::mutex> lock(m_closure_mutex);
 
-	// if it is already registered, simply return with the previous registered id
-	const auto it = m_closures.find(name);
+    // if it is already registered, simply return with the previous registered id
+    const auto it = m_closures.find(name);
     if (it != m_closures.end())
         return it->second.m_closure_id;
     
     const auto closure_type_name = "closure_type_" + name;
     const auto function_name = "make_closure_" + name;
 
-	// assemble the variable types
+    // assemble the variable types
     std::vector<Type*> arg_types;
     for (auto& arg : arg_list) {
         auto type = get_type_from_context(arg.m_type, m_llvm_compiling_context);
@@ -126,7 +126,7 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureAr
     // return type is always int* to avoid debugging error
     auto ret_type = get_closure_ty(m_llvm_compiling_context);
 
-	// declare the closure parameter data structure
+    // declare the closure parameter data structure
     const auto closure_param_type = StructType::create(arg_types, closure_type_name);
 
     // the function to allocate the closure data structure
@@ -140,7 +140,7 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureAr
     const auto param_table_ptr = builder.CreateCall(malloc_function, { ConstantInt::get(m_llvm_context, APInt(32, structure_size)) }, "TSL_MALLOC");
     const auto converted_param_table_ptr = builder.CreatePointerCast(param_table_ptr, closure_param_type->getPointerTo());
 
-	// copy all variables in this parameter table
+    // copy all variables in this parameter table
     for (int i = 0; i < arg_list.size(); ++i) {
         const auto& arg = arg_list[i];
 
@@ -159,11 +159,11 @@ ClosureID GlobalModule::register_closure_type(const std::string& name, ClosureAr
     auto closure_tree_node_ptr = builder.CreateCall(malloc_function, { ConstantInt::get(m_llvm_context, APInt(32, sizeof(ClosureTreeNodeBase))) });
     auto converted_closure_tree_node_ptr = builder.CreatePointerCast(closure_tree_node_ptr, m_closure_base_type->getPointerTo());
 
-	// setup closure id
-	auto closure_id = ConstantInt::get(m_llvm_context, APInt(32, m_current_closure_id));
-	auto gep0 = builder.CreateConstGEP2_32(nullptr, converted_closure_tree_node_ptr, 0, 0);
-	auto dst_closure_id_ptr = builder.CreatePointerCast(gep0, Type::getInt32PtrTy(m_llvm_context));
-	builder.CreateStore(closure_id, dst_closure_id_ptr);
+    // setup closure id
+    auto closure_id = ConstantInt::get(m_llvm_context, APInt(32, m_current_closure_id));
+    auto gep0 = builder.CreateConstGEP2_32(nullptr, converted_closure_tree_node_ptr, 0, 0);
+    auto dst_closure_id_ptr = builder.CreatePointerCast(gep0, Type::getInt32PtrTy(m_llvm_context));
+    builder.CreateStore(closure_id, dst_closure_id_ptr);
 
     // assign the closure parameter pointer
     auto gep1 = builder.CreateConstGEP2_32(nullptr, converted_closure_tree_node_ptr, 0, 1);
@@ -232,7 +232,7 @@ void GlobalModule::declare_global_module(TSL_Compile_Context& context){
 
     // malloc function
     Function* malloc_function = Function::Create(FunctionType::get(get_int_32_ptr_ty(context), { get_int_32_ty(context) }, false), Function::ExternalLinkage, "TSL_MALLOC", context.module);
-	context.m_func_symbols["TSL_MALLOC"] = std::make_pair(malloc_function, nullptr);
+    context.m_func_symbols["TSL_MALLOC"] = std::make_pair(malloc_function, nullptr);
 
     // texture 2d sampling
     Function* texture2d_sample_function = Function::Create(FunctionType::get(get_void_ty(context), { get_int_32_ptr_ty(context) , float3_struct_llvm_type->getPointerTo(), get_float_ty(context), get_float_ty(context) }, false), Function::ExternalLinkage, "TSL_TEXTURE2D_SAMPLE", context.module);

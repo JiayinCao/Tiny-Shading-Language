@@ -86,7 +86,7 @@ struct TSL_Compile_Context {
     llvm::Value* get_var_symbol(const std::string& name, bool only_top_layer = false);
 
     // get a variable type if possible
-    DataType	 get_var_type(const std::string& name, bool only_top_layer = false);
+    DataType     get_var_type(const std::string& name, bool only_top_layer = false);
 
     // push a variable into the variable symbol table
     llvm::Value* push_var_symbol(const std::string& name, llvm::Value* value, DataType type);

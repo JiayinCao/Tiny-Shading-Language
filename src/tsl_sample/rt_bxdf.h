@@ -36,7 +36,7 @@ protected:
     // since all primitives are sphere, I took advantage of the fact and simplified the
     // transformation.
     const Vec   sphere_center;
-	const bool	flip_normal;
+    const bool    flip_normal;
 
     // Helper method to convert vector between world space and local space
     Vec local_to_world(const Vec& pos, const Vec& vec);

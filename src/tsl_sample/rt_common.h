@@ -60,7 +60,7 @@ struct Sphere {
     double rad;       // radius 
     Vec p, e, c;      // position, emission, color 
     MaterialType mt;  // material type 
-	const bool fn;	  // whether normal is flipped
+    const bool fn;      // whether normal is flipped
     Sphere(double rad_, Vec p_, Vec e_, Vec c_, MaterialType mt_, bool fn) :
         rad(rad_), p(p_), e(e_), c(c_), mt(mt_), fn(fn) {}
 

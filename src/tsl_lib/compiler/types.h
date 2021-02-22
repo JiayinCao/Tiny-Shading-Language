@@ -24,31 +24,31 @@ TSL_NAMESPACE_BEGIN
 // Data types that can be used as funciton arguments supported in TSL.
 enum class DataTypeEnum : int{
     INVALID = 0,
-	VOID	,
-	INT		,
-	FLOAT	,
+    VOID    ,
+    INT        ,
+    FLOAT    ,
     DOUBLE  ,
-	BOOL	,
+    BOOL    ,
     CLOSURE ,
-	STRUCT
+    STRUCT
 };
 
 // A thin wrapper of data type with structure name if necessary.
 struct DataType{
-	DataTypeEnum	m_type;
-	const char*		m_structure_name;	// this is only used for structure type
+    DataTypeEnum    m_type;
+    const char*        m_structure_name;    // this is only used for structure type
 };
 
 static inline bool operator == (DataType& data_type0, DataType& data_type1) {
-	return data_type0.m_type == data_type1.m_type && data_type0.m_structure_name == data_type1.m_structure_name;
+    return data_type0.m_type == data_type1.m_type && data_type0.m_structure_name == data_type1.m_structure_name;
 }
 
 // Each argument could have some configuration
 enum VariableConfig : int {
-	NONE = 0,
-	INPUT = 1,
-	OUTPUT = 2,
-	CONST = 4,
+    NONE = 0,
+    INPUT = 1,
+    OUTPUT = 2,
+    CONST = 4,
 };
 
 TSL_NAMESPACE_END

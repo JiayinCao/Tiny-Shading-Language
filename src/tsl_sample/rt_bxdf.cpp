@@ -89,8 +89,8 @@ void coordinateSystem(const Vec& v0, Vec& v1, Vec& v2) {
 Vec Bxdf::local_to_world(const Vec& pos, const Vec& vec) {
     auto n = (pos - sphere_center).norm();
 
-	if (flip_normal)
-		n = n * -1.0f;
+    if (flip_normal)
+        n = n * -1.0f;
 
     Vec t, bt;
     coordinateSystem(n, t, bt);
@@ -105,8 +105,8 @@ Vec Bxdf::local_to_world(const Vec& pos, const Vec& vec) {
 Vec Bxdf::world_to_local(const Vec& pos, const Vec& vec) {
     auto n = (pos - sphere_center).norm();
 
-	if (flip_normal)
-		n = n * -1.0f;
+    if (flip_normal)
+        n = n * -1.0f;
 
     Vec t, bt;
     coordinateSystem(n, t, bt);

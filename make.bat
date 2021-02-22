@@ -47,11 +47,11 @@ if NOT "%1" == "" (
         set CLEAN_DEP=1
         goto EOF
     )else if "%1" == "update_dep" (
-		set UPDATE_DEP=1
-		goto EOF
-	)else if "%1" == "force_update_dep" (
-		set FORCE_UPDATE_DEP=1
-		goto EOF
+        set UPDATE_DEP=1
+        goto EOF
+    )else if "%1" == "force_update_dep" (
+        set FORCE_UPDATE_DEP=1
+        goto EOF
     )else if "%1" == "generate_src" (
         set GENERATE_SRC=1
         goto EOF
@@ -70,12 +70,12 @@ if NOT "%1" == "" (
     )else if "%1" == "full" (
         set FULL=1
         goto EOF
-	)else if "%1" == "install" (
-		set INSTALL=1
-		if "%2" == "INSTALL_PATH" (
-			set RESOLVED_INSTALL_PATH=%3
-		)
-		goto EOF
+    )else if "%1" == "install" (
+        set INSTALL=1
+        if "%2" == "INSTALL_PATH" (
+            set RESOLVED_INSTALL_PATH=%3
+        )
+        goto EOF
     )else if "%1" == "verify_builds" (
         set VERIFY_BUILDS=1
         goto EOF
@@ -91,117 +91,117 @@ if NOT "%1" == "" (
 :EOF
 
 if "%CLEAN%" == "1" (
-	echo [33mCleaning all temporary file[0m
-	powershell Remove-Item -path ./bin -recurse -ErrorAction Ignore
-	powershell Remove-Item -path ./generated_src -recurse -ErrorAction Ignore
-	powershell Remove-Item -path ./proj_release -recurse -ErrorAction Ignore
-	powershell Remove-Item -path ./proj_debug -recurse -ErrorAction Ignore
-	powershell Remove-Item -path ./_out -recurse -ErrorAction Ignore
-	goto EOF
+    echo [33mCleaning all temporary file[0m
+    powershell Remove-Item -path ./bin -recurse -ErrorAction Ignore
+    powershell Remove-Item -path ./generated_src -recurse -ErrorAction Ignore
+    powershell Remove-Item -path ./proj_release -recurse -ErrorAction Ignore
+    powershell Remove-Item -path ./proj_debug -recurse -ErrorAction Ignore
+    powershell Remove-Item -path ./_out -recurse -ErrorAction Ignore
+    goto EOF
 )
 
 if "%CLEAN_DEP%" == "1" (
-	echo [33mCleaning all dependencies file[0m
-	powershell Remove-Item -path ./dependencies -recurse -ErrorAction Ignore
-	goto EOF
+    echo [33mCleaning all dependencies file[0m
+    powershell Remove-Item -path ./dependencies -recurse -ErrorAction Ignore
+    goto EOF
 )
 
 if "%UPDATE_DEP%" == "1" (
-	echo [33mDownloading dependencies[0m
-	py .\scripts\get_dependencies.py
-	goto EOF
+    echo [33mDownloading dependencies[0m
+    py .\scripts\get_dependencies.py
+    goto EOF
 )
 
 if "%FORCE_UPDATE_DEP%" == "1" (
-	echo [33mDownloading dependencies[0m
-	py .\scripts\get_dependencies.py TRUE
-	goto EOF
+    echo [33mDownloading dependencies[0m
+    py .\scripts\get_dependencies.py TRUE
+    goto EOF
 )
 
 if "%UPDATE%" == "1" (
-	echo [33mSycning latest code[0m
-	git pull
-	goto EOF
+    echo [33mSycning latest code[0m
+    git pull
+    goto EOF
 )
 
 if "%BUILD_RELEASE%" == "1" (
-	echo [33mBuilding release[0m
+    echo [33mBuilding release[0m
 
-	py .\scripts\get_dependencies.py
+    py .\scripts\get_dependencies.py
 
-	powershell New-Item -Force -ItemType directory -Path proj_release
-	cd proj_release
-	cmake -A x64 ..
-	msbuild /p:Configuration=Release TSL.sln
+    powershell New-Item -Force -ItemType directory -Path proj_release
+    cd proj_release
+    cmake -A x64 ..
+    msbuild /p:Configuration=Release TSL.sln
 
     :: catch msbuild error
-	if ERRORLEVEL 1 ( 
-		goto BUILD_ERR
-	)
+    if ERRORLEVEL 1 ( 
+        goto BUILD_ERR
+    )
 
-	cd ..
+    cd ..
 )
 
 if "%BUILD_DEBUG%" == "1" (
-	echo [33mBuilding debug[0m
+    echo [33mBuilding debug[0m
 
-	py .\scripts\get_dependencies.py
-	
-	powershell New-Item -Force -ItemType directory -Path proj_debug
-	cd proj_debug
-	cmake -A x64 ..
-	msbuild /p:Configuration=Debug TSL.sln
+    py .\scripts\get_dependencies.py
+    
+    powershell New-Item -Force -ItemType directory -Path proj_debug
+    cd proj_debug
+    cmake -A x64 ..
+    msbuild /p:Configuration=Debug TSL.sln
 
     :: catch msbuild error
-	if ERRORLEVEL 1 ( 
-		goto BUILD_ERR
-	)
+    if ERRORLEVEL 1 ( 
+        goto BUILD_ERR
+    )
 
-	cd ..
+    cd ..
 )
 
 if "%GENERATE_PROJ%" == "1" (
-	echo [33mGenerating Visual Studio Project[0m
-	
-	powershell New-Item -Force -ItemType directory -Path _out
-	cd _out
-	cmake -A x64 ..
-	cd ..
+    echo [33mGenerating Visual Studio Project[0m
+    
+    powershell New-Item -Force -ItemType directory -Path _out
+    cd _out
+    cmake -A x64 ..
+    cd ..
 )
 
 if "%GENERATE_SRC%" == "1" (
-	echo [33mGenerating flex and bison source code[0m
-	
-	powershell Remove-Item -path ./generated_src -recurse -ErrorAction Ignore
-	mkdir generated_src
+    echo [33mGenerating flex and bison source code[0m
+    
+    powershell Remove-Item -path ./generated_src -recurse -ErrorAction Ignore
+    mkdir generated_src
 
-	.\dependencies\flex_bison\win_bison.exe -d .\src\tsl_lib\compiler\grammar.y -o .\generated_src\compiled_grammar.cpp
-	.\dependencies\flex_bison\win_flex.exe .\src\tsl_lib\compiler\lex.l
+    .\dependencies\flex_bison\win_bison.exe -d .\src\tsl_lib\compiler\grammar.y -o .\generated_src\compiled_grammar.cpp
+    .\dependencies\flex_bison\win_flex.exe .\src\tsl_lib\compiler\lex.l
 )
 
 if "%UNIT_TEST%" == "1" (
-	echo [33mRunning unit tests[0m
-	.\bin\tsl_test_r.exe
-	.\bin\llvm_test_r.exe
+    echo [33mRunning unit tests[0m
+    .\bin\tsl_test_r.exe
+    .\bin\llvm_test_r.exe
 )
 
 if "%FULL%" == "1" (
-	make update
-	make clean
-	make
-	make test 
+    make update
+    make clean
+    make
+    make test 
 )
 
 if "%INSTALL%" == "1" (
-	echo [33mBuild and install TSL[0m
-	echo Install Path: %RESOLVED_INSTALL_PATH%
-	make
-	cmake -DCMAKE_INSTALL_PREFIX=%RESOLVED_INSTALL_PATH% -P ./proj_release/cmake_install.cmake
+    echo [33mBuild and install TSL[0m
+    echo Install Path: %RESOLVED_INSTALL_PATH%
+    make
+    cmake -DCMAKE_INSTALL_PREFIX=%RESOLVED_INSTALL_PATH% -P ./proj_release/cmake_install.cmake
 )
 
 if "%VERIFY_BUILDS%" == "1" (
-	echo [33mVerifying builds[0m
-	py .\scripts\verify_builds.py
+    echo [33mVerifying builds[0m
+    py .\scripts\verify_builds.py
 )
 
 :EOF

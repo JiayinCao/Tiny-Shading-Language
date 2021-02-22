@@ -81,12 +81,12 @@ TEST(Logic, Logic_And) {
 TEST(Logic, While_Loop) {
     auto shader_source = R"(
         shader main( int cnt, out int arg2 ){
-			int k = cnt;
-			int g = 0;
-			while( k && --k ){
+            int k = cnt;
+            int g = 0;
+            while( k && --k ){
                 if( k % 3 == 1 )
                     g = g + 1;
-			}
+            }
 
             arg2 = g;
         }
@@ -106,13 +106,13 @@ TEST(Logic, While_Loop) {
 TEST(Logic, Do_While_Loop) {
     auto shader_source = R"(
         shader main( int cnt , out int arg2 ){
-			int k = 1;
-			int g = 0;
-			do{
+            int k = 1;
+            int g = 0;
+            do{
                 if( k % 3 == 1 )
                     g = g + 1;
                 k = k + 1;
-			}while( k < cnt );
+            }while( k < cnt );
             
             arg2 = g;
         }
@@ -132,12 +132,12 @@ TEST(Logic, Do_While_Loop) {
 TEST(Logic, For_Loop) {
     auto shader_source = R"(
         shader main( int cnt , out int arg2 ){
-			int k = 1;
-			int g = 0;
-			for(; k < cnt ; ++k ){
+            int k = 1;
+            int g = 0;
+            for(; k < cnt ; ++k ){
                 if( k % 3 == 1 )
                     g = g + 1;
-			}
+            }
             
             arg2 = g;
         }
@@ -157,9 +157,9 @@ TEST(Logic, For_Loop) {
 TEST(Logic, While_Break_Continue) {
     auto shader_source = R"(
         shader main( int cnt , out int arg2 ){
-			int k = 1;
-			int g = 0;
-			while( k < cnt ){
+            int k = 1;
+            int g = 0;
+            while( k < cnt ){
                 if( k % 3 == 0 ){
                     k = k + 1;
                     continue;
@@ -169,7 +169,7 @@ TEST(Logic, While_Break_Continue) {
                 if( k > 20 )
                    break;
                 k = k + 1;
-			}
+            }
             
             arg2 = g;
         }
@@ -189,9 +189,9 @@ TEST(Logic, While_Break_Continue) {
 TEST(Logic, DoWhile_Break_Continue) {
     auto shader_source = R"(
         shader main( int cnt , out int arg2 ){
-			int k = 1;
-			int g = 0;
-			do{
+            int k = 1;
+            int g = 0;
+            do{
                 if( k % 3 == 0 ){
                     k = k + 1;
                     continue;
@@ -201,7 +201,7 @@ TEST(Logic, DoWhile_Break_Continue) {
                 if( k > 20 )
                    break;
                 k = k + 1;
-			}while( k < cnt );
+            }while( k < cnt );
             
             arg2 = g;
         }
