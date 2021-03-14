@@ -81,7 +81,7 @@ However, it does successfully replaces OSL with its own implementation in my ren
 
 # About Author
 
-My name is Jiayin Cao. I’m currently working at Naughty Dog as a graphics engineer. Prior to joining Naughty Dog, I used to work at Ubisoft Singapore and NVIDIA Shanghai before. My primary interest covers the following areas,
+My name is Jiayin Cao. I’m currently working at Ready At Dawn as a senior graphics engineer. Prior to joining Naughty Dog, I used to work at Naughty Dog, Ubisoft Singapore and NVIDIA Shanghai before. My primary interest covers the following areas,
 
 - Real-time Rendering
 - Offline Rendering
